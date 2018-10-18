@@ -1,8 +1,52 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NamiTrade at 0x7369bdbcc09c083dccd99a048046c2bbfe96ba0c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NamiTrade at 0xd0d6b03cb90ec013c6a00ff60e30c3a350c1df94
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.24;
 
+/**
+ * Math operations with safety checks
+ */
+library SafeMath {
+  function mul(uint a, uint b) internal pure returns (uint) {
+    uint c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function div(uint a, uint b) internal pure returns (uint) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint a, uint b) internal pure returns (uint) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint a, uint b) internal pure returns (uint) {
+    uint c = a + b;
+    assert(c >= a);
+    return c;
+  }
+
+  function max64(uint64 a, uint64 b) internal pure returns (uint64) {
+    return a >= b ? a : b;
+  }
+
+  function min64(uint64 a, uint64 b) internal pure returns (uint64) {
+    return a < b ? a : b;
+  }
+
+  function max256(uint256 a, uint256 b) internal pure returns (uint256) {
+    return a >= b ? a : b;
+  }
+
+  function min256(uint256 a, uint256 b) internal pure returns (uint256) {
+    return a < b ? a : b;
+  }
+}
 
 /*
 * NamiMultiSigWallet smart contract-------------------------------
@@ -363,7 +407,10 @@ contract NamiMultiSigWallet {
         }
     }
 }
-
+contract PresaleToken {
+    mapping (address => uint256) public balanceOf;
+    function burnTokens(address _owner) public;
+}
  /*
  * Contract that is working with ERC223 tokens
  */
@@ -384,11 +431,6 @@ contract ERC223ReceivingContract {
     function tokenFallbackBuyer(address _from, uint _value, address _buyer) public returns (bool success);
     function tokenFallbackExchange(address _from, uint _value, uint _price) public returns (bool success);
 }
-contract PresaleToken {
-    mapping (address => uint256) public balanceOf;
-    function burnTokens(address _owner) public;
-}
-
 // ERC20 token interface is implemented only partially.
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; }
 
@@ -869,69 +911,24 @@ contract NamiCrowdSale {
     }
 //-------------------------------------------------------------------------------------------------------
 }
-
-/**
- * Math operations with safety checks
- */
-library SafeMath {
-  function mul(uint a, uint b) internal pure returns (uint) {
-    uint c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint a, uint b) internal pure returns (uint) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint a, uint b) internal pure returns (uint) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint a, uint b) internal pure returns (uint) {
-    uint c = a + b;
-    assert(c >= a);
-    return c;
-  }
-
-  function max64(uint64 a, uint64 b) internal pure returns (uint64) {
-    return a >= b ? a : b;
-  }
-
-  function min64(uint64 a, uint64 b) internal pure returns (uint64) {
-    return a < b ? a : b;
-  }
-
-  function max256(uint256 a, uint256 b) internal pure returns (uint256) {
-    return a >= b ? a : b;
-  }
-
-  function min256(uint256 a, uint256 b) internal pure returns (uint256) {
-    return a < b ? a : b;
-  }
-}
-
-
-
 contract NamiTrade{
     using SafeMath for uint256;
-    
+
     uint public minNac = 0; // min NAC deposit
-    uint public minWithdraw =  100 * 10**18;
-    uint public maxWithdraw = 100000 * 10**18; // max NAC withdraw one time
-    
+    uint public minWithdraw =  2000 * 10**18;
+    uint public maxWithdraw = 50000 * 10**18; // max NAC withdraw one time
+
     constructor(address _escrow, address _namiMultiSigWallet, address _namiAddress) public {
         require(_namiMultiSigWallet != 0x0);
         escrow = _escrow;
         namiMultiSigWallet = _namiMultiSigWallet;
-        NamiAddr = _namiAddress; 
+        NamiAddr = _namiAddress;
+        // init for migration
+        balanceOf[_escrow] = 7850047931491270769372792;
+        totalSupply = 7850047931491270769372792;
     }
-    
-    
+
+
     // balance of pool
     uint public NetfBalance;
     /**
@@ -940,46 +937,46 @@ contract NamiTrade{
      * NlfRevenueBalance:       listSubRoundNLF[currentRound][_subRoundIndex].totalNacInSubRound
      */
 
-    
+
     // escrow has exclusive priveleges to call administrative
     // functions on this contract.
     address public escrow;
 
     // Gathered funds can be withdraw only to namimultisigwallet's address.
     address public namiMultiSigWallet;
-    
+
     /// address of Nami token
     address public NamiAddr;
-    
+
     modifier onlyEscrow() {
         require(msg.sender == escrow);
         _;
     }
-    
+
     modifier onlyNami {
         require(msg.sender == NamiAddr);
         _;
     }
-    
+
     modifier onlyNamiMultisig {
         require(msg.sender == namiMultiSigWallet);
         _;
     }
-    
+
     modifier onlyController {
         require(isController[msg.sender] == true);
         _;
     }
-    
-    
+
+
     /*
     *
     * list setting function
     */
     mapping(address => bool) public isController;
-    
-    
-    
+
+
+
     // set controller address
     /**
      * make new controller
@@ -987,63 +984,63 @@ contract NamiTrade{
      * execute any time in sc state
      */
     function setController(address _controller)
-        public
-        onlyEscrow
+    public
+    onlyEscrow
     {
         require(!isController[_controller]);
         isController[_controller] = true;
     }
-    
+
     /**
      * remove controller
      * require input address is a controller
      * execute any time in sc state
      */
     function removeController(address _controller)
-        public
-        onlyEscrow
+    public
+    onlyEscrow
     {
         require(isController[_controller]);
         isController[_controller] = false;
     }
-    
-    
+
+
     // change minimum nac to deposit
     function changeMinNac(uint _minNAC) public
-        onlyEscrow
+    onlyEscrow
     {
         require(_minNAC != 0);
         minNac = _minNAC;
     }
-    
+
     // change escrow
     function changeEscrow(address _escrow) public
-        onlyNamiMultisig
+    onlyNamiMultisig
     {
         require(_escrow != 0x0);
         escrow = _escrow;
     }
-    
-    
+
+
     // min and max for withdraw nac
     function changeMinWithdraw(uint _minWithdraw) public
-        onlyEscrow
+    onlyEscrow
     {
         require(_minWithdraw != 0);
         minWithdraw = _minWithdraw;
     }
-    
+
     function changeMaxWithdraw(uint _maxNac) public
-        onlyEscrow
+    onlyEscrow
     {
         require(_maxNac != 0);
         maxWithdraw = _maxNac;
     }
-    
+
     /// @dev withdraw ether to nami multisignature wallet, only escrow can call
     /// @param _amount value ether in wei to withdraw
     function withdrawEther(uint _amount) public
-        onlyEscrow
+    onlyEscrow
     {
         require(namiMultiSigWallet != 0x0);
         // Available at any phase.
@@ -1051,12 +1048,12 @@ contract NamiTrade{
             namiMultiSigWallet.transfer(_amount);
         }
     }
-    
-    
+
+
     /// @dev withdraw NAC to nami multisignature wallet, only escrow can call
     /// @param _amount value NAC to withdraw
     function withdrawNac(uint _amount) public
-        onlyEscrow
+    onlyEscrow
     {
         require(namiMultiSigWallet != 0x0);
         // Available at any phase.
@@ -1065,7 +1062,7 @@ contract NamiTrade{
             namiToken.transfer(namiMultiSigWallet, _amount);
         }
     }
-    
+
     /*
     *
     *
@@ -1073,30 +1070,30 @@ contract NamiTrade{
     */
     event Deposit(address indexed user, uint amount, uint timeDeposit);
     event Withdraw(address indexed user, uint amount, uint timeWithdraw);
-    
+
     event PlaceBuyFciOrder(address indexed investor, uint amount, uint timePlaceOrder);
     event PlaceSellFciOrder(address indexed investor, uint amount, uint timePlaceOrder);
     event InvestToNLF(address indexed investor, uint amount, uint timeInvest);
-    
+
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////fci token function///////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     string public name = "Nami Trade";
     string public symbol = "FCI";
     uint8 public decimals = 18;
-    
+
     uint256 public totalSupply;
-    
+
     //  paus phrase to compute ratio fci
     bool public isPause;
-    
+
     // time expires of price fci
     uint256 public timeExpires;
-    
+
     // price fci : if 1 fci = 2 nac => priceFci = 2000000
     uint public fciDecimals = 1000000;
     uint256 public priceFci;
-    
+
     // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
     mapping (address => mapping (address => uint256)) public allowance;
@@ -1104,34 +1101,32 @@ contract NamiTrade{
     // This generates a public event on the blockchain that will notify clients
     event Transfer(address indexed from, address indexed to, uint256 value);
 
-    // This notifies clients about the amount burnt
-    event Burn(address indexed from, uint256 value);
-    
     // This notifies someone buy fci by NAC
     event BuyFci(address investor, uint256 valueNac, uint256 valueFci, uint timeBuyFci);
     event SellFci(address investor, uint256 valueNac, uint256 valueFci, uint timeSellFci);
+    event WithdrawRound(address investor, uint256 valueNac, uint timeWithdraw);
     
     modifier onlyRunning {
         require(isPause == false);
         _;
     }
-    
-    
+
+
     /**
      * controller update balance of Netf to smart contract
      */
     function addNacToNetf(uint _valueNac) public onlyController {
         NetfBalance = NetfBalance.add(_valueNac);
     }
-    
-    
+
+
     /**
      * controller update balance of Netf to smart contract
      */
     function removeNacFromNetf(uint _valueNac) public onlyController {
         NetfBalance = NetfBalance.sub(_valueNac);
     }
-    
+
     //////////////////////////////////////////////////////buy and sell fci function//////////////////////////////////////////////////////////
     /**
     *  Setup pause phrase
@@ -1139,18 +1134,18 @@ contract NamiTrade{
     function changePause() public onlyController {
         isPause = !isPause;
     }
-    
+
     /**
-     * 
-     * 
+     *
+     *
      * update price fci daily
      */
-     function updatePriceFci(uint _price, uint _timeExpires) onlyController public {
-         require(now > timeExpires);
-         priceFci = _price;
-         timeExpires = _timeExpires;
-     }
-    
+    function updatePriceFci(uint _price, uint _timeExpires) onlyController public {
+        require(now > timeExpires);
+        priceFci = _price;
+        timeExpires = _timeExpires;
+    }
+
     /**
      * before buy users need to place buy Order
      * function buy fci
@@ -1163,19 +1158,19 @@ contract NamiTrade{
         require(_buyer != 0x0);
         require( _valueNac * fciDecimals > priceFci);
         uint fciReceive = (_valueNac.mul(fciDecimals))/priceFci;
-        
+
         // construct fci
         balanceOf[_buyer] = balanceOf[_buyer].add(fciReceive);
         totalSupply = totalSupply.add(fciReceive);
         NetfBalance = NetfBalance.add(_valueNac);
-        
+
         emit Transfer(address(this), _buyer, fciReceive);
         emit BuyFci(_buyer, _valueNac, fciReceive, now);
     }
-    
-    
+
+
     /**
-     * 
+     *
      * before controller buy fci for user
      * user nead to place sell order
      */
@@ -1184,9 +1179,9 @@ contract NamiTrade{
         _transfer(msg.sender, address(this), _valueFci);
         emit PlaceSellFciOrder(msg.sender, _valueFci, now);
     }
-    
+
     /**
-     * 
+     *
      * function sellFci
      * only controller can execute in phare running
      */
@@ -1197,40 +1192,39 @@ contract NamiTrade{
         require(_seller != 0x0);
         require(_valueFci * priceFci > fciDecimals);
         uint nacReturn = (_valueFci.mul(priceFci))/fciDecimals;
-        
+
         // destroy fci
         balanceOf[address(this)] = balanceOf[address(this)].sub(_valueFci);
         totalSupply = totalSupply.sub(_valueFci);
-        
+
         // update NETF balance
         NetfBalance = NetfBalance.sub(nacReturn);
-        
+
         // send NAC
         NamiCrowdSale namiToken = NamiCrowdSale(NamiAddr);
         namiToken.transfer(_seller, nacReturn);
-        
-        emit Transfer(_seller, address(this), _valueFci);
+
         emit SellFci(_seller, nacReturn, _valueFci, now);
     }
-    
+
     /////////////////////////////////////////////////////NETF Revenue function///////////////////////////////////////////////////////////////
     struct ShareHolderNETF {
         uint stake;
         bool isWithdrawn;
     }
-    
+
     struct RoundNetfRevenue {
         bool isOpen;
         uint currentNAC;
         uint totalFci;
         bool withdrawable;
     }
-    
+
     uint public currentNetfRound;
-    
+
     mapping (uint => RoundNetfRevenue) public NetfRevenue;
     mapping (uint => mapping(address => ShareHolderNETF)) public usersNETF;
-    
+
     // 1. open Netf round
     /**
      * first controller open one round for netf revenue
@@ -1240,9 +1234,9 @@ contract NamiTrade{
         currentNetfRound = _roundIndex;
         NetfRevenue[_roundIndex].isOpen = true;
     }
-    
+
     /**
-     * 
+     *
      * this function update balance of NETF revenue funds add NAC to funds
      * only executable if round open and round not withdraw yet
      */
@@ -1250,9 +1244,9 @@ contract NamiTrade{
         require(NetfRevenue[currentNetfRound].isOpen == true && NetfRevenue[currentNetfRound].withdrawable == false);
         NetfRevenue[currentNetfRound].currentNAC = NetfRevenue[currentNetfRound].currentNAC.add(_valueNac);
     }
-    
+
     /**
-     * 
+     *
      * this function update balance of NETF Funds remove NAC from funds
      * only executable if round open and round not withdraw yet
      */
@@ -1260,80 +1254,80 @@ contract NamiTrade{
         require(NetfRevenue[currentNetfRound].isOpen == true && NetfRevenue[currentNetfRound].withdrawable == false);
         NetfRevenue[currentNetfRound].currentNAC = NetfRevenue[currentNetfRound].currentNAC.sub(_valueNac);
     }
-    
+
     // switch to pause phrase here
-    
+
     /**
      * after pause all investor to buy, sell and exchange fci on the market
      * controller or investor latch final fci of current round
      */
-     function latchTotalFci(uint _roundIndex) onlyController public {
-         require(isPause == true && NetfRevenue[_roundIndex].isOpen == true);
-         require(NetfRevenue[_roundIndex].withdrawable == false);
-         NetfRevenue[_roundIndex].totalFci = totalSupply;
-     }
-     
-     function latchFciUserController(uint _roundIndex, address _investor) onlyController public {
-         require(isPause == true && NetfRevenue[_roundIndex].isOpen == true);
-         require(NetfRevenue[_roundIndex].withdrawable == false);
-         require(balanceOf[_investor] > 0);
-         usersNETF[_roundIndex][_investor].stake = balanceOf[_investor];
-     }
-     
-     /**
-      * investor can latch Fci by themself
-      */
-     function latchFciUser(uint _roundIndex) public {
-         require(isPause == true && NetfRevenue[_roundIndex].isOpen == true);
-         require(NetfRevenue[_roundIndex].withdrawable == false);
-         require(balanceOf[msg.sender] > 0);
-         usersNETF[_roundIndex][msg.sender].stake = balanceOf[msg.sender];
-     }
-     
-     /**
-      * after all investor latch fci, controller change round state withdrawable
-      * now investor can withdraw NAC from NetfRevenue funds of this round
-      * and auto switch to unpause phrase
-      */
-     function changeWithdrawableNetfRe(uint _roundIndex) onlyController public {
-         require(isPause == true && NetfRevenue[_roundIndex].isOpen == true);
-         NetfRevenue[_roundIndex].withdrawable = true;
-         isPause = false;
-     }
-     
-     // after latch all investor, unpause here
-     /**
-      * withdraw NAC for 
-      * run by controller
-      */
-     function withdrawNacNetfReController(uint _roundIndex, address _investor) onlyController public {
-         require(NetfRevenue[_roundIndex].withdrawable == true && isPause == false && _investor != 0x0);
-         require(usersNETF[_roundIndex][_investor].stake > 0 && usersNETF[_roundIndex][_investor].isWithdrawn == false);
-         require(NetfRevenue[_roundIndex].totalFci > 0);
-         // withdraw NAC
-         uint nacReturn = ( NetfRevenue[_roundIndex].currentNAC.mul(usersNETF[_roundIndex][_investor].stake) ) / NetfRevenue[_roundIndex].totalFci;
-         NamiCrowdSale namiToken = NamiCrowdSale(NamiAddr);
-         namiToken.transfer(_investor, nacReturn);
-         
-         usersNETF[_roundIndex][_investor].isWithdrawn = true;
-     }
-     
-     /**
-      * withdraw NAC for 
-      * run by investor
-      */
-     function withdrawNacNetfRe(uint _roundIndex) public {
-         require(NetfRevenue[_roundIndex].withdrawable == true && isPause == false);
-         require(usersNETF[_roundIndex][msg.sender].stake > 0 && usersNETF[_roundIndex][msg.sender].isWithdrawn == false);
-         require(NetfRevenue[_roundIndex].totalFci > 0);
-         // withdraw NAC
-         uint nacReturn = ( NetfRevenue[_roundIndex].currentNAC.mul(usersNETF[_roundIndex][msg.sender].stake) ) / NetfRevenue[_roundIndex].totalFci;
-         NamiCrowdSale namiToken = NamiCrowdSale(NamiAddr);
-         namiToken.transfer(msg.sender, nacReturn);
-         
-         usersNETF[_roundIndex][msg.sender].isWithdrawn = true;
-     }
-    
+    function latchTotalFci(uint _roundIndex) onlyController public {
+        require(isPause == true && NetfRevenue[_roundIndex].isOpen == true);
+        require(NetfRevenue[_roundIndex].withdrawable == false);
+        NetfRevenue[_roundIndex].totalFci = totalSupply;
+    }
+
+    function latchFciUserController(uint _roundIndex, address _investor) onlyController public {
+        require(isPause == true && NetfRevenue[_roundIndex].isOpen == true);
+        require(NetfRevenue[_roundIndex].withdrawable == false);
+        require(balanceOf[_investor] > 0);
+        usersNETF[_roundIndex][_investor].stake = balanceOf[_investor];
+    }
+
+    /**
+     * investor can latch Fci by themself
+     */
+    function latchFciUser(uint _roundIndex) public {
+        require(isPause == true && NetfRevenue[_roundIndex].isOpen == true);
+        require(NetfRevenue[_roundIndex].withdrawable == false);
+        require(balanceOf[msg.sender] > 0);
+        usersNETF[_roundIndex][msg.sender].stake = balanceOf[msg.sender];
+    }
+
+    /**
+     * after all investor latch fci, controller change round state withdrawable
+     * now investor can withdraw NAC from NetfRevenue funds of this round
+     * and auto switch to unpause phrase
+     */
+    function changeWithdrawableNetfRe(uint _roundIndex) onlyController public {
+        require(isPause == true && NetfRevenue[_roundIndex].isOpen == true);
+        NetfRevenue[_roundIndex].withdrawable = true;
+        isPause = false;
+    }
+
+    // after latch all investor, unpause here
+    /**
+     * withdraw NAC for
+     * run by controller
+     */
+    function withdrawNacNetfReController(uint _roundIndex, address _investor) onlyController public {
+        require(NetfRevenue[_roundIndex].withdrawable == true && isPause == false && _investor != 0x0);
+        require(usersNETF[_roundIndex][_investor].stake > 0 && usersNETF[_roundIndex][_investor].isWithdrawn == false);
+        require(NetfRevenue[_roundIndex].totalFci > 0);
+        // withdraw NAC
+        uint nacReturn = ( NetfRevenue[_roundIndex].currentNAC.mul(usersNETF[_roundIndex][_investor].stake) ) / NetfRevenue[_roundIndex].totalFci;
+        NamiCrowdSale namiToken = NamiCrowdSale(NamiAddr);
+        namiToken.transfer(_investor, nacReturn);
+
+        usersNETF[_roundIndex][_investor].isWithdrawn = true;
+    }
+
+    /**
+     * withdraw NAC for
+     * run by investor
+     */
+    function withdrawNacNetfRe(uint _roundIndex) public {
+        require(NetfRevenue[_roundIndex].withdrawable == true && isPause == false);
+        require(usersNETF[_roundIndex][msg.sender].stake > 0 && usersNETF[_roundIndex][msg.sender].isWithdrawn == false);
+        require(NetfRevenue[_roundIndex].totalFci > 0);
+        // withdraw NAC
+        uint nacReturn = ( NetfRevenue[_roundIndex].currentNAC.mul(usersNETF[_roundIndex][msg.sender].stake) ) / NetfRevenue[_roundIndex].totalFci;
+        NamiCrowdSale namiToken = NamiCrowdSale(NamiAddr);
+        namiToken.transfer(msg.sender, nacReturn);
+
+        usersNETF[_roundIndex][msg.sender].isWithdrawn = true;
+    }
+
     /////////////////////////////////////////////////////token fci function//////////////////////////////////////////////////////////////////
     /**
      * Internal transfer, only can be called by this contract
@@ -1393,7 +1387,7 @@ contract NamiTrade{
      * @param _value the max amount they can spend
      */
     function approve(address _spender, uint256 _value) public onlyRunning
-        returns (bool success) {
+    returns (bool success) {
         allowance[msg.sender][_spender] = _value;
         return true;
     }
@@ -1408,38 +1402,38 @@ contract NamiTrade{
      * @param _extraData some extra information to send to the approved contract
      */
     function approveAndCall(address _spender, uint256 _value, bytes _extraData)
-        public onlyRunning
-        returns (bool success) {
+    public onlyRunning
+    returns (bool success) {
         tokenRecipient spender = tokenRecipient(_spender);
         if (approve(_spender, _value)) {
             spender.receiveApproval(msg.sender, _value, this, _extraData);
             return true;
         }
     }
-    
+
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////end fci token function///////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
-    
-    
+
+
+
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////pool function////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     uint public currentRound = 1;
     uint public currentSubRound = 1;
-    
+
     struct shareHolderNLF {
         uint fciNLF;
         bool isWithdrawnRound;
     }
-    
+
     struct SubRound {
         uint totalNacInSubRound;
         bool isOpen;
         bool isCloseNacPool;
     }
-    
+
     struct Round {
         bool isOpen;
         bool isActivePool;
@@ -1447,24 +1441,24 @@ contract NamiTrade{
         uint currentNAC;
         uint finalNAC;
     }
-    
+
     // NLF Funds
     mapping(uint => Round) public NLFunds;
     mapping(uint => mapping(address => mapping(uint => bool))) public isWithdrawnSubRoundNLF;
     mapping(uint => mapping(uint => SubRound)) public listSubRoundNLF;
     mapping(uint => mapping(address => shareHolderNLF)) public membersNLF;
-    
-    
+
+
     event ActivateRound(uint RoundIndex, uint TimeActive);
     event ActivateSubRound(uint RoundIndex, uint TimeActive);
-    // ------------------------------------------------ 
+    // ------------------------------------------------
     /**
      * Admin function
      * Open and Close Round
      */
     function activateRound(uint _roundIndex)
-        onlyEscrow
-        public
+    onlyEscrow
+    public
     {
         // require round not open
         require(NLFunds[_roundIndex].isOpen == false);
@@ -1472,14 +1466,14 @@ contract NamiTrade{
         currentRound = _roundIndex;
         emit ActivateRound(_roundIndex, now);
     }
-    
+
     ///////////////////////deposit to NLF funds in tokenFallbackExchange///////////////////////////////
     /**
      * after all user deposit to NLF pool
      */
     function deactivateRound(uint _roundIndex)
-        onlyEscrow
-        public
+    onlyEscrow
+    public
     {
         // require round id is openning
         require(NLFunds[_roundIndex].isOpen == true);
@@ -1487,13 +1481,13 @@ contract NamiTrade{
         NLFunds[_roundIndex].isOpen = false;
         NLFunds[_roundIndex].finalNAC = NLFunds[_roundIndex].currentNAC;
     }
-    
+
     /**
      * before send NAC to subround controller need active subround
      */
     function activateSubRound(uint _subRoundIndex)
-        onlyController
-        public
+    onlyController
+    public
     {
         // require current round is not open and pool active
         require(NLFunds[currentRound].isOpen == false && NLFunds[currentRound].isActivePool == true);
@@ -1502,83 +1496,83 @@ contract NamiTrade{
         //
         currentSubRound = _subRoundIndex;
         require(listSubRoundNLF[currentRound][_subRoundIndex].isCloseNacPool == false);
-        
+
         listSubRoundNLF[currentRound][_subRoundIndex].isOpen = true;
         emit ActivateSubRound(_subRoundIndex, now);
     }
-    
-    
+
+
     /**
      * every week controller deposit to subround to send NAC to all user have NLF fci
      */
     function depositToSubRound(uint _value)
-        onlyController
-        public
+    onlyController
+    public
     {
         // require sub round is openning
         require(currentSubRound != 0);
         require(listSubRoundNLF[currentRound][currentSubRound].isOpen == true);
         require(listSubRoundNLF[currentRound][currentSubRound].isCloseNacPool == false);
-        
+
         // modify total NAC in each subround
         listSubRoundNLF[currentRound][currentSubRound].totalNacInSubRound = listSubRoundNLF[currentRound][currentSubRound].totalNacInSubRound.add(_value);
     }
-    
-    
+
+
     /**
      * every week controller deposit to subround to send NAC to all user have NLF fci
      */
     function withdrawFromSubRound(uint _value)
-        onlyController
-        public
+    onlyController
+    public
     {
         // require sub round is openning
         require(currentSubRound != 0);
         require(listSubRoundNLF[currentRound][currentSubRound].isOpen == true);
         require(listSubRoundNLF[currentRound][currentSubRound].isCloseNacPool == false);
-        
+
         // modify total NAC in each subround
         listSubRoundNLF[currentRound][currentSubRound].totalNacInSubRound = listSubRoundNLF[currentRound][currentSubRound].totalNacInSubRound.sub(_value);
     }
-    
-    
+
+
     /**
      * controller close deposit subround phrase and user can withdraw NAC from subround
      */
     function closeDepositSubRound()
-        onlyController
-        public
+    onlyController
+    public
     {
         require(listSubRoundNLF[currentRound][currentSubRound].isOpen == true);
         require(listSubRoundNLF[currentRound][currentSubRound].isCloseNacPool == false);
-        
+
         listSubRoundNLF[currentRound][currentSubRound].isCloseNacPool = true;
     }
-    
-    
+
+
     /**
      * user withdraw NAC from each subround of NLF funds for investor
      */
-    function withdrawSubRound(uint _subRoundIndex) public {
+    function withdrawSubRound(uint _roundIndex, uint _subRoundIndex) public {
         // require close deposit to subround
-        require(listSubRoundNLF[currentRound][_subRoundIndex].isCloseNacPool == true);
-        
+        require(listSubRoundNLF[_roundIndex][_subRoundIndex].isCloseNacPool == true);
+
         // user not ever withdraw nac in this subround
-        require(isWithdrawnSubRoundNLF[currentRound][msg.sender][_subRoundIndex] == false);
-        
+        require(isWithdrawnSubRoundNLF[_roundIndex][msg.sender][_subRoundIndex] == false);
+
         // require user have fci
-        require(membersNLF[currentRound][msg.sender].fciNLF > 0);
-        
+        require(membersNLF[_roundIndex][msg.sender].fciNLF > 0);
+
         // withdraw token
         NamiCrowdSale namiToken = NamiCrowdSale(NamiAddr);
-        
-        uint nacReturn = (listSubRoundNLF[currentRound][_subRoundIndex].totalNacInSubRound.mul(membersNLF[currentRound][msg.sender].fciNLF)).div(NLFunds[currentRound].finalNAC);
+
+        uint nacReturn = (listSubRoundNLF[_roundIndex][_subRoundIndex].totalNacInSubRound.mul(membersNLF[_roundIndex][msg.sender].fciNLF)).div(NLFunds[_roundIndex].finalNAC);
         namiToken.transfer(msg.sender, nacReturn);
-        
-        isWithdrawnSubRoundNLF[currentRound][msg.sender][_subRoundIndex] = true;
+
+        isWithdrawnSubRoundNLF[_roundIndex][msg.sender][_subRoundIndex] = true;
     }
-    
-    
+
+
     /**
      * controller of NLF add NAC to update NLF balance
      * this NAC come from 10% trading revenue
@@ -1586,69 +1580,67 @@ contract NamiTrade{
     function addNacToNLF(uint _value) public onlyController {
         require(NLFunds[currentRound].isActivePool == true);
         require(NLFunds[currentRound].withdrawable == false);
-        
+
         NLFunds[currentRound].currentNAC = NLFunds[currentRound].currentNAC.add(_value);
     }
-    
+
     /**
      * controller get NAC from NLF pool to send to trader
      */
-    
+
     function removeNacFromNLF(uint _value) public onlyController {
         require(NLFunds[currentRound].isActivePool == true);
         require(NLFunds[currentRound].withdrawable == false);
-        
+
         NLFunds[currentRound].currentNAC = NLFunds[currentRound].currentNAC.sub(_value);
     }
-    
+
     /**
      * end of round escrow run this to allow user sell fci to receive NAC
      */
     function changeWithdrawableRound(uint _roundIndex)
-        public
-        onlyEscrow
+    public
+    onlyEscrow
     {
-        require(NLFunds[currentRound].isActivePool == true);
+        require(NLFunds[_roundIndex].isActivePool == true);
         require(NLFunds[_roundIndex].withdrawable == false && NLFunds[_roundIndex].isOpen == false);
-        
+
         NLFunds[_roundIndex].withdrawable = true;
     }
-    
-    
+
+
+    /**
+     * Internal Withdraw round, only can be called by this contract
+     */
+    function _withdrawRound(uint _roundIndex, address _investor) internal {
+        require(NLFunds[_roundIndex].withdrawable == true);
+        require(membersNLF[_roundIndex][_investor].isWithdrawnRound == false);
+        require(membersNLF[_roundIndex][_investor].fciNLF > 0);
+
+        NamiCrowdSale namiToken = NamiCrowdSale(NamiAddr);
+        uint nacReturn = NLFunds[_roundIndex].currentNAC.mul(membersNLF[_roundIndex][_investor].fciNLF).div(NLFunds[_roundIndex].finalNAC);
+        namiToken.transfer(msg.sender, nacReturn);
+
+        // update status round
+        membersNLF[_roundIndex][_investor].isWithdrawnRound = true;
+        membersNLF[_roundIndex][_investor].fciNLF = 0;
+        emit WithdrawRound(_investor, nacReturn, now);
+    }
+
     /**
      * end of round user sell fci to receive NAC from NLF funds
      * function for investor
      */
     function withdrawRound(uint _roundIndex) public {
-        require(NLFunds[_roundIndex].withdrawable == true);
-        require(membersNLF[currentRound][msg.sender].isWithdrawnRound == false);
-        require(membersNLF[currentRound][msg.sender].fciNLF > 0);
-        
-        NamiCrowdSale namiToken = NamiCrowdSale(NamiAddr);
-        uint nacReturn = NLFunds[currentRound].currentNAC.mul(membersNLF[currentRound][msg.sender].fciNLF).div(NLFunds[currentRound].finalNAC);
-        namiToken.transfer(msg.sender, nacReturn);
-        
-        // update status round
-        membersNLF[currentRound][msg.sender].isWithdrawnRound = true;
-        membersNLF[currentRound][msg.sender].fciNLF = 0;
+        _withdrawRound(_roundIndex, msg.sender);
     }
-    
+
     function withdrawRoundController(uint _roundIndex, address _investor) public onlyController {
-        require(NLFunds[_roundIndex].withdrawable == true);
-        require(membersNLF[currentRound][_investor].isWithdrawnRound == false);
-        require(membersNLF[currentRound][_investor].fciNLF > 0);
-        
-        NamiCrowdSale namiToken = NamiCrowdSale(NamiAddr);
-        uint nacReturn = NLFunds[currentRound].currentNAC.mul(membersNLF[currentRound][_investor].fciNLF).div(NLFunds[currentRound].finalNAC);
-        namiToken.transfer(msg.sender, nacReturn);
-        
-        // update status round
-        membersNLF[currentRound][_investor].isWithdrawnRound = true;
-        membersNLF[currentRound][_investor].fciNLF = 0;
+        _withdrawRound(_roundIndex, _investor);
     }
-    
-    
-    
+
+
+
     /**
      * fall back function call from nami crawsale smart contract
      * deposit NAC to NAMI TRADE broker, invest to NETF and NLF funds
@@ -1664,7 +1656,7 @@ contract NamiTrade{
             // invest to NLF funds
             membersNLF[currentRound][_from].fciNLF = membersNLF[currentRound][_from].fciNLF.add(_value);
             NLFunds[currentRound].currentNAC = NLFunds[currentRound].currentNAC.add(_value);
-            
+
             emit InvestToNLF(_from, _value, now);
         } else if(_choose == 2) {
             // invest NAC to NETF Funds
@@ -1673,30 +1665,30 @@ contract NamiTrade{
         }
         return true;
     }
-    
-    
+
+
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////////////////end pool function///////////////////////////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
     // withdraw token
     function withdrawToken(address _account, uint _amount)
-        public
-        onlyController
+    public
+    onlyController
     {
         require(_amount >= minWithdraw && _amount <= maxWithdraw);
         NamiCrowdSale namiToken = NamiCrowdSale(NamiAddr);
-        
+
         uint previousBalances = namiToken.balanceOf(address(this));
         require(previousBalances >= _amount);
-        
+
         // transfer token
         namiToken.transfer(_account, _amount);
-        
+
         // emit event
         emit Withdraw(_account, _amount, now);
         assert(previousBalances >= namiToken.balanceOf(address(this)));
     }
-    
-    
+
+
 }
