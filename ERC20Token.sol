@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x5c92ab264b85694f1c331b28e491f4eb1c1d0c8a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x33e63bc3a003c73ea029e3210eb6ecb9638f65f6
 */
-pragma solidity ^0.4.4;
+pragma solidity ^0.4.24;
 
 contract Token {
 
@@ -38,10 +38,8 @@ contract Token {
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-    
+
 }
-
-
 
 contract StandardToken is Token {
 
@@ -117,13 +115,13 @@ contract ERC20Token is StandardToken {
 
 //make sure this function name matches the contract name above. So if you're token is called TutorialToken, make sure the //contract name above is also TutorialToken instead of ERC20Token
 
-    function ERC20Token(
+    function OptheriumToken(
         ) {
-        balances[msg.sender] = 100000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 100000000;                        // Update total supply (100000 for example)
-        name = "Xthereum";                                   // Set the name for display purposes
-        decimals = 18;                            // Amount of decimals for display purposes
-        symbol = "XTH";                               // Set the symbol for display purposes
+        balances[msg.sender] = 100000000e18; // Give the creator all initial tokens (100000 for example)
+        totalSupply = 100000000e18;          // Update total supply (100000 for example)
+        name = "Optherium Token";             // Set the name for display purposes
+        decimals = 18;                                 // Amount of decimals for display purposes
+        symbol = "OPT";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
