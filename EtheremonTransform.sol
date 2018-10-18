@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheremonTransform at 0xa6ff73743b2fd8dedfacea4067a51ef86d249491
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheremonTransform at 0x16ecc82b4e3e5ff5a4db8510ed191282a37639b0
 */
 pragma solidity ^0.4.16;
 
@@ -113,27 +113,13 @@ contract EtheremonEnum {
     }
 }
 
-contract EtheremonDataBase is EtheremonEnum, BasicAccessControl, SafeMath {
+contract EtheremonDataBase is EtheremonEnum, BasicAccessControl {
     
     uint64 public totalMonster;
     uint32 public totalClass;
     
     // write
-    function addElementToArrayType(ArrayType _type, uint64 _id, uint8 _value) onlyModerators public returns(uint);
-    function removeElementOfArrayType(ArrayType _type, uint64 _id, uint8 _value) onlyModerators public returns(uint);
-    function setMonsterClass(uint32 _classId, uint256 _price, uint256 _returnPrice, bool _catchable) onlyModerators public returns(uint32);
-    function addMonsterObj(uint32 _classId, address _trainer, string _name) onlyModerators public returns(uint64);
-    function setMonsterObj(uint64 _objId, string _name, uint32 _exp, uint32 _createIndex, uint32 _lastClaimIndex) onlyModerators public;
-    function increaseMonsterExp(uint64 _objId, uint32 amount) onlyModerators public;
-    function decreaseMonsterExp(uint64 _objId, uint32 amount) onlyModerators public;
-    function removeMonsterIdMapping(address _trainer, uint64 _monsterId) onlyModerators public;
-    function addMonsterIdMapping(address _trainer, uint64 _monsterId) onlyModerators public;
-    function clearMonsterReturnBalance(uint64 _monsterId) onlyModerators public returns(uint256 amount);
-    function collectAllReturnBalance(address _trainer) onlyModerators public returns(uint256 amount);
-    function transferMonster(address _from, address _to, uint64 _monsterId) onlyModerators public returns(ResultCode);
-    function addExtraBalance(address _trainer, uint256 _amount) onlyModerators public returns(uint256);
-    function deductExtraBalance(address _trainer, uint256 _amount) onlyModerators public returns(uint256);
-    function setExtraBalance(address _trainer, uint256 _amount) onlyModerators public;
+    function decreaseMonsterExp(uint64 _objId, uint32 amount) external;
     
     // read
     function getSizeArrayType(ArrayType _type, uint64 _id) constant public returns(uint);
@@ -161,13 +147,12 @@ contract EtheremonTransformData {
     function setTranformed(uint64 _objId, uint64 _newObjId) external;
 }
 
-contract EtheremonWorld is EtheremonEnum {
-    
+contract EtheremonWorld {
     function getGen0COnfig(uint32 _classId) constant public returns(uint32, uint256, uint32);
     function getTrainerEarn(address _trainer) constant public returns(uint256);
     function getReturnFromMonster(uint64 _objId) constant public returns(uint256 current, uint256 total);
-    function getClassPropertyValue(uint32 _classId, PropertyType _type, uint index) constant external returns(uint32);
-    function getClassPropertySize(uint32 _classId, PropertyType _type) constant external returns(uint);
+    function getClassPropertyValue(uint32 _classId, EtheremonEnum.PropertyType _type, uint index) constant external returns(uint32);
+    function getClassPropertySize(uint32 _classId, EtheremonEnum.PropertyType _type) constant external returns(uint);
 }
 
 interface EtheremonBattle {
@@ -179,18 +164,22 @@ interface EtheremonTradeInterface {
     function isOnTrading(uint64 _objId) constant external returns(bool);
 }
 
+interface EtheremonMonsterNFTInterface {
+    function mintMonster(uint32 _classId, address _trainer, string _name) external returns(uint);
+    function burnMonster(uint64 _tokenId) external;
+}
+
+interface EtheremonTransformSettingInterface {
+    function getRandomClassId(uint _seed) constant external returns(uint32);
+    function getLayEggInfo(uint32 _classId) constant external returns(uint8 layingLevel, uint8 layingCost);
+    function getTransformInfo(uint32 _classId) constant external returns(uint32 transformClassId, uint8 level);
+    function getClassTransformInfo(uint32 _classId) constant external returns(uint8 layingLevel, uint8 layingCost, uint8 transformLevel, uint32 transformCLassId);
+}
+
 contract EtheremonTransform is EtheremonEnum, BasicAccessControl, SafeMath {
     uint8 constant public STAT_COUNT = 6;
     uint8 constant public STAT_MAX = 32;
     uint8 constant public GEN0_NO = 24;
-    
-    struct MonsterClassAcc {
-        uint32 classId;
-        uint256 price;
-        uint256 returnPrice;
-        uint32 total;
-        bool catchable;
-    }
 
     struct MonsterObjAcc {
         uint64 monsterId;
@@ -216,6 +205,7 @@ contract EtheremonTransform is EtheremonEnum, BasicAccessControl, SafeMath {
         uint32 classId;
         address owner;
         uint8 level;
+        uint32 exp;
     }
     
     // Gen0 has return price & no longer can be caught when this contract is deployed
@@ -227,91 +217,55 @@ contract EtheremonTransform is EtheremonEnum, BasicAccessControl, SafeMath {
     }
     
     // hatching range
-    uint16 public hatchStartTime = 2; // hour
-    uint16 public hatchMaxTime = 46; // hour
+    uint public hatchStartTime = 2; // hour
+    uint public hatchMaxTime = 46; // hour
     uint public removeHatchingTimeFee = 0.05 ether; // ETH
-    uint public buyEggFee = 0.06 ether; // ETH
-    
-    uint32[] public randomClassIds;
-    mapping(uint32 => uint8) public layingEggLevels;
-    mapping(uint32 => uint8) public layingEggDeductions;
-    mapping(uint32 => uint8) public transformLevels;
-    mapping(uint32 => uint32) public transformClasses;
+    uint public buyEggFee = 0.09 ether; // ETH
 
     mapping(uint8 => uint32) public levelExps;
-    address private lastHatchingAddress;
-    
     mapping(uint32 => Gen0Config) public gen0Config;
     
     // linked smart contract
     address public dataContract;
     address public worldContract;
     address public transformDataContract;
+    address public transformSettingContract;
     address public battleContract;
     address public tradeContract;
+    address public monsterNFTContract;
     
     // events
-    event Transfer(address indexed _from, address indexed _to, uint256 _tokenId);
-    event EventLayEgg(address indexed trainer, uint64 objId, uint64 eggId);
-    
-    // modifier
-    
-    modifier requireDataContract {
-        require(dataContract != address(0));
-        _;
-    }
-    
-    modifier requireTransformDataContract {
-        require(transformDataContract != address(0));
-        _;
-    }
-    
-    modifier requireBattleContract {
-        require(battleContract != address(0));
-        _;
-    }
-    
-    modifier requireTradeContract {
-        require(tradeContract != address(0));
-        _;        
-    }
-    
+    event EventLayEgg(address indexed trainer, uint objId, uint eggId);
+    event EventHatchEgg(address indexed trainer, uint eggId, uint objId);
+    event EventTransform(address indexed trainer, uint oldObjId, uint newObjId);
     
     // constructor
-    function EtheremonTransform(address _dataContract, address _worldContract, address _transformDataContract, address _battleContract, address _tradeContract) public {
+    function EtheremonTransform(address _dataContract, address _worldContract, address _transformDataContract, address _transformSettingContract,
+        address _battleContract, address _tradeContract, address _monsterNFTContract) public {
         dataContract = _dataContract;
         worldContract = _worldContract;
         transformDataContract = _transformDataContract;
+        transformSettingContract = _transformSettingContract;
         battleContract = _battleContract;
         tradeContract = _tradeContract;
+        monsterNFTContract = _monsterNFTContract;
     }
     
     // helper
-    function getRandom(uint16 maxRan, uint8 index, address priAddress) constant public returns(uint8) {
-        uint256 genNum = uint256(block.blockhash(block.number-1)) + uint256(priAddress);
-        for (uint8 i = 0; i < index && i < 6; i ++) {
-            genNum /= 256;
-        }
-        return uint8(genNum % maxRan);
-    }
-    
-    function addNewObj(address _trainer, uint32 _classId) private returns(uint64) {
-        EtheremonDataBase data = EtheremonDataBase(dataContract);
-        uint64 objId = data.addMonsterObj(_classId, _trainer, "..name me...");
-        for (uint i=0; i < STAT_COUNT; i+= 1) {
-            uint8 value = getRandom(STAT_MAX, uint8(i), lastHatchingAddress) + data.getElementInArrayType(ArrayType.STAT_START, uint64(_classId), i);
-            data.addElementToArrayType(ArrayType.STAT_BASE, objId, value);
-        }
-        return objId;
+    function getRandom(address _player, uint _block, uint64 _count) constant public returns(uint) {
+        return uint(keccak256(block.blockhash(_block), _player, _count));
     }
     
     // admin & moderators
-    function setContract(address _dataContract, address _worldContract, address _transformDataContract, address _battleContract, address _tradeContract) onlyModerators external {
+    function setContract(address _dataContract, address _worldContract, address _transformDataContract, address _transformSettingContract,
+        address _battleContract, address _tradeContract, address _monsterNFTContract) onlyModerators external {
         dataContract = _dataContract;
         worldContract = _worldContract;
         transformDataContract = _transformDataContract;
+        transformSettingContract = _transformSettingContract;
         battleContract = _battleContract;
         tradeContract = _tradeContract;
+        monsterNFTContract = _monsterNFTContract;
     }
 
     function setOriginalPriceGen0() onlyModerators external {
@@ -339,12 +293,7 @@ contract EtheremonTransform is EtheremonEnum, BasicAccessControl, SafeMath {
         gen0Config[22] = Gen0Config(22, 0.2 ether, 0.001 ether, 468);
         gen0Config[23] = Gen0Config(23, 0.5 ether, 0.0025 ether, 302);
         gen0Config[24] = Gen0Config(24, 1 ether, 0.005 ether, 195);
-    }    
-
-    function updateHatchingRange(uint16 _start, uint16 _max) onlyModerators external {
-        hatchStartTime = _start;
-        hatchMaxTime = _max;
-    }
+    } 
 
     function withdrawEther(address _sendTo, uint _amount) onlyModerators external {
         // no user money is kept in this contract, only trasaction fee
@@ -353,17 +302,12 @@ contract EtheremonTransform is EtheremonEnum, BasicAccessControl, SafeMath {
         }
         _sendTo.transfer(_amount);
     }
-
-    function setConfigClass(uint32 _classId, uint8 _layingLevel, uint8 _layingCost, uint8 _transformLevel, uint32 _tranformClass) onlyModerators external {
-        layingEggLevels[_classId] = _layingLevel;
-        layingEggDeductions[_classId] = _layingCost;
-        transformLevels[_classId] = _transformLevel;
-        transformClasses[_classId] = _tranformClass;
-    }
     
-    function setConfig(uint _removeHatchingTimeFee, uint _buyEggFee) onlyModerators external {
+    function setConfig(uint _removeHatchingTimeFee, uint _buyEggFee, uint _hatchStartTime, uint _hatchMaxTime) onlyModerators external {
         removeHatchingTimeFee = _removeHatchingTimeFee;
         buyEggFee = _buyEggFee;
+        hatchStartTime = _hatchStartTime;
+        hatchMaxTime = _hatchMaxTime;
     }
 
     function genLevelExp() onlyModerators external {
@@ -378,32 +322,7 @@ contract EtheremonTransform is EtheremonEnum, BasicAccessControl, SafeMath {
         }
     }
     
-    function addRandomClass(uint32 _newClassId) onlyModerators public {
-        if (_newClassId > 0) {
-            for (uint index = 0; index < randomClassIds.length; index++) {
-                if (randomClassIds[index] == _newClassId) {
-                    return;
-                }
-            }
-            randomClassIds.push(_newClassId);
-        }
-    }
-    
-    function removeRandomClass(uint32 _oldClassId) onlyModerators public {
-        uint foundIndex = 0;
-        for (; foundIndex < randomClassIds.length; foundIndex++) {
-            if (randomClassIds[foundIndex] == _oldClassId) {
-                break;
-            }
-        }
-        if (foundIndex < randomClassIds.length) {
-            randomClassIds[foundIndex] = randomClassIds[randomClassIds.length-1];
-            delete randomClassIds[randomClassIds.length-1];
-            randomClassIds.length--;
-        }
-    }
-    
-    function removeHatchingTimeWithToken(address _trainer) isActive onlyModerators requireDataContract requireTransformDataContract external {
+    function removeHatchingTimeWithToken(address _trainer) isActive onlyModerators external {
         EtheremonTransformData transformData = EtheremonTransformData(transformDataContract);
         MonsterEgg memory egg;
         (egg.eggId, egg.objId, egg.classId, egg.trainer, egg.hatchTime, egg.newObjId) = transformData.getHatchingEggData(_trainer);
@@ -411,14 +330,13 @@ contract EtheremonTransform is EtheremonEnum, BasicAccessControl, SafeMath {
         if (egg.eggId == 0 || egg.trainer != _trainer || egg.newObjId > 0)
             revert();
         
-        transformData.setHatchTime(egg.eggId, 0);
+        EtheremonMonsterNFTInterface monsterNFT = EtheremonMonsterNFTInterface(monsterNFTContract);
+        uint objId = monsterNFT.mintMonster(egg.classId, egg.trainer, "..name me...");
+        transformData.setHatchedEgg(egg.eggId, uint64(objId));
+        EventHatchEgg(egg.trainer, egg.eggId, objId);
     }    
     
-    function buyEggWithToken(address _trainer) isActive onlyModerators requireDataContract requireTransformDataContract external {
-        if (randomClassIds.length == 0) {
-            revert();
-        }
-        
+    function buyEggWithToken(address _trainer) isActive onlyModerators external {
         EtheremonTransformData transformData = EtheremonTransformData(transformDataContract);
         // make sure no hatching egg at the same time
         if (transformData.getHatchingEggId(_trainer) > 0) {
@@ -426,10 +344,12 @@ contract EtheremonTransform is EtheremonEnum, BasicAccessControl, SafeMath {
         }
 
         // add random egg
-        uint8 classIndex = getRandom(uint16(randomClassIds.length), 1, lastHatchingAddress);
-        uint64 eggId = transformData.addEgg(0, randomClassIds[classIndex], _trainer, block.timestamp + (hatchStartTime + getRandom(hatchMaxTime, 0, lastHatchingAddress)) * 3600);
+        uint seed = getRandom(_trainer, block.number - 1, transformData.totalEgg());
+        uint32 classId = EtheremonTransformSettingInterface(transformSettingContract).getRandomClassId(seed);
+        if (classId == 0) revert();
+        uint64 eggId = transformData.addEgg(0, classId, _trainer, block.timestamp + (hatchStartTime + seed % hatchMaxTime) * 3600);
         // deduct exp
-        EventLayEgg(msg.sender, 0, eggId);
+        EventLayEgg(_trainer, 0, eggId);
     }
     
     // public
@@ -472,15 +392,14 @@ contract EtheremonTransform is EtheremonEnum, BasicAccessControl, SafeMath {
         return (obj.classId, obj.createIndex, safeMult(totalGap, gen0.returnPrice));
     }
     
-    function getObjClassId(uint64 _objId) requireDataContract constant public returns(uint32, address, uint8) {
+    function getObjClassExp(uint64 _objId) constant public returns(uint32, address, uint32) {
         EtheremonDataBase data = EtheremonDataBase(dataContract);
         MonsterObjAcc memory obj;
-        uint32 _ = 0;
-        (obj.monsterId, obj.classId, obj.trainer, obj.exp, _, _, obj.createTime) = data.getMonsterObj(_objId);
-        return (obj.classId, obj.trainer, getLevel(obj.exp));
+        (obj.monsterId, obj.classId, obj.trainer, obj.exp, obj.createIndex, obj.lastClaimIndex, obj.createTime) = data.getMonsterObj(_objId);
+        return (obj.classId, obj.trainer, obj.exp);
     }
     
-    function getClassCheckOwner(uint64 _objId, address _trainer) requireDataContract constant public returns(uint32) {
+    function getClassCheckOwner(uint64 _objId, address _trainer) constant public returns(uint32) {
         EtheremonDataBase data = EtheremonDataBase(dataContract);
         MonsterObjAcc memory obj;
         uint32 _ = 0;
@@ -520,21 +439,7 @@ contract EtheremonTransform is EtheremonEnum, BasicAccessControl, SafeMath {
         return ceil((catchPrice - totalEarn)*15*1000/avgPrice, 10000)/10000;
     }
     
-    function canLayEgg(uint64 _objId, uint32 _classId, uint32 _level) constant public returns(bool) {
-        if (_classId <= GEN0_NO) {
-            EtheremonTransformData transformData = EtheremonTransformData(transformDataContract);
-            // legends
-            if (transformData.countEgg(_objId) >= calculateMaxEggG0(_objId))
-                return false;
-            return true;
-        } else {
-            if (layingEggLevels[_classId] == 0 || _level < layingEggLevels[_classId])
-                return false;
-            return true;
-        }
-    }
-    
-    function layEgg(uint64 _objId) isActive requireDataContract requireTransformDataContract external {
+    function layEgg(uint64 _objId) isActive external {
         EtheremonTransformData transformData = EtheremonTransformData(transformDataContract);
         // make sure no hatching egg at the same time
         if (transformData.getHatchingEggId(msg.sender) > 0) {
@@ -542,41 +447,50 @@ contract EtheremonTransform is EtheremonEnum, BasicAccessControl, SafeMath {
         }
         
         // can not lay egg when trading
-        EtheremonTradeInterface trade = EtheremonTradeInterface(tradeContract);
-        if (trade.isOnTrading(_objId))
+        if (EtheremonTradeInterface(tradeContract).isOnTrading(_objId))
             revert();
         
         // check obj 
-        EtheremonDataBase data = EtheremonDataBase(dataContract);
-        MonsterObjAcc memory obj;
-        uint32 _ = 0;
-        (obj.monsterId, obj.classId, obj.trainer, obj.exp, _, _, obj.createTime) = data.getMonsterObj(_objId);
-        if (obj.monsterId != _objId || obj.trainer != msg.sender) {
+        uint32 classId;
+        address owner;
+        uint32 exp;
+        uint8 currentLevel;
+        (classId, owner, exp) = getObjClassExp(_objId);
+        currentLevel = getLevel(exp);
+        if (classId == 0 || owner != msg.sender) {
             revert();
         }
         
         // check lay egg condition
-        uint8 currentLevel = getLevel(obj.exp);
-        uint8 afterLevel = 0;
-        if (!canLayEgg(_objId, obj.classId, currentLevel))
-            revert();
-        if (layingEggDeductions[obj.classId] >= currentLevel)
-            revert();
-        afterLevel = currentLevel - layingEggDeductions[obj.classId];
-
+        uint8 temp = 0;
+        
+        if (classId <= GEN0_NO) {
+            // legends
+            if (transformData.countEgg(_objId) >= calculateMaxEggG0(_objId))
+                revert();
+            temp = currentLevel;
+        } else {
+            uint8 layingLevel;
+            (layingLevel, temp) = EtheremonTransformSettingInterface(transformSettingContract).getLayEggInfo(classId);
+            if (layingLevel == 0 || currentLevel < layingLevel || currentLevel < temp)
+                revert();
+            temp = currentLevel - temp;
+        }
+        
         // add egg 
-        uint64 eggId = transformData.addEgg(obj.monsterId, obj.classId, msg.sender, block.timestamp + (hatchStartTime + getRandom(hatchMaxTime, 0, lastHatchingAddress)) * 3600);
+        uint seed = getRandom(msg.sender, block.number - 1, transformData.totalEgg());
+        uint64 eggId = transformData.addEgg(_objId, classId, msg.sender, block.timestamp + (hatchStartTime + seed % hatchMaxTime) * 3600);
         
         // deduct exp 
-        if (afterLevel < currentLevel)
-            data.decreaseMonsterExp(_objId, obj.exp - levelExps[afterLevel-1]);
+        if (temp < currentLevel) {
+            EtheremonDataBase data = EtheremonDataBase(dataContract);
+            data.decreaseMonsterExp(_objId, exp - levelExps[temp-1]);
+        }
         EventLayEgg(msg.sender, _objId, eggId);
     }
     
-    function hatchEgg() isActive requireDataContract requireTransformDataContract external {
+    function hatchEgg() isActive external {
         // use as a seed for random
-        lastHatchingAddress = msg.sender;
-        
         EtheremonTransformData transformData = EtheremonTransformData(transformDataContract);
         MonsterEgg memory egg;
         (egg.eggId, egg.objId, egg.classId, egg.trainer, egg.hatchTime, egg.newObjId) = transformData.getHatchingEggData(msg.sender);
@@ -588,13 +502,13 @@ contract EtheremonTransform is EtheremonEnum, BasicAccessControl, SafeMath {
             revert();
         }
         
-        uint64 objId = addNewObj(msg.sender, egg.classId);
-        transformData.setHatchedEgg(egg.eggId, objId);
-        
-        Transfer(address(0), msg.sender, objId);
+        EtheremonMonsterNFTInterface monsterNFT = EtheremonMonsterNFTInterface(monsterNFTContract);
+        uint objId = monsterNFT.mintMonster(egg.classId, egg.trainer, "..name me...");
+        transformData.setHatchedEgg(egg.eggId, uint64(objId));
+        EventHatchEgg(egg.trainer, egg.eggId, objId);
     }
     
-    function removeHatchingTime() isActive requireDataContract requireTransformDataContract external payable  {
+    function removeHatchingTime() isActive external payable  {
         EtheremonTransformData transformData = EtheremonTransformData(transformDataContract);
         MonsterEgg memory egg;
         (egg.eggId, egg.objId, egg.classId, egg.trainer, egg.hatchTime, egg.newObjId) = transformData.getHatchingEggData(msg.sender);
@@ -605,7 +519,11 @@ contract EtheremonTransform is EtheremonEnum, BasicAccessControl, SafeMath {
         if (msg.value != removeHatchingTimeFee) {
             revert();
         }
-        transformData.setHatchTime(egg.eggId, 0);
+        
+        EtheremonMonsterNFTInterface monsterNFT = EtheremonMonsterNFTInterface(monsterNFTContract);
+        uint objId = monsterNFT.mintMonster(egg.classId, egg.trainer, "..name me...");
+        transformData.setHatchedEgg(egg.eggId, uint64(objId));
+        EventHatchEgg(egg.trainer, egg.eggId, objId);
     }
 
     
@@ -655,7 +573,7 @@ contract EtheremonTransform is EtheremonEnum, BasicAccessControl, SafeMath {
         return true;
     }
     
-    function transform(uint64 _objId, uint64 _a1, uint64 _a2, uint64 _a3) isActive requireDataContract requireTransformDataContract external payable {
+    function transform(uint64 _objId, uint64 _a1, uint64 _a2, uint64 _a3) isActive external payable {
         EtheremonTransformData transformData = EtheremonTransformData(transformDataContract);
         if (transformData.getTranformedId(_objId) > 0)
             revert();
@@ -665,18 +583,17 @@ contract EtheremonTransform is EtheremonEnum, BasicAccessControl, SafeMath {
         if (battle.isOnBattle(_objId) || trade.isOnTrading(_objId))
             revert();
         
-        EtheremonDataBase data = EtheremonDataBase(dataContract);
-        
         BasicObjInfo memory objInfo;
-        (objInfo.classId, objInfo.owner, objInfo.level) = getObjClassId(_objId);
-        uint32 transformClass = transformClasses[objInfo.classId];
+        (objInfo.classId, objInfo.owner, objInfo.exp) = getObjClassExp(_objId);
+        objInfo.level = getLevel(objInfo.exp);
         if (objInfo.classId == 0 || objInfo.owner != msg.sender)
             revert();
-        if (transformLevels[objInfo.classId] == 0 || objInfo.level < transformLevels[objInfo.classId])
-            revert();
-        if (transformClass == 0)
-            revert();
         
+        uint32 transformClass;
+        uint8 transformLevel;
+        (transformClass, transformLevel) = EtheremonTransformSettingInterface(transformSettingContract).getTransformInfo(objInfo.classId);
+        if (transformClass == 0 || transformLevel == 0) revert();
+        if (objInfo.level < transformLevel) revert();
         
         // gen0 - can not transform if it has bonus egg 
         if (objInfo.classId <= GEN0_NO) {
@@ -688,21 +605,17 @@ contract EtheremonTransform is EtheremonEnum, BasicAccessControl, SafeMath {
                 revert();
         }
         
-        uint64 newObjId = addNewObj(msg.sender, transformClass);
-        // remove old one
-        data.removeMonsterIdMapping(msg.sender, _objId);
-        transformData.setTranformed(_objId, newObjId);
         
-        Transfer(msg.sender, address(0), _objId);
-        Transfer(address(0), msg.sender, newObjId);
+        EtheremonMonsterNFTInterface monsterNFT = EtheremonMonsterNFTInterface(monsterNFTContract);
+        uint newObjId = monsterNFT.mintMonster(transformClass, msg.sender, "..name me...");
+        monsterNFT.burnMonster(_objId);
+
+        transformData.setTranformed(_objId, uint64(newObjId));
+        EventTransform(msg.sender, _objId, newObjId);
     }
     
-    function buyEgg() isActive requireDataContract requireTransformDataContract external payable {
+    function buyEgg() isActive external payable {
         if (msg.value != buyEggFee) {
-            revert();
-        }
-        
-        if (randomClassIds.length == 0) {
             revert();
         }
         
@@ -711,10 +624,12 @@ contract EtheremonTransform is EtheremonEnum, BasicAccessControl, SafeMath {
         if (transformData.getHatchingEggId(msg.sender) > 0) {
             revert();
         }
-
+        
         // add random egg
-        uint8 classIndex = getRandom(uint16(randomClassIds.length), 1, lastHatchingAddress);
-        uint64 eggId = transformData.addEgg(0, randomClassIds[classIndex], msg.sender, block.timestamp + (hatchStartTime + getRandom(hatchMaxTime, 0, lastHatchingAddress)) * 3600);
+        uint seed = getRandom(msg.sender, block.number - 1, transformData.totalEgg());
+        uint32 classId = EtheremonTransformSettingInterface(transformSettingContract).getRandomClassId(seed);
+        if (classId == 0) revert();
+        uint64 eggId = transformData.addEgg(0, classId, msg.sender, block.timestamp + (hatchStartTime + seed % hatchMaxTime) * 3600);
         // deduct exp
         EventLayEgg(msg.sender, 0, eggId);
     }
@@ -728,5 +643,4 @@ contract EtheremonTransform is EtheremonEnum, BasicAccessControl, SafeMath {
         }
         return 0;
     }
-    
 }
