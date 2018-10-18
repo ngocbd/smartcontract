@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TMtoken at 0xf8459ead98b6f28cb90008a985fb82bf2fd16e60
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TMtoken at 0xdac3a0c0aebeeb13b6eeab7cf9fe951664c9fd7c
 */
 pragma solidity ^0.4.24;
 // ----------------------------------------------------------------------------
@@ -12,10 +12,9 @@ pragma solidity ^0.4.24;
 // Decimals     : 18
 // Total supply : 2,000,000,000
 // 40%	800,000,000	Free TM token to Tokenmom users(Rewards & Referral)
-// 30%	600,000,000	Founder, team, exchange maintenance
-// 20%	400,000,000	Price stability and maintenance of TM Token(Burning)
-// 10%	200,000,000	Reserved funds to prepare for problems
-// 100%	2,000,000,000	TOTAL SUPPLY
+// 40%	800,000,000	Founder, team, exchange ecosystem & maintenance
+// 10%	200,000,000	Price stability and maintenance of TM Token(Burning)
+// 10%	200,000,000	Reserved funds to prepare for future problems
 // ----------------------------------------------------------------------------
 
 /**
