@@ -1,20 +1,20 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EOS at 0x3c861137c28e10b4b9c974f78d3252b740e25908
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Eos at 0x5f6b54fddf9ed3390acf3a7eb50e5c923288fa81
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
-// '0Fucks' token contract
+// 'Eos' CROWDSALE token contract
 //
-// Deployed to : 0xA1A4A07C73342B9C5e6055666cC956cDE364a652
+// Deployed to : 0x5f6b54fddf9ed3390acf3a7eb50e5c923288fa81
 // Symbol      : EOS
-// Name        : EOS
+// Name        : Eos Token
 // Total supply: 100000000
 // Decimals    : 18
 //
 // Enjoy.
 //
-// (c) by Moritz Neto with BokkyPooBah / Bok Consulting Pty Ltd Au 2017. The MIT Licence.
+// (c) by Moritz Neto & Daniel Bar with BokkyPooBah / Bok Consulting Pty Ltd Au 2017. The MIT Licence.
 // ----------------------------------------------------------------------------
 
 
@@ -22,19 +22,19 @@ pragma solidity ^0.4.18;
 // Safe maths
 // ----------------------------------------------------------------------------
 contract SafeMath {
-    function safeAdd(uint a, uint b) public pure returns (uint c) {
+    function safeAdd(uint a, uint b) internal pure returns (uint c) {
         c = a + b;
         require(c >= a);
     }
-    function safeSub(uint a, uint b) public pure returns (uint c) {
+    function safeSub(uint a, uint b) internal pure returns (uint c) {
         require(b <= a);
         c = a - b;
     }
-    function safeMul(uint a, uint b) public pure returns (uint c) {
+    function safeMul(uint a, uint b) internal pure returns (uint c) {
         c = a * b;
         require(a == 0 || c / a == b);
     }
-    function safeDiv(uint a, uint b) public pure returns (uint c) {
+    function safeDiv(uint a, uint b) internal pure returns (uint c) {
         require(b > 0);
         c = a / b;
     }
@@ -102,11 +102,14 @@ contract Owned {
 // ERC20 Token, with the addition of symbol, name and decimals and assisted
 // token transfers
 // ----------------------------------------------------------------------------
-contract EOS is ERC20Interface, Owned, SafeMath {
+contract Eos is ERC20Interface, Owned, SafeMath {
     string public symbol;
     string public  name;
     uint8 public decimals;
     uint public _totalSupply;
+    uint public startDate;
+    uint public bonusEnds;
+    uint public endDate;
 
     mapping(address => uint) balances;
     mapping(address => mapping(address => uint)) allowed;
@@ -115,13 +118,13 @@ contract EOS is ERC20Interface, Owned, SafeMath {
     // ------------------------------------------------------------------------
     // Constructor
     // ------------------------------------------------------------------------
-    function EOS() public {
-        symbol = "EOS";
-        name = "EOS";
+    function Eos() public {
+        symbol = "Eos";
+        name = "Eos Token";
         decimals = 18;
-        _totalSupply = 100000000000000000000;
-        balances[0xA1A4A07C73342B9C5e6055666cC956cDE364a652] = _totalSupply;
-        Transfer(address(0), 0xA1A4A07C73342B9C5e6055666cC956cDE364a652, _totalSupply);
+        bonusEnds = now + 1 weeks;
+        endDate = now + 7 weeks;
+
     }
 
 
@@ -134,7 +137,7 @@ contract EOS is ERC20Interface, Owned, SafeMath {
 
 
     // ------------------------------------------------------------------------
-    // Get the token balance for account tokenOwner
+    // Get the token balance for account `tokenOwner`
     // ------------------------------------------------------------------------
     function balanceOf(address tokenOwner) public constant returns (uint balance) {
         return balances[tokenOwner];
@@ -142,7 +145,7 @@ contract EOS is ERC20Interface, Owned, SafeMath {
 
 
     // ------------------------------------------------------------------------
-    // Transfer the balance from token owner's account to to account
+    // Transfer the balance from token owner's account to `to` account
     // - Owner's account must have sufficient balance to transfer
     // - 0 value transfers are allowed
     // ------------------------------------------------------------------------
@@ -155,12 +158,12 @@ contract EOS is ERC20Interface, Owned, SafeMath {
 
 
     // ------------------------------------------------------------------------
-    // Token owner can approve for spender to transferFrom(...) tokens
+    // Token owner can approve for `spender` to transferFrom(...) `tokens`
     // from the token owner's account
     //
     // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
     // recommends that there are no checks for the approval double-spend attack
-    // as this should be implemented in user interfaces 
+    // as this should be implemented in user interfaces
     // ------------------------------------------------------------------------
     function approve(address spender, uint tokens) public returns (bool success) {
         allowed[msg.sender][spender] = tokens;
@@ -170,10 +173,10 @@ contract EOS is ERC20Interface, Owned, SafeMath {
 
 
     // ------------------------------------------------------------------------
-    // Transfer tokens from the from account to the to account
-    // 
+    // Transfer `tokens` from the `from` account to the `to` account
+    //
     // The calling account must already have sufficient tokens approve(...)-d
-    // for spending from the from account and
+    // for spending from the `from` account and
     // - From account must have sufficient balance to transfer
     // - Spender must have sufficient allowance to transfer
     // - 0 value transfers are allowed
@@ -197,9 +200,9 @@ contract EOS is ERC20Interface, Owned, SafeMath {
 
 
     // ------------------------------------------------------------------------
-    // Token owner can approve for spender to transferFrom(...) tokens
-    // from the token owner's account. The spender contract function
-    // receiveApproval(...) is then executed
+    // Token owner can approve for `spender` to transferFrom(...) `tokens`
+    // from the token owner's account. The `spender` contract function
+    // `receiveApproval(...)` is then executed
     // ------------------------------------------------------------------------
     function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
         allowed[msg.sender][spender] = tokens;
@@ -208,13 +211,23 @@ contract EOS is ERC20Interface, Owned, SafeMath {
         return true;
     }
 
-
     // ------------------------------------------------------------------------
-    // Don't accept ETH
+    // 1,000 Eos Tokens per 1 ETH
     // ------------------------------------------------------------------------
     function () public payable {
-        revert();
+        require(now >= startDate && now <= endDate);
+        uint tokens;
+        if (now <= bonusEnds) {
+            tokens = msg.value * 1200;
+        } else {
+            tokens = msg.value * 1000;
+        }
+        balances[msg.sender] = safeAdd(balances[msg.sender], tokens);
+        _totalSupply = safeAdd(_totalSupply, tokens);
+        Transfer(address(0), msg.sender, tokens);
+        owner.transfer(msg.value);
     }
+
 
 
     // ------------------------------------------------------------------------
