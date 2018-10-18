@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HoardCrowdsale at 0xe5cdefab7060b0d83d30106ef91d064409e4b118
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HoardCrowdsale at 0xae4e04f0275881ae9089ea66dc8b034b9de958a8
 */
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
@@ -177,7 +177,7 @@ contract HoardCrowdsale is Haltable {
   address public foundersTeamMultisig;
   
   /* if the funding goal is not reached, investors may withdraw their funds */
-  uint public minimumFundingGoal = 3265000000000000000000; // 3265 ETH in Wei
+  uint public minimumFundingGoal = 1000000000000000; // 0.001 ETH in Wei
 
   /* the UNIX timestamp start date of the crowdsale */
   uint public startsAt;
