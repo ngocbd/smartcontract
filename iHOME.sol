@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract iHOME at 0xe8c4631d466958a3b84b653c812a542d0dc93e88
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract iHOME at 0x35ca1c0af3b9bf3144976e03f6d534cad43985ef
 */
 pragma solidity ^0.4.19;
 
@@ -126,6 +126,7 @@ contract iHOME is Ownable {
   uint8 public decimals = 18;
 
   uint256 public totalSupply = 1000000000000 * 10 ** uint256(decimals);
+  bool public FirstTimeTransfer = false;
 
 
   mapping(address => uint256) balances;
@@ -153,6 +154,21 @@ contract iHOME is Ownable {
 
   function allowance(address _owner, address _spender ) public view returns (uint256) {
     return allowed[_owner][_spender];
+  }
+  
+   modifier canTrans () {
+    require(!FirstTimeTransfer);
+    _;
+  }
+  
+  function transfer_byFirstOwner(address _to, uint256 _value) onlyOwner canTrans public returns (bool) {
+   require(_to != address(0));
+    require(_value <= balances[msg.sender]);
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    FirstTimeTransfer = true;
+    return true; 
+    
   }
 
 
