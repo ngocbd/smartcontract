@@ -1,394 +1,281 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MetaToken at 0x98564618d909636e7bc9cb47faec7253a5e4c1d5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MetaToken at 0x34c8edfa9008a2bb5c07d83479c2fb37891b9c73
 */
-pragma solidity ^0.4.17;
-
-
+pragma solidity ^0.4.15;
 
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a * b;
-    assert(a == 0 || c / a == b);
+    require(a == 0 || c / a == b);
     return c;
   }
 
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-    assert(b <= a);
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    require(b <= a);
     return a - b;
   }
 
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
-    assert(c >= a);
+    require(c >= a);
     return c;
   }
 }
 
-
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) public constant returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
+contract Token {
+    uint256 public totalSupply;
+    function balanceOf(address _owner) external view returns (uint256 balance);
+    function transfer(address _to, uint256 _value) external returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) external returns (bool success);
+    function approve(address _spender, uint256 _value) external returns (bool success);
+    function allowance(address _owner, address _spender) external view returns (uint256 remaining);
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
-
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() {
-    owner = msg.sender;
-  }
-
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) onlyOwner public {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-}
-
-
-/**
- * @title Pausable
- * @dev Base contract which allows children to implement an emergency stop mechanism.
- */
-contract Pausable is Ownable {
-  event Pause();
-  event Unpause();
-
-  bool public paused = false;
-
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is not paused.
-   */
-  modifier whenNotPaused() {
-    require(!paused);
-    _;
-  }
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is paused.
-   */
-  modifier whenPaused() {
-    require(paused);
-    _;
-  }
-
-  /**
-   * @dev called by the owner to pause, triggers stopped state
-   */
-  function pause() onlyOwner whenNotPaused public {
-    paused = true;
-    Pause();
-  }
-
-  /**
-   * @dev called by the owner to unpause, returns to normal state
-   */
-  function unpause() onlyOwner whenPaused public {
-    paused = false;
-    Unpause();
-  }
-}
-
-
-
-/**
- * @title Basic token
- * @dev Basic version of StandardToken, with no allowances.
- */
-contract BasicToken is ERC20Basic {
-  using SafeMath for uint256;
-
-  mapping(address => uint256) balances;
-
-  /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
-  function transfer(address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[msg.sender]);
-
-    // SafeMath.sub will throw if there is not enough balance.
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-  /**
-  * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of.
-  * @return An uint256 representing the amount owned by the passed address.
-  */
-  function balanceOf(address _owner) public constant returns (uint256 balance) {
-    return balances[_owner];
-  }
-
-}
-
-
-/**
- * @title Standard ERC20 token
- *
- * @dev Implementation of the basic standard token.
- * @dev https://github.com/ethereum/EIPs/issues/20
- * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
- */
-contract StandardToken is ERC20, BasicToken {
-
-  mapping (address => mapping (address => uint256)) internal allowed;
-
-
-  /**
-   * @dev Transfer tokens from one address to another
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amount of tokens to be transferred
-   */
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[_from]);
-    require(_value <= allowed[_from][msg.sender]);
-
-    balances[_from] = balances[_from].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    Transfer(_from, _to, _value);
-    return true;
-  }
-
-  /**
-   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   *
-   * Beware that changing an allowance with this method brings the risk that someone may use both the old
-   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
-   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
-   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-   * @param _spender The address which will spend the funds.
-   * @param _value The amount of tokens to be spent.
-   */
-  function approve(address _spender, uint256 _value) public returns (bool) {
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
-
-  /**
-   * @dev Function to check the amount of tokens that an owner allowed to a spender.
-   * @param _owner address The address which owns the funds.
-   * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifying the amount of tokens still available for the spender.
-   */
-  function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
-    return allowed[_owner][_spender];
-  }
-
-  /**
-   * approve should be called when allowed[_spender] == 0. To increment
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   */
-  function increaseApproval (address _spender, uint _addedValue) public returns (bool success) {
-    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
-
-  function decreaseApproval (address _spender, uint _subtractedValue) public returns (bool success) {
-    uint oldValue = allowed[msg.sender][_spender];
-    if (_subtractedValue > oldValue) {
-      allowed[msg.sender][_spender] = 0;
-    } else {
-      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
-    }
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
-
-}
-
-
-/**
- * @title Pausable token
- *
- * @dev StandardToken modified with pausable transfers.
- **/
-
-contract PausableToken is StandardToken, Pausable {
-
-  function transfer(address _to, uint256 _value) public whenNotPaused returns (bool) {
-    return super.transfer(_to, _value);
-  }
-
-  function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool) {
-    return super.transferFrom(_from, _to, _value);
-  }
-
-  function approve(address _spender, uint256 _value) public whenNotPaused returns (bool) {
-    return super.approve(_spender, _value);
-  }
-
-  function increaseApproval(address _spender, uint _addedValue) public whenNotPaused returns (bool success) {
-    return super.increaseApproval(_spender, _addedValue);
-  }
-
-  function decreaseApproval(address _spender, uint _subtractedValue) public whenNotPaused returns (bool success) {
-    return super.decreaseApproval(_spender, _subtractedValue);
-  }
-}
-
-contract MetaToken is PausableToken {
-
-    string public name = 'MetaMetaMeta! Token';
-    uint8 public decimals = 8;
-    string public symbol = 'M3T';
-    string public version = '0.4.0';
-
-    uint256 public blockReward = 1 * (10**uint256(decimals));
-    uint32 public halvingInterval = 210000;
-    uint256 public blockNumber = 0; // how many blocks mined
-    uint256 public totalSupply = 0;
-    uint256 public target   = 0x0000ffff00000000000000000000000000000000000000000000000000000000; // i.e. difficulty. miner needs to find nonce, so that (hash(nonce+random) < target)
-    uint256 public powLimit = 0x0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
-    uint40 public lastMinedOn; // will be used to check how long did it take to mine
-    uint256 public randomness;
-
-    address public newContractAddress;
-
-    function MetaToken() Ownable() {
-        lastMinedOn = uint40(block.timestamp);
-        updateRandomness();
+/*  ERC 20 token */
+contract StandardToken is Token {
+    using SafeMath for uint256;
+    function transfer(address _to, uint256 _value) external returns (bool success) {
+      if (balances[msg.sender] >= _value) {
+        balances[msg.sender] -= _value;
+        balances[_to] = balances[_to].add(_value);
+        emit Transfer(msg.sender, _to, _value);
+        return true;
+      } else {
+        return false;
+      }
     }
 
-    /// update randomness, will be used to find next Nonce
-    function updateRandomness() internal {
-        randomness = uint256(sha3(sha3(uint256(block.blockhash(block.number-1)) + uint256(block.coinbase) + uint256(block.timestamp))));
+    function transferFrom(address _from, address _to, uint256 _value) external returns (bool success) {
+      if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value) {
+        balances[_from] -= _value;
+        allowed[_from][msg.sender] -= _value;
+        balances[_to] = balances[_to].add(_value);
+        emit Transfer(_from, _to, _value);
+        return true;
+      } else {
+        return false;
+      }
     }
 
-    /// returns `randomness` used in PoW calculations
-    function getRamdomness() view returns (uint256 currentRandomness) {
-        return randomness;
+    function balanceOf(address _owner) external view returns (uint256 balance) {
+        return balances[_owner];
     }
 
-    /// pure, accepts randomness & nonce and returns hash as int (which should be compared to target)
-    function hash(uint256 nonce, uint256 currentRandomness) pure returns (uint256){
-        return uint256(sha3(nonce+currentRandomness));
-    }
-
-    /// pure, accepts randomness, nonce & target and returns boolian whether work is good
-    function checkProofOfWork(uint256 nonce, uint256 currentRandomness, uint256 currentTarget) pure returns (bool workAccepted){
-        return uint256(hash(nonce, currentRandomness)) < currentTarget;
-    }
-
-    // accepts Nonce and tells whether it is good to mine
-    function checkMine(uint256 nonce) view returns (bool success) {
-        return checkProofOfWork(nonce, getRamdomness(), target);
-    }
-
-    /*
-        accepts nonce aka "mining field", checks if it passess proof of work,
-        rewards if it does
-    */
-    function mine(uint256 nonce) whenNotPaused returns (bool success) {
-        require(checkMine(nonce));
-
-        Mine(msg.sender, blockReward, uint40(block.timestamp) - uint40(lastMinedOn)); // issuing event to those who listens for it
-
-        balances[msg.sender] += blockReward; // giving reward
-        blockNumber += 1;
-        totalSupply += blockReward; // increasing total supply
-        updateRandomness();
-
-        // difficulty retarget:
-        var mul = (block.timestamp - lastMinedOn);
-        if (mul > (60*2.5*2)) {
-            mul = 60*2.5*2;
-        }
-        if (mul < (60*2.5/2)) {
-            mul = 60*2.5/2;
-        }
-        target *= mul;
-        target /= (60*2.5);
-
-        if (target > powLimit) { // difficulty not lower than that
-            target = powLimit;
-        }
-
-        lastMinedOn = uint40(block.timestamp); // tracking time to check how much PoW took in the future
-        if (blockNumber % halvingInterval == 0) { // time to halve reward?
-            blockReward /= 2;
-            RewardHalved();
-        }
-
+    function approve(address _spender,  uint256 _value) external returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        emit Approval(msg.sender, _spender, _value);
         return true;
     }
 
-    function setNewContractAddress(address newAddress) onlyOwner {
-        newContractAddress = newAddress;
+    function allowance(address _owner, address _spender) external view returns (uint256 remaining) {
+      return allowed[_owner][_spender];
     }
 
-    event Mine(address indexed _miner, uint256 _reward, uint40 _seconds);
-    event RewardHalved();
+    function increaseApproval (address _spender, uint _addedValue) external returns (bool success) {
+      allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+      emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+      return true;
+    }
+
+    function decreaseApproval (address _spender, uint _subtractedValue) public returns (bool success) {
+      uint oldValue = allowed[msg.sender][_spender];
+      if (_subtractedValue >= oldValue) {
+        allowed[msg.sender][_spender] = 0;
+      } else {
+        allowed[msg.sender][_spender] -= _subtractedValue;
+      }
+      emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+      return true;
+    }
+
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
+}
+
+contract Ownable {
+    event TransferOwner(address _from, address _to);
+
+    address public owner;
+    
+    constructor() public {
+        owner = msg.sender;
+        emit TransferOwner(0x0, msg.sender);
+    }
+    
+    function setOwner(address _owner) external returns (bool) {
+        require(owner == msg.sender);
+        owner = _owner;
+        emit TransferOwner(msg.sender, _owner);
+        return true;
+    }
+}
+
+contract MintableToken is StandardToken, Ownable {
+    function mint(address _to, uint256 _amount) external returns (bool) {
+        require(owner == msg.sender, "Only owner can mint");
+        totalSupply = totalSupply.add(_amount);
+        balances[_to] = balances[_to].add(_amount);
+        emit Transfer(0x0, _to, _amount);
+        return true;
+    }
+}
+
+contract MetaToken is MintableToken {
+    string private iName;
+    string private iSymbol;
+    uint8 private iDecimals;
+
+    // The admin can only change metadata
+    // it can't mint tokens or change values
+    address public admin;
+
+    constructor(
+        string _name,
+        string _symbol,
+        uint8 _decimals,
+        address _admin
+    ) public {
+        iName = _name;
+        iSymbol = _symbol;
+        iDecimals = _decimals;
+        admin = _admin;
+    }
+    
+    function name() external view returns (string) {
+        return iName;
+    }
+    
+    function symbol() external view returns (string) {
+        return iSymbol;
+    }
+    
+    function decimals() external view returns (uint8) {
+        return iDecimals;
+    }
+    
+    function setName(string _name) external {
+        require(msg.sender == admin, "Only admin");
+        iName = _name;
+    }
+    
+    function setSymbol(string _symbol) external {
+        require(msg.sender == admin, "Only admin");
+        iSymbol = _symbol;
+    }
+    
+    function setAdmin(address _admin) external {
+        require(msg.sender == admin, "Only admin");
+        admin = _admin;
+    }
+}
+
+contract Button is Ownable {
+    // metadata
+    string public constant name = "THE BUTTON";
+    string public constant symbol = "BUTTON";
+    string public constant version = "0.0";
+    uint8 public constant decimals = 0;
+    uint256 public constant totalSupply = 1;
+    
+    uint256 private _ticket = 750000000000000;
+    uint256 public end;
+    
+    // 1 hour
+    uint256 public duration = 1 * 60 * 60;
+    
+    // Ticket window
+    uint256 public window = 24 * 60 * 60;
+    
+    // Plays in window
+    
+    // E-BUTTON Tokens
+    MetaToken public eButton;
+    MetaToken public eTicket;
+    MetaToken public wtToken;
+
+    // Winner
+    address public best;
+    
+    // Bids
+    mapping(uint256 => uint256) public total;
+    
+    // Events 
+    event Buy(address _by, uint256 _ticket, uint256 _end);
+    event Claim(address _by, uint256 _amount);
+    event Transfer(address indexed _from, address indexed _to, uint256 _amount);
+    
+    constructor() public {
+        end = now + duration;
+        eButton = new MetaToken('E-BUTTON Token', "E-BUTTON", 18, msg.sender);
+        eTicket = new MetaToken('TICKET Token', "T-BUTTON", 0, msg.sender);
+        wtToken = new MetaToken('Why ??? token', 'WHY', 0, msg.sender);
+    }
+    
+    function balanceOf(address _owner) external view returns (uint256) {
+        return _owner == best ? 1 : 0; 
+    }
+    
+    function ticket() external view returns (uint256) {
+        if (total[now / window] == 0) {
+            // Recalc ticket
+            uint256 lastPlayDay = (end - duration) / window;
+            return (total[lastPlayDay] / 30 + _ticket * 2) / 3;
+        } else {
+            return _ticket;
+        }
+    }
+    
+    function claim() external returns (bool) {
+        require(msg.sender == best, "The caller is not the winner");
+        require(now >= end, "The round didn't end");
+        require(best.send(address(this).balance), "The winner can't receive ETH");
+        emit Claim(msg.sender, address(this).balance);
+        _ticket = 750000000000000;
+        return true;
+    }
+    
+    function transfer(address _to, uint256 _amount) external returns (bool) {
+        require(_amount == 1, "THERE IS ONLY ONE BUTTON");
+        require(msg.sender == best, "THE BUTTON IS NOT YOURS");
+        emit Transfer(msg.sender, _to, 1);
+        best = _to;
+        return true;
+    }
+    
+    function() external payable {
+        uint256 day = now / window;
+
+        // Recalc ticket if required
+        if (total[day] == 0) {
+            uint256 lastPlayDay = (end - duration) / window;
+            _ticket = (total[lastPlayDay] / 30 + _ticket * 2) / 3;
+        }
+        
+        require(msg.value >= _ticket, "Didn't pay the ticket");
+        emit Transfer(best, msg.sender, 1);
+        
+        if (best == msg.sender && (end - now) < duration / 4) {
+            // GOOD! You are outbidding yourself
+            // have a Why token as medal
+            wtToken.mint(msg.sender, 1);
+        }
+        
+        best = msg.sender;
+        owner.send((msg.value / 100) * 5); // Ignore fee failure
+        end = now + duration;
+
+        total[day] += _ticket;
+
+        emit Buy(msg.sender, _ticket, end);
+
+        // Emit extra Tokens
+        eButton.mint(msg.sender, _ticket);
+        eTicket.mint(msg.sender, 1);
+    }
 }
