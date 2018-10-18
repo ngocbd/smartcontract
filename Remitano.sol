@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Remitano at 0x2e6997b11c0cefbb3c7eb7e4c31dd35265847bea
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Remitano at 0x3dadc31e521276483a445e8766f6c0eee1c0e884
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.25;
 
 interface IERC20 {
   function totalSupply() external view returns (uint256);
@@ -269,12 +269,19 @@ contract Remitano is ERC20 {
   string public constant symbol = "RET";
   uint8 public constant decimals = 18;
 
-  uint256 public constant INITIAL_SUPPLY = 1000000 * (10 ** uint256(decimals));
+  uint256 public constant INITIAL_SUPPLY = 40000000 * (10 ** uint256(decimals));
 
   /**
    * @dev Constructor that gives msg.sender all of existing tokens.
    */
   constructor() public {
     _mint(msg.sender, INITIAL_SUPPLY);
+  }
+
+  /**
+   * @dev Do not accept ETH
+   */
+  function () public payable {
+    revert();
   }
 }
