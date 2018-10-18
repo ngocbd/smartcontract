@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sacrific3d at 0x1b43f7543164ead3dac0393aaebaaf3b35c459c2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sacrific3d at 0xbb27ad42cbe9534cec452b0134a350cbfe1ba337
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.25;
 
 contract Sacrific3d {
     
@@ -16,10 +16,10 @@ contract Sacrific3d {
     HourglassInterface constant p3dContract = HourglassInterface(0xB3775fB83F7D12A36E0475aBdD1FCA35c091efBe);
    
     //a small part of every winners share of the sacrificed players offer is used to purchase p3d instead
-    uint256 constant private P3D_SHARE = 0.025 ether;
+    uint256 constant private P3D_SHARE = 0.125 ether;
     
     uint8 constant public MAX_PLAYERS_PER_STAGE = 5;
-    uint256 constant public OFFER_SIZE = 0.5 ether;
+    uint256 constant public OFFER_SIZE = 2.5 ether;
     
     uint256 private p3dPerStage = P3D_SHARE * (MAX_PLAYERS_PER_STAGE - 1);
     //not sacrificed players receive their offer back and also a share of the sacrificed players offer 
