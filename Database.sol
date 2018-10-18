@@ -1,38 +1,87 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Database at 0x3270360ede054cba2ef829af1e124c4d6e0f8a60
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Database at 0x400d188e1c21d592820df1f2f8cf33b3a13a377e
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.13;
 
-// @author: Ghilia Weldesselasie
-// An experiment in using contracts as public DBs on the blockchain
+contract Database
+{
+    address public m_Owner;
+    address public m_Owner2;
+    address public m_Creator;
+    AbstractRandom m_RandomGen = AbstractRandom(0x3936fba4dc8cf1e2746423a04f5c6b4ade033e81);
+    BitGuildToken public tokenContract = BitGuildToken(0x7E43581b19ab509BCF9397a2eFd1ab10233f27dE); // Predefined PLAT token address
+    mapping(address => mapping(uint256 => mapping(uint256 => bytes32))) public m_Data;
+    mapping(address => bool)  public trustedContracts;
 
-contract Database {
-
-    address public owner;
-
-    constructor() public {
-      owner = msg.sender;
+    modifier OnlyOwnerAndContracts()
+    {
+        require(msg.sender == m_Owner || msg.sender == m_Owner2 || msg.sender== m_Creator || trustedContracts[msg.sender]);
+        _;
     }
+
+    function ChangeRandomGen(address rg) public OnlyOwnerAndContracts(){
+        m_RandomGen = AbstractRandom(rg);
+    }
+
+    function() public payable
+    {
+
+    }
+
+    function Database() public
+    {
+        m_Owner = address(0);
+        m_Owner2 = address(0);
+        m_Creator = msg.sender;
+    }
+
+    function ChangeOwner(address new_owner) OnlyOwnerAndContracts() public
+    {
+        require(msg.sender == m_Owner || msg.sender == m_Creator || msg.sender == m_Owner2);
+
+        m_Owner = new_owner;
+    }
+
+    function ChangeOwner2(address new_owner2) OnlyOwnerAndContracts() public
+    {
+        require(msg.sender == m_Owner || msg.sender == m_Creator || msg.sender == m_Owner2);
+
+        m_Owner2 = new_owner2;
+    }
+
+    function ChangeAddressTrust(address contract_address,bool trust_flag) public OnlyOwnerAndContracts()
+    {
+        trustedContracts[contract_address] = trust_flag;
+    }
+
+    function Store(address user, uint256 category, uint256 index, bytes32 data) public OnlyOwnerAndContracts()
+    {
+        m_Data[user][category][index] = data;
+    }
+
+    function Load(address user, uint256 category, uint256 index) public view returns (bytes32)
+    {
+        return m_Data[user][category][index];
+    }
+
+    function TransferFunds(address target, uint256 transfer_amount) public OnlyOwnerAndContracts()
+    {
+        tokenContract.transfer(target,transfer_amount);
+    }
+
+    function getRandom(uint256 _upper, uint8 _seed) public OnlyOwnerAndContracts() returns (uint256 number){
+        number = m_RandomGen.random(_upper,_seed);
+
+        return number;
+    }
+ 
     
-    function withdraw() public {
-      require(msg.sender == owner);
-      owner.transfer(address(this).balance);
-    }
 
-    // Here the 'Table' event is treated as an SQL table
-    // Each property is indexed and can be retrieved easily via web3.js
-    event Table(uint256 indexed _row, bytes32 indexed _column, bytes32 indexed _value);
-    /*
-    _______
-    |||Table|||
-    -----------
-    | row |    _column    |    _column2   |
-    |  1  |    _value     |    _value     |
-    |  2  |    _value     |    _value     |
-    |  3  |    _value     |    _value     |
-    */
-
-    function put(uint256 _row, string _column, string _value) public {
-        emit Table(_row, keccak256(_column), keccak256(_value));
-    }
+}
+contract BitGuildToken{
+    function transfer(address _to, uint256 _value) public;
+}
+contract AbstractRandom
+{
+    function random(uint256 upper, uint8 seed) public returns (uint256 number);
 }
