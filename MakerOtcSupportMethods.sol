@@ -1,7 +1,22 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MakerOtcSupportMethods at 0x9b3f075b12513afe56ca2ed838613b7395f57839
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MakerOtcSupportMethods at 0xe5decbdcca2e9957b525fb04293f1eeeb547baab
 */
 pragma solidity ^0.4.23;
+
+/// math.sol -- mixin for inline numerical wizardry
+
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 contract DSMath {
     function add(uint x, uint y) internal pure returns (uint z) {
