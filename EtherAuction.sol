@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Etherauction at 0x148e61062615c0832e3adcfafd4c6f06e629fd62
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Etherauction at 0x39f996a2cafca0e593d0c46b8365d3936b6cc1cf
 */
 pragma solidity ^0.4.17;
 
@@ -548,12 +548,12 @@ contract Etherauction is ContractOwner {
   }
 
   function _getMinAuctionSeconds() internal pure returns (uint256) {
-    return 15 * 60;
+    return 30 * 60;
     // return 1 * 60; //test
   }
 
   function _getMaxAuctionSeconds() internal pure returns (uint256) {
-    return 30 * 60;
+    return 12 * 60 * 60;
     // return 3 * 60;  //test
   }
 
