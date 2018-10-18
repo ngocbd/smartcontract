@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Store at 0x51A1A60aE2310e34295A18B559cAC9E4140303D7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Store at 0x6407b7462D0b3BC2F09aA3eF7aB78ca1CC32085B
 */
 pragma solidity ^0.4.24;
 
@@ -21,7 +21,7 @@ contract Base
         creator = msg.sender;
     }
 
-    modifier MasterAble()
+    modifier CreatorAble()
     {
         require(msg.sender == creator);
         _;
@@ -47,42 +47,23 @@ contract Base
         return 5;
     }
 
-}
-
-contract BasicTime
-{
-    uint constant DAY_SECONDS = 60 * 60 * 24;
-
-    function GetDayCount(uint timestamp) pure internal returns(uint)
+    function GetPartLimit(uint8 level, uint part) internal pure returns(uint8)
     {
-        return timestamp/DAY_SECONDS;
-    }
-
-    function GetExpireTime(uint timestamp, uint dayCnt) pure internal returns(uint)
-    {
-        uint dayEnd = GetDayCount(timestamp) + dayCnt;
-        return dayEnd * DAY_SECONDS;
+        if (!IsLimitPart(level, part)) return 0;
+        if (level == 5) return 1;
+        if (level == 4) return 8;
+        return 15;
     }
 
 }
+
+
+
 
 contract BasicAuth is Base
 {
 
-    address master;
     mapping(address => bool) auth_list;
-
-    function InitMaster(address acc) internal
-    {
-        require(address(0) != acc);
-        master = acc;
-    }
-
-    modifier MasterAble()
-    {
-        require(msg.sender == creator || msg.sender == master);
-        _;
-    }
 
     modifier OwnerAble(address acc)
     {
@@ -96,20 +77,19 @@ contract BasicAuth is Base
         _;
     }
 
-    function CanHandleAuth(address from) internal view returns(bool)
+    modifier ValidHandleAuth()
     {
-        return from == creator || from == master;
+        require(tx.origin==creator || msg.sender==creator);
+        _;
     }
-    
-    function SetAuth(address target) external
+   
+    function SetAuth(address target) external ValidHandleAuth
     {
-        require(CanHandleAuth(tx.origin) || CanHandleAuth(msg.sender));
         auth_list[target] = true;
     }
 
-    function ClearAuth(address target) external
+    function ClearAuth(address target) external ValidHandleAuth
     {
-        require(CanHandleAuth(tx.origin) || CanHandleAuth(msg.sender));
         delete auth_list[target];
     }
 
@@ -118,71 +98,22 @@ contract BasicAuth is Base
 
 
 
-library IndexList
-{
-    function insert(uint32[] storage self, uint32 index, uint pos) external
-    {
-        require(self.length >= pos);
-        self.length++;
-        for (uint i=self.length; i>pos; i++)
-        {
-            self[i+1] = self[i];
-        }
-        self[pos] = index;
-    }
-
-    function remove(uint32[] storage self, uint32 index) external returns(bool)
-    {
-        return remove(self,index,0);
-    }
-
-    function remove(uint32[] storage self, uint32 index, uint startPos) public returns(bool)
-    {
-        for (uint i=startPos; i<self.length; i++)
-        {
-            if (self[i] != index) continue;
-            for (uint j=i; j<self.length-1; j++)
-            {
-                self[j] = self[j+1];
-            }
-            delete self[self.length-1];
-            self.length--;
-            return true;
-        }
-        return false;
-    }
-
-}
-
 library ItemList {
 
-    using IndexList for uint32[];
-    
     struct Data {
         uint32[] m_List;
         mapping(uint32 => uint) m_Maps;
-    }
-
-    function _insert(Data storage self, uint32 key, uint val) internal
-    {
-        self.m_List.push(key);
-        self.m_Maps[key] = val;
-    }
-
-    function _delete(Data storage self, uint32 key) internal
-    {
-        self.m_List.remove(key);
-        delete self.m_Maps[key];
     }
 
     function set(Data storage self, uint32 key, uint num) public
     {
         if (!has(self,key)) {
             if (num == 0) return;
-            _insert(self,key,num);
+            self.m_List.push(key);
+            self.m_Maps[key] = num;
         }
         else if (num == 0) {
-            _delete(self,key);
+            delete self.m_Maps[key];
         } 
         else {
             uint old = self.m_Maps[key];
@@ -243,25 +174,38 @@ library ItemList {
 
 
 
-contract MainBase is Base 
+library IndexList
 {
-    modifier ValidLevel(uint8 level)
+    function insert(uint32[] storage self, uint32 index, uint pos) external
     {
-        require(level<=HEROLEVEL_MAX && level>=HEROLEVEL_MIN);
-        _;
+        require(self.length >= pos);
+        self.length++;
+        for (uint i=self.length; i>pos; i++)
+        {
+            self[i+1] = self[i];
+        }
+        self[pos] = index;
     }
 
-    modifier ValidParts(uint8 level, uint32[] parts)
+    function remove(uint32[] storage self, uint32 index) external returns(bool)
     {
-        require(GetPartNum(level) == parts.length);
-        _;
+        return remove(self,index,0);
     }
 
-    modifier ValidPart(uint8 level, uint part)
+    function remove(uint32[] storage self, uint32 index, uint startPos) public returns(bool)
     {
-        require(part > 0);
-        require(GetPartNum(level) >= part);
-        _;
+        for (uint i=startPos; i<self.length; i++)
+        {
+            if (self[i] != index) continue;
+            for (uint j=i; j<self.length-1; j++)
+            {
+                self[j] = self[j+1];
+            }
+            delete self[self.length-1];
+            self.length--;
+            return true;
+        }
+        return false;
     }
 
 }
@@ -269,7 +213,7 @@ contract MainBase is Base
 
 
 
-contract MainCard is BasicAuth,MainBase
+contract MainCard is BasicAuth
 {
     struct Card {
         uint32 m_Index;
@@ -289,9 +233,8 @@ contract MainCard is BasicAuth,MainBase
 
     CardLib g_CardLib;
 
-    function AddNewCard(uint32 iCard, uint32 duration, uint8 level, uint16 dp, uint16 dpk, uint16 sp, uint16 ip, uint32[] parts) external MasterAble ValidLevel(level) ValidParts(level,parts)
+    function AddNewCard(uint32 iCard, uint32 duration, uint8 level, uint16 dp, uint16 dpk, uint16 sp, uint16 ip, uint32[] parts) internal
     {
-        require(!CardExists(iCard));
         g_CardLib.m_List.push(iCard);
         g_CardLib.m_Lib[iCard] = Card({
             m_Index   : iCard,
@@ -332,7 +275,7 @@ contract MainCard is BasicAuth,MainBase
 
 
 
-contract MainChip is BasicAuth,MainBase
+contract MainChip is BasicAuth
 {
     using IndexList for uint32[];
 
@@ -361,7 +304,7 @@ contract MainChip is BasicAuth,MainBase
 
     ChipLib g_ChipLib;
 
-    function AddNewChip(uint32 iChip, uint8 lv, uint8 limit, uint8 part) external MasterAble ValidLevel(lv) ValidPart(lv,part)
+    function AddNewChip(uint32 iChip, uint8 lv, uint8 limit, uint8 part) internal
     {
         require(!ChipExists(iChip));
         g_ChipLib.m_List.push(iChip);
@@ -523,12 +466,33 @@ contract MainChip is BasicAuth,MainBase
 
 
 
-contract MainBonus is BasicTime,BasicAuth,MainBase,MainCard
+contract BasicTime
+{
+    uint constant DAY_SECONDS = 60 * 60 * 24;
+
+    function GetDayCount(uint timestamp) pure internal returns(uint)
+    {
+        return timestamp/DAY_SECONDS;
+    }
+
+    function GetExpireTime(uint timestamp, uint dayCnt) pure internal returns(uint)
+    {
+        uint dayEnd = GetDayCount(timestamp) + dayCnt;
+        return dayEnd * DAY_SECONDS;
+    }
+
+}
+
+
+
+
+contract MainBonus is BasicTime,BasicAuth,MainCard
 {
     uint constant BASERATIO = 10000;
 
     struct PlayerBonus
     {
+        uint m_Bonus;       // bonus by immediateprofit
         uint m_DrawedDay;
         uint16 m_DDPermanent;// drawed day permanent
         mapping(uint => uint16) m_DayStatic;
@@ -555,11 +519,13 @@ contract MainBonus is BasicTime,BasicAuth,MainBase,MainCard
         mapping(address => PlayerBonus) m_PlayerBonus;
     }
 
+    address receiver;
     BonusData g_Bonus;
 
-    constructor() public
+    constructor(address Receiver) public
     {
         g_Bonus.m_RecordDay = GetDayCount(now);
+        receiver = Receiver;
     }
 
     function() external payable {}
@@ -654,6 +620,7 @@ contract MainBonus is BasicTime,BasicAuth,MainBase,MainCard
     {
         PlayerBonus storage pb = g_Bonus.m_PlayerBonus[acc];
         accPR = pb.m_DDPermanent;
+        accBonus = pb.m_Bonus;
 
         if (!PlayerNeedRefresh(acc, todayNo)) return;
 
@@ -726,13 +693,12 @@ contract MainBonus is BasicTime,BasicAuth,MainBase,MainCard
     function ImmediateProfit(address acc, uint ratio) internal
     {
         RefreshDayBonus();
+        if (g_Bonus.m_RecordBonus == 0) return;
         uint bonus = ratio*g_Bonus.m_RecordBonus/BASERATIO;
         g_Bonus.m_RecordBonus -= bonus;
         g_Bonus.m_RewardBonus -= bonus;
-        if (bonus == 0) return
-        acc.transfer(bonus);
+        g_Bonus.m_PlayerBonus[acc].m_Bonus += bonus;
     }
-
 
     function ProfitByCard(address acc, uint32 iCard) internal
     {
@@ -779,7 +745,7 @@ contract MainBonus is BasicTime,BasicAuth,MainBase,MainCard
         g_Bonus.m_RecordBonus += bonus;
     }
 
-    function Withdraw(address acc) external
+    function Withdraw(address acc) external OwnerAble(acc)
     {
         RefreshDayBonus();
         PlayerBonus storage pb = g_Bonus.m_PlayerBonus[acc];
@@ -787,16 +753,17 @@ contract MainBonus is BasicTime,BasicAuth,MainBase,MainCard
         uint todayNo = GetDayCount(now);
         (bonus, pb.m_DDPermanent) = QueryPlayerBonus(acc, todayNo);
         require(bonus > 0);
+        pb.m_Bonus = 0;
         pb.m_DrawedDay = todayNo;
-        acc.transfer(bonus);
         g_Bonus.m_RewardBonus -= bonus;
+        acc.transfer(bonus);
     }
 
     function MasterWithdraw() external
     {
         uint bonus = address(this).balance-g_Bonus.m_RewardBonus;
         require(bonus > 0);
-        master.transfer(bonus);
+        receiver.transfer(bonus);
     }
 
 
@@ -941,15 +908,120 @@ contract MainBag is BasicTime,BasicAuth,MainChip,MainCard
 
 
 
+contract OldMain
+{
+    function GetStuffList(address) external view returns(uint32[], uint[]);
+    function GetTempStuffList(address acc) external view returns(uint32[], uint[]);
+    function GetChipList(address acc) external view returns(uint32[], uint[]);
+    function GetCardList(address acc) external view returns(uint32[] tempCards, uint[] cardsTime, uint32[] permCards);
+}
+
 contract Main is MainChip,MainCard,MainBag,MainBonus
 {
+    using ItemList for ItemList.Data;
 
-    constructor(address Master) public
+    constructor(address Receiver) public MainBonus(Receiver) {}
+
+    ///==================================================================
+    bool g_Synced = false;
+    function SyncOldData(OldMain oldMain, address[] accounts) external CreatorAble
     {
-        InitMaster(Master);
+        // transfer itemdata
+        require(!g_Synced);
+        g_Synced = true;
+        for (uint i=0; i<accounts.length; i++)
+        {
+            address acc = accounts[i];
+            SyncStuff(oldMain, acc);
+            SyncTempStuff(oldMain, acc);
+            SyncChip(oldMain, acc);
+            SyncCard(oldMain, acc);
+        }
     }
 
-    function GainCard(address acc, uint32 iCard) external
+    function SyncItemData(ItemList.Data storage Data, uint32[] idxList, uint[] valList) internal
+    {
+        if (idxList.length == 0) return;
+        for (uint i=0; i<idxList.length; i++)
+        {
+            uint32 index = idxList[i];
+            uint val = valList[i];
+            Data.set(index, val);
+        }
+    }
+
+    function SyncStuff(OldMain oldMain, address acc) internal
+    {
+        (uint32[] memory idxList, uint[] memory valList) = oldMain.GetStuffList(acc);
+        SyncItemData(g_BagList[acc].m_Stuff, idxList, valList);
+    }
+
+    function SyncTempStuff(OldMain oldMain, address acc) internal
+    {
+        (uint32[] memory idxList, uint[] memory valList) = oldMain.GetTempStuffList(acc);
+        SyncItemData(g_BagList[acc].m_TempStuff, idxList, valList);
+    }
+
+    function SyncChip(OldMain oldMain, address acc) internal
+    {
+        (uint32[] memory idxList, uint[] memory valList) = oldMain.GetChipList(acc);
+        SyncItemData(g_BagList[acc].m_Chips, idxList, valList);
+    }
+
+    function CompensateChips(address acc, uint32[] idxList) internal
+    {
+        for (uint i=0; i<idxList.length; i++)
+        {
+            uint32 iCard = idxList[i];
+            if (iCard == 0) return;
+            Card storage obj = GetCard(iCard);
+            for (uint j=0; j<obj.m_Parts.length; j++)
+            {
+                uint32 iChip = obj.m_Parts[j];
+                g_BagList[acc].m_Chips.add(iChip,1);
+            }
+        }
+    }
+
+    function SyncCard(OldMain oldMain, address acc) internal
+    {
+        (uint32[] memory idxList, uint[] memory valList ,uint32[] memory permCards) = oldMain.GetCardList(acc);
+        uint32[] memory allCards = new uint32[](idxList.length+permCards.length);
+        uint i=0;
+        uint j=0;
+        for (j=0; j<idxList.length; j++)
+        {
+            uint expire = valList[j];
+            if (expire < now) continue;
+            allCards[i] = idxList[j];
+            i++;
+        }
+        for (j=0; j<permCards.length; j++)
+        {
+            allCards[i] = permCards[j];
+            i++;
+        }
+        CompensateChips(acc, allCards);
+    }
+
+    ///==================================================================
+
+    function InsertCard(uint32 iCard, uint32 duration, uint8 level, uint16 dp, uint16 dpk, uint16 sp, uint16 ip, uint32[] parts) external CreatorAble
+    {
+        require(!CardExists(iCard));
+        require(level<=HEROLEVEL_MAX && level>=HEROLEVEL_MIN);
+        require(GetPartNum(level) == parts.length);
+        AddNewCard(iCard, duration, level, dp, dpk, sp, ip, parts);
+        for (uint8 iPart=1; iPart<=parts.length; iPart++)
+        {
+            uint idx = iPart-1;
+            uint32 iChip = parts[idx];
+            uint8 limit = GetPartLimit(level, iPart);
+            AddNewChip(iChip, level, limit, iPart);
+        }
+    }
+
+    function GainCard(address acc, uint32 iCard) external AuthAble OwnerAble(acc)
     {
         require(CardExists(iCard) && !HasCard(acc,iCard));
         GainCard2(acc,iCard);
@@ -996,17 +1068,12 @@ contract StoreChipBag is BasicAuth
 
     mapping(address => uint32[]) g_ChipBag;
 
-    constructor(address Master) public
-    {
-        InitMaster(Master);
-    }
-
     function AddChip(address acc, uint32 iChip) external OwnerAble(acc) AuthAble
     {
         g_ChipBag[acc].push(iChip);
     }
 
-    function CollectChips(address acc) external returns(uint32[] chips)
+    function CollectChips(address acc) external OwnerAble(acc) AuthAble returns(uint32[] chips)
     {
         chips = g_ChipBag[acc];
         delete g_ChipBag[acc];
@@ -1022,7 +1089,7 @@ contract StoreChipBag is BasicAuth
 
 
 
-contract StoreGifts is BasicAuth
+contract StoreGift is BasicAuth
 {
     struct Gift
     {
@@ -1035,11 +1102,6 @@ contract StoreGifts is BasicAuth
     mapping(address => mapping(string => bool)) g_Exchange;
     mapping(string => Gift) g_Gifts;
 
-    constructor(address Master) public
-    {
-        InitMaster(Master);
-    }
-
     function HasGift(string key) public view returns(bool)
     {
         Gift storage obj = g_Gifts[key];
@@ -1048,7 +1110,7 @@ contract StoreGifts is BasicAuth
         return true;
     }
 
-    function AddGift(string key, uint expire, uint32[] idxList, uint[] numList) external MasterAble
+    function AddGift(string key, uint expire, uint32[] idxList, uint[] numList) external CreatorAble
     {
         require(!HasGift(key));
         require(now<expire || expire==0);
@@ -1060,7 +1122,7 @@ contract StoreGifts is BasicAuth
         });
     }
 
-    function DelGift(string key) external MasterAble
+    function DelGift(string key) external CreatorAble
     {
         delete g_Gifts[key];
     }
@@ -1107,23 +1169,7 @@ contract StoreGoods is BasicAuth
     mapping(uint32 => Goods) g_Goods;
     mapping(address => ItemList.Data) g_PurchaseInfo;
 
-    constructor(address Master) public
-    {
-        InitMaster(Master);
-    }
-
-    function AddGoods(
-        uint32 iGoods,
-        uint32 costItem,
-        uint price,
-        uint32 itemRef,
-        uint32 amount,
-        uint32 duration,
-        uint32 expire,
-        uint8 limit,
-        uint8 disCount,
-        uint8 disRate
-    ) external MasterAble
+    function AddGoods(uint32 iGoods, uint32 costItem, uint price, uint32 itemRef, uint32 amount, uint32 duration, uint32 expire, uint8 limit, uint8 disCount, uint8 disRate) external CreatorAble
     {
         require(!HasGoods(iGoods));
         g_Goods[iGoods] = Goods({
@@ -1140,7 +1186,7 @@ contract StoreGoods is BasicAuth
         });
     }
 
-    function DelGoods(uint32 iGoods) external MasterAble
+    function DelGoods(uint32 iGoods) external CreatorAble
     {
         delete g_Goods[iGoods];
     }
@@ -1222,7 +1268,7 @@ contract Child is Base {
         g_Main.SetAuth(this);
     }
 
-    function kill() external MasterAble
+    function kill() external CreatorAble
     {
         g_Main.ClearAuth(this);
         selfdestruct(creator);
@@ -1256,11 +1302,11 @@ contract Store is Child
     uint8 constant EXCHANGE_KEYERR = 1;
     uint8 constant EXCHANGE_HADGOT = 2;
 
+    StoreGift g_Gifts;
     StoreGoods g_Goods;
-    StoreGifts g_Gifts;
     StoreChipBag g_ChipBag;
 
-    constructor(Main main, StoreGoods goods, StoreGifts gifts, StoreChipBag chipbag) public Child(main)
+    constructor(Main main, StoreGoods goods, StoreGift gifts, StoreChipBag chipbag) public Child(main)
     {
         g_Goods = goods;
         g_Gifts = gifts;
@@ -1270,7 +1316,7 @@ contract Store is Child
         g_ChipBag.SetAuth(this);
     }
     
-    function kill() external MasterAble
+    function kill() external CreatorAble
     {
         g_Goods.ClearAuth(this);
     }
@@ -1349,6 +1395,7 @@ contract Store is Child
     function CollectChipBag() external
     {
         uint32[] memory chips = g_ChipBag.CollectChips(msg.sender);
+        require(chips.length > 0);
         for (uint i=0; i<chips.length; i++)
         {
             g_Main.GainChip(msg.sender, chips[i], true);
