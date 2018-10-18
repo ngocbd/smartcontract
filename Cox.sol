@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Cox at 0xfba5687b205307852a37dcb765551438fc0f67ff
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Cox at 0xcbdbfa19ba66b3010e9ec1e31075bddff8dccad9
 */
 pragma solidity ^0.4.17;
 
@@ -44,6 +44,52 @@ library SafeMath {
         c = a + b;
         require(c >= a, "SafeMath add failed");
         return c;
+    }
+}
+
+
+library TableLib {
+    using SafeMath for uint256;
+
+    struct TableValue {
+      bool exists;
+      uint256 value;
+    }
+
+    struct Table {
+        mapping (address => TableValue) tableMapping;
+        address[] addressList;
+    }
+
+    function getNum(Table storage tbl, address adrs) internal view returns (uint256 num) {
+      return tbl.tableMapping[adrs].value;
+    }
+
+    function add(Table storage tbl, address adrs, uint256 num) internal {
+        if (!tbl.tableMapping[adrs].exists) {
+          tbl.addressList.push(adrs);
+          tbl.tableMapping[adrs].exists = true;
+        }
+        tbl.tableMapping[adrs].value = tbl.tableMapping[adrs].value.add(num);
+    }
+
+    function getValues(Table storage tbl, uint256 page) internal view
+    returns (uint256 count, address[] addressList, uint256[] numList) {
+      count = tbl.addressList.length;
+      uint256 maxPageSize = 50;
+      uint256 index = 0;
+      uint256 pageSize = maxPageSize;
+      if ( page*maxPageSize > count ) {
+        pageSize = count - (page-1)*maxPageSize;
+      }
+      addressList = new address[](pageSize);
+      numList = new uint256[](pageSize);
+      for (uint256 i = (page - 1) * maxPageSize; i < count && index < pageSize; i++) {
+        address adrs = tbl.addressList[i];
+        addressList[index] = adrs;
+        numList[index] = tbl.tableMapping[adrs].value;
+        index++;
+      }
     }
 }
 
@@ -101,51 +147,6 @@ library HolderLib {
     }
 }
 
-library TableLib {
-    using SafeMath for uint256;
-
-    struct TableValue {
-      bool exists;
-      uint256 value;
-    }
-
-    struct Table {
-        mapping (address => TableValue) tableMapping;
-        address[] addressList;
-    }
-
-    function getNum(Table storage tbl, address adrs) internal view returns (uint256 num) {
-      return tbl.tableMapping[adrs].value;
-    }
-
-    function add(Table storage tbl, address adrs, uint256 num) internal {
-        if (!tbl.tableMapping[adrs].exists) {
-          tbl.addressList.push(adrs);
-          tbl.tableMapping[adrs].exists = true;
-        }
-        tbl.tableMapping[adrs].value = tbl.tableMapping[adrs].value.add(num);
-    }
-
-    function getValues(Table storage tbl, uint256 page) internal view
-    returns (uint256 count, address[] addressList, uint256[] numList) {
-      count = tbl.addressList.length;
-      uint256 maxPageSize = 50;
-      uint256 index = 0;
-      uint256 pageSize = maxPageSize;
-      if ( page*maxPageSize > count ) {
-        pageSize = count - (page-1)*maxPageSize;
-      }
-      addressList = new address[](pageSize);
-      numList = new uint256[](pageSize);
-      for (uint256 i = (page - 1) * maxPageSize; i < count && index < pageSize; i++) {
-        address adrs = tbl.addressList[i];
-        addressList[index] = adrs;
-        numList[index] = tbl.tableMapping[adrs].value;
-        index++;
-      }
-    }
-}
-
 library RoundLib {
     using SafeMath for uint256;
     using HolderLib for HolderLib.Holder;
@@ -156,37 +157,40 @@ library RoundLib {
     uint256 constant private roundSizeIncreasePercent = 160;
 
     struct Round {
-        uint256 roundId;      // ?????????
-        uint256 roundNum;     // ????????
-        uint256 max;          // ???????
-        TableLib.Table investers;  // ?????
-        uint256 raised;       // ?????
-        uint256 pot;          // ?????????
+        uint256 roundId;
+        uint256 roundNum;
+        uint256 max;
+        TableLib.Table investers;
+        uint256 raised;
+        uint256 pot;
+        address addressOfMaxInvestment;
     }
 
     function getInitRound(uint256 initSize) internal pure returns (Round) {
         TableLib.Table memory investers;
         return Round({
-          roundId: 1,
-          roundNum: 1,
-          max: initSize,
-          investers: investers,
-          raised: 0,
-          pot: 0
+            roundId: 1,
+            roundNum: 1,
+            max: initSize,
+            investers: investers,
+            raised: 0,
+            pot: 0,
+            addressOfMaxInvestment: 0
         });
     }
 
     function getNextRound(Round storage round, uint256 initSize) internal view returns (Round) {
-      TableLib.Table memory investers;
-      bool isFinished = round.max == round.raised;
-      return Round({
-        roundId: round.roundId + 1,
-        roundNum: isFinished ? round.roundNum + 1 : 1,
-        max: isFinished ? round.max * roundSizeIncreasePercent / 100 : initSize,
-        investers: investers,
-        raised: 0,
-        pot: 0
-      });
+        TableLib.Table memory investers;
+        bool isFinished = round.max == round.raised;
+        return Round({
+            roundId: round.roundId + 1,
+            roundNum: isFinished ? round.roundNum + 1 : 1,
+            max: isFinished ? round.max * roundSizeIncreasePercent / 100 : initSize,
+            investers: investers,
+            raised: 0,
+            pot: 0,
+            addressOfMaxInvestment: 0
+        });
     }
 
     function add (Round storage round, address adrs, uint256 amount) internal
@@ -199,6 +203,9 @@ library RoundLib {
             amountUsed = amount;
         }
         round.investers.add(adrs, amountUsed);
+        if (round.addressOfMaxInvestment == 0 || getNum(round, adrs) > getNum(round, round.addressOfMaxInvestment)) {
+            round.addressOfMaxInvestment = adrs;
+        }
         round.raised = round.raised.add(amountUsed);
     }
 
@@ -238,7 +245,7 @@ library DealerLib {
     struct DealerInfo {
         address addr;
         uint256 amount;
-        uint256 rate; // ????????? 200?? 2%
+        uint256 rate; // can not more than 300
     }
 
     struct Dealers {
@@ -290,6 +297,7 @@ library DealerLib {
         dealers.dealerMap[code].amount = dealers.dealerMap[code].amount.add(amountToDealer);
     }
 }
+
 
 contract Ownable {
   address public owner;
@@ -346,20 +354,19 @@ contract Cox is Ownable {
     event PoolAdd(uint256 value);
     event PoolSub(uint256 value);
 
-    // ?????
     uint256 private roundDuration = 1 days;
-    uint256 private initSize = 10 ether;       // ??????
-    uint256 private minRecharge = 0.01 ether;  // ??????
-    bool private mIsActive = false;      // ???????????
-    bool private isAutoRestart = true;   // ???????????????????
-    uint256 private rate = 300;           // ????300 ? 3%
+    uint256 private initSize = 10 ether;       // fund of first round
+    uint256 private minRecharge = 0.01 ether;  // minimum of invest amount
+    bool private mIsActive = false;
+    bool private isAutoRestart = true;
+    uint256 private rate = 300;                // 300 of ten thousand
     string private defaultRefCode = "owner";
 
-    DealerLib.Dealers private dealers;    // ?????
-    HolderLib.Holder private coinHolders; // ?????
+    DealerLib.Dealers private dealers;    // dealer information
+    HolderLib.Holder private coinHolders; // all investers information
     RoundLib.Round[] private roundList;
 
-    uint256 private fundPoolSize;            // ????
+    uint256 private fundPoolSize;
     uint256 private roundStartTime;
     uint256 private roundEndTime;
     uint256 private bigRound = 1;
@@ -398,7 +405,7 @@ contract Cox is Ownable {
         _;
     }
 
-    // ??
+    // deposit
     function recharge(string code) public isActive callFromHuman(msg.sender) payable {
         require(msg.value >= minRecharge, "not enough fund");
 
@@ -427,7 +434,6 @@ contract Cox is Ownable {
       }
     }
 
-    // ??
     function withdraw() public callFromHuman(msg.sender) {
         moveRoundsToHolder(msg.sender);
         uint256 amount = coinHolders.getNum(msg.sender);
@@ -438,7 +444,6 @@ contract Cox is Ownable {
         }
     }
 
-    // ?????
     function roundIn() public isActive {
         string memory code = coinHolders.getRefCode(msg.sender);
         require(bytes(code).length > 0, "code must not be empty");
@@ -450,7 +455,6 @@ contract Cox is Ownable {
         roundIn(amount, code);
     }
 
-    // ????
     function endRound() public isActive {
       RoundLib.Round storage curRound = roundList[roundList.length - 1];
       endRoundWhenTimeout(curRound);
@@ -466,6 +470,13 @@ contract Cox is Ownable {
           uint256 last2RoundsRaised = preRoundMax + curRound.raised;
 
           if (last2RoundsRaised > 0) {
+              if (curRound.addressOfMaxInvestment != 0) {
+                  // 20% of fund pool going to the lucky dog
+                  uint256 amountToLuckyDog = fundPoolSize * 2 / 10;
+                  coinHolders.add(curRound.addressOfMaxInvestment, amountToLuckyDog);
+                  poolSub(amountToLuckyDog);
+              }
+
               curRound.pot = curRound.raised * fundPoolSize / last2RoundsRaised;
               if (curRound.roundNum > 1) {
                   preRound.pot = preRound.raised * fundPoolSize / last2RoundsRaised;
@@ -502,12 +513,10 @@ contract Cox is Ownable {
 
         emit RoundIn(msg.sender, amountUsed, curRound.raised, curRound.roundNum, bigRound, code);
 
-        // ???? roundId
         coinHolders.addRelatedRoundId(msg.sender, curRound.roundId);
 
         coinHolders.sub(msg.sender, amountUsed);
 
-        // ??????????
         uint256 amountToDealer = dealers.addAmount(code, amountUsed);
         uint256 amountToOwner = (amountUsed * rate / 10000).sub(amountToDealer);
         coinHolders.add(owner, amountToOwner);
