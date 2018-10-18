@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract vevcoin at 0x461d795c3d188db80b9e6c666923a688961bf461
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract vevcoin at 0x07c56dd81c8394edf08d97aedf9a94dfdf6f6ec5
 */
 pragma solidity ^0.4.18;
 
@@ -212,15 +212,15 @@ contract vevcoin is ERC20Interface, Owned, SafeMath {
     }
 
     // ------------------------------------------------------------------------
-    // 5 vev Tokens per 0.1 ETH
+    // 50 vev Tokens per 1 ETH
     // ------------------------------------------------------------------------
     function () public payable {
         require(now >= startDate && now <= endDate);
         uint tokens;
         if (now <= bonusEnds) {
-            tokens = msg.value * 10;
+            tokens = msg.value * 100;
         } else {
-            tokens = msg.value * 5;
+            tokens = msg.value * 50;
         }
         balances[msg.sender] = safeAdd(balances[msg.sender], tokens);
         _totalSupply = safeAdd(_totalSupply, tokens);
