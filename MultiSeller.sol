@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSeller at 0xfef44414ebc9d4bfba3bd986a12fcc23bdda2302
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSeller at 0xc19c00ef7011336b3a0cd151cef511f95e1ec056
 */
 pragma solidity ^0.4.24;
 
@@ -275,10 +275,10 @@ contract MultiSeller is CanReclaimToken {
         uint256 _amount,
         address[] _exchanges,
         bytes _datas,
-        uint[] _datasIndexes, // including 0 and LENGTH values
-        address _for
+        uint[] _datasIndexes // including 0 and LENGTH values
     )
         public
+        payable
     {
         require(_mtkn.tokensCount() == _exchanges.length, "sell: _mtkn should have the same tokens count as _exchanges");
         require(_datasIndexes.length == _exchanges.length + 1, "sell: _datasIndexes should start with 0 and end with LENGTH");
@@ -289,7 +289,7 @@ contract MultiSeller is CanReclaimToken {
         for (uint i = 0; i < _exchanges.length; i++) {
             ERC20 token = _mtkn.tokens(i);
             if (_exchanges[i] == 0) {
-                token.transfer(_for, token.balanceOf(this));
+                token.transfer(msg.sender, token.balanceOf(this));
                 continue;
             }
 
@@ -302,6 +302,6 @@ contract MultiSeller is CanReclaimToken {
             require(_exchanges[i].call(data), "sell: exchange arbitrary call failed");
         }
 
-        _for.transfer(address(this).balance);
+        msg.sender.transfer(address(this).balance);
     }
 }
