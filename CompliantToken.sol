@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CompliantToken at 0xd8dc5d0a1ca571fd945ad146990b6fa50d069eb2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CompliantToken at 0x6de6db58082cf53ba6cd4450ecd27e0944d6070f
 */
 pragma solidity 0.4.24;
 
@@ -17,7 +17,7 @@ library SafeMath {
     if (a == 0) {
       return 0;
     }
-    uint256 c = a * b;
+    uint256 c = a * b; //alicia 2
     assert(c / a == b);
     return c;
   }
