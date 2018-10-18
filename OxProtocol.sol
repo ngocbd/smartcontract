@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OxProtocol at 0xd8f56703b734a13c034ee16531b26443f464e3d1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OxProtocol at 0x1662cffefa08b150329e419b2f1a13d010174246
 */
 pragma solidity ^0.4.4;
 
@@ -107,12 +107,12 @@ contract OxProtocol is StandardToken {
 
 
     // which means the following function name has to match the contract name declared above
-    function iToken() {
-        balances[msg.sender] = 19000000000000000000000000000;
-        totalSupply = 19000000000000000000000000000;
+    function OxProtocol() {
+        balances[msg.sender] = 18000000000000000000000000000;
+        totalSupply = 18000000000000000000000000000;
         name = "OxProtocol";
         decimals = 18;
-        symbol = "OxP";
+        symbol = "OXP";
         unitsOneEthCanBuy = 100000000;
         fundsWallet = msg.sender;
     }
