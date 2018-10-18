@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TechX at 0x3500381c4707aee4c517a91e856e231cb48bf301
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TechX at 0x23ea859c451590f791a08de41df325b8d3d039ef
 */
 pragma solidity ^0.4.24;
 
@@ -221,7 +221,7 @@ contract TechX is StandardToken {
   string public constant symbol = "TECX"; // solium-disable-line uppercase
   uint8 public constant decimals = 6; // solium-disable-line uppercase
 
-  uint256 public constant INITIAL_SUPPLY = 21000000000 * (10 ** uint256(decimals));
+  uint256 public constant INITIAL_SUPPLY = 21000000000 * (6 ** uint256(decimals));
 
   
   constructor() public {
