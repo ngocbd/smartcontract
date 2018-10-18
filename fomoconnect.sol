@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract fomoconnect at 0x4ab4ebf4ffafb874517c9feb2433c9f925463eed
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract fomoconnect at 0xbea4b317796587afa709be555ce66f20ab735b36
 */
 pragma solidity ^0.4.24;
 
@@ -47,6 +47,11 @@ contract fomoconnect{
         require(msg.sender == bountyManager);
         _;
 	}
+	
+	function setStep(uint256 stepSet) public onlyOwner {
+	    require(stepSet > step); //Not able to set it lower
+	    step = stepSet;
+    }
 
     /**
      * @dev Allows current owner to transfer control of the contract to a newOwner.
@@ -75,7 +80,6 @@ contract fomoconnect{
         ownerWallet.transfer(msg.value.div(100).mul(5));
         ownerWallet2.transfer(msg.value.div(100).mul(5));
         emit Invest(msg.sender, msg.value);
-        step++;
     }
 
     /**
@@ -160,15 +164,6 @@ contract fomoconnect{
     */
     function checkReferral(address _hunter) public view returns (uint256) {
         return referrer[_hunter];
-    }
-    
-    /**
-    * @dev Updates referrer balance 
-    * @param _hunter The address of the referrer
-    * @param _amount An uint256 representing the referral earnings.
-    */
-    function updateReferral(address _hunter, uint256 _amount) onlyBountyManager public {
-        referrer[_hunter] = referrer[_hunter].add(_amount);
     }
     
 }
