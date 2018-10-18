@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TSCoin at 0xbe2A1D562817b6064e0568A4DC9E2c80f7478DFe
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TSCoin at 0xae7294ed5aa7bad6bddf06d91985c697241b15b4
 */
 pragma solidity ^0.4.24;
  
 contract TSCoin {
  
     uint256 totalSupply_; 
-    string public constant name = "TS Coin";
+    string public constant name = "TSCoin";
     string public constant symbol = "TSC";
     uint8 public constant decimals = 18;
     uint256 public constant initialSupply = 200000000*(10**uint256(decimals));
@@ -68,6 +68,10 @@ contract TSCoin {
 			owner.transfer(address(this).balance);
 		}
 
+
+
+
+
  
     function approve(address _spender, uint256 _value) public returns (bool) {
         allowed[msg.sender][_spender] = _value;
@@ -93,24 +97,23 @@ contract TSCoin {
      } 
  
     function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) { 
-        uint oldValue = allowed[msg.sender][_spender]; 
-        if (_subtractedValue > oldValue) {
-     
-            allowed[msg.sender][_spender] = 0;
-        } 
-            else {
-            allowed[msg.sender][_spender] = oldValue - _subtractedValue;
-        }
-        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-        return true;
+    uint oldValue = allowed[msg.sender][_spender]; 
+    if (_subtractedValue > oldValue) {
+ 
+        allowed[msg.sender][_spender] = 0;
+    } 
+        else {
+        allowed[msg.sender][_spender] = oldValue - _subtractedValue;
     }
-    
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+    }
 	
 
  
     constructor(uint256 prices) public {
         totalSupply_ = initialSupply;
-        balances[msg.sender] = initialSupply;
+        balances[this] = initialSupply;
         
 		buyPrice = prices;
 		owner = msg.sender;
