@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x31ead6a10b5215321afa8bef2f05aa271508fa6c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x3527e209343bcec38b22cc452502aa6fd6151db1
 */
 pragma solidity ^0.4.19;
 
@@ -45,53 +45,13 @@ contract BaseToken {
     }
 }
 
-contract BurnToken is BaseToken {
-    event Burn(address indexed from, uint256 value);
-
-    function burn(uint256 _value) public returns (bool success) {
-        require(balanceOf[msg.sender] >= _value);
-        balanceOf[msg.sender] -= _value;
-        totalSupply -= _value;
-        Burn(msg.sender, _value);
-        return true;
-    }
-
-    function burnFrom(address _from, uint256 _value) public returns (bool success) {
-        require(balanceOf[_from] >= _value);
-        require(_value <= allowance[_from][msg.sender]);
-        balanceOf[_from] -= _value;
-        allowance[_from][msg.sender] -= _value;
-        totalSupply -= _value;
-        Burn(_from, _value);
-        return true;
-    }
-}
-
-contract LockToken is BaseToken {
-    struct LockMeta {
-        uint256 amount;
-        uint256 endtime;
-    }
-    
-    mapping (address => LockMeta) public lockedAddresses;
-
-    function _transfer(address _from, address _to, uint _value) internal {
-        require(balanceOf[_from] >= _value);
-        LockMeta storage meta = lockedAddresses[_from];
-        require(now >= meta.endtime || meta.amount <= balanceOf[_from] - _value);
-        super._transfer(_from, _to, _value);
-    }
-}
-
-contract CustomToken is BaseToken, BurnToken, LockToken {
+contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 520000000000000000000000000;
-        name = 'DragonCoin';
-        symbol = 'DC';
+        totalSupply = 20000000000000000000000000;
+        name = 'HomeAutomationCoin';
+        symbol = 'HAC';
         decimals = 18;
-        balanceOf[0x837b5cc69e11e89b5fdb266a3ff0a71ba37aa3a6] = totalSupply;
-        Transfer(address(0), 0x837b5cc69e11e89b5fdb266a3ff0a71ba37aa3a6, totalSupply);
-
-        lockedAddresses[0x3a6aeca5666d4af4161e48609f83e80f124170d9] = LockMeta({amount: 400000000000000000000000000, endtime: 1549000800});
+        balanceOf[0xbcade28d8c2f22345165f0e07c94a600f6c4e925] = totalSupply;
+        Transfer(address(0), 0xbcade28d8c2f22345165f0e07c94a600f6c4e925, totalSupply);
     }
 }
