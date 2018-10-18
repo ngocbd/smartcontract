@@ -1,275 +1,224 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SMT at 0x21f15966e07a10554c364b988e91dab01d32794a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SMT at 0x15c2f2ef00b2fc24461e56e26f1166d2cead7ac9
 */
-// Abstract contract for the full ERC 20 Token standard
-// https://github.com/ethereum/EIPs/issues/20
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.24;
 
-contract Token {
-    /* This is a slight change to the ERC20 base standard.*/
-    /// total amount of tokens
-    uint256 public totalSupply;
+// ----------------------------------------------------------------------------
+// 'FIXED' 'Example Fixed Supply Token' token contract
+//
+// Symbol      : FIXED
+// Name        : Example Fixed Supply Token
+// Total supply: 1,00,000,000.000000000000000000
+// Decimals    : 18
 
-    /// @param _owner The address from which the balance will be retrieved
-    /// @return The balance
-    function balanceOf(address _owner) public constant returns (uint256 balance);
+// ----------------------------------------------------------------------------
 
-    /// @notice send `_value` token to `_to` from `msg.sender`
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transfer(address _to, uint256 _value) public returns (bool success);
 
-    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
-    /// @param _from The address of the sender
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
-
-    /// @notice `msg.sender` approves `_spender` to spend `_value` tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @param _value The amount of tokens to be approved for transfer
-    /// @return Whether the approval was successful or not
-    function approve(address _spender, uint256 _value) public returns (bool success);
-
-    /// @param _owner The address of the account owning tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @return Amount of remaining tokens allowed to spent
-    function allowance(address _owner, address _spender) public constant returns (uint256 remaining);
-
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+// ----------------------------------------------------------------------------
+// Safe maths
+// ----------------------------------------------------------------------------
+library SafeMath {
+    function add(uint a, uint b) internal pure returns (uint c) {
+        c = a + b;
+        require(c >= a);
+    }
+    function sub(uint a, uint b) internal pure returns (uint c) {
+        require(b <= a);
+        c = a - b;
+    }
+    function mul(uint a, uint b) internal pure returns (uint c) {
+        c = a * b;
+        require(a == 0 || c / a == b);
+    }
+    function div(uint a, uint b) internal pure returns (uint c) {
+        require(b > 0);
+        c = a / b;
+    }
 }
 
+
+// ----------------------------------------------------------------------------
+// ERC Token Standard #20 Interface
+// https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md
+// ----------------------------------------------------------------------------
+contract ERC20Interface {
+    function totalSupply() public constant returns (uint);
+    function balanceOf(address tokenOwner) public constant returns (uint balance);
+    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
+    function transfer(address to, uint tokens) public returns (bool success);
+    function approve(address spender, uint tokens) public returns (bool success);
+    function transferFrom(address from, address to, uint tokens) public returns (bool success);
+
+    event Transfer(address indexed from, address indexed to, uint tokens);
+    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
+}
+
+
+// ----------------------------------------------------------------------------
+// Contract function to receive approval and execute function in one call
+//
+// Borrowed from MiniMeToken
+// ----------------------------------------------------------------------------
+contract ApproveAndCallFallBack {
+    function receiveApproval(address from, uint256 tokens, address token, bytes data) public;
+}
+
+
+// ----------------------------------------------------------------------------
+// Owned contract
+// ----------------------------------------------------------------------------
 contract Owned {
-
-    /// `owner` is the only address that can call a function with this
-    /// modifier
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-
     address public owner;
+    address public newOwner;
 
-    /// @notice The Constructor assigns the message sender to be `owner`
+    event OwnershipTransferred(address indexed _from, address indexed _to);
+
     constructor() public {
         owner = msg.sender;
     }
 
-    address newOwner=0x0;
-
-    event OwnerUpdate(address _prevOwner, address _newOwner);
-
-    ///change the owner
-    function changeOwner(address _newOwner) public onlyOwner {
-        require(_newOwner != owner);
-        newOwner = _newOwner;
-    }
-
-    /// accept the ownership
-    function acceptOwnership() public{
-        require(msg.sender == newOwner);
-        emit OwnerUpdate(owner, newOwner);
-        owner = newOwner;
-        newOwner = 0x0;
-    }
-}
-
-contract Controlled is Owned{
-
-    constructor() public {
-       setExclude(msg.sender);
-    }
-
-    // Flag that determines if the token is transferable or not.
-    bool public transferEnabled = false;
-
-    // flag that makes locked address effect
-    bool lockFlag=true;
-    mapping(address => bool) locked;
-    mapping(address => bool) exclude;
-
-    function enableTransfer(bool _enable) public onlyOwner{
-        transferEnabled=_enable;
-    }
-
-    function disableLock(bool _enable) public onlyOwner returns (bool success){
-        lockFlag=_enable;
-        return true;
-    }
-
-    function addLock(address _addr) public onlyOwner returns (bool success){
-        require(_addr!=msg.sender);
-        locked[_addr]=true;
-        return true;
-    }
-
-    function setExclude(address _addr) public onlyOwner returns (bool success){
-        exclude[_addr]=true;
-        return true;
-    }
-
-    function removeLock(address _addr) public onlyOwner returns (bool success){
-        locked[_addr]=false;
-        return true;
-    }
-
-    modifier transferAllowed(address _addr) {
-        if (!exclude[_addr]) {
-            assert(transferEnabled);
-            if(lockFlag){
-                assert(!locked[_addr]);
-            }
-        }
-        
+    modifier onlyOwner {
+        require(msg.sender == owner);
         _;
     }
 
+    function transferOwnership(address _newOwner) public onlyOwner {
+        newOwner = _newOwner;
+    }
+    function acceptOwnership() public {
+        require(msg.sender == newOwner);
+        emit OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+        newOwner = address(0);
+    }
 }
 
-contract StandardToken is Token,Controlled {
 
-    function transfer(address _to, uint256 _value) public transferAllowed(msg.sender) returns (bool success) {
-        //Default assumes totalSupply can't be over max (2^256 - 1).
-        //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
-        //Replace the if with this one instead.
-        if (balances[msg.sender] >= _value && balances[_to] + _value >= balances[_to]) {
-            balances[msg.sender] -= _value;
-            balances[_to] += _value;
-            emit Transfer(msg.sender, _to, _value);
-            return true;
-        } else { return false; }
+// ----------------------------------------------------------------------------
+// ERC20 Token, with the addition of symbol, name and decimals and a
+// fixed supply
+// ----------------------------------------------------------------------------
+contract SMT is ERC20Interface, Owned {
+    using SafeMath for uint;
+
+    string public symbol;
+    string public  name;
+    uint8 public decimals;
+    uint _totalSupply;
+
+    mapping(address => uint) balances;
+    mapping(address => mapping(address => uint)) allowed;
+
+
+    // ------------------------------------------------------------------------
+    // Constructor
+    // ------------------------------------------------------------------------
+    constructor() public {
+        symbol = "SMT";
+        name = "Smart Media Token";
+        decimals = 18;
+        _totalSupply = 100000000 * 10 ** uint(decimals);
+        balances[owner] = _totalSupply;
+        emit Transfer(address(0), owner, _totalSupply);
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) public transferAllowed(_from) returns (bool success) {
-        //same as above. Replace this line with the following if you want to protect against wrapping uints.
-        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value >= balances[_to]) {
-            balances[_to] += _value;
-            balances[_from] -= _value;
-            allowed[_from][msg.sender] -= _value;
-            emit Transfer(_from, _to, _value);
-            return true;
-        } else { return false; }
+
+    // ------------------------------------------------------------------------
+    // Total supply
+    // ------------------------------------------------------------------------
+    function totalSupply() public view returns (uint) {
+        return _totalSupply.sub(balances[address(0)]);
     }
 
-    function balanceOf(address _owner) public constant returns (uint256 balance) {
-        return balances[_owner];
+
+    // ------------------------------------------------------------------------
+    // Get the token balance for account `tokenOwner`
+    // ------------------------------------------------------------------------
+    function balanceOf(address tokenOwner) public view returns (uint balance) {
+        return balances[tokenOwner];
     }
 
-    function approve(address _spender, uint256 _value) public returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        emit Approval(msg.sender, _spender, _value);
+
+    // ------------------------------------------------------------------------
+    // Transfer the balance from token owner's account to `to` account
+    // - Owner's account must have sufficient balance to transfer
+    // - 0 value transfers are allowed
+    // ------------------------------------------------------------------------
+    function transfer(address to, uint tokens) public returns (bool success) {
+        balances[msg.sender] = balances[msg.sender].sub(tokens);
+        balances[to] = balances[to].add(tokens);
+        emit Transfer(msg.sender, to, tokens);
         return true;
     }
 
-    function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
-      return allowed[_owner][_spender];
+
+    // ------------------------------------------------------------------------
+    // Token owner can approve for `spender` to transferFrom(...) `tokens`
+    // from the token owner's account
+    //
+    // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
+    // recommends that there are no checks for the approval double-spend attack
+    // as this should be implemented in user interfaces
+    // ------------------------------------------------------------------------
+    function approve(address spender, uint tokens) public returns (bool success) {
+        allowed[msg.sender][spender] = tokens;
+        emit Approval(msg.sender, spender, tokens);
+        return true;
     }
 
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
-}
 
-contract SMT is StandardToken {
+    // ------------------------------------------------------------------------
+    // Transfer `tokens` from the `from` account to the `to` account
+    //
+    // The calling account must already have sufficient tokens approve(...)-d
+    // for spending from the `from` account and
+    // - From account must have sufficient balance to transfer
+    // - Spender must have sufficient allowance to transfer
+    // - 0 value transfers are allowed
+    // ------------------------------------------------------------------------
+    function transferFrom(address from, address to, uint tokens) public returns (bool success) {
+        balances[from] = balances[from].sub(tokens);
+        allowed[from][msg.sender] = allowed[from][msg.sender].sub(tokens);
+        balances[to] = balances[to].add(tokens);
+        emit Transfer(from, to, tokens);
+        return true;
+    }
 
-    function () public {
+
+    // ------------------------------------------------------------------------
+    // Returns the amount of tokens approved by the owner that can be
+    // transferred to the spender's account
+    // ------------------------------------------------------------------------
+    function allowance(address tokenOwner, address spender) public view returns (uint remaining) {
+        return allowed[tokenOwner][spender];
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Token owner can approve for `spender` to transferFrom(...) `tokens`
+    // from the token owner's account. The `spender` contract function
+    // `receiveApproval(...)` is then executed
+    // ------------------------------------------------------------------------
+    function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
+        allowed[msg.sender][spender] = tokens;
+        emit Approval(msg.sender, spender, tokens);
+        ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, this, data);
+        return true;
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Don't accept ETH
+    // ------------------------------------------------------------------------
+    function () public payable {
         revert();
     }
 
-    string public name = "SmartMesh Token";                   //fancy name
-    uint8 public decimals = 18;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
-    string public symbol = "SMT";                 //An identifier
-    string public version = 'v0.1';       //SMT 0.1 standard. Just an arbitrary versioning scheme.
-    uint256 public allocateEndTime;
 
-    
-    // The nonce for avoid transfer replay attacks
-    mapping(address => uint256) nonces;
-
-    constructor() public {
-        allocateEndTime = now + 1 days;
-    }
-
-    /*
-     * Proxy transfer SmartMesh token. When some users of the ethereum account has no ether,
-     * he or she can authorize the agent for broadcast transactions, and agents may charge agency fees
-     * @param _from
-     * @param _to
-     * @param _value
-     * @param feeSmt
-     * @param _v
-     * @param _r
-     * @param _s
-     */
-    function transferProxy(address _from, address _to, uint256 _value, uint256 _feeSmt,
-        uint8 _v,bytes32 _r, bytes32 _s) public transferAllowed(_from) returns (bool){
-
-        if(balances[_from] < _feeSmt + _value 
-            || _feeSmt > _feeSmt + _value) revert();
-
-        uint256 nonce = nonces[_from];
-        bytes32 h = keccak256(_from,_to,_value,_feeSmt,nonce,address(this));
-        if(_from != ecrecover(h,_v,_r,_s)) revert();
-
-        if(balances[_to] + _value < balances[_to]
-            || balances[msg.sender] + _feeSmt < balances[msg.sender]) revert();
-        balances[_to] += _value;
-        emit Transfer(_from, _to, _value);
-
-        balances[msg.sender] += _feeSmt;
-        emit Transfer(_from, msg.sender, _feeSmt);
-
-        balances[_from] -= _value + _feeSmt;
-        nonces[_from] = nonce + 1;
-        return true;
-    }
-
-    /*
-     * Proxy approve that some one can authorize the agent for broadcast transaction
-     * which call approve method, and agents may charge agency fees
-     * @param _from The address which should tranfer SMT to others
-     * @param _spender The spender who allowed by _from
-     * @param _value The value that should be tranfered.
-     * @param _v
-     * @param _r
-     * @param _s
-     */
-    function approveProxy(address _from, address _spender, uint256 _value,
-        uint8 _v,bytes32 _r, bytes32 _s) public returns (bool success) {
-
-        uint256 nonce = nonces[_from];
-        bytes32 hash = keccak256(_from,_spender,_value,nonce,address(this));
-        if(_from != ecrecover(hash,_v,_r,_s)) revert();
-        allowed[_from][_spender] = _value;
-        emit Approval(_from, _spender, _value);
-        nonces[_from] = nonce + 1;
-        return true;
-    }
-
-    /*
-     * Get the nonce
-     * @param _addr
-     */
-    function getNonce(address _addr) public constant returns (uint256){
-        return nonces[_addr];
-    }
-
-    // Allocate tokens to the users
-    // @param _owners The owners list of the token
-    // @param _values The value list of the token
-    function allocateTokens(address[] _owners, uint256[] _values) public onlyOwner {
-
-        if(allocateEndTime < now) revert();
-        if(_owners.length != _values.length) revert();
-
-        for(uint256 i = 0; i < _owners.length ; i++){
-            address to = _owners[i];
-            uint256 value = _values[i];
-            if(totalSupply + value <= totalSupply || balances[to] + value <= balances[to]) revert();
-            totalSupply += value;
-            balances[to] += value;
-        }
+    // ------------------------------------------------------------------------
+    // Owner can transfer out any accidentally sent ERC20 tokens
+    // ------------------------------------------------------------------------
+    function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
+        return ERC20Interface(tokenAddress).transfer(owner, tokens);
     }
 }
