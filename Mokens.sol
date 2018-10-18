@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Mokens at 0xb39ccbadfc9343c731e5382fe6a4a85b9e63e7cf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Mokens at 0x44883d86f03f50cd1772472d14ecf17a86e92efb
 */
 pragma solidity 0.4.24;
 pragma experimental "v0.5.0";
@@ -10,7 +10,7 @@ pragma experimental "v0.5.0";
 /******************************************************************************/
 
 /******************************************************************************\
-* Author: Nick Mudge, <nick@mokens.io>
+* Author: Nick Mudge,  <nick@mokens.io>
 * Copyright (c) 2018
 *
 * The Mokens contract is a proxy contract that delegates all functionality
@@ -41,113 +41,12 @@ pragma experimental "v0.5.0";
 *  - MokenEras: Implements moken era functionality.
 *  - QueryMokenData: Implements functions to query info about mokens.
 /******************************************************************************/
-
-///////////////////////////////////////////////////////////////////////////////////
-// All storage variables are declared here
-///////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////
+//Storage Contract
+////////////////////////////////////
 contract Storage0 {
-    ///////////////////////////////////////////////////////////////////////////////////
-    //Storage version 0
-    ///////////////////////////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////////////
-    //Contract Management
-    ///////////////////////////////////////////////////////////////////////////////////
     // funcId => delegate contract
     mapping(bytes4 => address) internal delegates;
-    address internal contractOwner;
-    string[] internal functionSignatures;
-    // signature => index+1
-    mapping(string => uint256) internal functionSignatureToIndex;
-
-
-    ///////////////////////////////////////////////////////////////////////////////////
-    //SupportsInterfaces
-    ///////////////////////////////////////////////////////////////////////////////////
-    mapping(bytes4 => bool) internal supportedInterfaces;
-
-
-    ///////////////////////////////////////////////////////////////////////////////////
-    //RootOwnerOf
-    //ERC721Metadata
-    ///////////////////////////////////////////////////////////////////////////////////
-    struct Moken {
-        string name;
-        uint256 data;
-        uint256 parentTokenId;
-    }
-    //tokenId => moken
-    mapping(uint256 => Moken) internal mokens;
-    uint256 internal mokensLength;
-    // child address => child tokenId => tokenId+1
-    mapping(address => mapping(uint256 => uint256)) internal childTokenOwner;
-
-
-    ///////////////////////////////////////////////////////////////////////////////////
-    //ERC721
-    //ERC721Enumerable
-    ///////////////////////////////////////////////////////////////////////////////////
-    // root token owner address => (tokenId => approved address)
-    mapping(address => mapping(uint256 => address)) internal rootOwnerAndTokenIdToApprovedAddress;
-    // token owner => (operator address => bool)
-    mapping(address => mapping(address => bool)) internal tokenOwnerToOperators;
-    // Mapping from owner to list of owned token IDs
-    mapping(address => uint32[]) internal ownedTokens;
-
-
-    ///////////////////////////////////////////////////////////////////////////////////
-    //ERC998ERC721TopDown
-    ///////////////////////////////////////////////////////////////////////////////////
-    // tokenId => (child address => array of child tokens)
-    mapping(uint256 => mapping(address => uint256[])) internal childTokens;
-    // tokenId => (child address => (child token => child index)
-    mapping(uint256 => mapping(address => mapping(uint256 => uint256))) internal childTokenIndex;
-    // tokenId => (child address => contract index)
-    mapping(uint256 => mapping(address => uint256)) internal childContractIndex;
-    // tokenId => child contract
-    mapping(uint256 => address[]) internal childContracts;
-
-
-    ///////////////////////////////////////////////////////////////////////////////////
-    //ERC998ERC20TopDown
-    ///////////////////////////////////////////////////////////////////////////////////
-    // tokenId => token contract
-    mapping(uint256 => address[]) internal erc20Contracts;
-    // tokenId => (token contract => token contract index)
-    mapping(uint256 => mapping(address => uint256)) erc20ContractIndex;
-    // tokenId => (token contract => balance)
-    mapping(uint256 => mapping(address => uint256)) internal erc20Balances;
-
-
-    ///////////////////////////////////////////////////////////////////////////////////
-    //ERC998ERC721BottomUp
-    ///////////////////////////////////////////////////////////////////////////////////
-    // parent address => (parent tokenId => array of child tokenIds)
-    mapping(address => mapping(uint256 => uint32[])) internal parentToChildTokenIds;
-    // tokenId => position in childTokens array
-    mapping(uint256 => uint256) internal tokenIdToChildTokenIdsIndex;
-
-
-    ///////////////////////////////////////////////////////////////////////////////////
-    //Era
-    ///////////////////////////////////////////////////////////////////////////////////
-    // index => era
-    mapping(uint256 => bytes32) internal eras;
-    uint256 internal eraLength;
-    // era => index+1
-    mapping(bytes32 => uint256) internal eraIndex;
-
-
-    ///////////////////////////////////////////////////////////////////////////////////
-    //Minting
-    ///////////////////////////////////////////////////////////////////////////////////
-    uint256 internal mintPriceOffset; // = 0 szabo;
-    uint256 internal mintStepPrice; // = 500 szabo;
-    uint256 internal mintPriceBuffer; // = 5000 szabo;
-    address[] internal mintContracts;
-    mapping(address => uint256) internal mintContractIndex;
-    //moken name => tokenId+1
-    mapping(string => uint256) internal tokenByName_;
 }
 
 contract Mokens is Storage0 {
@@ -161,7 +60,6 @@ contract Mokens is Storage0 {
             if eq(callSuccess,0) {revert(calldata, size)}
         }
     }
-
     function() external payable {
         address delegate = delegates[msg.sig];
         require(delegate != address(0), "Mokens function does not exist.");
