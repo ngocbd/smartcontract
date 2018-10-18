@@ -1,14 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ADZbuzzCommunityToken at 0x61982c7957f5388871f8b7aac3310a222bbcc2e3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ADZbuzzCommunityToken at 0xc3996ecf58d6881296841781a13b38bb50507611
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
-// 'ACT111765' token contract
+// 'ACT503197' token contract
 //
 // Deployed to : 0x3f70c0B02879c36162C2C902ECfe9Ac0a8a8a187
-// Symbol      : ACT111765
-// Name        : ADZbuzz Thehardtackle.com Community Token
+// Symbol      : ACT503197
+// Name        : ADZbuzz Thebitcoinnews.com Community Token
 // Total supply: 2000000
 // Decimals    : 8
 //
@@ -117,8 +117,8 @@ contract ADZbuzzCommunityToken is ERC20Interface, Owned, SafeMath {
     // Constructor
     // ------------------------------------------------------------------------
     function ADZbuzzCommunityToken() public {
-        symbol = "ACT111765";
-        name = "ADZbuzz Thehardtackle.com Community Token";
+        symbol = "ACT503197";
+        name = "ADZbuzz Thebitcoinnews.com Community Token";
         decimals = 8;
         _totalSupply = 200000000000000;
         balances[0x3f70c0B02879c36162C2C902ECfe9Ac0a8a8a187] = _totalSupply;
