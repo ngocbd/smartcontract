@@ -1,15 +1,17 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenMultiTimeLock at 0x7e1dc755c1a3fe082e2d585da6dc5403d1ab0428
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenMultiTimeLock at 0x0888003242c6d000453c1c638c742ad48ab786b0
 */
 pragma solidity ^0.4.24;
 
 /*
 *
 *
-*    __   ____  _________
-*   / /  / __ \/ ___/ __ \
-*  / /__/ /_/ / (_ / /_/ /
-* /____/\____/\___/\____/
+*
+*    ______  ____________    ______     __
+*   / ___/ |/ /_  __/ __ \  /_  __/__  / /_____ ___
+*  / /__/    / / / / /_/ /   / / / _ \/  '_/ -_) _ \
+*  \___/_/|_/ /_/  \____/   /_/  \___/_/\_\\__/_//_/
+*
 *
 *
 */
@@ -70,10 +72,10 @@ interface ERC20Token {
 
 // the main ERC20-compliant multi-timelock enabled contract
 contract TokenMultiTimeLock is SafeMath, Owned, ERC20Token {
-    string private constant standard = "545028";
-    string private constant version = "alpha";
-    string private _name = "NTEST";
-    string private _symbol = "NTST";
+    string private constant standard = "0.666";
+    string private constant version = "v3.0";
+    string private _name = "CNTO";
+    string private _symbol = "NTO";
     uint8 private _decimals = 18;
     uint256 private _totalSupply = 2 * 10**9 * uint256(10)**_decimals;
     mapping (address => uint256) private balanceP;
