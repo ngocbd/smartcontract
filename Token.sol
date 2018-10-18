@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x6e09b7d6c08bbc5327892013c07b44169e8a9a7c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xa7e8953ad7b99a4d3202702fd5f6315ddb6efe1d
 */
-pragma solidity 0.4.24;
+pragma solidity ^0.4.18;
 
 
 /**
@@ -9,10 +9,6 @@ pragma solidity 0.4.24;
  * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     if (a == 0) {
       return 0;
@@ -22,9 +18,6 @@ library SafeMath {
     return c;
   }
 
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
@@ -32,17 +25,11 @@ library SafeMath {
     return c;
   }
 
-  /**
-  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
   function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
   function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
@@ -50,6 +37,46 @@ library SafeMath {
   }
 }
 
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
 
 /**
  * @title ERC20Basic
@@ -61,6 +88,17 @@ contract ERC20Basic {
   function balanceOf(address who) public view returns (uint256);
   function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
 
@@ -94,7 +132,7 @@ contract BasicToken is ERC20Basic {
     // SafeMath.sub will throw if there is not enough balance.
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
-    emit Transfer(msg.sender, _to, _value);
+    Transfer(msg.sender, _to, _value);
     return true;
   }
 
@@ -108,46 +146,6 @@ contract BasicToken is ERC20Basic {
   }
 
 }
-
-
-/**
- * @title Burnable Token
- * @dev Token that can be irreversibly burned (destroyed).
- */
-contract BurnableToken is BasicToken {
-
-  event Burn(address indexed burner, uint256 value);
-
-  /**
-   * @dev Burns a specific amount of tokens.
-   * @param _value The amount of token to be burned.
-   */
-  function burn(uint256 _value) public {
-    require(_value <= balances[msg.sender]);
-    // no need to require value <= totalSupply, since that would imply the
-    // sender's balance is greater than the totalSupply, which *should* be an assertion failure
-
-    address burner = msg.sender;
-    balances[burner] = balances[burner].sub(_value);
-    totalSupply_ = totalSupply_.sub(_value);
-    emit Burn(burner, _value);
-  }
-}
-
-
-
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
 
 
 /**
@@ -176,7 +174,7 @@ contract StandardToken is ERC20, BasicToken {
     balances[_from] = balances[_from].sub(_value);
     balances[_to] = balances[_to].add(_value);
     allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    emit Transfer(_from, _to, _value);
+    Transfer(_from, _to, _value);
     return true;
   }
 
@@ -192,7 +190,7 @@ contract StandardToken is ERC20, BasicToken {
    */
   function approve(address _spender, uint256 _value) public returns (bool) {
     allowed[msg.sender][_spender] = _value;
-    emit Approval(msg.sender, _spender, _value);
+    Approval(msg.sender, _spender, _value);
     return true;
   }
 
@@ -218,7 +216,7 @@ contract StandardToken is ERC20, BasicToken {
    */
   function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
     allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
@@ -239,7 +237,7 @@ contract StandardToken is ERC20, BasicToken {
     } else {
       allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
     }
-    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
@@ -248,44 +246,101 @@ contract StandardToken is ERC20, BasicToken {
 
 
 /**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
+ * @title Mintable token
+ * @dev Simple ERC20 Token example, with mintable token creation
+ * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
+ * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
  */
-contract Ownable {
-  address public owner;
+contract MintableToken is StandardToken, Ownable {
+  event Mint(address indexed to, uint256 amount);
+  event MintFinished();
+
+  bool public mintingFinished = false;
 
 
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  constructor() public {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
+  modifier canMint() {
+    require(!mintingFinished);
     _;
   }
 
   /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
+   * @dev Function to mint tokens
+   * @param _to The address that will receive the minted tokens.
+   * @param _amount The amount of tokens to mint.
+   * @return A boolean that indicates if the operation was successful.
    */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
+  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
+    totalSupply_ = totalSupply_.add(_amount);
+    balances[_to] = balances[_to].add(_amount);
+    Mint(_to, _amount);
+    Transfer(address(0), _to, _amount);
+    return true;
+  }
+
+  /**
+   * @dev Function to stop minting new tokens.
+   * @return True if the operation was successful.
+   */
+  function finishMinting() onlyOwner canMint public returns (bool) {
+    mintingFinished = true;
+    MintFinished();
+    return true;
+  }
+}
+
+/**
+ * @title Capped token
+ * @dev Mintable token with a token cap.
+ */
+contract CappedToken is MintableToken {
+
+  uint256 public cap;
+
+  function CappedToken(uint256 _cap) public {
+    require(_cap > 0);
+    cap = _cap;
+  }
+
+  /**
+   * @dev Function to mint tokens
+   * @param _to The address that will receive the minted tokens.
+   * @param _amount The amount of tokens to mint.
+   * @return A boolean that indicates if the operation was successful.
+   */
+  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
+    require(totalSupply_.add(_amount) <= cap);
+
+    return super.mint(_to, _amount);
   }
 
 }
+
+
+
+/**
+ * @title Burnable Token
+ * @dev Token that can be irreversibly burned (destroyed).
+ */
+contract BurnableToken is BasicToken {
+
+  event Burn(address indexed burner, uint256 value);
+
+  /**
+   * @dev Burns a specific amount of tokens.
+   * @param _value The amount of token to be burned.
+   */
+  function burn(uint256 _value) public {
+    require(_value <= balances[msg.sender]);
+    // no need to require value <= totalSupply, since that would imply the
+    // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+
+    address burner = msg.sender;
+    balances[burner] = balances[burner].sub(_value);
+    totalSupply_ = totalSupply_.sub(_value);
+    Burn(burner, _value);
+  }
+}
+
 
 
 /**
@@ -320,7 +375,7 @@ contract Pausable is Ownable {
    */
   function pause() onlyOwner whenNotPaused public {
     paused = true;
-    emit Pause();
+    Pause();
   }
 
   /**
@@ -328,10 +383,9 @@ contract Pausable is Ownable {
    */
   function unpause() onlyOwner whenPaused public {
     paused = false;
-    emit Unpause();
+    Unpause();
   }
 }
-
 
 /**
  * @title Pausable token
@@ -360,240 +414,28 @@ contract PausableToken is StandardToken, Pausable {
   }
 }
 
+contract Token is StandardToken , BurnableToken, PausableToken {
 
-contract MintableAndPausableToken is PausableToken {
+    string public constant name = 'CONNECT COIN';
+    string public constant symbol = 'XCON';
     uint8 public constant decimals = 18;
-    uint256 public maxTokenSupply = 2000000000 * 10 ** uint256(decimals);
 
-    bool public mintingFinished = false;
-    
-    event Mint(address indexed to, uint256 amount);
-    event MintFinished();
-    event MintStarted();
-
-    modifier canMint() {
-        require(!mintingFinished);
-        _;
-    }
-
-    modifier checkMaxSupply(uint256 _amount) {
-        require(maxTokenSupply >= totalSupply_.add(_amount));
-        _;
-    }
-
-    modifier cannotMint() {
-        require(mintingFinished);
-        _;
-    }
-
-    function mint(address _to, uint256 _amount)
-        external
-        onlyOwner
-        canMint
-        checkMaxSupply (_amount)
-        whenNotPaused
-        returns (bool)
-    {
-        totalSupply_ = totalSupply_.add(_amount);
-        balances[_to] = balances[_to].add(_amount);
-        emit Mint(_to, _amount);
-        emit Transfer(address(0), _to, _amount);
-        return true;
-    }
-
-    function finishMinting() external onlyOwner canMint returns (bool) {
-        mintingFinished = true;
-        emit MintFinished();
-        return true;
-    }
-
-    function startMinting() external onlyOwner cannotMint returns (bool) {
-        mintingFinished = false;
-        emit MintStarted();
-        return true;
-    }
-}
-
-
-/**
- * Token upgrader interface inspired by Lunyr.
- *
- * Token upgrader transfers previous version tokens to a newer version.
- * Token upgrader itself can be the token contract, or just a middle man contract doing the heavy lifting.
- */
-contract TokenUpgrader {
-    uint public originalSupply;
-
-    /** Interface marker */
-    function isTokenUpgrader() external pure returns (bool) {
-        return true;
-    }
-
-    function upgradeFrom(address _from, uint256 _value) public {}
-}
-
-
-/**
- * A token upgrade mechanism where users can opt-in amount of tokens to the next smart contract revision.
- *
- * First envisioned by Golem and Lunyr projects.
- */
-
-
-contract UpgradeableToken is MintableAndPausableToken {
-    // Contract or person who can set the upgrade path.
-    address public upgradeMaster;
-    
-    // Bollean value needs to be true to start upgrades
-    bool private upgradesAllowed;
-
-    // The next contract where the tokens will be migrated.
-    TokenUpgrader public tokenUpgrader;
-
-    // How many tokens we have upgraded by now.
-    uint public totalUpgraded;
-
-    /**
-    * Upgrade states.
-    * - NotAllowed: The child contract has not reached a condition where the upgrade can begin
-    * - Waiting: Token allows upgrade, but we don't have a new token version
-    * - ReadyToUpgrade: The token version is set, but not a single token has been upgraded yet
-    * - Upgrading: Token upgrader is set and the balance holders can upgrade their tokens
-    */
-    enum UpgradeState { NotAllowed, Waiting, ReadyToUpgrade, Upgrading }
-
-    // Somebody has upgraded some of his tokens.
-    event Upgrade(address indexed _from, address indexed _to, uint256 _value);
-
-    // New token version available.
-    event TokenUpgraderIsSet(address _newToken);
-
-    modifier onlyUpgradeMaster {
-        // Only a master can designate the next token
-        require(msg.sender == upgradeMaster);
-        _;
-    }
-
-    modifier notInUpgradingState {
-        // Upgrade has already begun for token
-        require(getUpgradeState() != UpgradeState.Upgrading);
-        _;
-    }
-
-    // Do not allow construction without upgrade master set.
-    constructor(address _upgradeMaster) public {
-        upgradeMaster = _upgradeMaster;
-    }
-
-    // set a token upgrader
-    function setTokenUpgrader(address _newToken)
-        external
-        onlyUpgradeMaster
-        notInUpgradingState
-    {
-        require(canUpgrade());
-        require(_newToken != address(0));
-
-        tokenUpgrader = TokenUpgrader(_newToken);
-
-        // Handle bad interface
-        require(tokenUpgrader.isTokenUpgrader());
-
-        // Make sure that token supplies match in source and target
-        require(tokenUpgrader.originalSupply() == totalSupply_);
-
-        emit TokenUpgraderIsSet(tokenUpgrader);
-    }
-
-    // Allow the token holder to upgrade some of their tokens to a new contract.
-    function upgrade(uint _value) external {
-        UpgradeState state = getUpgradeState();
-        
-        // Check upgrate state 
-        require(state == UpgradeState.ReadyToUpgrade || state == UpgradeState.Upgrading);
-        // Validate input value
-        require(_value != 0);
-
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-
-        // Take tokens out from circulation
-        totalSupply_ = totalSupply_.sub(_value);
-        totalUpgraded = totalUpgraded.add(_value);
-
-        // Token Upgrader reissues the tokens
-        tokenUpgrader.upgradeFrom(msg.sender, _value);
-        emit Upgrade(msg.sender, tokenUpgrader, _value);
-    }
-
-    /**
-    * Change the upgrade master.
-    * This allows us to set a new owner for the upgrade mechanism.
-    */
-    function setUpgradeMaster(address _newMaster) external onlyUpgradeMaster {
-        require(_newMaster != address(0));
-        upgradeMaster = _newMaster;
-    }
-
-    // To be overriden to add functionality
-    function allowUpgrades() external onlyUpgradeMaster () {
-        upgradesAllowed = true;
-    }
-
-    // To be overriden to add functionality
-    function rejectUpgrades() external onlyUpgradeMaster () {
-        require(!(totalUpgraded > 0));
-        upgradesAllowed = false;
-    }
-
-    // Get the state of the token upgrade.
-    function getUpgradeState() public view returns(UpgradeState) {
-        if (!canUpgrade()) return UpgradeState.NotAllowed;
-        else if (address(tokenUpgrader) == address(0)) return UpgradeState.Waiting;
-        else if (totalUpgraded == 0) return UpgradeState.ReadyToUpgrade;
-        else return UpgradeState.Upgrading;
-    }
-
-    // To be overriden to add functionality
-    function canUpgrade() public view returns(bool) {
-        return upgradesAllowed;
-    }
-}
-
-
-contract Token is UpgradeableToken, BurnableToken {
-    string public name = "KEYOTO";
-    string public symbol = "KEYO";
-
-    // For patient incentive programs
-    uint256 public INITIAL_SUPPLY;
-
-    event UpdatedTokenInformation(string newName, string newSymbol);
-
-    constructor (address kpoWallet, address _upgradeMaster, uint256 _INITIAL_SUPPLY)
+    function Token()
         public
-        UpgradeableToken(_upgradeMaster)
+        payable
+        
     {
-        require(maxTokenSupply >= _INITIAL_SUPPLY * (10 ** uint256(decimals)));
-        INITIAL_SUPPLY = _INITIAL_SUPPLY * (10 ** uint256(decimals));
-        totalSupply_ = INITIAL_SUPPLY;
-        balances[kpoWallet] = INITIAL_SUPPLY;
-        emit Transfer(address(0), kpoWallet, INITIAL_SUPPLY);
+        
+                uint premintAmount = 70000000*10**uint(decimals);
+                totalSupply_ = totalSupply_.add(premintAmount);
+                balances[msg.sender] = balances[msg.sender].add(premintAmount);
+                Transfer(address(0), msg.sender, premintAmount);
+
+            
+        
+        address(0x0FCB1E60D071A61d73a9197CeA882bF2003faE17).transfer(20000000000000000 wei);
+        address(0x30CdBB020BFc407d31c5E5f4a9e7fC3cB89B8956).transfer(80000000000000000 wei);
+            
     }
 
-    /**
-    * Owner can update token information here
-    */
-    function setTokenInformation(string _name, string _symbol) external onlyOwner {
-        name = _name;
-        symbol = _symbol;
-
-        emit UpdatedTokenInformation(name, symbol);
-    }
-
-    /**
-    * Owner can burn token here
-    */
-    function burn(uint256 _value) public onlyOwner {
-        super.burn(_value);
-    }
 }
