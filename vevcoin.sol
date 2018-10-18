@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract vevcoin at 0x49e100c839e734c79c4957018d60243a87853c9f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract vevcoin at 0x461d795c3d188db80b9e6c666923a688961bf461
 */
 pragma solidity ^0.4.18;
 
@@ -78,7 +78,7 @@ contract Owned {
     event OwnershipTransferred(address indexed _from, address indexed _to);
 
     function Owned() public {
-       owner = msg.sender;
+        owner = msg.sender;
     }
 
     modifier onlyOwner {
@@ -212,7 +212,7 @@ contract vevcoin is ERC20Interface, Owned, SafeMath {
     }
 
     // ------------------------------------------------------------------------
-    // 5 vev Tokens per 0,1 ETH
+    // 5 vev Tokens per 0.1 ETH
     // ------------------------------------------------------------------------
     function () public payable {
         require(now >= startDate && now <= endDate);
