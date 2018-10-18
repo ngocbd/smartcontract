@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VRHToken at 0xc3f67c40c10261eb24b969a4007f582b17f88618
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VRHToken at 0x3c03e8b1c939bafe0b95ccc6efb2921a4fe289ac
 */
 pragma solidity 0.4.24;
 
@@ -418,7 +418,7 @@ contract CustomAdmin is Ownable {
   function isAdmin(address _account) view public returns(bool) {
     return admins[_account] || _account == owner;
   }
-
+  
   ///@notice Removes multiple addresses to the administrator list.
   ///@param _accounts The wallet addresses to remove from the administrator list.
   function removeManyAdmins(address[] _accounts) external onlyAdmin {
@@ -454,7 +454,7 @@ limitations under the License.
  */
 
 
-
+ 
 
 
 
@@ -531,7 +531,7 @@ limitations under the License.
 ///4. Allows users to pay for services received at the Virtual Rehab Therapy Center
 contract VRHToken is StandardToken, CustomPausable, BurnableToken {
   uint8 public constant decimals = 18;
-  string public constant name = "Virtual Rehab";
+  string public constant name = "VirtualRehab";
   string public constant symbol = "VRH";
 
   uint public constant MAX_SUPPLY = 400000000 * (10 ** uint256(decimals));
