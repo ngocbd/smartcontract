@@ -1,52 +1,73 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KulapDex at 0x3f7a7fe9b5304042d179deadf2521ea12d97a5c7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KulapDex at 0xcee7eea7e58434997a59049f7da4d0ad46f1f141
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.24;
+
 
 /**
- * Math operations with safety checks
+ * @title SafeMath
+ * @dev Math operations with safety checks that revert on error
  */
 library SafeMath {
-  function mul(uint a, uint b) pure internal returns (uint) {
-    uint c = a * b;
-    assert(a == 0 || c / a == b);
+
+  /**
+  * @dev Multiplies two numbers, reverts on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    // Gas optimization: this is cheaper than requiring 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+    if (a == 0) {
+      return 0;
+    }
+
+    uint256 c = a * b;
+    require(c / a == b);
+
     return c;
   }
 
-  function div(uint a, uint b) pure internal returns (uint) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint c = a / b;
+  /**
+  * @dev Integer division of two numbers truncating the quotient, reverts on division by zero.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    require(b > 0); // Solidity only automatically asserts when dividing by 0
+    uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+
     return c;
   }
 
-  function sub(uint a, uint b) pure internal returns (uint) {
-    assert(b <= a);
-    return a - b;
-  }
+  /**
+  * @dev Subtracts two numbers, reverts on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    require(b <= a);
+    uint256 c = a - b;
 
-  function add(uint a, uint b) pure internal returns (uint) {
-    uint c = a + b;
-    assert(c >= a);
     return c;
   }
 
-  function max64(uint64 a, uint64 b) pure internal returns (uint64) {
-    return a >= b ? a : b;
+  /**
+  * @dev Adds two numbers, reverts on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    require(c >= a);
+
+    return c;
   }
 
-  function min64(uint64 a, uint64 b) pure internal returns (uint64) {
-    return a < b ? a : b;
-  }
-
-  function max256(uint256 a, uint256 b) pure internal returns (uint256) {
-    return a >= b ? a : b;
-  }
-
-  function min256(uint256 a, uint256 b) pure internal returns (uint256) {
-    return a < b ? a : b;
+  /**
+  * @dev Divides two numbers and returns the remainder (unsigned integer modulo),
+  * reverts when dividing by zero.
+  */
+  function mod(uint256 a, uint256 b) internal pure returns (uint256) {
+    require(b != 0);
+    return a % b;
   }
 }
+
 
 /**
  * @title Ownable
@@ -87,6 +108,7 @@ contract Ownable {
 
 }
 
+
 /**
  * @title ERC20
  * @dev The ERC20 interface has an standard functions and event
@@ -103,6 +125,7 @@ interface ERC20 {
     event Approval(address indexed _owner, address indexed _spender, uint _value);
 }
 
+
 /**
  * @title KULAP Trading Proxy
  * @dev The KULAP trading proxy interface has an standard functions and event
@@ -115,7 +138,7 @@ interface KULAPTradingProxy {
     /// @param srcAmount amount of source tokens
     /// @param dest   Destination token
     /// @return amount of actual destination tokens
-    event Trade( ERC20 src, uint srcAmount, ERC20 dest, uint destAmount);
+    event Trade( ERC20 src, uint256 srcAmount, ERC20 dest, uint256 destAmount);
 
     /// @notice use token address ETH_TOKEN_ADDRESS for ether
     /// @dev makes a trade between src and dest token and send dest token to destAddress
@@ -126,11 +149,11 @@ interface KULAPTradingProxy {
     function trade(
         ERC20 src,
         ERC20 dest,
-        uint srcAmount
+        uint256 srcAmount
     )
         external
         payable
-        returns(uint);
+        returns(uint256);
     
     /// @dev provite current rate between source and destination token 
     ///      for given source amount
@@ -141,11 +164,11 @@ interface KULAPTradingProxy {
     function rate(
         ERC20 src, 
         ERC20 dest, 
-        uint srcAmount
+        uint256 srcAmount
     ) 
         external 
         view 
-        returns(uint, uint);
+        returns(uint256, uint256);
 }
 
 contract KulapDex is Ownable {
@@ -199,8 +222,8 @@ contract KulapDex is Ownable {
     }
 
     function _tradeTokenToEther(
-        uint256 tradingProxyIndex, 
-        ERC20 src, 
+        uint256 tradingProxyIndex,
+        ERC20 src,
         uint256 srcAmount
         ) 
         private 
@@ -215,6 +238,30 @@ contract KulapDex is Ownable {
         uint256 destAmount = tradingProxy.trade(
             src, 
             etherERC20,
+            srcAmount
+        );
+        
+        return destAmount;
+    }
+
+    function _tradeTokenToToken(
+        uint256 tradingProxyIndex,
+        ERC20 src,
+        uint256 srcAmount,
+        ERC20 dest
+        ) 
+        private 
+        returns(uint256)  {
+        // Load trading proxy
+        KULAPTradingProxy tradingProxy = tradingProxies[tradingProxyIndex];
+
+        // Approve to TradingProxy
+        src.approve(tradingProxy, srcAmount);
+
+        // Trande to proxy
+        uint256 destAmount = tradingProxy.trade(
+            src, 
+            dest,
             srcAmount
         );
         
@@ -261,27 +308,26 @@ contract KulapDex is Ownable {
             destAmount = _tradeTokenToEther(_tradingProxyIndex, _src, _srcAmount);
 
         // Trade Token -> Token
-        // For token -> token use tradeRoutes instead
         } else {
-            revert();
+            destAmount = _tradeTokenToToken(_tradingProxyIndex, _src, _srcAmount, _dest);
         }
 
         // Recheck if src/dest amount correct
         // Source
         if (etherERC20 == _src) {
-            assert(address(this).balance == srcAmountBefore.sub(_srcAmount));
+            require(address(this).balance == srcAmountBefore.sub(_srcAmount), "source amount mismatch after trade");
         } else {
-            assert(_src.balanceOf(this) == srcAmountBefore.sub(_srcAmount));
+            require(_src.balanceOf(this) == srcAmountBefore.sub(_srcAmount), "source amount mismatch after trade");
         }
         // Dest
         if (etherERC20 == _dest) {
-            assert(address(this).balance == destAmountBefore.add(destAmount));
+            require(address(this).balance == destAmountBefore.add(destAmount), "destination amount mismatch after trade");
         } else {
-            assert(_dest.balanceOf(this) == destAmountBefore.add(destAmount));
+            require(_dest.balanceOf(this) == destAmountBefore.add(destAmount), "destination amount mismatch after trade");
         }
 
         // Throw exception if destination amount doesn't meet user requirement.
-        assert(destAmount >= _minDestAmount);
+        require(destAmount >= _minDestAmount, "destination amount is too low.");
 
         return destAmount;
     }
@@ -294,39 +340,32 @@ contract KulapDex is Ownable {
     function trade(uint256 tradingProxyIndex, ERC20 src, uint256 srcAmount, ERC20 dest, uint256 minDestAmount) payable public returns(uint256)  {
         uint256 destAmount;
 
-        // Trade ETH -> Token
-        if (etherERC20 == src) {
-            destAmount = _trade(tradingProxyIndex, src, srcAmount, dest, 1);
-
-            // Throw exception if destination amount doesn't meet user requirement.
-            assert(destAmount >= minDestAmount);
-
-            // Send back token to sender
-            // Some ERC20 Smart contract not return Bool, so we can't check here
-            // require(dest.transfer(msg.sender, destAmount));
-            dest.transfer(msg.sender, destAmount);
-        
-        // Trade Token -> ETH
-        } else if (etherERC20 == dest) {
+        // Prepare source's asset
+        if (etherERC20 != src) {
             // Transfer token to This address
             src.transferFrom(msg.sender, address(this), srcAmount);
+        }
 
-            destAmount = _trade(tradingProxyIndex, src, srcAmount, dest, 1);
+        // Trade with proxy
+        destAmount = _trade(tradingProxyIndex, src, srcAmount, dest, 1);
 
-            // Throw exception if destination amount doesn't meet user requirement.
-            assert(destAmount >= minDestAmount);
+        // Throw exception if destination amount doesn't meet user requirement.
+        require(destAmount >= minDestAmount, "destination amount is too low.");
 
+        // Send back ether to sender
+        if (etherERC20 == dest) {
             // Send back ether to sender
             // Throws on failure
             msg.sender.transfer(destAmount);
-
-        // Trade Token -> Token
-        // For token -> token use tradeRoutes instead
+        
+        // Send back token to sender
         } else {
-            revert();
+            // Some ERC20 Smart contract not return Bool, so we can't check here
+            // require(dest.transfer(msg.sender, destAmount));
+            dest.transfer(msg.sender, destAmount);
         }
 
-        emit Trade( src, srcAmount, dest, destAmount, msg.sender, 0);
+        emit Trade(src, srcAmount, dest, destAmount, msg.sender, 0);
         
 
         return destAmount;
@@ -341,7 +380,14 @@ contract KulapDex is Ownable {
     // Step1: trade 50 OMG -> ETH
     // Step2: trade xx ETH -> DAI
     // "0x5b9a857e0C3F2acc5b94f6693536d3Adf5D6e6Be", "30000000000000000000", "0x45ad02b30930cad22ff7921c111d22943c6c822f", "1", ["0x0000000000000000000000000000000000000000", "0x5b9a857e0C3F2acc5b94f6693536d3Adf5D6e6Be", "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "0x0000000000000000000000000000000000000001", "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "0x45ad02b30930cad22ff7921c111d22943c6c822f"]
-    function tradeRoutes(ERC20 src, uint256 srcAmount, ERC20 dest, uint256 minDestAmount, address[] _tradingPaths) payable public returns(uint256)  {
+    function tradeRoutes(
+        ERC20 src,
+        uint256 srcAmount,
+        ERC20 dest,
+        uint256 minDestAmount,
+        address[] _tradingPaths)
+
+        public payable returns(uint256)  {
         uint256 destAmount;
 
         if (etherERC20 != src) {
@@ -350,7 +396,7 @@ contract KulapDex is Ownable {
         }
 
         uint256 pathSrcAmount = srcAmount;
-        for (uint i=0; i < _tradingPaths.length; i+=3) {
+        for (uint i = 0; i < _tradingPaths.length; i += 3) {
             uint256 tradingProxyIndex =         uint256(_tradingPaths[i]);
             ERC20 pathSrc =                     ERC20(_tradingPaths[i+1]);
             ERC20 pathDest =                    ERC20(_tradingPaths[i+2]);
@@ -360,7 +406,7 @@ contract KulapDex is Ownable {
         }
 
         // Throw exception if destination amount doesn't meet user requirement.
-        assert(destAmount >= minDestAmount);
+        require(destAmount >= minDestAmount, "destination amount is too low.");
 
         // Trade Any -> ETH
         if (etherERC20 == dest) {
@@ -376,7 +422,7 @@ contract KulapDex is Ownable {
             dest.transfer(msg.sender, destAmount);
         }
 
-        emit Trade( src, srcAmount, dest, destAmount, msg.sender, 0);
+        emit Trade(src, srcAmount, dest, destAmount, msg.sender, 0);
 
         return destAmount;
     }
@@ -404,7 +450,7 @@ contract KulapDex is Ownable {
         KULAPTradingProxy _proxyAddress
     ) public onlyOwner returns (uint256) {
 
-        tradingProxies.push( _proxyAddress );
+        tradingProxies.push(_proxyAddress);
 
         return tradingProxies.length;
     }
