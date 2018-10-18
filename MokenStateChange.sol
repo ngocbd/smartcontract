@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MokenStateChange at 0x73c72e72523ebb751b9bbb737f9ad75f85481d59
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MokenStateChange at 0x88709acee2a7d5ad8281d76c2d944eda1ee05063
 */
 pragma solidity 0.4.24;
 /******************************************************************************\
@@ -102,22 +102,25 @@ contract MokenStateChange is Storage6 {
     uint256 constant MOKEN_LINK_HASH_MASK = 0xffffffffffffffff000000000000000000000000000000000000000000000000;
 
     function getStateHash(uint256 _tokenId) public view returns (bytes32 stateHash) {
+        uint256 linkHash = mokens[_tokenId].data & MOKEN_LINK_HASH_MASK;
+        stateHash = keccak256(stateHash, linkHash);
         address[] memory childContracts_ = childContracts[_tokenId];
-        stateHash = keccak256(childContracts_);
         uint256 length = childContracts_.length;
         uint256 i;
-        for (i = 0; i < length; i++) {
-            stateHash = keccak256(stateHash, childTokens[_tokenId][childContracts_[i]]);
+        if(length > 0) {
+            stateHash = keccak256(stateHash, childContracts_);
+            for (i = 0; i < length; i++) {
+                stateHash = keccak256(stateHash, childTokens[_tokenId][childContracts_[i]]);
+            }
         }
-
         address[] memory erc20Contracts_ = erc20Contracts[_tokenId];
-        stateHash = keccak256(erc20Contracts_);
         length = erc20Contracts_.length;
-        for (i = 0; i < length; i++) {
-            stateHash = keccak256(stateHash, erc20Balances[_tokenId][erc20Contracts_[i]]);
+        if(length > 0) {
+            stateHash = keccak256(stateHash, erc20Contracts_);
+            for (i = 0; i < length; i++) {
+                stateHash = keccak256(stateHash, erc20Balances[_tokenId][erc20Contracts_[i]]);
+            }
         }
-
-        uint256 linkHash = mokens[_tokenId].data & MOKEN_LINK_HASH_MASK;
-        return keccak256(stateHash, linkHash);
+        return stateHash;
     }
 }
