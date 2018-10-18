@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Coin at 0x20e3f40009206779a791c55929b4988231261500
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Coin at 0xaff84e86d72edb971341a6a66eb2da209446fa14
 */
 pragma solidity ^0.4.4;
 
@@ -7,7 +7,6 @@ pragma solidity ^0.4.4;
  * @title ERC20 interface
  * see https://github.com/ethereum/EIPs/issues/20
  */
-
 contract ERC20 {
 
   uint public totalSupply;
@@ -201,7 +200,7 @@ contract StandardToken is ERC20, SafeMathLib {
  * First envisioned by Golem and Lunyr projects.
  * Taken and inspired from https://tokenmarket.net
  */
-contract CMBUpgradeableToken is StandardToken {
+contract TCAUpgradeableToken is StandardToken {
 
   /** Contract / person who can set the upgrade path. This can be the same as team multisig wallet, as what it is with its default value. */
   address public upgradeMaster;
@@ -236,7 +235,7 @@ contract CMBUpgradeableToken is StandardToken {
   /**
    * Do not allow construction without upgrade master set.
    */
-  function CMBUpgradeableToken(address _upgradeMaster) {
+  function TCAUpgradeableToken(address _upgradeMaster) {
     upgradeMaster = _upgradeMaster;
   }
 
@@ -397,41 +396,37 @@ contract ReleasableToken is ERC20, Ownable {
 }
 
 
-contract Coin is CMBUpgradeableToken, ReleasableToken {
+contract Coin is TCAUpgradeableToken, ReleasableToken {
 
   event UpdatedTokenInformation(string newName, string newSymbol);
 
   /* name of the token */
-  string public name = "Creatanium";
+  string public name = "TheCurrencyAnalytics";
 
   /* symbol of the token */
-  string public symbol = "CMB";
+  string public symbol = "TCAT";
 
   /* token decimals to handle fractions */
   uint public decimals = 18;
 
-/* initial token supply */
-  uint public totalSupply = 2000000000 * (10 ** decimals);
-  uint public onSaleTokens = 30000000 * (10 ** decimals);
-
-  uint256 pricePerToken = 295898260100000; //1 Eth = 276014352700000 CMB (0.2 USD = 1 CMB)
-
-
-  uint minETH = 0 * 10**decimals;
-  uint maxETH = 500 * 10**decimals; 
-
-
   //Crowdsale running
   bool public isCrowdsaleOpen=false;
-  
+
+  /* initial token supply */
+  uint public totalSupply = 400000000 * (10 ** decimals);
+  uint public onSaleTokens = 200000000 * (10 ** decimals);
+
 
   uint tokensForPublicSale = 0;
 
   address contractAddress;
 
-  
+  uint256 pricePerToken = 2860; //1 Eth = 2860 TCAT
 
-  function Coin() CMBUpgradeableToken(msg.sender) {
+  uint minETH = 0 * 10**decimals; // 0 ether
+  uint maxETH = 15 * 10**decimals; // 15 ether
+
+  function Coin() TCAUpgradeableToken(msg.sender) {
 
     owner = msg.sender;
     contractAddress = address(this);
@@ -466,7 +461,7 @@ contract Coin is CMBUpgradeableToken, ReleasableToken {
 
 
 
-  /* A dispense feature to allocate some addresses with CMB tokens
+  /* A dispense feature to allocate some addresses with TCA tokens
   * calculation done using token count
   *  Can be called only by owner
   */
@@ -496,7 +491,7 @@ contract Coin is CMBUpgradeableToken, ReleasableToken {
     tokensForPublicSale = _tokensForPublicSale;
     isCrowdsaleOpen=_crowdsaleStatus;
     require(_min >= 0);
-    require(_max > _min+1);
+    require(_max > 0);
     minETH = _min;
     maxETH = _max;
  }
@@ -507,9 +502,23 @@ contract Coin is CMBUpgradeableToken, ReleasableToken {
       tokensForPublicSale = _value;
   }
 
+ function increaseSupply(uint value) onlyOwner returns (bool) {
+  totalSupply = safeAdd(totalSupply, value);
+  balances[contractAddress] = safeAdd(balances[contractAddress], value);
+  Transfer(0x0, contractAddress, value);
+  return true;
+}
+
+function decreaseSupply(uint value) onlyOwner returns (bool) {
+  balances[contractAddress] = safeSub(balances[contractAddress], value);
+  totalSupply = safeSub(totalSupply, value);
+  Transfer(contractAddress, 0x0, value);
+  return true;
+}
+
   function setMinAndMaxEthersForPublicSale(uint _min, uint _max) onlyOwner{
       require(_min >= 0);
-      require(_max > _min+1);
+      require(_max > 0);
       minETH = _min;
       maxETH = _max;
   }
@@ -538,7 +547,9 @@ contract Coin is CMBUpgradeableToken, ReleasableToken {
     require(weiAmount >= minETH);
     require(weiAmount <= maxETH);
 
-    _tokenAmount =  safeMul(weiAmount,multiplier) / pricePerToken;
+    // _tokenAmount =  safeMul(weiAmount,multiplier) / pricePerToken;
+    
+    _tokenAmount = safeMul(weiAmount,pricePerToken);
 
     require(_tokenAmount > 0);
 
