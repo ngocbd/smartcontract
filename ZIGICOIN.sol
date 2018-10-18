@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZIGICOIN at 0x46dfa187005ffca98105b8fe93532ac0d03a6692
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zigicoin at 0x3ddeac1e7bd314a86d1510d7b11b47d16701939e
 */
 pragma solidity ^0.4.4;
 
@@ -10,6 +10,8 @@ contract Token {
 
     /// @param _owner The address from which the balance will be retrieved
     /// @return The balance
+    
+    
     function balanceOf(address _owner) constant returns (uint256 balance) {}
 
     /// @notice send `_value` token to `_to` from `msg.sender`
@@ -87,16 +89,12 @@ contract StandardToken is Token {
     uint256 public totalSupply;
 }
 
-contract ZIGICOIN is StandardToken { // CHANGE THIS. Update the contract name.
+contract Zigicoin is StandardToken { // CHANGE THIS. Update the contract name.
 
     /* Public variables of the token */
 
     /*
-    NOTE:*************************ZIGICOIN   *****************************
-    ********ZIGICOIN    **************ZIGICOIN    *****
-********ZIGICOIN   **************ZIGICOIN   *************ZIGICOIN  **************ZIGICOIN  ****
-    ********ZIGICOIN   **************ZIGICOIN  *************ZIGICOIN  **************ZIGICOIN   *****
-*************ZIGICOIN   ****************ZIGICOIN    
+    NOTE    
    */
     string public name;                   // Token 
     uint8 public decimals;                // How many decimals to show. To be standard complicant keep it 18
@@ -106,18 +104,18 @@ contract ZIGICOIN is StandardToken { // CHANGE THIS. Update the contract name.
     uint256 public totalEthInWei;         // WEI is the smallest unit of ETH (the equivalent of cent in USD or satoshi in BTC). We'll store the total ETH raised via our ICO here.  
     address  fundsWallet;           // Where should the raised ETH go?
 
-    // This is a constructor function 
+     // This is a constructor function 
     // which means the following function name has to match the contract name declared above
-    function EarthMedz() {
-        balances[msg.sender] =  10000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
-        totalSupply = 10000000000000000000;                        // Update total supply (1000 for example) (ZIGICOIN )
-        name = "ZIGICOIN";                                   // Set the name for display purposes (ZIGICOIN  )
-        decimals = 9;                                               // Amount of decimals for display purposes (ZIGICOIN )
-        symbol = "ZIGI";                                             // Set the symbol for display purposes (ZIGICOIN  )
-                                              // Set the price of your token for the ICO (ZIGICOIN  )
-        fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
+    function Zigicoin() {
+        balances[msg.sender] = 1000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
+        totalSupply = 1000000000000000000;                        // Update total supply (1000 for example) 
+        name = "Zigicoin";                                   // Set the name for display purposes 
+        decimals = 8;                                               // Amount of decimals for display purposes 
+        symbol = "zigi";                                             // Set the symbol for display purposes 
+                                              // Set the price of your token for the ICO 
+        fundsWallet = msg.sender;                                    // The owner of the contract gets ETH 
     }
-                                
+                             
 
 /* Approves and then calls the receiving contract */
     function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
