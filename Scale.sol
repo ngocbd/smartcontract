@@ -1,23 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Scale at 0x92bc46890929b9f6d27e1882d13852801ef8a8cd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Scale at 0xa82b0ee3daeac02a5f63df48db34bd474c5f8af7
 */
 pragma solidity ^0.4.24;
-
-/**************************************************************
- * @title Scale Token Contract
- * @file Scale.sol
- * @author Jared Downing and Kane Thomas of the Scale Network
- * @version 1.0
- *
- * @section DESCRIPTION
- *
- * This is an ERC20-based token with staking and inflationary functionality.
- *
- *************************************************************/
-
-//////////////////////////////////
-/// OpenZeppelin library imports
-//////////////////////////////////
 
 /**
  * @title ERC20Basic
@@ -72,6 +56,22 @@ contract Ownable {
   }
 
 }
+
+/**************************************************************
+ * @title Scale Token Contract
+ * @file Scale.sol
+ * @author Jared Downing and Kane Thomas of the Scale Network
+ * @version 1.0
+ *
+ * @section DESCRIPTION
+ *
+ * This is an ERC20-based token with staking and inflationary functionality.
+ *
+ *************************************************************/
+
+//////////////////////////////////
+/// OpenZeppelin library imports
+//////////////////////////////////
 
 /**
  * @title SafeMath
@@ -311,11 +311,40 @@ contract HasNoEther is Ownable {
   }
 }
 
+
+/**
+ * @title Burnable Token
+ * @dev Token that can be irreversibly burned (destroyed).
+ */
+contract BurnableToken is BasicToken {
+
+  event Burn(address indexed burner, uint256 value);
+
+  /**
+   * @dev Burns a specific amount of tokens.
+   * @param _value The amount of token to be burned.
+   */
+  function burn(uint256 _value) public {
+    _burn(msg.sender, _value);
+  }
+
+  function _burn(address _who, uint256 _value) internal {
+    require(_value <= balances[_who]);
+    // no need to require value <= totalSupply, since that would imply the
+    // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+
+    balances[_who] = balances[_who].sub(_value);
+    totalSupply = totalSupply.sub(_value);
+    emit Burn(_who, _value);
+    emit Transfer(_who, address(0), _value);
+  }
+}
+
 //////////////////////////////////
 /// Scale Token
 //////////////////////////////////
 
-contract Scale is MintableToken, HasNoEther {
+contract Scale is MintableToken, HasNoEther, BurnableToken {
 
     // Libraries
     using SafeMath for uint;
@@ -333,14 +362,14 @@ contract Scale is MintableToken, HasNoEther {
 
     // -- Pool Minting Rates and Percentages -- //
     // Pool for Scale distribution to rewards pool
-    // Set to address 0 to prohibit minting to the pool before it is assigned
+    // Set to 0 to prohibit issuing to the pool before it is assigned
     address public pool = address(0);
 
     // Pool and Owner minted tokens per second
     uint public poolMintRate;
     uint public ownerMintRate;
 
-    // Amount of Scale to be staked to the pool, staking, and mint, as calculated through their percentages
+    // Amount of Scale to be staked to the pool, staking, and owner, as calculated through their percentages
     uint public poolMintAmount;
     uint public stakingMintAmount;
     uint public ownerMintAmount;
@@ -371,14 +400,15 @@ contract Scale is MintableToken, HasNoEther {
     struct AddressStakeData {
         uint stakeBalance;
         uint initialStakeTime;
+        uint unstakeTime;
+        mapping (uint => uint) stakePerDay;
     }
 
     // Track all tokens staked
     mapping (address => AddressStakeData) public stakeBalances;
 
     // -- Inflation -- //
-    // Inflation rate begins at 100% per year and decreases by 30% per year until it 
-    // reaches 10% where it decreases by 0.5% per year, stopping at 1% per year.
+    // Inflation rate begins at 100% per year and decreases by 30% per year until it reaches 10% where it decreases by 0.5% per year
     uint256 inflationRate = 1000;
 
     // Used to manage when to inflate. Allowed to inflate once per year until the rate reaches 1%.
@@ -388,7 +418,9 @@ contract Scale is MintableToken, HasNoEther {
     // Fired when tokens are staked
     event Stake(address indexed staker, uint256 value);
     // Fired when tokens are unstaked
-    event Unstake(address indexed unstaker, uint256 stakedAmount, uint256 stakingGains);
+    event Unstake(address indexed unstaker, uint256 stakedAmount);
+    // Fired when a user claims their stake
+    event ClaimStake(address indexed claimer, uint256 stakedAmount, uint256 stakingGains);
 
     //////////////////////////////////////////////////
     /// Scale Token Functionality
@@ -423,7 +455,7 @@ contract Scale is MintableToken, HasNoEther {
         ownerMintRate = calculateFraction(ownerMintAmount, _oneYearInSeconds, decimals);
         stakingMintRate = calculateFraction(stakingMintAmount, _oneYearInSeconds, decimals);
 
-        // Set the last time inflation was update to now so that the next time it can be updated is 1 year from now
+        // Set the last time inflation was updated to now so that the next time it can be updated is 1 year from now
         lastInflationUpdate = now;
     }
 
@@ -434,31 +466,33 @@ contract Scale is MintableToken, HasNoEther {
     /// @dev the inflation rate begins at 100% and decreases by 30% every year until it reaches 10%
     /// at 10% the rate begins to decrease by 0.5% until it reaches 1%
     function adjustInflationRate() private {
-
-
       // Make sure adjustInflationRate cannot be called for at least another year
       lastInflationUpdate = now;
 
       // Decrease inflation rate by 30% each year
       if (inflationRate > 100) {
-
         inflationRate = inflationRate.sub(300);
       }
       // Inflation rate reaches 10%. Decrease inflation rate by 0.5% from here on out until it reaches 1%.
       else if (inflationRate > 10) {
-
         inflationRate = inflationRate.sub(5);
       }
+
+      adjustMintRates();
+    }
+
+    /// @dev adjusts the mint rate when the yearly inflation update is called
+    function adjustMintRates() internal {
 
       // Calculate new mint amount of Scale that should be created per year.
       poolMintAmount = totalSupply.mul(inflationRate).div(1000).mul(poolPercentage).div(100);
       ownerMintAmount = totalSupply.mul(inflationRate).div(1000).mul(ownerPercentage).div(100);
       stakingMintAmount = totalSupply.mul(inflationRate).div(1000).mul(stakingPercentage).div(100);
 
-        // Adjust Scale created per-second for each rate
-        poolMintRate = calculateFraction(poolMintAmount, 31536000 ether, decimals);
-        ownerMintRate = calculateFraction(ownerMintAmount, 31536000 ether, decimals);
-        stakingMintRate = calculateFraction(stakingMintAmount, 31536000 ether, decimals);
+      // Adjust Scale created per-second for each rate
+      poolMintRate = calculateFraction(poolMintAmount, 31536000 ether, decimals);
+      ownerMintRate = calculateFraction(ownerMintAmount, 31536000 ether, decimals);
+      stakingMintRate = calculateFraction(stakingMintAmount, 31536000 ether, decimals);
     }
 
     /// @dev anyone can call this function to update the inflation rate yearly
@@ -468,144 +502,225 @@ contract Scale is MintableToken, HasNoEther {
       require(now.sub(lastInflationUpdate) >= 31536000);
 
       adjustInflationRate();
-
     }
 
     /////////////
     // Staking
     /////////////
 
-    /// @dev staking function which allows users to stake an amount of tokens to gain interest for up to 365 days
-    /// @param _stakeAmount how many tokens a user wants to stake
-    function stakeScale(uint _stakeAmount) external {
-
+    /// @dev staking function which allows users to stake an amount of tokens to gain interest for up to 1 year
+    function stake(uint _stakeAmount) external {
         // Require that tokens are staked successfully
-        require(stake(msg.sender, _stakeAmount));
+        require(stakeScale(msg.sender, _stakeAmount));
     }
 
-    /// @dev stake for a seperate address
-    /// @param _stakeAmount how many tokens a user wants to stake
-    function stakeFor(address _user, uint _stakeAmount) external {
+   /// @dev staking function which allows users to stake an amount of tokens for another user
+   function stakeFor(address _user, uint _amount) external {
+        // Stake for the user
+        require(stakeScale(_user, _amount));
+   }
 
-      // You can only stake tokens for another user if they have not already staked tokens
-      require(stakeBalances[_user].stakeBalance == 0);
+   /// @dev Transfer tokens from the contract to the user when unstaking
+   /// @param _value uint256 the amount of tokens to be transferred
+   function transferFromContract(uint _value) internal {
 
-      // Transfer Scale from to the msg.sender to the user
-      transfer( _user, _stakeAmount);
+     // Sanity check to make sure we are not transferring more than the contract has
+     require(_value <= balances[address(this)]);
 
-      // Stake for the user
-      stake(_user, _stakeAmount);
+     // Add to the msg.sender balance
+     balances[msg.sender] = balances[msg.sender].add(_value);
+     
+     // Subtract from the contract's balance
+     balances[address(this)] = balances[address(this)].sub(_value);
+
+     // Fire an event for transfer
+     emit Transfer(address(this), msg.sender, _value);
+   }
+
+   /// @dev stake function reduces the user's total available balance and adds it to their staking balance
+   /// @param _value how many tokens a user wants to stake
+   function stakeScale(address _user, uint256 _value) private returns (bool success) {
+
+       // You can only stake / stakeFor as many tokens as you have
+       require(_value <= balances[msg.sender]);
+
+       // Require the user is not in power down period
+       require(stakeBalances[_user].unstakeTime == 0);
+
+       // Transfer tokens to contract address
+       transfer(address(this), _value);
+
+       // Now as a day
+       uint _nowAsDay = now.div(timingVariable);
+
+       // Adjust the new staking balance
+       uint _newStakeBalance = stakeBalances[_user].stakeBalance.add(_value);
+
+       // If this is the initial stake time, save
+       if (stakeBalances[_user].stakeBalance == 0) {
+         // Save the time that the stake started
+         stakeBalances[_user].initialStakeTime = _nowAsDay;
+       }
+
+       // Add stake amount to staked balance
+       stakeBalances[_user].stakeBalance = _newStakeBalance;
+
+       // Assign the total amount staked at this day
+       stakeBalances[_user].stakePerDay[_nowAsDay] = _newStakeBalance;
+
+       // Increment the total staked tokens
+       totalScaleStaked = totalScaleStaked.add(_value);
+
+       // Set the new staking history
+       setTotalStakingHistory();
+
+       // Fire an event for newly staked tokens
+       emit Stake(_user, _value);
+
+       return true;
+   }
+
+    /// @dev deposit a user's initial stake plus earnings if the user unstaked at least 14 days ago
+    function claimStake() external returns (bool) {
+
+      // Require that at least 14 days have passed (days)
+      require(now.div(timingVariable).sub(stakeBalances[msg.sender].unstakeTime) >= 14);
+
+      // Get the user's stake balance 
+      uint _userStakeBalance = stakeBalances[msg.sender].stakeBalance;
+
+      // Calculate tokens to mint using unstakeTime, rewards are not received during power-down period
+      uint _tokensToMint = calculateStakeGains(stakeBalances[msg.sender].unstakeTime);
+
+      // Clear out stored data from mapping
+      stakeBalances[msg.sender].stakeBalance = 0;
+      stakeBalances[msg.sender].initialStakeTime = 0;
+      stakeBalances[msg.sender].unstakeTime = 0;
+
+      // Return the stake balance to the staker
+      transferFromContract(_userStakeBalance);
+
+      // Mint the new tokens to the sender
+      mint(msg.sender, _tokensToMint);
+
+      // Scale unstaked event
+      emit ClaimStake(msg.sender, _userStakeBalance, _tokensToMint);
+
+      return true;
     }
 
-    /// @dev stake function reduces the user's total available balance and adds it to their staking balance
-    /// @param _value how many tokens a user wants to stake
-    function stake(address _user, uint256 _value) private returns (bool success) {
+    /// @dev allows users to start the reclaim process for staked tokens and stake rewards
+    /// @return bool on success
+    function initUnstake() external returns (bool) {
 
-        // You can only stake as many tokens as you have
-        require(_value <= balances[_user]);
-        // You can only stake tokens if you have not already staked tokens
-        require(stakeBalances[_user].stakeBalance == 0);
+        // Require that the user has not already started the unstaked process
+        require(stakeBalances[msg.sender].unstakeTime == 0);
 
-        // Subtract stake amount from regular token balance
-        balances[_user] = balances[_user].sub(_value);
+        // Require that there was some amount staked
+        require(stakeBalances[msg.sender].stakeBalance > 0);
 
-        // Add stake amount to staked balance
-        stakeBalances[_user].stakeBalance = _value;
+        // Log time that user started unstaking
+        stakeBalances[msg.sender].unstakeTime = now.div(timingVariable);
 
-        // Increment the staking staked tokens value
-        totalScaleStaked = totalScaleStaked.add(_value);
+        // Subtract stake balance from totalScaleStaked
+        totalScaleStaked = totalScaleStaked.sub(stakeBalances[msg.sender].stakeBalance);
 
-        // Save the time that the stake started
-        stakeBalances[_user].initialStakeTime = now.div(timingVariable);
-
-        // Set the new staking history
+        // Set this every time someone adjusts the totalScaleStaked amount
         setTotalStakingHistory();
 
-        // Fire an event to tell the world of the newly staked tokens
-        emit Stake(_user, _value);
+        // Scale unstaked event
+        emit Unstake(msg.sender, stakeBalances[msg.sender].stakeBalance);
 
         return true;
+    }
+
+    /// @dev function to let the user know how much time they have until they can claim their tokens from unstaking
+    /// @param _user to check the time until claimable of
+    /// @return uint time in seconds until they may claim
+    function timeUntilClaimAvaliable(address _user) view external returns (uint) {
+      return stakeBalances[_user].unstakeTime.add(14).mul(86400);
+    }
+
+    /// @dev function to check the staking balance of a user
+    /// @param _user to check the balance of
+    /// @return uint of the stake balance
+    function stakeBalanceOf(address _user) view external returns (uint) {
+      return stakeBalances[_user].stakeBalance;
     }
 
     /// @dev returns how much Scale a user has earned so far
     /// @param _now is passed in to allow for a gas-free analysis
     /// @return staking gains based on the amount of time passed since staking began
     function getStakingGains(uint _now) view public returns (uint) {
-
         if (stakeBalances[msg.sender].stakeBalance == 0) {
-
           return 0;
         }
-
-        return calculateStakeGains(_now);
+        return calculateStakeGains(_now.div(timingVariable));
     }
 
-    /// @dev allows users to reclaim any staked tokens
-    /// @return bool on success
-    function unstake() external returns (bool) {
-
-        // Require that there was some amount vested
-        require(stakeBalances[msg.sender].stakeBalance > 0);
-
-        // Require that at least 7 timing variables have passed (days)
-        require(now.div(timingVariable).sub(stakeBalances[msg.sender].initialStakeTime) >= 7);
-
-        // Calculate tokens to mint
-        uint _tokensToMint = calculateStakeGains(now);
-
-        balances[msg.sender] = balances[msg.sender].add(stakeBalances[msg.sender].stakeBalance);
-
-        // Subtract stake balance from totalScaleStaked
-        totalScaleStaked = totalScaleStaked.sub(stakeBalances[msg.sender].stakeBalance);
-
-        // Mint the new tokens to the sender
-        mint(msg.sender, _tokensToMint);
-
-        // Scale unstaked event
-        emit Unstake(msg.sender, stakeBalances[msg.sender].stakeBalance, _tokensToMint);
-
-        // Clear out stored data from mapping
-        stakeBalances[msg.sender].stakeBalance = 0;
-        stakeBalances[msg.sender].initialStakeTime = 0;
-
-        // Set this every time someone adjusts the totalScaleStaking amount
-        setTotalStakingHistory();
-
-        return true;
-    }
-
-    /// @dev Helper function to claimStake that modularizes the minting via staking calculation
-    /// @param _now when the user stopped staking. Passed in as a variable to allow for checking without using gas from the getStakingGains function.
+    /// @dev Calculates staking gains 
+    /// @param _unstakeTime when the user stopped staking.
     /// @return uint for total coins to be minted
-    function calculateStakeGains(uint _now) view private returns (uint mintTotal)  {
+    function calculateStakeGains(uint _unstakeTime) view private returns (uint mintTotal)  {
 
-      uint _nowAsTimingVariable = _now.div(timingVariable);    // Today as a unique value in unix time
       uint _initialStakeTimeInVariable = stakeBalances[msg.sender].initialStakeTime; // When the user started staking as a unique day in unix time
-      uint _timePassedSinceStakeInVariable = _nowAsTimingVariable.sub(_initialStakeTimeInVariable); // How much time has passed, in days, since the user started staking.
+      uint _timePassedSinceStakeInVariable = _unstakeTime.sub(_initialStakeTimeInVariable); // How much time has passed, in days, since the user started staking.
       uint _stakePercentages = 0; // Keeps an additive track of the user's staking percentages over time
       uint _tokensToMint = 0; // How many new Scale tokens to create
-      uint _lastUsedVariable;  // Last day the totalScaleStaked was updated
+      uint _lastDayStakeWasUpdated;  // Last day the totalScaleStaked was updated
+      uint _lastStakeDay; // Last day that the user staked
 
+      // If user staked and init unstaked on the same day, gains are 0
+      if (_timePassedSinceStakeInVariable == 0) {
+        return 0;
+      }
+      // If user has been staking longer than 365 days, staked days after 365 days do not earn interest 
+      else if (_timePassedSinceStakeInVariable >= 365) {
+       _unstakeTime = _initialStakeTimeInVariable.add(365);
+       _timePassedSinceStakeInVariable = 365;
+      }
       // Average this msg.sender's relative percentage ownership of totalScaleStaked throughout each day since they started staking
-      for (uint i = _initialStakeTimeInVariable; i < _nowAsTimingVariable; i++) {
+      for (uint i = _initialStakeTimeInVariable; i < _unstakeTime; i++) {
 
-        // If the day exists add it to the percentages
-        if (totalStakingHistory[i] != 0) {
+        // Total amount user has staked on i day
+        uint _stakeForDay = stakeBalances[msg.sender].stakePerDay[i];
 
-           // If the day does exist add it to the number to be later averaged as a total average percentage of total staking
-          _stakePercentages = _stakePercentages.add(calculateFraction(stakeBalances[msg.sender].stakeBalance, totalStakingHistory[i], decimals));
+        // If this was a day that the user staked or added stake
+        if (_stakeForDay != 0) {
 
-          // Set this as the last day someone staked
-          _lastUsedVariable = totalStakingHistory[i];
+            // If the day exists add it to the percentages
+            if (totalStakingHistory[i] != 0) {
+
+                // If the day does exist add it to the number to be later averaged as a total average percentage of total staking
+                _stakePercentages = _stakePercentages.add(calculateFraction(_stakeForDay, totalStakingHistory[i], decimals));
+
+                // Set the last day someone staked
+                _lastDayStakeWasUpdated = totalStakingHistory[i];
+            }
+            else {
+                // Use the last day found in the totalStakingHistory mapping
+                _stakePercentages = _stakePercentages.add(calculateFraction(_stakeForDay, _lastDayStakeWasUpdated, decimals));
+            }
+
+            _lastStakeDay = _stakeForDay;
         }
         else {
 
-          // Use the last day found in the totalStakingHistory mapping
-          _stakePercentages = _stakePercentages.add(calculateFraction(stakeBalances[msg.sender].stakeBalance, _lastUsedVariable, decimals));
+            // If the day exists add it to the percentages
+            if (totalStakingHistory[i] != 0) {
+
+                // If the day does exist add it to the number to be later averaged as a total average percentage of total staking
+                _stakePercentages = _stakePercentages.add(calculateFraction(_lastStakeDay, totalStakingHistory[i], decimals));
+
+                // Set the last day someone staked
+                _lastDayStakeWasUpdated = totalStakingHistory[i];
+            }
+            else {
+                // Use the last day found in the totalStakingHistory mapping
+                _stakePercentages = _stakePercentages.add(calculateFraction(_lastStakeDay, _lastDayStakeWasUpdated, decimals));
+            }
         }
-
       }
-
         // Get the account's average percentage staked of the total stake over the course of all days they have been staking
         uint _stakePercentageAverage = calculateFraction(_stakePercentages, _timePassedSinceStakeInVariable, 0);
 
@@ -616,16 +731,7 @@ contract Scale is MintableToken, HasNoEther {
         _finalMintRate = _finalMintRate.div(1 ether);
 
         // Calculate total tokens to be minted. Multiply by timingVariable to convert back to seconds.
-        if (_timePassedSinceStakeInVariable >= 365) {
-
-          // Tokens were staked for the maximum amount of time, one year. Give them one year's worth of tokens. ( this limit is placed to avoid gas limits)
-          _tokensToMint = calculateMintTotal(timingVariable.mul(365), _finalMintRate);
-        }
-        else {
-
-          // Tokens were staked for less than the maximum amount of time
-          _tokensToMint = calculateMintTotal(_timePassedSinceStakeInVariable.mul(timingVariable), _finalMintRate);
-        }
+        _tokensToMint = calculateMintTotal(_timePassedSinceStakeInVariable.mul(timingVariable), _finalMintRate);
 
         return  _tokensToMint;
     }
@@ -640,18 +746,11 @@ contract Scale is MintableToken, HasNoEther {
       totalStakingHistory[_nowAsTimingVariable] = totalScaleStaked;
     }
 
-    /// @dev Allows user to check their staked balance
-    /// @return staked balance
-    function getStakedBalance() view external returns (uint stakedBalance) {
-
-        return stakeBalances[msg.sender].stakeBalance;
-    }
-
     /////////////
     // Scale Owner Claiming
     /////////////
 
-    /// @dev allows contract owner to claim their mint
+    /// @dev allows contract owner to claim their allocated mint
     function ownerClaim() external onlyOwner {
 
         require(now > ownerTimeLastMinted);
@@ -681,7 +780,7 @@ contract Scale is MintableToken, HasNoEther {
     // Scale Pool Distribution
     ////////////////////////////////
 
-    /// @dev anyone can call this function that mints Scale to the pool dedicated to Scale distribution to rewards pool
+    // @dev anyone can call this function that mints Scale to the pool dedicated to Scale distribution to rewards pool
     function poolIssue() public {
 
         // Do not allow tokens to be minted to the pool until the pool is set
@@ -695,15 +794,15 @@ contract Scale is MintableToken, HasNoEther {
         uint _tokenMintCount; // The amount of new tokens to mint
         bool _mintingSuccess; // The success of minting the new Scale tokens
 
-        // Calculate the number of seconds that have passed since the pool last took a claim
+        // Calculate the number of seconds that have passed since the owner last took a claim
         _timePassedSinceLastMint = now.sub(poolTimeLastMinted);
 
         assert(_timePassedSinceLastMint > 0);
 
-        // Determine the token mint amount, determined from the number of seconds passed and the poolMintRate
+        // Determine the token mint amount, determined from the number of seconds passed and the ownerMintRate
         _tokenMintCount = calculateMintTotal(_timePassedSinceLastMint, poolMintRate);
 
-        // Mint the pool's tokens; this also increases totalSupply
+        // Mint the owner's tokens; this also increases totalSupply
         _mintingSuccess = mint(pool, _tokenMintCount);
 
         require(_mintingSuccess);
@@ -715,7 +814,6 @@ contract Scale is MintableToken, HasNoEther {
     /// @dev sets the address for the rewards pool
     /// @param _newAddress pool Address
     function setPool(address _newAddress) public onlyOwner {
-
         pool = _newAddress;
     }
 
@@ -738,11 +836,9 @@ contract Scale is MintableToken, HasNoEther {
 
     /// @dev Determines the amount of Scale to create based on the number of seconds that have passed
     /// @param _timeInSeconds is the time passed in seconds to mint for
-    /// @param _mintRate the mint rate per second 
     /// @return uint with the calculated number of new tokens to mint
     function calculateMintTotal(uint _timeInSeconds, uint _mintRate) pure private returns(uint mintAmount) {
         // Calculates the amount of tokens to mint based upon the number of seconds passed
         return(_timeInSeconds.mul(_mintRate));
     }
-
 }
