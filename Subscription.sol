@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Subscription at 0xd6d5150c31ae87b0b1a5836c104652c502cebc3e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Subscription at 0x82778145802146916d28cB267EB13c7eE041b5E1
 */
 pragma solidity ^0.4.24;
 
@@ -661,9 +661,6 @@ contract Subscription is Ownable {
             from, to, tokenAddress, tokenAmount, periodSeconds, gasPrice
         );
         address signer = getSubscriptionSigner(subscriptionHash, signature);
-        uint256 allowance = ERC20(tokenAddress).allowance(from, address(this));
-        uint256 balance = ERC20(tokenAddress).balanceOf(from);
-
 
         //the signature must be valid
         require(signer == from, "Invalid Signature");
@@ -671,11 +668,6 @@ contract Subscription is Ownable {
         require(
             block.timestamp >= nextValidTimestamp[subscriptionHash],
             "Subscription is not ready"
-        );
-        //from account must have enough funds 
-        require(
-            allowance >= tokenAmount.add(gasPrice) && balance >= tokenAmount.add(gasPrice),
-            "Not enough tokens in from account or not enough allowed."
         );
 
         // if there are requirements from the deployer, let's make sure
