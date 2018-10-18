@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AegisEconomyCoin at 0xe581d52020e36f63ef5347ee5897ea9a1a5996d5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AegisEconomyCoin at 0x6fac250cE7BFf9D77d706Bbe2106e267baE1C95E
 */
 pragma solidity ^0.4.24;
 
@@ -339,21 +339,20 @@ contract PausableToken is StandardToken, Ownable {
 
 contract AegisEconomyCoin is PausableToken {
 
-    string  public constant     name = "Aegis Economy Coin";
-    string  public constant     symbol= "AGEC";
+    string  public constant     name = "Oriad Coin";
+    string  public constant     symbol= "ORI";
     uint256 public constant     decimals= 18;
     uint256 private constant    initialSupply = 50*(10**6)* (10**18);
     uint256 private constant    per15Period = 365 days;
     uint256 private constant    per12Period = 365 days;
     uint256 private constant    per10Period = 48 * 365 days;
-    uint256 private             inflationPeriodStart;
+    uint256 private  inflationPeriodStart = now;
     uint256 private             releasedTokens;
     uint256 private constant    calcresolution = 10000000;
 
 
     constructor() public {
         paused = false;
-        inflationPeriodStart = now;
     }
 
 
@@ -369,7 +368,6 @@ contract AegisEconomyCoin is PausableToken {
           return balances[_owner];
         }
     }
-
 
     function totalSupply() public view returns (uint256 _supply)
     {
