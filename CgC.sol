@@ -1,98 +1,129 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CGC at 0x48ad0c5db1cd4a1ae3618486f5aa634fd06f484a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CGC at 0xc313b0a7a5e769ec05e82ce28d9d8a1469a82383
 */
-pragma solidity ^0.4.4;
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+pragma solidity ^0.4.11;
+contract SafeMath {
+  function safeMul(uint256 a, uint256 b) internal returns (uint256) {
     uint256 c = a * b;
     assert(a == 0 || c / a == b);
     return c;
   }
 
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
+  function safeDiv(uint256 a, uint256 b) internal returns (uint256) {
+    assert(b > 0);
     uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    assert(a == b * c + a % b);
     return c;
   }
 
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+  function safeSub(uint256 a, uint256 b) internal returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+  function safeAdd(uint256 a, uint256 b) internal returns (uint256) {
     uint256 c = a + b;
-    assert(c >= a);
+    assert(c>=a && c>=b);
     return c;
+  }
+
+  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
+    return a >= b ? a : b;
+  }
+
+  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
+    return a < b ? a : b;
+  }
+
+  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
+    return a >= b ? a : b;
+  }
+
+  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
+    return a < b ? a : b;
   }
 }
 
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) public constant returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
+contract ERC20 {
+  function totalSupply() constant returns (uint256 totalSupply);
+  function balanceOf(address who) constant returns (uint256);
+  function allowance(address owner, address spender) constant returns (uint256);
+  function transfer(address to, uint256 value) returns (bool ok);
+  function transferFrom(address from, address to, uint256 value) returns (bool ok);
+  function approve(address spender, uint256 value) returns (bool ok);
   event Transfer(address indexed from, address indexed to, uint256 value);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
 }
-contract BasicToken is ERC20Basic {
-  using SafeMath for uint256;
 
+contract StandardToken is ERC20, SafeMath {
   mapping(address => uint256) balances;
+  mapping (address => mapping (address => uint256)) allowed;
+  uint256 public _totalSupply;
+  address public _creator;
+  bool bIsFreezeAll = false;
 
-  /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
-  function transfer(address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
+  function totalSupply() constant returns (uint256 totalSupply) {
+	totalSupply = _totalSupply;
+  }
 
-    // SafeMath.sub will throw if there is not enough balance.
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
+  function transfer(address _to, uint256 _value) returns (bool success) {
+    require(bIsFreezeAll == false);
+    balances[msg.sender] = safeSub(balances[msg.sender], _value);
+    balances[_to] = safeAdd(balances[_to], _value);
     Transfer(msg.sender, _to, _value);
     return true;
   }
 
-  /**
-  * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of.
-  * @return An uint256 representing the amount owned by the passed address.
-  */
-  function balanceOf(address _owner) public constant returns (uint256 balance) {
+  function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+    require(bIsFreezeAll == false);
+    var _allowance = allowed[_from][msg.sender];
+    balances[_to] = safeAdd(balances[_to], _value);
+    balances[_from] = safeSub(balances[_from], _value);
+    allowed[_from][msg.sender] = safeSub(_allowance, _value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
+
+  function balanceOf(address _owner) constant returns (uint256 balance) {
     return balances[_owner];
   }
 
-}
-contract BurnableToken is BasicToken {
+  function approve(address _spender, uint256 _value) returns (bool success) {
+	require(bIsFreezeAll == false);
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
 
-    event Burn(address indexed burner, uint256 value);
+  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+    return allowed[_owner][_spender];
+  }
 
-    /**
-     * @dev Burns a specific amount of tokens.
-     * @param _value The amount of token to be burned.
-     */
-    function burn(uint256 _value) public {
-        require(_value > 0);
+  function freezeAll()
+  {
+	require(msg.sender == _creator);
+	bIsFreezeAll = !bIsFreezeAll;
+  }
+}
 
-        address burner = msg.sender;
-        balances[burner] = balances[burner].sub(_value);
-        totalSupply = totalSupply.sub(_value);
-        Burn(burner, _value);
-    }
-}
-contract CGC is BurnableToken {
-string public name = 'CGC';
-string public symbol = 'CGC';
-uint public decimals = 1;
-uint public INITIAL_SUPPLY = 200000;
-function CGC() public {
-  totalSupply = INITIAL_SUPPLY;
-  balances[msg.sender] = INITIAL_SUPPLY;
-}
+contract CGC is StandardToken {
+
+  string public name = "CGC";
+  string public symbol = "CGC";
+  uint256 public constant decimals = 18;
+  uint256 public constant INITIAL_SUPPLY = 3000000000 * 10 ** decimals;	
+
+  
+  function CGC() {
+    _totalSupply = INITIAL_SUPPLY;
+	_creator = 0x27620f3687E90b83C0C9f271A4D7fE2DDCf16E6f;
+	balances[_creator] = INITIAL_SUPPLY;
+	bIsFreezeAll = false;
+  }
+  
+  function destroy() {
+	require(msg.sender == _creator);
+	suicide(_creator);
+  }
+
 }
