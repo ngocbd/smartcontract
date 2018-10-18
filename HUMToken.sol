@@ -1,54 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HUMToken at 0xc16bc517fe6b15903d6cbf02ffc447291477a43a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HUMToken at 0xb0514a5b4aa58ac6e954f537598dd42a71916581
 */
 pragma solidity ^0.4.23;
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
-    }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    // uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return a / b;
-  }
-
-  /**
-  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
 
 /**
  * @title ERC20Basic
@@ -105,6 +58,8 @@ contract BasicToken is ERC20Basic {
   }
 
 }
+
+
 /**
  * @title ERC20 interface
  * @dev see https://github.com/ethereum/EIPs/issues/20
@@ -115,6 +70,7 @@ contract ERC20 is ERC20Basic {
   function approve(address spender, uint256 value) public returns (bool);
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
+
 
 /**
  * @title Standard ERC20 token
@@ -211,6 +167,7 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
+
 /**
  * @title MultiOwnable
  */
@@ -240,6 +197,7 @@ contract MultiOwnable {
   */
   function newOwner(address _owner) onlyOwner external returns (bool) {
     require(_owner != 0);
+    require(owners[_owner] == 0);
     owners[_owner] = msg.sender;
     return true;
   }
@@ -251,79 +209,6 @@ contract MultiOwnable {
     require(owners[_owner] == msg.sender || (owners[_owner] != 0 && msg.sender == root));
     owners[_owner] = 0;
     return true;
-  }
-}
-
-
-/**
- * @title Burnable Token
- * @dev Token that can be irreversibly burned (destroyed).
- */
-contract BurnableToken is BasicToken {
-
-  event Burn(address indexed burner, uint256 value);
-
-  /**
-   * @dev Burns a specific amount of tokens.
-   * @param _value The amount of token to be burned.
-   */
-  function burn(uint256 _value) public {
-    _burn(msg.sender, _value);
-  }
-
-  function _burn(address _who, uint256 _value) internal {
-    require(_value <= balances[_who]);
-    // no need to require value <= totalSupply, since that would imply the
-    // sender's balance is greater than the totalSupply, which *should* be an assertion failure
-
-    balances[_who] = balances[_who].sub(_value);
-    totalSupply_ = totalSupply_.sub(_value);
-    emit Burn(_who, _value);
-    emit Transfer(_who, address(0), _value);
-  }
-}
-
-
-/**
- * @title Basic token
- * @dev Basic version of StandardToken, with no allowances.
- */
-contract Blacklisted is MultiOwnable {
-
-  mapping(address => bool) public blacklist;
-
-  /**
-  * @dev Throws if called by any account other than the owner.
-  */
-  modifier notBlacklisted() {
-    require(blacklist[msg.sender] == false);
-    _;
-  }
-
-  /**
-   * @dev Adds single address to blacklist.
-   * @param _villain Address to be added to the blacklist
-   */
-  function addToBlacklist(address _villain) external onlyOwner {
-    blacklist[_villain] = true;
-  }
-
-  /**
-   * @dev Adds list of addresses to blacklist. Not overloaded due to limitations with truffle testing.
-   * @param _villains Addresses to be added to the blacklist
-   */
-  function addManyToBlacklist(address[] _villains) external onlyOwner {
-    for (uint256 i = 0; i < _villains.length; i++) {
-      blacklist[_villains[i]] = true;
-    }
-  }
-
-  /**
-   * @dev Removes single address from blacklist.
-   * @param _villain Address to be removed to the blacklist
-   */
-  function removeFromBlacklist(address _villain) external onlyOwner {
-    blacklist[_villain] = false;
   }
 }
 
@@ -373,6 +258,128 @@ contract MintableToken is StandardToken, MultiOwnable {
 
 
 /**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return a / b;
+  }
+
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+
+
+
+/**
+ * @title Burnable Token
+ * @dev Token that can be irreversibly burned (destroyed).
+ */
+contract BurnableToken is BasicToken {
+
+  event Burn(address indexed burner, uint256 value);
+
+  /**
+   * @dev Burns a specific amount of tokens.
+   * @param _value The amount of token to be burned.
+   */
+  function burn(uint256 _value) public {
+    _burn(msg.sender, _value);
+  }
+
+  function _burn(address _who, uint256 _value) internal {
+    require(_value <= balances[_who]);
+    // no need to require value <= totalSupply, since that would imply the
+    // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+
+    balances[_who] = balances[_who].sub(_value);
+    totalSupply_ = totalSupply_.sub(_value);
+    emit Burn(_who, _value);
+    emit Transfer(_who, address(0), _value);
+  }
+}
+
+
+
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
+ */
+contract Blacklisted is MultiOwnable {
+
+  mapping(address => bool) public blacklist;
+
+  /**
+  * @dev Throws if called by any account other than the owner.
+  */
+  modifier notBlacklisted() {
+    require(blacklist[msg.sender] == false);
+    _;
+  }
+
+  /**
+   * @dev Adds single address to blacklist.
+   * @param _villain Address to be added to the blacklist
+   */
+  function addToBlacklist(address _villain) external onlyOwner {
+    blacklist[_villain] = true;
+  }
+
+  /**
+   * @dev Adds list of addresses to blacklist. Not overloaded due to limitations with truffle testing.
+   * @param _villains Addresses to be added to the blacklist
+   */
+  function addManyToBlacklist(address[] _villains) external onlyOwner {
+    for (uint256 i = 0; i < _villains.length; i++) {
+      blacklist[_villains[i]] = true;
+    }
+  }
+
+  /**
+   * @dev Removes single address from blacklist.
+   * @param _villain Address to be removed to the blacklist
+   */
+  function removeFromBlacklist(address _villain) external onlyOwner {
+    blacklist[_villain] = false;
+  }
+}
+
+/**
  * @title HUMToken
  * @dev ERC20 HUMToken.
  * Note they can later distribute these tokens as they wish using `transfer` and other
@@ -384,7 +391,7 @@ contract HUMToken is MintableToken, BurnableToken, Blacklisted {
   string public constant symbol = "HUM"; // solium-disable-line uppercase
   uint8 public constant decimals = 18; // solium-disable-line uppercase, // 18 decimals is the strongly suggested default, avoid changing it
 
-  uint256 public constant INITIAL_SUPPLY = 2500 * 1000 * 1000 * (10 ** uint256(decimals)); // 2,500,000,000 HUM
+  uint256 public constant INITIAL_SUPPLY = 125000 * 1000 * 1000 * (10 ** uint256(decimals)); // 125,000,000,000 HUM
 
   bool public isUnlocked = false;
   
