@@ -1,20 +1,21 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FixedSupplyToken at 0xfaae60f2ce6491886c9f7c9356bd92f688ca66a1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FixedSupplyToken at 0xeb483c154a6d0b9cf3e22ceef7a2f91692494d0c
 */
 pragma solidity ^0.4.24;
-//Spielleys Profit Allocation Share Module
-//In an effort to crowdfund myself to go fulltime dapp development,
-//I hereby created this contract to sell +/- 90% of future games dev fees 
-// Future P3D contract games made will have a P3D masternode setup for the uint
-// builder. Dev fee will consist of 1% of P3D divs gained in those contracts.
-// contract will mint shares/tokens as you buy them
-// Shares connot be destroyed, only traded.
-// use function buyshares to buy Shares
-// use function fetchdivs to get divs outstanding
-// read dividendsOwing(your addres) to see how many divs you have outstanding
-// Thank you for playing Spielleys contract creations.
-// speilley is not liable for any contract bugs known and unknown.
+
+// ----------------------------------------------------------------------------
+// 'RCT' token contract
 //
+// Symbol      : RCT
+// Name        : Remington
+// Total supply: 1000000000000
+// Decimals    : 18
+//
+// Enjoy.
+//
+// (c) BokkyPooBah / Bok Consulting Pty Ltd 2018. The MIT Licence.
+// ----------------------------------------------------------------------------
+
 
 // ----------------------------------------------------------------------------
 // Safe maths
@@ -38,34 +39,7 @@ library SafeMath {
     }
 }
 
-// ----------------------------------------------------------------------------
-// Owned contract
-// ----------------------------------------------------------------------------
-contract Owned {
-    address public owner;
-    address public newOwner;
 
-    event OwnershipTransferred(address indexed _from, address indexed _to);
-
-    constructor() public {
-        owner = 0x0B0eFad4aE088a88fFDC50BCe5Fb63c6936b9220;
-    }
-
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
-    }
-
-    function transferOwnership(address _newOwner) public onlyOwner {
-        newOwner = _newOwner;
-    }
-    function acceptOwnership() public {
-        require(msg.sender == newOwner);
-        emit OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
-        newOwner = address(0);
-    }
-}
 // ----------------------------------------------------------------------------
 // ERC Token Standard #20 Interface
 // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md
@@ -92,6 +66,37 @@ contract ApproveAndCallFallBack {
     function receiveApproval(address from, uint256 tokens, address token, bytes data) public;
 }
 
+
+// ----------------------------------------------------------------------------
+// Owned contract
+// ----------------------------------------------------------------------------
+contract Owned {
+    address public owner;
+    address public newOwner;
+
+    event OwnershipTransferred(address indexed _from, address indexed _to);
+
+    constructor() public {
+        owner = msg.sender;
+    }
+
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
+
+    function transferOwnership(address _newOwner) public onlyOwner {
+        newOwner = _newOwner;
+    }
+    function acceptOwnership() public {
+        require(msg.sender == newOwner);
+        emit OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+        newOwner = address(0);
+    }
+}
+
+
 // ----------------------------------------------------------------------------
 // ERC20 Token, with the addition of symbol, name and decimals and a
 // fixed supply
@@ -112,13 +117,12 @@ contract FixedSupplyToken is ERC20Interface, Owned {
     // Constructor
     // ------------------------------------------------------------------------
     constructor() public {
-        symbol = "SPASM";
-        name = "Spielleys Profit Allocation Share Module";
-        decimals = 0;
-        _totalSupply = 1;
+        symbol = "RCT";
+        name = "Remington";
+        decimals = 18;
+        _totalSupply = 1000000000000 * 10**uint(decimals);
         balances[owner] = _totalSupply;
-        emit Transfer(address(0),owner, _totalSupply);
-        
+        emit Transfer(address(0), owner, _totalSupply);
     }
 
 
@@ -143,7 +147,7 @@ contract FixedSupplyToken is ERC20Interface, Owned {
     // - Owner's account must have sufficient balance to transfer
     // - 0 value transfers are allowed
     // ------------------------------------------------------------------------
-    function transfer(address to, uint tokens) updateAccount(to) updateAccount(msg.sender) public returns (bool success) {
+    function transfer(address to, uint tokens) public returns (bool success) {
         balances[msg.sender] = balances[msg.sender].sub(tokens);
         balances[to] = balances[to].add(tokens);
         emit Transfer(msg.sender, to, tokens);
@@ -175,7 +179,7 @@ contract FixedSupplyToken is ERC20Interface, Owned {
     // - Spender must have sufficient allowance to transfer
     // - 0 value transfers are allowed
     // ------------------------------------------------------------------------
-    function transferFrom(address from, address to, uint tokens)updateAccount(to) updateAccount(from) public returns (bool success) {
+    function transferFrom(address from, address to, uint tokens) public returns (bool success) {
         balances[from] = balances[from].sub(tokens);
         allowed[from][msg.sender] = allowed[from][msg.sender].sub(tokens);
         balances[to] = balances[to].add(tokens);
@@ -206,7 +210,12 @@ contract FixedSupplyToken is ERC20Interface, Owned {
     }
 
 
-
+    // ------------------------------------------------------------------------
+    // Don't accept ETH
+    // ------------------------------------------------------------------------
+    function () public payable {
+        revert();
+    }
 
 
     // ------------------------------------------------------------------------
@@ -215,55 +224,4 @@ contract FixedSupplyToken is ERC20Interface, Owned {
     function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
         return ERC20Interface(tokenAddress).transfer(owner, tokens);
     }
-
-// divfunctions
-//divsection
-uint256 public pointMultiplier = 10e18;
-struct Account {
-  uint balance;
-  uint lastDividendPoints;
-}
-mapping(address=>Account) accounts;
-uint public ethtotalSupply;
-uint public totalDividendPoints;
-uint public unclaimedDividends;
-
-function dividendsOwing(address account) public view returns(uint256) {
-  uint256 newDividendPoints = totalDividendPoints.sub(accounts[account].lastDividendPoints);
-  return (balances[account] * newDividendPoints) / pointMultiplier;
-}
-modifier updateAccount(address account) {
-  uint256 owing = dividendsOwing(account);
-  if(owing > 0) {
-    unclaimedDividends = unclaimedDividends.sub(owing);
-    
-    account.transfer(owing);
-  }
-  accounts[account].lastDividendPoints = totalDividendPoints;
-  _;
-}
-function () external payable{disburse();}
-function fetchdivs() public updateAccount(msg.sender){}
-function disburse() public  payable {
-    uint256 amount = msg.value;
-    
-  totalDividendPoints = totalDividendPoints.add(amount.mul(pointMultiplier).div(_totalSupply));
-  //ethtotalSupply = ethtotalSupply.add(amount);
- unclaimedDividends = unclaimedDividends.add(amount);
-}
-function buyshares() public updateAccount(msg.sender) updateAccount(owner)  payable{
-    uint256 amount = msg.value;
-    address sender = msg.sender;
-    uint256 sup = _totalSupply;//totalSupply
-    require(amount >= 10 finney);
-    uint256 size = amount.div( 10 finney);
-    balances[owner] = balances[owner].add(size);
-     emit Transfer(0,owner, size);
-    sup = sup.add(size);
-     size = amount.div( 1 finney);
-    balances[msg.sender] = balances[sender].add(size);
-    emit Transfer(0,sender, size);
-     _totalSupply =  sup.add(size);
-     owner.transfer(amount);
-}
 }
