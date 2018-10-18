@@ -1,60 +1,24 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UNIT at 0xbe28d31a2165963e8c26c04909ee96569a4792ee
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UNIT at 0x26613b4ca0cad3b418e49e19626c0ba3dd713673
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.24;
 
+/*
+ * Creator: UNIT 
+ */
 
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
+/*
+ * Abstract Token Smart Contract
+ *
+ */
 
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-contract Ownable {
-  address public owner;
+ 
+ /*
+ * Safe Math Smart Contract. 
+ * https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/math/SafeMath.sol
+ */
 
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-}
-
-library SafeMath {
+contract SafeMath {
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     if (a == 0) {
       return 0;
@@ -64,329 +28,400 @@ library SafeMath {
     return c;
   }
 
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+  function safeDiv(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
 
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+  function safeSub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+  function safeAdd(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
     return c;
   }
 }
 
-contract UNIT is ERC20,Ownable{
-	using SafeMath for uint256;
 
-	//the base info of the token
-	string public constant name="Unit Pay";
-	string public constant symbol="UNIT";
-	string public constant version = "1.0";
-	uint256 public constant decimals = 18;
 
-	uint256 public constant MAX_PRIVATE_FUNDING_SUPPLY=600000000*10**decimals;
 
-	uint256 public constant COOPERATE_REWARD=300000000*10**decimals;
+/**
+ * ERC-20 standard token interface, as defined
+ * <a href="http://github.com/ethereum/EIPs/issues/20">here</a>.
+ */
+contract Token {
+  
+  function totalSupply() constant returns (uint256 supply);
+  function balanceOf(address _owner) constant returns (uint256 balance);
+  function transfer(address _to, uint256 _value) returns (bool success);
+  function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
+  function approve(address _spender, uint256 _value) returns (bool success);
+  function allowance(address _owner, address _spender) constant returns (uint256 remaining);
+  event Transfer(address indexed _from, address indexed _to, uint256 _value);
+  event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+}
 
-	uint256 public constant COMMON_WITHDRAW_SUPPLY=MAX_PRIVATE_FUNDING_SUPPLY+COOPERATE_REWARD;
 
-	uint256 public constant PARTNER_SUPPLY=600000000*10**decimals;
 
-	uint256 public constant MAX_PUBLIC_FUNDING_SUPPLY=150000000*10**decimals;
+/**
+ * Abstract Token Smart Contract that could be used as a base contract for
+ * ERC-20 token contracts.
+ */
+contract AbstractToken is Token, SafeMath {
+  /**
+   * Create new Abstract Token contract.
+   */
+  function AbstractToken () {
+    // Do nothing
+  }
+  
+  /**
+   * Get number of tokens currently belonging to given owner.
+   *
+   * @param _owner address to get number of tokens currently belonging to the
+   *        owner of
+   * @return number of tokens currently belonging to the owner of given address
+   */
+  function balanceOf(address _owner) constant returns (uint256 balance) {
+    return accounts [_owner];
+  }
 
-	uint256 public constant TEAM_KEEPING=1350000000*10**decimals;
-
-	uint256 public constant MAX_SUPPLY=COMMON_WITHDRAW_SUPPLY+PARTNER_SUPPLY+MAX_PUBLIC_FUNDING_SUPPLY+TEAM_KEEPING;
-
-	uint256 public rate;
-
-	mapping(address=>uint256) public publicFundingWhiteList;
-	
-
-	uint256 public totalCommonWithdrawSupply;
-
-	uint256 public totalPartnerWithdrawSupply;
-
-	uint256 public totalPublicFundingSupply;
-
-	uint256 public startTime;
-	uint256 public endTime;
-
-	uint256 public constant TEAM_UNFREEZE=270000000*10**decimals;
-	bool public hasOneStepWithdraw;
-	bool public hasTwoStepWithdraw;
-	bool public hasThreeStepWithdraw;
-	bool public hasFourStepWithdraw;
-	bool public hasFiveStepWithdraw;	
-	
-    struct epoch  {
-        uint256 lockEndTime;
-        uint256 lockAmount;
+  /**
+   * Transfer given number of tokens from message sender to given recipient.
+   *
+   * @param _to address to transfer tokens to the owner of
+   * @param _value number of tokens to transfer to the owner of given address
+   * @return true if tokens were transferred successfully, false otherwise
+   * accounts [_to] + _value > accounts [_to] for overflow check
+   * which is already in safeMath
+   */
+  function transfer(address _to, uint256 _value) returns (bool success) {
+    require(_to != address(0));
+    if (accounts [msg.sender] < _value) return false;
+    if (_value > 0 && msg.sender != _to) {
+      accounts [msg.sender] = safeSub (accounts [msg.sender], _value);
+      accounts [_to] = safeAdd (accounts [_to], _value);
     }
+    emit Transfer (msg.sender, _to, _value);
+    return true;
+  }
 
-    mapping(address=>epoch[]) public lockEpochsMap;
-	 
-    mapping(address => uint256) balances;
-	mapping (address => mapping (address => uint256)) allowed;
-	
+  /**
+   * Transfer given number of tokens from given owner to given recipient.
+   *
+   * @param _from address to transfer tokens from the owner of
+   * @param _to address to transfer tokens to the owner of
+   * @param _value number of tokens to transfer from given owner to given
+   *        recipient
+   * @return true if tokens were transferred successfully, false otherwise
+   * accounts [_to] + _value > accounts [_to] for overflow check
+   * which is already in safeMath
+   */
+  function transferFrom(address _from, address _to, uint256 _value)
+  returns (bool success) {
+    require(_to != address(0));
+    if (allowances [_from][msg.sender] < _value) return false;
+    if (accounts [_from] < _value) return false; 
 
-	function UNIT(){
-		totalSupply = 0 ;
-		totalCommonWithdrawSupply=0;
-		totalPartnerWithdrawSupply=0;
-		totalPublicFundingSupply = 0;
-
-		startTime = 1525104000;
-		endTime = 1525104000;
-		rate=80000;
-
-
-		hasOneStepWithdraw=false;
-		hasTwoStepWithdraw=false;
-		hasThreeStepWithdraw=false;
-		hasFourStepWithdraw=false;
-		hasFiveStepWithdraw=false;
-	}
-
-	event CreateUNIT(address indexed _to, uint256 _value);
-
-
-	modifier notReachTotalSupply(uint256 _value,uint256 _rate){
-		assert(MAX_SUPPLY>=totalSupply.add(_value.mul(_rate)));
-		_;
-	}
-
-	modifier notReachPublicFundingSupply(uint256 _value,uint256 _rate){
-		assert(MAX_PUBLIC_FUNDING_SUPPLY>=totalPublicFundingSupply.add(_value.mul(_rate)));
-		_;
-	}
-
-	modifier notReachCommonWithdrawSupply(uint256 _value,uint256 _rate){
-		assert(COMMON_WITHDRAW_SUPPLY>=totalCommonWithdrawSupply.add(_value.mul(_rate)));
-		_;
-	}
-
-
-	modifier notReachPartnerWithdrawSupply(uint256 _value,uint256 _rate){
-		assert(PARTNER_SUPPLY>=totalPartnerWithdrawSupply.add(_value.mul(_rate)));
-		_;
-	}
-
-
-	modifier assertFalse(bool withdrawStatus){
-		assert(!withdrawStatus);
-		_;
-	}
-
-	modifier notBeforeTime(uint256 targetTime){
-		assert(now>targetTime);
-		_;
-	}
-
-	modifier notAfterTime(uint256 targetTime){
-		assert(now<=targetTime);
-		_;
-	}
-	function etherProceeds() external
-		onlyOwner
-
-	{
-		if(!msg.sender.send(this.balance)) revert();
-	}
-
-	function processFunding(address receiver,uint256 _value,uint256 _rate) internal
-		notReachTotalSupply(_value,_rate)
-	{
-		uint256 amount=_value.mul(_rate);
-		totalSupply=totalSupply.add(amount);
-		balances[receiver] +=amount;
-		CreateUNIT(receiver,amount);
-		Transfer(0x0, receiver, amount);
-	}
-
-	function commonWithdraw(uint256 _value) external
-		onlyOwner
-		notReachCommonWithdrawSupply(_value,1)
-
-	{
-		processFunding(msg.sender,_value,1);
-		totalCommonWithdrawSupply=totalCommonWithdrawSupply.add(_value);
-	}
-
-	function withdrawToPartner(address _to,uint256 _value) external
-		onlyOwner
-		notReachPartnerWithdrawSupply(_value,1)
-	{
-		processFunding(_to,_value,1);
-		totalPartnerWithdrawSupply=totalPartnerWithdrawSupply.add(_value);
-		lockBalance(_to,_value,1541865600);
-	}
-
-	function () payable external
-		notBeforeTime(startTime)
-		notAfterTime(endTime)
-		notReachPublicFundingSupply(msg.value,rate)
-	{
-		require(publicFundingWhiteList[msg.sender]==1);
-
-		processFunding(msg.sender,msg.value,rate);
-		uint256 amount=msg.value.mul(rate);
-		totalPublicFundingSupply = totalPublicFundingSupply.add(amount);
-
-	}
-
-
-	function withdrawForOneStep() external
-		onlyOwner
-		assertFalse(hasOneStepWithdraw)
-		notBeforeTime(1525968000)
-	{
-		processFunding(msg.sender,TEAM_UNFREEZE,1);
-		hasOneStepWithdraw = true;
-	}
-
-	//20181111
-	function withdrawForTwoStep() external
-		onlyOwner
-		assertFalse(hasTwoStepWithdraw)
-		notBeforeTime(1541865600)
-	{
-		processFunding(msg.sender,TEAM_UNFREEZE,1);
-		hasTwoStepWithdraw = true;
-	}
-
-	//20190511
-	function withdrawForThreeStep() external
-		onlyOwner
-		assertFalse(hasThreeStepWithdraw)
-		notBeforeTime(1557504000)
-	{
-		processFunding(msg.sender,TEAM_UNFREEZE,1);
-		hasThreeStepWithdraw = true;
-	}
-
-	//20191111
-	function withdrawForFourStep() external
-		onlyOwner
-		assertFalse(hasFourStepWithdraw)
-		notBeforeTime(1573401600)
-	{
-		processFunding(msg.sender,TEAM_UNFREEZE,1);
-		hasFourStepWithdraw = true;
-	}
-
-	//20200511
-	function withdrawForFiveStep() external
-		onlyOwner
-		assertFalse(hasFiveStepWithdraw)
-		notBeforeTime(1589126400)
-	{
-		processFunding(msg.sender,TEAM_UNFREEZE,1);
-		hasFiveStepWithdraw = true;
-	}			
-
-
-  	function transfer(address _to, uint256 _value) public  returns (bool)
- 	{
-		require(_to != address(0));
-
-		epoch[] epochs = lockEpochsMap[msg.sender];
-		uint256 needLockBalance = 0;
-		for(uint256 i = 0;i<epochs.length;i++)
-		{
-			if( now < epochs[i].lockEndTime )
-			{
-				needLockBalance=needLockBalance.add(epochs[i].lockAmount);
-			}
-		}
-
-		require(balances[msg.sender].sub(_value)>=needLockBalance);
-
-		// SafeMath.sub will throw if there is not enough balance.
-		balances[msg.sender] = balances[msg.sender].sub(_value);
-		balances[_to] = balances[_to].add(_value);
-		Transfer(msg.sender, _to, _value);
-		return true;
-  	}
-
-  	function balanceOf(address _owner) public constant returns (uint256 balance) 
-  	{
-		return balances[_owner];
-  	}
-
-
-  	function transferFrom(address _from, address _to, uint256 _value) public returns (bool) 
-  	{
-		require(_to != address(0));
-
-		epoch[] epochs = lockEpochsMap[_from];
-		uint256 needLockBalance = 0;
-		for(uint256 i = 0;i<epochs.length;i++)
-		{
-			if( now < epochs[i].lockEndTime )
-			{
-				needLockBalance = needLockBalance.add(epochs[i].lockAmount);
-			}
-		}
-
-		require(balances[_from].sub(_value)>=needLockBalance);
-
-		uint256 _allowance = allowed[_from][msg.sender];
-
-		balances[_from] = balances[_from].sub(_value);
-		balances[_to] = balances[_to].add(_value);
-		allowed[_from][msg.sender] = _allowance.sub(_value);
-		Transfer(_from, _to, _value);
-		return true;
-  	}
-
-  	function approve(address _spender, uint256 _value) public returns (bool) 
-  	{
-		allowed[msg.sender][_spender] = _value;
-		Approval(msg.sender, _spender, _value);
-		return true;
-  	}
-
-  	function allowance(address _owner, address _spender) public constant returns (uint256 remaining) 
-  	{
-		return allowed[_owner][_spender];
-  	}
-
-	function lockBalance(address user, uint256 lockAmount,uint256 lockEndTime) internal
-	{
-		 epoch[] storage epochs = lockEpochsMap[user];
-		 epochs.push(epoch(lockEndTime,lockAmount));
-	}
-
-    function addPublicFundingWhiteList(address[] _list) external
-    	onlyOwner
-    {
-        uint256 count = _list.length;
-        for (uint256 i = 0; i < count; i++) {
-        	publicFundingWhiteList[_list [i]] = 1;
-        }    	
+    if (_value > 0 && _from != _to) {
+	  allowances [_from][msg.sender] = safeSub (allowances [_from][msg.sender], _value);
+      accounts [_from] = safeSub (accounts [_from], _value);
+      accounts [_to] = safeAdd (accounts [_to], _value);
     }
+    emit Transfer(_from, _to, _value);
+    return true;
+  }
 
-	function refreshRate(uint256 _rate) external
-		onlyOwner
-	{
-		rate=_rate;
-	}
-	
-    function refreshPublicFundingTime(uint256 _startTime,uint256 _endTime) external
-        onlyOwner
-    {
-		startTime=_startTime;
-		endTime=_endTime;
-    }
+  /**
+   * Allow given spender to transfer given number of tokens from message sender.
+   * @param _spender address to allow the owner of to transfer tokens from message sender
+   * @param _value number of tokens to allow to transfer
+   * @return true if token transfer was successfully approved, false otherwise
+   */
+   function approve (address _spender, uint256 _value) returns (bool success) {
+    allowances [msg.sender][_spender] = _value;
+    emit Approval (msg.sender, _spender, _value);
+    return true;
+  }
 
+  /**
+   * Tell how many tokens given spender is currently allowed to transfer from
+   * given owner.
+   *
+   * @param _owner address to get number of tokens allowed to be transferred
+   *        from the owner of
+   * @param _spender address to get number of tokens allowed to be transferred
+   *        by the owner of
+   * @return number of tokens given spender is currently allowed to transfer
+   *         from given owner
+   */
+  function allowance(address _owner, address _spender) constant
+  returns (uint256 remaining) {
+    return allowances [_owner][_spender];
+  }
+
+  /**
+   * Mapping from addresses of token holders to the numbers of tokens belonging
+   * to these token holders.
+   */
+  mapping (address => uint256) accounts;
+
+  /**
+   * Mapping from addresses of token holders to the mapping of addresses of
+   * spenders to the allowances set by these token holders to these spenders.
+   */
+  mapping (address => mapping (address => uint256)) private allowances;
+  
+}
+
+
+/**
+ * UNIT smart contract.
+ */
+contract UNIT is AbstractToken {
+  /**
+   * Maximum allowed number of tokens in circulation.
+   * tokenSupply = tokensIActuallyWant * (10 ^ decimals)
+   */
+   
+   
+  uint256 constant MAX_TOKEN_COUNT = 18000000000 * (10**18);
+   
+  /**
+   * Address of the owner of this smart contract.
+   */
+  address private owner;
+  
+  /**
+   * Frozen account list holder
+   */
+  mapping (address => bool) private frozenAccount;
+  
+
+  /**
+   * Current number of tokens in circulation.
+   */
+  uint256 tokenCount = 0;
+  
+ 
+  /**
+   * True if tokens transfers are currently frozen, false otherwise.
+   */
+  bool frozen = false;
+  
+ 
+  /**
+   * Create new token smart contract and make msg.sender the
+   * owner of this smart contract.
+   */
+  function UNIT () {
+    owner = msg.sender;
+  }
+
+  /**
+   * Get total number of tokens in circulation.
+   *
+   * @return total number of tokens in circulation
+   */
+  function totalSupply() constant returns (uint256 supply) {
+    return tokenCount;
+  }
+
+  string constant public name = "UNIT";
+  string constant public symbol = "UNIT";
+  uint8 constant public decimals = 18;
+  
+  /**
+   * Transfer given number of tokens from message sender to given recipient.
+   * @param _to address to transfer tokens to the owner of
+   * @param _value number of tokens to transfer to the owner of given address
+   * @return true if tokens were transferred successfully, false otherwise
+   */
+  function transfer(address _to, uint256 _value) returns (bool success) {
+    require(!frozenAccount[msg.sender]);
+	if (frozen) return false;
+    else return AbstractToken.transfer (_to, _value);
+  }
+
+  /**
+   * Transfer given number of tokens from given owner to given recipient.
+   *
+   * @param _from address to transfer tokens from the owner of
+   * @param _to address to transfer tokens to the owner of
+   * @param _value number of tokens to transfer from given owner to given
+   *        recipient
+   * @return true if tokens were transferred successfully, false otherwise
+   */
+  function transferFrom(address _from, address _to, uint256 _value)
+    returns (bool success) {
+	require(!frozenAccount[_from]);
+    if (frozen) return false;
+    else return AbstractToken.transferFrom (_from, _to, _value);
+  }
+
+   /**
+   * Change how many tokens given spender is allowed to transfer from message
+   * spender.  In order to prevent double spending of allowance,
+   * To change the approve amount you first have to reduce the addresses`
+   * allowance to zero by calling `approve(_spender, 0)` if it is not
+   * already 0 to mitigate the race condition described here:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   * @param _spender address to allow the owner of to transfer tokens from
+   *        message sender
+   * @param _value number of tokens to allow to transfer
+   * @return true if token transfer was successfully approved, false otherwise
+   */
+  function approve (address _spender, uint256 _value)
+    returns (bool success) {
+	require(allowance (msg.sender, _spender) == 0 || _value == 0);
+    return AbstractToken.approve (_spender, _value);
+  }
+
+  /**
+   * Create _value new tokens and give new created tokens to msg.sender.
+   * Only be called by smart contract owner.
+   *
+   * @param _value number of tokens to create
+   * @return true if tokens were created successfully, false otherwise
+   */
+  function createTokens(uint256 _value)
+    returns (bool success) {
+    require (msg.sender == owner);
+
+    if (_value > 0) {
+      if (_value > safeSub (MAX_TOKEN_COUNT, tokenCount)) return false;
 	  
+      accounts [msg.sender] = safeAdd (accounts [msg.sender], _value);
+      tokenCount = safeAdd (tokenCount, _value);
+	  
+	  // adding transfer event and _from address as null address
+	  emit Transfer(0x0, msg.sender, _value);
+	  
+	  return true;
+    }
+	
+	  return false;
+    
+  }
+  
+  
+ 
+  
+  /**
+   * Burn intended tokens.
+   * Only be called by owner.
+   *
+   * @param _value number of tokens to burn
+   * @return true if burnt successfully, false otherwise
+   */
+  
+  function burn(uint256 _value) public returns (bool success) {
+        require(accounts[msg.sender] >= _value); 
+		require (msg.sender == owner);
+		accounts [msg.sender] = safeSub (accounts [msg.sender], _value);
+        tokenCount = safeSub (tokenCount, _value);	
+        emit Burn(msg.sender, _value);
+        return true;
+    }
+  
+
+  /**
+   * Set new owner for the smart contract.
+   * Only be called by smart contract owner.
+   *
+   * @param _newOwner address of new owner of the smart contract
+   */
+  function setOwner(address _newOwner) {
+    require (msg.sender == owner);
+
+    owner = _newOwner;
+  }
+
+  /**
+   * Freeze ALL token transfers.
+   * Only be called by smart contract owner.
+   */
+  function freezeTransfers () {
+    require (msg.sender == owner);
+
+    if (!frozen) {
+      frozen = true;
+      emit Freeze ();
+    }
+  }
+
+  /**
+   * Unfreeze ALL token transfers.
+   * Only be called by smart contract owner.
+   */
+  function unfreezeTransfers () {
+    require (msg.sender == owner);
+
+    if (frozen) {
+      frozen = false;
+      emit Unfreeze ();
+    }
+  }
+  
+  
+  /*A user is able to unintentionally send tokens to a contract 
+  * and if the contract is not prepared to refund them they will get stuck in the contract. 
+  * The same issue used to happen for Ether too but new Solidity versions added the payable modifier to
+  * prevent unintended Ether transfers. However, there’s no such mechanism for token transfers.
+  * so the below function is created
+  */
+  
+  function refundTokens(address _token, address _refund, uint256 _value) {
+    require (msg.sender == owner);
+    require(_token != address(this));
+    AbstractToken token = AbstractToken(_token);
+    token.transfer(_refund, _value);
+    emit RefundTokens(_token, _refund, _value);
+  }
+  
+  /**
+   * Freeze specific account
+   * Only be called by smart contract owner.
+   */
+  function freezeAccount(address _target, bool freeze) {
+      require (msg.sender == owner);
+	  require (msg.sender != _target);
+      frozenAccount[_target] = freeze;
+      emit FrozenFunds(_target, freeze);
+ }
+
+  /**
+   * Logged when token transfers were frozen.
+   */
+  event Freeze ();
+
+  /**
+   * Logged when token transfers were unfrozen.
+   */
+  event Unfreeze ();
+  
+  /**
+   * Logged when a particular account is frozen.
+   */
+  
+  event FrozenFunds(address target, bool frozen);
+  
+  /**
+   * Logged when a token is burnt.
+   */  
+  
+  event Burn(address target,uint256 _value);
+
+
+  
+  /**
+   * when accidentally send other tokens are refunded
+   */
+  
+  event RefundTokens(address _token, address _refund, uint256 _value);
 }
