@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BITOXAirdrop at 0x2df4031060e27faec80e66380d31b142b7bbfa61
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BITOXAirdrop at 0xe2612b9bc5cc0abf3fd35400cc2e49b3d426c56f
 */
 pragma solidity 0.4.24;
 
@@ -129,6 +129,8 @@ contract Lockable is Ownable {
 
 interface ERC20Token {
     function transferFrom(address from_, address to_, uint value_) external returns (bool);
+    function transfer(address to_, uint value_) external returns (bool);
+    function balanceOf(address owner_) external returns (uint);
 }
 
 // File: contracts/base/BaseAirdrop.sol
@@ -150,13 +152,11 @@ contract BaseAirdrop is Lockable {
         tokenHolder = _tokenHolder;
     }
 
-    function airdrop(uint8 v, bytes32 r, bytes32 s) public whenNotLocked {
-        if (ecrecover(keccak256("Signed for Airdrop", address(this), address(token), msg.sender), v, r, s) != owner
-            || users[msg.sender]) {
+    function airdrop(uint8 v, bytes32 r, bytes32 s, uint amount) public whenNotLocked {
+        if (users[msg.sender] || ecrecover(prefixedHash(amount), v, r, s) != owner) {
             revert();
         }
         users[msg.sender] = true;
-        uint amount = getAirdropAmount(msg.sender);
         token.transferFrom(tokenHolder, msg.sender, amount);
         emit AirdropToken(msg.sender, amount);
     }
@@ -165,7 +165,20 @@ contract BaseAirdrop is Lockable {
         return users[user];
     }
 
-    function getAirdropAmount(address user) public constant returns (uint amount);
+    function originalHash(uint amount) internal view returns (bytes32) {
+        return keccak256(abi.encodePacked(
+                "Signed for Airdrop",
+                address(this),
+                address(token),
+                msg.sender,
+                amount
+            ));
+    }
+
+    function prefixedHash(uint amount) internal view returns (bytes32) {
+        bytes memory prefix = "\x19Ethereum Signed Message:\n32";
+        return keccak256(abi.encodePacked(prefix, originalHash(amount)));
+    }
 }
 
 // File: contracts/BITOXAirdrop.sol
@@ -174,8 +187,6 @@ contract BaseAirdrop is Lockable {
  * @title BITOX token airdrop contract.
  */
 contract BITOXAirdrop is BaseAirdrop {
-
-    uint public constant PER_USER_AMOUNT = 2883e18;
 
     constructor(address _token, address _tokenHolder) public BaseAirdrop(_token, _tokenHolder) {
         locked = true;
@@ -186,8 +197,15 @@ contract BITOXAirdrop is BaseAirdrop {
         revert();
     }
 
-    function getAirdropAmount(address user) public constant returns (uint amount) {
-        require(user != address(0));
-        return PER_USER_AMOUNT;
+    // withdraw funds only for owner
+    function withdraw() public onlyOwner {
+        owner.transfer(address(this).balance);
+    }
+
+    // withdraw stuck tokens only for owner
+    function withdrawTokens(address _someToken) public onlyOwner {
+        ERC20Token someToken = ERC20Token(_someToken);
+        uint balance = someToken.balanceOf(this);
+        someToken.transfer(owner, balance);
     }
 }
