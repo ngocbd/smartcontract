@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GravityNetwork at 0x943c7db8e2a1b046ed9af53831267a83e2068aea
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GravityNetwork at 0x5d0a54f938b26d4d90f66b92e4723038135454dc
 */
 pragma solidity ^0.4.4;
 
@@ -107,9 +107,9 @@ contract GravityNetwork is StandardToken {
 
 
     // which means the following function name has to match the contract name declared above
-    function GravityNetwork() {
-        balances[msg.sender] = 20000000000000000000000000000;
-        totalSupply = 20000000000000000000000000000;
+    function GobizToken() {
+        balances[msg.sender] = 2000000000000000000000000000;
+        totalSupply = 2000000000000000000000000000;
         name = "GravityNetwork";
         decimals = 18;
         symbol = "GNPC";
