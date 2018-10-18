@@ -1,25 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CompliantToken at 0x322a9e799a48a5174120466ba815d928bed37a83
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CompliantToken at 0xd8dc5d0a1ca571fd945ad146990b6fa50d069eb2
 */
 pragma solidity 0.4.24;
-//
-//
-//
-//used Wallet of ACcount 179//
-//
-//
-//
-//
-//
-//
-//testing 2nd company
-//demo
-//wallet2
-//new ICO Sep28
-//company_2
-//DefaultOffer
-//new for company_2
-//FOR PRODUCTION
+
 
 /**
  * @title SafeMath
