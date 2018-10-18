@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HeroHelperBuy at 0xdbc5e20dfab8982a293b337d46019485969d68db
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HeroHelperBuy at 0x1930aedb47658025b6dae6c8a7c91675acd6fca5
 */
 pragma solidity ^0.4.19;
 
@@ -682,7 +682,7 @@ contract HeroHelperBuy
     bool public m_Paused;
     AbstractDatabase m_Database= AbstractDatabase(0x400d188e1c21d592820df1f2f8cf33b3a13a377e);
     BitGuildToken public tokenContract = BitGuildToken(0x7E43581b19ab509BCF9397a2eFd1ab10233f27dE); // Predefined PLAT token address
-    address public bitGuildAddress = 0x89a196a34B7820bC985B98096ED5EFc7c4DC8363;
+    address public bitGuildAddress = 0x6ca511eE4aF4f98eA6A4C99ab79D86C450B89955;
     mapping(address => bool)  public trustedContracts;
     using SafeMath for uint256;
     using SafeMath32 for uint32;
@@ -788,7 +788,7 @@ contract HeroHelperBuy
         }
         return number;
     }
-    function BuyStockHeroP1(uint16 stock_id,uint256 _value,address _sender) public {
+    function BuyStockHeroP1(uint16 stock_id,uint256 _value,address _sender) internal {
         
         LibStructs.StockHero memory prehero = GetHeroStock(stock_id);
         uint256 finneyPrice = prehero.price;
