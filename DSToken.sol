@@ -1,14 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DSToken at 0x7fd23f0f50560a5bd469f791fee7410732b8ba70
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DSToken at 0x89509d113b09b109a0ae2fb940091a60e8b73231
 */
-pragma solidity ^0.4.24;
 contract DSNote {
     event LogNote(
         bytes4   indexed  sig,
         address  indexed  guy,
         bytes32  indexed  foo,
         bytes32  indexed  bar,
-        uint              wad,
+	uint	 	  wad,
         bytes             fax
     ) anonymous;
 
@@ -21,7 +20,7 @@ contract DSNote {
             bar := calldataload(36)
         }
 
-        emit LogNote(msg.sig, msg.sender, foo, bar, msg.value, msg.data);
+        LogNote(msg.sig, msg.sender, foo, bar, msg.value, msg.data);
 
         _;
     }
@@ -30,177 +29,336 @@ contract DSNote {
 contract DSAuthority {
     function canCall(
         address src, address dst, bytes4 sig
-    ) public view returns (bool);
+    ) constant returns (bool);
 }
 
 contract DSAuthEvents {
+    event LogSetAuthority (address indexed authority);
     event LogSetOwner     (address indexed owner);
 }
 
 contract DSAuth is DSAuthEvents {
+    DSAuthority  public  authority;
     address      public  owner;
 
-    constructor() public {
+    function DSAuth() {
         owner = msg.sender;
-        emit LogSetOwner(msg.sender);
+        LogSetOwner(msg.sender);
+    }
+
+    function setOwner(address owner_)
+        auth
+    {
+        owner = owner_;
+        LogSetOwner(owner);
+    }
+
+    function setAuthority(DSAuthority authority_)
+        auth
+    {
+        authority = authority_;
+        LogSetAuthority(authority);
     }
 
     modifier auth {
-        require(isAuthorized(msg.sender));
+        assert(isAuthorized(msg.sender, msg.sig));
         _;
     }
 
-    function isAuthorized(address src) internal view returns (bool) {
-        if (src == owner) {
+    modifier authorized(bytes4 sig) {
+        assert(isAuthorized(msg.sender, sig));
+        _;
+    }
+
+    function isAuthorized(address src, bytes4 sig) internal returns (bool) {
+        if (src == address(this)) {
             return true;
-        } else {
+        } else if (src == owner) {
+            return true;
+        } else if (authority == DSAuthority(0)) {
             return false;
+        } else {
+            return authority.canCall(src, this, sig);
         }
     }
-}
 
-contract DSStop is DSNote, DSAuth {
-
-    bool public stopped;
-
-    modifier stoppable {
-        require(!stopped);
-        _;
+    function assert(bool x) internal {
+        if (!x) throw;
     }
-    function stop() public auth note {
-        stopped = true;
-    }
-    function start() public auth note {
-        stopped = false;
-    }
-
 }
 
 contract DSMath {
-    function add(uint x, uint y) internal pure returns (uint z) {
-        require((z = x + y) >= x);
+    
+    /*
+    standard uint256 functions
+     */
+
+    function add(uint256 x, uint256 y) constant internal returns (uint256 z) {
+        assert((z = x + y) >= x);
     }
-    function sub(uint x, uint y) internal pure returns (uint z) {
-        require((z = x - y) <= x);
+
+    function sub(uint256 x, uint256 y) constant internal returns (uint256 z) {
+        assert((z = x - y) <= x);
     }
-    function mul(uint x, uint y) internal pure returns (uint z) {
-        require(y == 0 || (z = x * y) / y == x);
+
+    function mul(uint256 x, uint256 y) constant internal returns (uint256 z) {
+        assert((z = x * y) >= x);
     }
+
+    function div(uint256 x, uint256 y) constant internal returns (uint256 z) {
+        z = x / y;
+    }
+
+    function min(uint256 x, uint256 y) constant internal returns (uint256 z) {
+        return x <= y ? x : y;
+    }
+    function max(uint256 x, uint256 y) constant internal returns (uint256 z) {
+        return x >= y ? x : y;
+    }
+
+    /*
+    uint128 functions (h is for half)
+     */
+
+
+    function hadd(uint128 x, uint128 y) constant internal returns (uint128 z) {
+        assert((z = x + y) >= x);
+    }
+
+    function hsub(uint128 x, uint128 y) constant internal returns (uint128 z) {
+        assert((z = x - y) <= x);
+    }
+
+    function hmul(uint128 x, uint128 y) constant internal returns (uint128 z) {
+        assert((z = x * y) >= x);
+    }
+
+    function hdiv(uint128 x, uint128 y) constant internal returns (uint128 z) {
+        z = x / y;
+    }
+
+    function hmin(uint128 x, uint128 y) constant internal returns (uint128 z) {
+        return x <= y ? x : y;
+    }
+    function hmax(uint128 x, uint128 y) constant internal returns (uint128 z) {
+        return x >= y ? x : y;
+    }
+
+
+    /*
+    int256 functions
+     */
+
+    function imin(int256 x, int256 y) constant internal returns (int256 z) {
+        return x <= y ? x : y;
+    }
+    function imax(int256 x, int256 y) constant internal returns (int256 z) {
+        return x >= y ? x : y;
+    }
+
+    /*
+    WAD math
+     */
+
+    uint128 constant WAD = 10 ** 18;
+
+    function wadd(uint128 x, uint128 y) constant internal returns (uint128) {
+        return hadd(x, y);
+    }
+
+    function wsub(uint128 x, uint128 y) constant internal returns (uint128) {
+        return hsub(x, y);
+    }
+
+    function wmul(uint128 x, uint128 y) constant internal returns (uint128 z) {
+        z = cast((uint256(x) * y + WAD / 2) / WAD);
+    }
+    function wmulfloor(uint128 x, uint128 y) constant internal returns (uint128 z) {
+        z = cast((uint256(x) * y) / WAD);
+    }
+
+    function wdiv(uint128 x, uint128 y) constant internal returns (uint128 z) {
+        z = cast((uint256(x) * WAD + y / 2) / y);
+    }
+    function wdivfloor(uint128 x, uint128 y) constant internal returns (uint128 z) {
+        z = cast((uint256(x) * WAD) / y);
+    }
+
+    function wmin(uint128 x, uint128 y) constant internal returns (uint128) {
+        return hmin(x, y);
+    }
+    function wmax(uint128 x, uint128 y) constant internal returns (uint128) {
+        return hmax(x, y);
+    }
+
+    /*
+    RAY math
+     */
+
+    uint128 constant RAY = 10 ** 27;
+
+    function radd(uint128 x, uint128 y) constant internal returns (uint128) {
+        return hadd(x, y);
+    }
+
+    function rsub(uint128 x, uint128 y) constant internal returns (uint128) {
+        return hsub(x, y);
+    }
+
+    function rmul(uint128 x, uint128 y) constant internal returns (uint128 z) {
+        z = cast((uint256(x) * y + RAY / 2) / RAY);
+    }
+
+    function rdiv(uint128 x, uint128 y) constant internal returns (uint128 z) {
+        z = cast((uint256(x) * RAY + y / 2) / y);
+    }
+
+    function rpow(uint128 x, uint64 n) constant internal returns (uint128 z) {
+        // This famous algorithm is called "exponentiation by squaring"
+        // and calculates x^n with x as fixed-point and n as regular unsigned.
+        //
+        // It's O(log n), instead of O(n) for naive repeated multiplication.
+        //
+        // These facts are why it works:
+        //
+        //  If n is even, then x^n = (x^2)^(n/2).
+        //  If n is odd,  then x^n = x * x^(n-1),
+        //   and applying the equation for even x gives
+        //    x^n = x * (x^2)^((n-1) / 2).
+        //
+        //  Also, EVM division is flooring and
+        //    floor[(n-1) / 2] = floor[n / 2].
+
+        z = n % 2 != 0 ? x : RAY;
+
+        for (n /= 2; n != 0; n /= 2) {
+            x = rmul(x, x);
+
+            if (n % 2 != 0) {
+                z = rmul(z, x);
+            }
+        }
+    }
+
+    function rmin(uint128 x, uint128 y) constant internal returns (uint128) {
+        return hmin(x, y);
+    }
+    function rmax(uint128 x, uint128 y) constant internal returns (uint128) {
+        return hmax(x, y);
+    }
+
+    function cast(uint256 x) constant internal returns (uint128 z) {
+        assert((z = uint128(x)) == x);
+    }
+
 }
 
-contract ERC20Events {
-    event Approval(address indexed src, address indexed guy, uint wad);
-    event Transfer(address indexed src, address indexed dst, uint wad);
-}
+contract ERC20 {
+    function totalSupply() constant returns (uint supply);
+    function balanceOf( address who ) constant returns (uint value);
+    function allowance( address owner, address spender ) constant returns (uint _allowance);
 
-contract ERC20 is ERC20Events {
-    function totalSupply() public view returns (uint);
-    function balanceOf(address guy) public view returns (uint);
-    function frozenFunds(address guy) public view returns (uint);
-    function allowance(address src, address guy) public view returns (uint);
+    function transfer( address to, uint value) returns (bool ok);
+    function transferFrom( address from, address to, uint value) returns (bool ok);
+    function approve( address spender, uint value ) returns (bool ok);
 
-    function approve(address guy, uint wad) public returns (bool);
-    function transfer(address dst, uint wad) public returns (bool);
-    function transferFrom(
-        address src, address dst, uint wad
-    ) public returns (bool);
+    event Transfer( address indexed from, address indexed to, uint value);
+    event Approval( address indexed owner, address indexed spender, uint value);
 }
 
 contract DSTokenBase is ERC20, DSMath {
     uint256                                            _supply;
     mapping (address => uint256)                       _balances;
-    mapping (address => uint256)                       _frozens;
     mapping (address => mapping (address => uint256))  _approvals;
-
-    constructor(uint supply) public {
+    
+    function DSTokenBase(uint256 supply) {
         _balances[msg.sender] = supply;
         _supply = supply;
     }
-
-    function totalSupply() public view returns (uint) {
+    
+    function totalSupply() constant returns (uint256) {
         return _supply;
     }
-    function balanceOf(address src) public view returns (uint) {
+    function balanceOf(address src) constant returns (uint256) {
         return _balances[src];
     }
-    function frozenFunds(address src) public view returns (uint) {
-        return _frozens[src];
-    }
-    function allowance(address src, address guy) public view returns (uint) {
+    function allowance(address src, address guy) constant returns (uint256) {
         return _approvals[src][guy];
     }
-
-    function transfer(address dst, uint wad) public returns (bool) {
-        return transferFrom(msg.sender, dst, wad);
+    
+    function transfer(address dst, uint wad) returns (bool) {
+        assert(_balances[msg.sender] >= wad);
+        
+        _balances[msg.sender] = sub(_balances[msg.sender], wad);
+        _balances[dst] = add(_balances[dst], wad);
+        
+        Transfer(msg.sender, dst, wad);
+        
+        return true;
     }
-
-    function transferFrom(address src, address dst, uint wad)
-        public
-        returns (bool)
-    {
-        if (src != msg.sender) {
-            _approvals[src][msg.sender] = sub(_approvals[src][msg.sender], wad);
-        }
-
+    
+    function transferFrom(address src, address dst, uint wad) returns (bool) {
+        assert(_balances[src] >= wad);
+        assert(_approvals[src][msg.sender] >= wad);
+        
+        _approvals[src][msg.sender] = sub(_approvals[src][msg.sender], wad);
         _balances[src] = sub(_balances[src], wad);
         _balances[dst] = add(_balances[dst], wad);
-
-        emit Transfer(src, dst, wad);
-
+        
+        Transfer(src, dst, wad);
+        
         return true;
     }
-
-    function approve(address guy, uint wad) public returns (bool) {
+    
+    function approve(address guy, uint256 wad) returns (bool) {
         _approvals[msg.sender][guy] = wad;
-
-        emit Approval(msg.sender, guy, wad);
-
+        
+        Approval(msg.sender, guy, wad);
+        
         return true;
     }
+
 }
 
-contract DSToken is DSTokenBase(60000000000000000000000000), DSStop {
+contract DSToken is DSTokenBase, DSAuth, DSNote {
 
-    string  public  symbol = "HER";
-    uint8  public  decimals = 18; 
-    event Freeze(address indexed guy, uint wad);
+    bytes32  public  symbol;
+    uint256  public  decimals = 18; // standard token precision. override to customize
 
-    function approve(address guy, uint wad) public stoppable returns (bool) {
+    function DSToken(bytes32 symbol_, uint256 supply_) DSTokenBase(supply_) {
+        symbol = symbol_;
+    }
+
+    function transfer(address dst, uint wad) note returns (bool) {
+        return super.transfer(dst, wad);
+    }
+    function transferFrom(
+        address src, address dst, uint wad
+    ) note returns (bool) {
+        return super.transferFrom(src, dst, wad);
+    }
+    function approve(address guy, uint wad) note returns (bool) {
         return super.approve(guy, wad);
     }
 
-    function transferFrom(address src, address dst, uint wad)
-        public
-        stoppable
-        returns (bool)
-    {
-        require(_balances[src] - _frozens[src] >= wad);
-        
-        if (src != msg.sender && _approvals[src][msg.sender] != uint(-1)) {
-            _approvals[src][msg.sender] = sub(_approvals[src][msg.sender], wad);
-        }
-
-        _balances[src] = sub(_balances[src], wad);
-        _balances[dst] = add(_balances[dst], wad);
-
-        emit Transfer(src, dst, wad);
-
-        return true;
+    function push(address dst, uint128 wad) returns (bool) {
+        return transfer(dst, wad);
     }
-    function freezeAccount(address guy, uint wad) public auth {
-        require(_balances[guy] >= wad);
-        
-        _frozens[guy] = add(0, wad);
-        emit Freeze(guy, wad);
+    function pull(address src, uint128 wad) returns (bool) {
+        return transferFrom(src, msg.sender, wad);
     }
 
-    string   public  name = "Herdius";
+    function burn(uint128 wad) auth note {
+        _balances[msg.sender] = sub(_balances[msg.sender], wad);
+        _supply = sub(_supply, wad);
+    }
 
-    function setName(string name_) public auth {
+    // Optional token name
+
+    bytes32   public  name = "";
+    
+    function setName(bytes32 name_) auth {
         name = name_;
     }
-    
-    function setSymbol(string symbol_) public auth {
-        symbol = symbol_;
-    }
+
 }
