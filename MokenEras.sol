@@ -1,11 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MokenEras at 0x789d2da15818c765529e3c5c1a1e28898986037a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MokenEras at 0x613f26a3baaabb9ae0b7cb9bdc548e35f123ce6a
 */
 pragma solidity 0.4.24;
 pragma experimental "v0.5.0";
 /******************************************************************************\
 * Author: Nick Mudge, nick@mokens.io
-*
 * Mokens
 * Copyright (c) 2018
 *
@@ -32,9 +31,9 @@ contract Storage0 {
 ///////////////////////////////////////////////////////////////////////////////////
 contract Storage1 is Storage0 {
     address internal contractOwner;
-    string[] internal functionSignatures;
+    bytes[] internal funcSignatures;
     // signature => index+1
-    mapping(string => uint256) internal functionSignatureToIndex;
+    mapping(bytes => uint256) internal funcSignatureToIndex;
 }
 ///////////////////////////////////////////////////////////////////////////////////
 //MokensSupportsInterfaces
@@ -127,6 +126,7 @@ contract Storage8 is Storage7 {
     //moken name => tokenId+1
     mapping(string => uint256) internal tokenByName_;
 }
+
 contract MokenEras is Storage8 {
 
     event NewEra(
