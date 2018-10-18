@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x1268e0636680c90b8aae70f90e7f3d94b546ee80
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xc3758ba9d0851daE0abFeB65ab439138Deb3d3e3
 */
 pragma solidity ^0.4.16;
 
@@ -7,11 +7,11 @@ interface tokenRecipient { function receiveApproval(address _from, uint256 _valu
 
 contract TokenERC20 {
     // Public variables of the token
-    string public name;
-    string public symbol;
-    uint8 public decimals = 18;
+    string public name="Hotelload";
+    string public symbol="HLL";
+    uint8 public decimals = 6;
     // 18 decimals is the strongly suggested default, avoid changing it
-    uint256 public totalSupply;
+    uint256 public totalSupply=76000000000000;
 
     // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
@@ -31,7 +31,7 @@ contract TokenERC20 {
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    function TokenERC20(
+    function HotelloadTokenERC20(
         uint256 initialSupply,
         string tokenName,
         string tokenSymbol
