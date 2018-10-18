@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CitowiseToken at 0x9748737627cce952ccdf03b399b2de724a12ab4f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CitowiseToken at 0xa91d1f8852ae5a02416361d2f45a32c207a1ded3
 */
 pragma solidity ^0.4.24;
 
@@ -486,7 +486,10 @@ contract CitowiseToken is StandardToken, Ownable, MintableToken, BurnableToken, 
     string public symbol;
     uint8 public decimals;
 
-    constructor() public CappedToken(500000000) {
+    uint256 constant public TOKENS_CAP = 500000000;
+    uint256 constant public ETHER = 1000000000000000000;
+
+    constructor() public CappedToken(TOKENS_CAP * ETHER) {
         name = "Citowise Token";
         symbol = "CTW";
         decimals = 18;
