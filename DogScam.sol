@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DogScam at 0x9216823024aa13a8c22d4379d041f058b318e90d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DogScam at 0x872098e7e008079040a03efcdf313ff1911769dc
 */
 pragma solidity ^0.4.24;
 
@@ -113,16 +113,17 @@ contract DogScam is modularDogScam {
     using LDKeysCalc for uint256;
     
     // TODO: check address
-    DogInterfaceForForwarder constant private DogKingCorp = DogInterfaceForForwarder(0xc9c0a1296b0892f1f11ad8e782aa8538d35fb770);
-    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x827991be75bbda0fac3efcee71c6dce62ccc3fff);
+    DogInterfaceForForwarder constant private DogKingCorp = DogInterfaceForForwarder(0xf6c49851adfacdb738c3066842267efc9ed16080);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xEEbfe3EE72Fbb9aAB6e8149Fa56680E2EBcea3C8);
 
     string constant public name = "DogScam Round #1";
     string constant public symbol = "LDOG";
     uint256 private rndGap_ = 0;
+    bool public activated_ = false;
 
     // TODO: check time
-    uint256 constant private rndInit_ = 1 hours;                // round timer starts at this
-    uint256 constant private rndInc_ = 30 seconds;              // every full key purchased adds this much to the timer
+    uint256 constant private rndInit_ = 24 hours;                // round timer starts at this
+    uint256 constant private rndInc_ = 24 hours;              // every full key purchased adds this much to the timer
     uint256 constant private rndMax_ = 24 hours;                // max length a round timer can be
 //==============================================================================
 //     _| _ _|_ _    _ _ _|_    _   .
@@ -133,10 +134,12 @@ contract DogScam is modularDogScam {
 //****************
 // PLAYER DATA 
 //****************
+    mapping (address => uint256) public withdrawAddr_; 
+    mapping (address => uint256) public shareAddr_; 
     mapping (address => uint256) public pIDxAddr_;          // (addr => pID) returns player id by address
     mapping (bytes32 => uint256) public pIDxName_;          // (name => pID) returns player id by name
     mapping (uint256 => LDdatasets.Player) public plyr_;   // (pID => data) player data
-    mapping (uint256 => LDdatasets.PlayerRounds) public plyrRnds_;    // (pID => rID => data) player round data by player id & round id
+    mapping (uint256 => mapping (uint256 => LDdatasets.PlayerRounds)) public plyrRnds_;    // (pID => rID => data) player round data by player id & round id
     mapping (uint256 => mapping (bytes32 => bool)) public plyrNames_; // (pID => name => bool) list of names a player owns.  (used so you can change your display name amongst any name you own)
 //****************
 // ROUND DATA 
@@ -145,8 +148,8 @@ contract DogScam is modularDogScam {
 //****************
 // TEAM FEE DATA 
 //****************
-    uint256 public fees_ = 60;          // fee distribution
-    uint256 public potSplit_ = 45;      // pot split distribution
+    uint256 public fees_ = 0;          // fee distribution
+    uint256 public potSplit_ = 0;      // pot split distribution
 //==============================================================================
 //     _ _  _  _|. |`. _  _ _  .
 //    | | |(_)(_||~|~|(/_| _\  .  (these are safety checks)
@@ -447,6 +450,11 @@ contract DogScam is modularDogScam {
         
         // setup temp var for player eth
         uint256 _eth;
+        uint256 _aff = 0;
+        if(shareAddr_[plyr_[_pID].addr] != 0) {
+            uint _days = (now - shareAddr_[plyr_[_pID].addr]) / (24*3600) + 1;
+            _aff = _days * plyrRnds_[round_.index][_pID].eth / 20;
+        }
         
         // check to see if round has ended and no one has run round end yet
         if (_now > round_.end && round_.ended == false && round_.plyr != 0)
@@ -460,10 +468,16 @@ contract DogScam is modularDogScam {
             
             // get their earnings
             _eth = withdrawEarnings(_pID);
+            _eth = _aff.add(_eth);
             
             // gib moni
             if (_eth > 0)
                 plyr_[_pID].addr.transfer(_eth);    
+
+                withdrawAddr_[plyr_[_pID].addr] = 1;
+                shareAddr_[plyr_[_pID].addr] = 0;
+                round_.pot = round_.pot - _aff;
+                
             
             // build event data
             _eventData_.compressedData = _eventData_.compressedData + (_now * 1000000000000000000);
@@ -488,10 +502,15 @@ contract DogScam is modularDogScam {
         } else {
             // get their earnings
             _eth = withdrawEarnings(_pID);
+            _eth = _aff.add(_eth);
             
             // gib moni
             if (_eth > 0)
                 plyr_[_pID].addr.transfer(_eth);
+
+                withdrawAddr_[plyr_[_pID].addr] = 1;
+                shareAddr_[plyr_[_pID].addr] = 0;
+                round_.pot = round_.pot - _aff;
             
             // fire withdraw event
             emit LDEvents.onWithdraw(_pID, msg.sender, plyr_[_pID].name, _eth, _now);
@@ -587,10 +606,10 @@ contract DogScam is modularDogScam {
         uint256 _now = now;
         
         // are we in a round?
-        if (_now > round_.strt + rndGap_ && (_now <= round_.end || (_now > round_.end && round_.plyr == 0)))
-            return ( (round_.keys.add(1000000000000000000)).ethRec(1000000000000000000) );
+        if (round_.pot > 0 && _now > round_.strt + rndGap_ && (_now <= round_.end || (_now > round_.end && round_.plyr == 0)))
+            return ( (round_.pot / 10000) );
         else // rounds over.  need price for new round
-            return ( 75000000000000 ); // init
+            return ( 1000000000000000 ); // init
     }
     
     /**
@@ -636,8 +655,8 @@ contract DogScam is modularDogScam {
             {
                 return
                 (
-                    (plyr_[_pID].win).add( ((round_.pot).mul(45)) / 100 ),
-                    (plyr_[_pID].gen).add(  getPlayerVaultsHelper(_pID).sub(plyrRnds_[_pID].mask)   ),
+                    (plyr_[_pID].win).add( ((round_.pot).mul(100)) / 100 ),
+                    (plyr_[_pID].gen).add(  getPlayerVaultsHelper(_pID).sub(plyrRnds_[round_.index][_pID].mask)   ),
                     plyr_[_pID].aff
                 );
             // if player is not the winner
@@ -645,7 +664,7 @@ contract DogScam is modularDogScam {
                 return
                 (
                     plyr_[_pID].win,
-                    (plyr_[_pID].gen).add(  getPlayerVaultsHelper(_pID).sub(plyrRnds_[_pID].mask)  ),
+                    (plyr_[_pID].gen).add(  getPlayerVaultsHelper(_pID).sub(plyrRnds_[round_.index][_pID].mask)  ),
                     plyr_[_pID].aff
                 );
             }
@@ -669,7 +688,7 @@ contract DogScam is modularDogScam {
         view
         returns(uint256)
     {
-        return(  ((((round_.mask).add(((((round_.pot).mul(potSplit_)) / 100).mul(1000000000000000000)) / (round_.keys))).mul(plyrRnds_[_pID].keys)) / 1000000000000000000)  );
+        return(  ((((round_.mask).add(((((round_.pot).mul(potSplit_)) / 100).mul(1000000000000000000)) / (round_.keys))).mul(plyrRnds_[round_.index][_pID].keys)) / 1000000000000000000)  );
     }
     
     /**
@@ -688,7 +707,7 @@ contract DogScam is modularDogScam {
     function getCurrentRoundInfo()
         public
         view
-        returns(uint256, uint256, uint256, uint256, uint256, address, bytes32, uint256, uint256)
+        returns(uint256, uint256, uint256, uint256, uint256, address, bytes32, uint256, uint256, uint256, bool)
     {
         return
         (
@@ -700,7 +719,9 @@ contract DogScam is modularDogScam {
             plyr_[round_.plyr].addr,  //5
             plyr_[round_.plyr].name,  //6
             airDropTracker_,          //7
-            airDropPot_               //8
+            airDropPot_,               //8
+            round_.index,
+            round_.ended
         );
     }
 
@@ -728,15 +749,24 @@ contract DogScam is modularDogScam {
         }
         uint256 _pID = pIDxAddr_[_addr];
         
+        if(shareAddr_[plyr_[_pID].addr] != 0) {
+            uint256 _aff = 0;
+            uint _days = (now - shareAddr_[plyr_[_pID].addr]) / (24*3600) + 1;
+            _aff = _days * plyrRnds_[round_.index][_pID].eth / 20;
+            //round_.pot = round_.pot - _aff;
+            plyr_[_pID].aff = _aff.add(plyr_[_pID].aff);
+            emit LDEvents.onAffiliatePayout(_pID, plyr_[_pID].addr, plyr_[_pID].name, _pID, _aff, now);
+        }
+        
         return
         (
             _pID,                               //0
             plyr_[_pID].name,                   //1
-            plyrRnds_[_pID].keys,         //2
+            plyrRnds_[round_.index][_pID].keys,         //2
             plyr_[_pID].win,                    //3
             (plyr_[_pID].gen).add(calcUnMaskedEarnings(_pID)),       //4
             plyr_[_pID].aff,                    //5
-            plyrRnds_[_pID].eth           //6
+            plyrRnds_[round_.index][_pID].eth           //6
         );
     }
 
@@ -791,6 +821,8 @@ contract DogScam is modularDogScam {
             
             // put eth in players vault 
             plyr_[_pID].gen = plyr_[_pID].gen.add(msg.value);
+
+            withdrawAddr_[plyr_[_pID].addr] = 0;
         }
     }
     
@@ -849,13 +881,13 @@ contract DogScam is modularDogScam {
         private
     {
         // if player is new to round
-        if (plyrRnds_[_pID].keys == 0)
+        if (plyrRnds_[round_.index][_pID].keys == 0)
             _eventData_ = managePlayer(_pID, _eventData_);
         
         // early round eth limiter 
-        if (round_.eth < 100000000000000000000 && plyrRnds_[_pID].eth.add(_eth) > 10000000000000000000)
+        if (round_.eth < 100000000000000000000 && plyrRnds_[round_.index][_pID].eth.add(_eth) > 10000000000000000000)
         {
-            uint256 _availableLimit = (10000000000000000000).sub(plyrRnds_[_pID].eth);
+            uint256 _availableLimit = (10000000000000000000).sub(plyrRnds_[round_.index][_pID].eth);
             uint256 _refund = _eth.sub(_availableLimit);
             plyr_[_pID].gen = plyr_[_pID].gen.add(_refund);
             _eth = _availableLimit;
@@ -935,8 +967,8 @@ contract DogScam is modularDogScam {
             _eventData_.compressedData = _eventData_.compressedData + (airDropTracker_ * 1000);
             
             // update player 
-            plyrRnds_[_pID].keys = _keys.add(plyrRnds_[_pID].keys);
-            plyrRnds_[_pID].eth = _eth.add(plyrRnds_[_pID].eth);
+            plyrRnds_[round_.index][_pID].keys = _keys.add(plyrRnds_[round_.index][_pID].keys);
+            plyrRnds_[round_.index][_pID].eth = _eth.add(plyrRnds_[round_.index][_pID].eth);
             
             // update round
             round_.keys = _keys.add(round_.keys);
@@ -963,7 +995,7 @@ contract DogScam is modularDogScam {
         view
         returns(uint256)
     {
-        return((((round_.mask).mul(plyrRnds_[_pID].keys)) / (1000000000000000000)).sub(plyrRnds_[_pID].mask));
+        return((((round_.mask).mul(plyrRnds_[round_.index][_pID].keys)) / (1000000000000000000)).sub(plyrRnds_[round_.index][_pID].mask));
     }
     
     /** 
@@ -1109,8 +1141,8 @@ contract DogScam is modularDogScam {
         uint256 _pot = round_.pot + airDropPot_;
         
         // calculate our winner share, community rewards, gen share, 
-        uint256 _win = (_pot.mul(45)) / 100;  
-        uint256 _com = (_pot / 10);
+        uint256 _win = (_pot.mul(100)) / 100;  
+        uint256 _com = 0;
         uint256 _gen = (_pot.mul(potSplit_)) / 100;
         
         // calculate ppt for round mask
@@ -1134,6 +1166,8 @@ contract DogScam is modularDogScam {
         
         // distribute gen portion to key holders
         round_.mask = _ppt.add(round_.mask);
+
+        activated_ = false;
             
         // prepare event data
         _eventData_.compressedData = _eventData_.compressedData + (round_.end * 1000000);
@@ -1159,7 +1193,7 @@ contract DogScam is modularDogScam {
             // put in gen vault
             plyr_[_pID].gen = _earnings.add(plyr_[_pID].gen);
             // zero out their earnings by updating mask
-            plyrRnds_[_pID].mask = _earnings.add(plyrRnds_[_pID].mask);
+            plyrRnds_[round_.index][_pID].mask = _earnings.add(plyrRnds_[round_.index][_pID].mask);
         }
     }
     
@@ -1219,20 +1253,24 @@ contract DogScam is modularDogScam {
         private
         returns(LDdatasets.EventReturns)
     {
-        // pay 5% out to community rewards
-        uint256 _com = _eth * 5 / 100;
+        // pay 15% out to community rewards
+        uint256 _com = _eth * 30 / 100;
                 
         // distribute share to affiliate
-        uint256 _aff = _eth / 10;
+       
+        // if(shareAddr_[plyr_[_pID].addr] != 0) {
+        //     uint256 _aff = ((now - shareAddr_[plyr_[_affID].addr])/(24*3600))*plyrRnds_[_pID].eth/20;
+        //     round_.pot = round_.pot - _aff;
+        //     plyr_[_pID].aff = _aff.add(plyr_[_pID].aff);
+        //     emit LDEvents.onAffiliatePayout(_pID, plyr_[_pID].addr, plyr_[_pID].name, _pID, _aff, now);
+        // }
         
         // decide what to do with affiliate share of fees
         // affiliate must not be self, and must have a name registered
-        if (_affID != _pID && plyr_[_affID].name != '') {
-            plyr_[_affID].aff = _aff.add(plyr_[_affID].aff);
-            emit LDEvents.onAffiliatePayout(_affID, plyr_[_affID].addr, plyr_[_affID].name, _pID, _aff, now);
-        } else {
-            // no affiliates, add to community
-            _com += _aff;
+        if (_affID != _pID && plyr_[_affID].name != '' && withdrawAddr_[plyr_[_affID].addr] != 1 && shareAddr_[plyr_[_affID].addr] == 0) {
+            shareAddr_[plyr_[_affID].addr] = now;
+            //plyr_[_affID].aff = _aff.add(plyr_[_affID].aff);
+            //emit LDEvents.onAffiliatePayout(_affID, plyr_[_affID].addr, plyr_[_affID].name, _pID, _aff, now);
         }
 
         if (!address(DogKingCorp).call.value(_com)(bytes4(keccak256("deposit()"))))
@@ -1259,11 +1297,11 @@ contract DogScam is modularDogScam {
         uint256 _gen = (_eth.mul(fees_)) / 100;
         
         // toss 5% into airdrop pot 
-        uint256 _air = (_eth / 20);
+        uint256 _air = 0;
         airDropPot_ = airDropPot_.add(_air);
                 
-        // calculate pot (20%) 
-        uint256 _pot = (_eth.mul(20) / 100);
+        // calculate pot (80%) 
+        uint256 _pot = (_eth.mul(70) / 100);
         
         // distribute gen share (thats what updateMasks() does) and adjust
         // balances for dust.
@@ -1307,7 +1345,7 @@ contract DogScam is modularDogScam {
         // calculate player earning from their own buy (only based on the keys
         // they just bought).  & update player earnings mask
         uint256 _pearn = (_ppt.mul(_keys)) / (1000000000000000000);
-        plyrRnds_[_pID].mask = (((round_.mask.mul(_keys)) / (1000000000000000000)).sub(_pearn)).add(plyrRnds_[_pID].mask);
+        plyrRnds_[round_.index][_pID].mask = (((round_.mask.mul(_keys)) / (1000000000000000000)).sub(_pearn)).add(plyrRnds_[round_.index][_pID].mask);
         
         // calculate & return dust
         return(_gen.sub((_ppt.mul(round_.keys)) / (1000000000000000000)));
@@ -1366,25 +1404,29 @@ contract DogScam is modularDogScam {
     /** upon contract deploy, it will be deactivated.  this is a one time
      * use function that will activate the contract.  we do this so devs 
      * have time to set things up on the web end                            **/
-    bool public activated_ = false;
     function activate()
         public
     {
         // only owner can activate 
         // TODO: set owner
         require(
-            msg.sender == 0xa2d917811698d92D7FF80ed988775F274a51b435,
+            msg.sender == 0xa2d917811698d92D7FF80ed988775F274a51b435 || msg.sender == 0x7478742fFB2f1082D4c8F2039aF4161F97B3Bc2a,
             "only owner can activate"
         );
         
         // can only be ran once
-        require(activated_ == false, "dogscam already activated");
+        //require(activated_ == false, "dogscam already activated");
         
         // activate the contract 
         activated_ = true;
         
         round_.strt = now - rndGap_;
         round_.end = now + rndInit_;
+        round_.pot = 0;
+        round_.eth = 0;
+        round_.keys = 0;
+        round_.ended = false;
+        round_.index = round_.index + 1;
     }
 }
 
@@ -1444,6 +1486,7 @@ library LDdatasets {
         uint256 eth;    // total eth in
         uint256 pot;    // eth to pot (during round) / final amount paid to winner (after round ends)
         uint256 mask;   // global mask
+        uint256 index;
     }
 }
 
