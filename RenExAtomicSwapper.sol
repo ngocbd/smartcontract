@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RenExAtomicSwapper at 0xc3fed6eb39178a541d274e6fc748d48f0ca01cc3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RenExAtomicSwapper at 0xd5fAEF6b5eE44391FFaa42d732c88b86C73ed287
 */
 pragma solidity 0.4.24;
 
@@ -170,5 +170,14 @@ contract RenExAtomicSwapper {
     /// @param _swapID The unique atomic swap id.
     function redeemable(bytes32 _swapID) external view returns (bool) {
         return (swapStates[_swapID] == States.OPEN);
+    }
+
+    /// @notice Generates a deterministic swap id using initiate swap details.
+    ///
+    /// @param _withdrawTrader The address of the withdrawing trader.
+    /// @param _secretLock The hash of the secret.
+    /// @param _timelock The expiry timestamp.
+    function swapID(address _withdrawTrader, bytes32 _secretLock, uint256 _timelock) public pure returns (bytes32) {
+        return keccak256(abi.encodePacked(_withdrawTrader, _secretLock, _timelock));
     }
 }
