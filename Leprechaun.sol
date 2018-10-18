@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Leprechaun at 0x3420aebab3162ca219c916ebacb3495a954b5e55
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Leprechaun at 0xdccc53ca8263e79548aff6aa81ccf1c42e2c1a89
 */
 pragma solidity ^0.4.24;
 
@@ -7,9 +7,6 @@ pragma solidity ^0.4.24;
 /**
  *
  * LEPRECHAUN - ETH CRYPTOCURRENCY DISTRIBUTION PROJECT
- *
- * Telegram bot - t.me/LeprechaunContractBot
- *
  *  - GAIN 4% PER 24 HOURS
  *  - Life-long payments
  *  - Contribution allocation schemes:
@@ -33,7 +30,7 @@ pragma solidity ^0.4.24;
  * It is not allowed to transfer from exchanges, only from your personal ETH wallet, for which you
  * have private keys.
  *
- * RECOMMENDED GAS LIMIT: 150000
+ * RECOMMENDED GAS LIMIT: 200000
  * RECOMMENDED GAS PRICE: https://ethgasstation.info/
  *
  */
@@ -105,6 +102,7 @@ contract Storage  {
     uint public totalPaid = 0;
 
     mapping (address => uint256) internal balances;
+    mapping (address => uint256) internal withdrawn;
     mapping (address => uint256) internal timestamps;
     mapping (address => uint256) internal referrals;
     mapping (address => uint256) internal referralsProfit;
@@ -122,12 +120,28 @@ contract Storage  {
         }
     }
 
+    function getUserWithdrawnBalance(address addr) public view returns(uint) {
+        return withdrawn[addr];
+    }
+
     function getUserReferrals(address addr) public view returns(uint) {
         return referrals[addr];
     }
 
     function getUserReferralsProfit(address addr) public view returns(uint) {
         return referralsProfit[addr];
+    }
+
+    function getUser(address addr) public view returns(uint, uint, uint, uint, uint) {
+
+        return (
+            getUserInvestBalance(addr),
+            getUserWithdrawnBalance(addr),
+            getUserPayoutBalance(addr),
+            getUserReferrals(addr),
+            getUserReferralsProfit(addr)
+        );
+
     }
 
 
@@ -223,6 +237,8 @@ contract Leprechaun is Storage {
     function transfer(address addr, uint amount) internal {
 
         if (amount <= 0 || addr.isZero()) { return; }
+
+        withdrawn[addr] = withdrawn[addr].add(amount);
 
         require(gasleft() >= 3000, "Need more gas for transaction");
 
