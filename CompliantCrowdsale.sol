@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CompliantCrowdsale at 0x348fcc80a18b6c247ce2889bfc063e281a4e2951
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CompliantCrowdsale at 0x790ab3c76d6589b489ad60938411b8dd1c0d32ef
 */
 pragma solidity 0.4.24;
 
@@ -7,7 +7,7 @@ pragma solidity 0.4.24;
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error 1
- * version 5
+ * version 7
  */
 library SafeMath {
 
