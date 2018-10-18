@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETQuality at 0x94d787cac6bfc4ec509a0f34aa7bc2fb68848c5e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETQuality at 0xa29e71cb2e30e8af956d64b025b88a5ca3d7ecd2
 */
 pragma solidity ^0.4.24;
 
@@ -119,11 +119,11 @@ contract ETQuality is StandardToken {
 
     function ETQuality(
         ) {
-        balances[msg.sender] = 1000000000000000000000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 1000000000000000000000000000;                        // Update total supply (100000 for example)
-        name = "ZeroPlastic";                                   // Set the name for display purposes
+        balances[msg.sender] = 1000000000000000000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 1000000000000000000000000;                        // Update total supply (100000 for example)
+        name = "Lambocoin";                                   // Set the name for display purposes
         decimals = 18;                            // Amount of decimals for display purposes
-        symbol = "ZPC";                                // Set the symbol for display purposes
+        symbol = "LLC";                                // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
