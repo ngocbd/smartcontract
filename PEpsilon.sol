@@ -1,36 +1,31 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PEpsilon at 0xecb8457a9ae61578540fc36a537f876ecb3c1277
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PEpsilon at 0x6a315c4d4c405f6242778abb203c5745a631988e
 */
 pragma solidity ^0.4.24;
 
 
-/** @title PEpsilon
- *  @author Daniel Babbev
+/** @title PEpsilonLastRound
+ *  @author based on a contract by Daniel Babbev, modified by William George
  *
- *  This contract implements a p + epsilon attack against the Kleros court.
+ *  This contract implements a p + epsilon attack against the Kleros court where the bribe is only offered to jurors in the last appeal round.
  *  The attack is described by VitaliK Buterin here: https://blog.ethereum.org/2015/01/28/p-epsilon-attack/
  */
 contract PEpsilon {
   Pinakion public pinakion;
   Kleros public court;
-
-  uint public balance;
+   uint public balance;
   uint public disputeID;
   uint public desiredOutcome;
   uint public epsilon;
   bool public settled;
   uint public maxAppeals; // The maximum number of appeals this cotracts promises to pay
   mapping (address => uint) public withdraw; // We'll use a withdraw pattern here to avoid multiple sends when a juror has voted multiple times.
-
-  address public attacker;
+   address public attacker;
   uint public remainingWithdraw; // Here we keep the total amount bribed jurors have available for withdraw.
-
-  modifier onlyBy(address _account) {require(msg.sender == _account); _;}
-
-  event AmountShift(uint val, uint epsilon ,address juror);
+   modifier onlyBy(address _account) {require(msg.sender == _account); _;}
+   event AmountShift(uint val, uint epsilon ,address juror);
   event Log(uint val, address addr, string message);
-
-  /** @dev Constructor.
+   /** @dev Constructor.
    *  @param _pinakion The PNK contract.
    *  @param _kleros   The Kleros court.
    *  @param _disputeID The dispute we are targeting.
@@ -47,61 +42,50 @@ contract PEpsilon {
     attacker = msg.sender;
     maxAppeals = _maxAppeals;
   }
-
-  /** @dev Callback of approveAndCall - transfer pinakions in the contract. Should be called by the pinakion contract. TRUSTED.
+   /** @dev Callback of approveAndCall - transfer pinakions in the contract. Should be called by the pinakion contract. TRUSTED.
    *  The attacker has to deposit sufficiently large amount of PNK to cover the payouts to the jurors.
    *  @param _from The address making the transfer.
    *  @param _amount Amount of tokens to transfer to this contract (in basic units).
    */
   function receiveApproval(address _from, uint _amount, address, bytes) public onlyBy(pinakion) {
     require(pinakion.transferFrom(_from, this, _amount));
-
-    balance += _amount;
+     balance += _amount;
   }
-
-  /** @dev Jurors can withdraw their PNK from here
+   /** @dev Jurors can withdraw their PNK from here
    */
   function withdrawJuror() {
     withdrawSelect(msg.sender);
   }
-
-  /** @dev Withdraw the funds of a given juror
+   /** @dev Withdraw the funds of a given juror
    *  @param _juror The address of the juror
    */
   function withdrawSelect(address _juror) {
     uint amount = withdraw[_juror];
     withdraw[_juror] = 0;
-
-    balance = sub(balance, amount); // Could underflow
+     balance = sub(balance, amount); // Could underflow
     remainingWithdraw = sub(remainingWithdraw, amount);
-
-    // The juror receives d + p + e (deposit + p + epsilon)
+     // The juror receives d + p + e (deposit + p + epsilon)
     require(pinakion.transfer(_juror, amount));
   }
-
-  /**
+   /**
   * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
   */
   function sub(uint256 _a, uint256 _b) internal pure returns (uint256) {
     assert(_b <= _a);
     return _a - _b;
   }
-
-  /** @dev The attacker can withdraw their PNK from here after the bribe has been settled.
+   /** @dev The attacker can withdraw their PNK from here after the bribe has been settled.
    */
   function withdrawAttacker(){
     require(settled);
-
-    if (balance > remainingWithdraw) {
+     if (balance > remainingWithdraw) {
       // The remaning balance of PNK after settlement is transfered to the attacker.
       uint amount = balance - remainingWithdraw;
       balance = remainingWithdraw;
-
-      require(pinakion.transfer(attacker, amount));
+       require(pinakion.transfer(attacker, amount));
     }
   }
-
-  /** @dev Settles the p + e bribe with the jurors.
+   /** @dev Settles the p + e bribe with the jurors.
    * If the dispute is ruled differently from desiredOutcome:
    *    The jurors who voted for desiredOutcome receive p + d + e in rewards from this contract.
    * If the dispute is ruled as in desiredOutcome:
@@ -110,70 +94,56 @@ contract PEpsilon {
   function settle() public {
     require(court.disputeStatus(disputeID) ==  Arbitrator.DisputeStatus.Solved); // The case must be solved.
     require(!settled); // This function can be executed only once.
-
-    settled = true; // settle the bribe
-
-    // From the dispute we get the # of appeals and the available choices
+     settled = true; // settle the bribe
+     // From the dispute we get the # of appeals and the available choices
     var (, , appeals, choices, , , ,) = court.disputes(disputeID);
-
-    if (court.currentRuling(disputeID) != desiredOutcome){
+     if (court.currentRuling(disputeID) != desiredOutcome){
       // Calculate the redistribution amounts.
       uint amountShift = court.getStakePerDraw();
       uint winningChoice = court.getWinningChoice(disputeID, appeals);
-
-      // Rewards are calculated as per the one shot token reparation.
-      for (uint i=0; i <= (appeals > maxAppeals ? maxAppeals : appeals); i++){ // Loop each appeal and each vote.
-
-        // Note that we don't check if the result was a tie becuse we are getting a funny compiler error: "stack is too deep" if we check.
-        // TODO: Account for ties
-        if (winningChoice != 0){
-          // votesLen is the length of the votes per each appeal. There is no getter function for that, so we have to calculate it here.
-          // We must end up with the exact same value as if we would have called dispute.votes[i].length
-          uint votesLen = 0;
-          for (uint c = 0; c <= choices; c++) { // Iterate for each choice of the dispute.
-            votesLen += court.getVoteCount(disputeID, i, c);
-          }
-
-          emit Log(amountShift, 0x0 ,"stakePerDraw");
-          emit Log(votesLen, 0x0, "votesLen");
-
-          uint totalToRedistribute = 0;
-          uint nbCoherent = 0;
-
-          // Now we will use votesLen as a substitute for dispute.votes[i].length
-          for (uint j=0; j < votesLen; j++){
-            uint voteRuling = court.getVoteRuling(disputeID, i, j);
-            address voteAccount = court.getVoteAccount(disputeID, i, j);
-
-            emit Log(voteRuling, voteAccount, "voted");
-
-            if (voteRuling != winningChoice){
-              totalToRedistribute += amountShift;
-
-              if (voteRuling == desiredOutcome){ // If the juror voted as we desired.
-                // Transfer this juror back the penalty.
-                withdraw[voteAccount] += amountShift + epsilon;
-                remainingWithdraw += amountShift + epsilon;
-                emit AmountShift(amountShift, epsilon, voteAccount);
-              }
-            } else {
-              nbCoherent++;
+       // Rewards are calculated as per the one shot token reparation.
+      uint lastRound = (appeals > maxAppeals ? maxAppeals : appeals);
+       // Note that we don't check if the result was a tie becuse we are getting a funny compiler error: "stack is too deep" if we check.
+      // TODO: Account for ties
+      if (winningChoice != 0){
+        // votesLen is the length of the votes per each appeal. There is no getter function for that, so we have to calculate it here.
+        // We must end up with the exact same value as if we would have called dispute.votes[lastRound].length
+        uint votesLen = 0;
+        for (uint c = 0; c <= choices; c++) { // Iterate for each choice of the dispute.
+          votesLen += court.getVoteCount(disputeID, lastRound, c);
+        }
+         emit Log(amountShift, 0x0 ,"stakePerDraw");
+        emit Log(votesLen, 0x0, "votesLen");
+         uint totalToRedistribute = 0;
+        uint nbCoherent = 0;
+         // Now we will use votesLen as a substitute for dispute.votes[lastRound].length
+        for (uint j=0; j < votesLen; j++){
+          uint voteRuling = court.getVoteRuling(disputeID, lastRound, j);
+          address voteAccount = court.getVoteAccount(disputeID, lastRound, j);
+           emit Log(voteRuling, voteAccount, "voted");
+           if (voteRuling != winningChoice){
+            totalToRedistribute += amountShift;
+             if (voteRuling == desiredOutcome){ // If the juror voted as we desired.
+              // Transfer this juror back the penalty.
+              withdraw[voteAccount] += amountShift + epsilon;
+              remainingWithdraw += amountShift + epsilon;
+              emit AmountShift(amountShift, epsilon, voteAccount);
             }
+          } else {
+            nbCoherent++;
           }
-          // toRedistribute is the amount each juror received when he voted coherently.
-          uint toRedistribute = (totalToRedistribute - amountShift) / (nbCoherent + 1);
-
-          // We use votesLen again as a substitute for dispute.votes[i].length
-          for (j = 0; j < votesLen; j++){
-            voteRuling = court.getVoteRuling(disputeID, i, j);
-            voteAccount = court.getVoteAccount(disputeID, i, j);
-
-            if (voteRuling == desiredOutcome){
-              // Add the coherent juror reward to the total payout.
-              withdraw[voteAccount] += toRedistribute;
-              remainingWithdraw += toRedistribute;
-              emit AmountShift(toRedistribute, 0, voteAccount);
-            }
+        }
+        // toRedistribute is the amount each juror received when he voted coherently.
+        uint toRedistribute = (totalToRedistribute - amountShift) / (nbCoherent + 1);
+         // We use votesLen again as a substitute for dispute.votes[lastRound].length
+        for (j = 0; j < votesLen; j++){
+          voteRuling = court.getVoteRuling(disputeID, lastRound, j);
+          voteAccount = court.getVoteAccount(disputeID, lastRound, j);
+           if (voteRuling == desiredOutcome){
+            // Add the coherent juror reward to the total payout.
+            withdraw[voteAccount] += toRedistribute;
+            remainingWithdraw += toRedistribute;
+            emit AmountShift(toRedistribute, 0, voteAccount);
           }
         }
       }
