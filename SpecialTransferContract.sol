@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SpecialTransferContract at 0x2585c836d0fbf41112861988bfc0b836ee064012
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SpecialTransferContract at 0x06409b071a4338b2b8987f021a70ab552eb3bcce
 */
 pragma solidity ^0.4.25;
 
 /*
 Version 1.0.14
 This contract accepts ETH, and distributes tokens.
-DBLK Airdrop Accelerator
+DBLK Airdrop Multiplier
  */
 
 
