@@ -1,140 +1,97 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CHANCE at 0x9491b80e8971331f172cc3bce5840319e0233616
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Chance at 0x042b6475E8e0B8B12D001E2eAFb036Bbea0C4e52
 */
-pragma solidity ^0.4.19;
-
-contract Token {
-
-    /// @return total amount of tokens
-    function totalSupply() constant returns (uint256 supply) {}
-
-    /// @param _owner The address from which the balance will be retrieved
-    /// @return The balance
-    function balanceOf(address _owner) constant returns (uint256 balance) {}
-
-    /// @notice send `_value` token to `_to` from `msg.sender`
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transfer(address _to, uint256 _value) returns (bool success) {}
-
-    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
-    /// @param _from The address of the sender
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
-
-    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @param _value The amount of wei to be approved for transfer
-    /// @return Whether the approval was successful or not
-    function approve(address _spender, uint256 _value) returns (bool success) {}
-
-    /// @param _owner The address of the account owning tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @return Amount of remaining tokens allowed to spent
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
-
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+pragma solidity ^0.4.0;
+contract Chance {
+    address owner;
+    uint public pot;
+    uint SEKU_PRICE;
+    uint private _random;
+    address[] public participants;
+    mapping (address => uint) public sekus;
+    mapping (uint => address) public invitation;
+    uint public reflink;
     
-}
-
-
-
-contract StandardToken is Token {
-
-    function transfer(address _to, uint256 _value) returns (bool success) {
-        //Default assumes totalSupply can't be over max (2^256 - 1).
-        //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
-        //Replace the if with this one instead.
-        //if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-        if (balances[msg.sender] >= _value && _value > 0) {
-            balances[msg.sender] -= _value;
-            balances[_to] += _value;
-            Transfer(msg.sender, _to, _value);
-            return true;
-        } else { return false; }
+    event Payout(address target, uint amount, uint nrOfParticipants, uint sekus);
+	
+    modifier onlyBy(address _account)
+    {
+        require(msg.sender == _account);
+        _;
     }
-
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        //same as above. Replace this line with the following if you want to protect against wrapping uints.
-        //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
-            balances[_to] += _value;
-            balances[_from] -= _value;
-            allowed[_from][msg.sender] -= _value;
-            Transfer(_from, _to, _value);
-            return true;
-        } else { return false; }
+    
+    constructor () public {
+        owner = msg.sender;
+        pot= address(this).balance;
+        SEKU_PRICE=0.001 ether;
     }
-
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-        return balances[_owner];
+	 function setSEKU(uint price) public onlyBy(owner){
+        SEKU_PRICE = price* 1 ether;
     }
-
-    function approve(address _spender, uint256 _value) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
+    function withdrawal()payable public onlyBy(owner){
+        terminate();
     }
-
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-      return allowed[_owner][_spender];
+	
+    function getref() constant returns (uint) { 
+        return uint32(keccak256(abi.encodePacked(msg.sender)));
     }
-
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
-    uint256 public totalSupply;
-}
-
-
-//name this contract whatever you'd like
-contract CHANCE is StandardToken {
-
-    function () {
-        //if ether is sent to this address, send it back.
-        throw;
+    
+     function buySEKU(uint amount,uint ref) payable public {
+        require(msg.value == amount*SEKU_PRICE && amount>0 && amount<201 );
+        bool _ref=false;
+        if(ref != 0 && invitation[ref] != msg.sender && sekus[invitation[ref]]>amount){
+            _ref=true;
+        }
+        for (uint i=0; i<amount; i++) {
+            participants.push(msg.sender);
+            if( _ref==true && (i%4==0)){
+                participants.push(invitation[ref]);
+        }
     }
-
-    /* Public variables of the token */
-
-    /*
-    NOTE:
-    The following variables are OPTIONAL vanities. One does not have to include them.
-    They allow one to customise the token contract & in no way influences the core functionality.
-    Some wallets/interfaces might not even bother to look at this information.
-    */
-    string public name;                   //fancy name: eg Simon Bucks
-    uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
-    string public symbol;                 //An identifier: eg SBX
-    string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
-
-//
-// CHANGE THESE VALUES FOR YOUR TOKEN
-//
-
-//make sure this function name matches the contract name above. So if you're token is called TutorialToken, make sure the //contract name above is also TutorialToken instead of ERC20Token
-
-    function CHANCE(
-        ) {
-        balances[msg.sender] = 79000000000000000000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 79000000000000000000000000;                        // Update total supply (100000 for example)
-        name = "CHANCE";                                   // Set the name for display purposes
-        decimals = 18;                            // Amount of decimals for display purposes
-        symbol = "CHE";                               // Set the symbol for display purposes
+        sekus[msg.sender]+=amount;
+        reflink=uint32(keccak256(abi.encodePacked(msg.sender)));
+        invitation[reflink]= msg.sender;
+        pot+=msg.value;
     }
-
-    /* Approves and then calls the receiving contract */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-
-        //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
-        //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
-        //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
-        if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
-        return true;
+   
+    function terminate() private {
+        uint totalPayout = pot;
+        _random= random();
+        uint ownerFee = totalPayout / 10;
+        uint payoutToFirstWinner = (totalPayout) / 2;
+        uint payoutToSecondWinner = (totalPayout) / 4;
+        uint payoutToThirdWinner = (totalPayout)  / 20;
+        
+        owner.transfer(ownerFee);
+        
+        uint firstWinnerIndex =  uint(blockhash(block.number-1-_random))  % participants.length;
+        address firstWinner = participants[firstWinnerIndex];
+        firstWinner.transfer(payoutToFirstWinner);
+        emit Payout(firstWinner, payoutToFirstWinner, participants.length,sekus[firstWinner]);
+        uint secondWinnerIndex =  uint(blockhash(block.number-2-_random)) % participants.length;
+        address secondWinner = participants[secondWinnerIndex];
+        while (secondWinner==firstWinner || secondWinner==owner){
+            _random+=1;
+            secondWinnerIndex =  uint(blockhash(block.number-2-_random)) % participants.length;
+            secondWinner = participants[secondWinnerIndex];
+        }
+        
+        secondWinner.transfer(payoutToSecondWinner);
+        emit Payout(secondWinner, payoutToSecondWinner, participants.length,sekus[secondWinner]);
+        uint thirdWinnerIndex =  uint(blockhash(block.number-3-_random)) % participants.length;
+        address thirdWinner = participants[thirdWinnerIndex];
+        while (thirdWinner==firstWinner || thirdWinner==secondWinner || secondWinner==owner){
+            _random+=1;
+            thirdWinnerIndex =  uint(blockhash(block.number-3-_random)) % participants.length;
+            thirdWinner = participants[thirdWinnerIndex];
+        }
+        
+        thirdWinner.transfer(payoutToThirdWinner);
+        emit Payout(thirdWinner, payoutToThirdWinner, participants.length,sekus[thirdWinner]);
+        pot-=(ownerFee+payoutToThirdWinner+payoutToSecondWinner+payoutToFirstWinner);
+        delete participants;
+    }
+      function random() private view returns (uint8) {
+        return uint8(uint256(keccak256(abi.encodePacked(now, block.difficulty)))%251);
     }
 }
