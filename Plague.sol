@@ -1,12 +1,36 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Plague at 0xe261b329eaa9a0ac456d09f8501fb0129b0c3797
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Plague at 0xf317a365cfef0aa4357abd057048808a1d430402
 */
 pragma solidity ^0.4.24;
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
+//================================================================================
+//                            Plague Inc. <Grand prize>
+// WARNING!!! WARNING!!! WARNING!!! WARNING!!! WARNING!!! WARNING!!! WARNING!!!
+//                     This game is easy for you to get rich.
+//                           Please prepare enough ETH.
+//                 If you have HEART DISEASE, PLEASE DON'T PLAY.
+//       If you are Chinese or American, please don't play. YOU ARE TOO RICH.
+// 
+// Plague Inc. , which is abbreviated as PIC by players.
+// is developed by a well-known games company who put a lot of effort into R&D.
+// One evening, our producer had a hands-on experience on FOMO3D.
+// and he was really annoyed by the "unreasonable" numerical settings in FOMO3D.
+// He said: "We can make a better one!"
+// So we made a better one. ^v^
+// 
+// # It takes less time for investors to get back their capital, while making more
+//   profit (51% for investor dividends).
+// # Introducers can get a high return of 10% (effective in the long term).
+// # A lot of investors suffered losses in FOMO3D Quick, which is solved perfectly
+//   by Plague Inc.
+// # A total of 11 players will share the grand prize, you don’t have to be the
+//   last one.
+// # Better numerical and time setup, no worries about being in trouble.
+// 
+//                     ©2030 Plague Inc. All Rights Reserved.
+//                                www.plagueinc.io
+//                Memorial Bittorrent, eDonkey, eMule. Embrace IPFS
+//                        Blockchain will change the world.
+//================================================================================
 library SafeMath {
     function mul(uint256 a, uint256 b) 
         internal 
@@ -121,7 +145,7 @@ contract Plague is PlagueEvents{
     struct Round {
         uint256 eth;                // total eth
         uint256 keys;               // total keys
-        uint256 startTime;          // end time
+        uint256 startTime;          // start time
         uint256 endTime;            // end time
         uint256 infectiveEndTime;   // infective end time
         address leader;             // leader
@@ -146,13 +170,13 @@ contract Plague is PlagueEvents{
     uint256 public rndNo = 1;                                   // current round number
     uint256 public totalEth = 0;                                // total eth in all round
 
-    uint256 constant private rndInfectiveStage_ = 10 minutes;          // round timer at iinfective stage12 hours;
-    uint256 constant private rndInfectiveReadyTime_ = 1 minutes;      // round timer at infective stage ready time
-    uint256 constant private rndDevelopmentStage_ = 3 minutes;       // round timer at development stage 30 minutes; 
-    uint256 constant private rndDevelopmentReadyTime_ = 1 minutes;       // round timer at development stage ready time 1 hours;
-    uint256 constant private allKeys_ = 100 * (10 ** 18);   // all keys count
-    uint256 constant private allEths_ = 7500773437500000; // all eths count
-    uint256 constant private rndIncreaseTime_ = 3 minutes;       // increase time 3 hours
+    uint256 constant private rndInfectiveStage_ = 12 hours;          // round timer at infective stage 12 hours;
+    uint256 constant private rndInfectiveReadyTime_ = 30 minutes;      // round timer at infective stage ready time
+    uint256 constant private rndDevelopmentStage_ = 15 minutes;       // round timer at development stage 30 minutes; 
+    uint256 constant private rndDevelopmentReadyTime_ = 12 hours;       // round timer at development stage ready time 1 hours;
+    uint256 constant private allKeys_ = 15000000 * (10 ** 18);   // all keys count
+    uint256 constant private allEths_ = 18703123828125000000000; // all eths count
+    uint256 constant private rndIncreaseTime_ = 3 hours;       // increase time 3 hours
     uint256 constant private developmentAwardPercent = 1;   // 0.1% reduction every 3 hours
 
     mapping (uint256 => Round) public round_m;                  // (rndNo => Round)
@@ -223,16 +247,15 @@ contract Plague is PlagueEvents{
         uint256 _rndNo = rndNo;
         uint256 _ethUse = msg.value;
 
-        // start next round?
         if (_now > round_m[_rndNo].endTime)
         {
-            require(round_m[_rndNo].endTime + rndDevelopmentReadyTime_ < _now, "we should wait some times");
+            require(round_m[_rndNo].endTime + rndDevelopmentReadyTime_ < _now, "we should wait some time");
             
             uint256 lastAwardEth = (round_m[_rndNo].eth.mul(14) / 100).sub(round_m[_rndNo].inveterAmount);
             
-            if(round_m[_rndNo].totalInfective < round_m[_rndNo].lastInfective.length.sub(1))
+            if(round_m[_rndNo].totalInfective < round_m[_rndNo].lastInfective.length)
             {
-                uint256 nextPlayersAward = round_m[_rndNo].lastInfective.length.sub(1).sub(round_m[_rndNo].totalInfective);
+                uint256 nextPlayersAward = round_m[_rndNo].lastInfective.length.sub(round_m[_rndNo].totalInfective);
                 uint256 _totalAward = round_m[_rndNo].eth.mul(30) / 100;
                 _totalAward = _totalAward.add(round_m[_rndNo].lastRoundReward);
                 if(round_m[_rndNo].infectLastPlayer != address(0))
@@ -573,6 +596,8 @@ contract Plague is PlagueEvents{
         onlyOwner()
         public
     {
+        require(isStartGame == false, "The game has already started!");
+        
         round_m[1].startTime = now;
         round_m[1].endTime = now + rndInfectiveStage_;
         round_m[1].lastRoundReward = 0;
@@ -597,7 +622,7 @@ contract Plague is PlagueEvents{
     function getCurrentRoundInfo()
         public 
         view 
-        returns(uint256, uint256[2], uint256[3], address[2], uint256[6], address[11],address[4])
+        returns(uint256, uint256[2], uint256[3], address[2], uint256[6], address[11], address[4])
     {
         uint256 _rndNo = rndNo;
         uint256 _totalAwardAtRound = round_m[_rndNo].lastRoundReward.add(round_m[_rndNo].exAward).add(round_m[_rndNo].eth.mul(30) / 100);
@@ -651,6 +676,7 @@ contract Plague is PlagueEvents{
         //second stage
         return (0);
     }
+    
 }
 
 library KeysCalc {
