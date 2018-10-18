@@ -1,49 +1,121 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NetkillerToken at 0x6333050c7a025027b51a8039cbafd2584933299d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NetkillerToken at 0xac13cc399515688fc0c45da6e293cbbe5f297549
 */
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.25;
 
 /******************************************/
-/*       Netkiller ADVANCED TOKEN         */
+/*     Netkiller Standard safe token      */
 /******************************************/
 /* Author netkiller <netkiller@msn.com>   */
 /* Home http://www.netkiller.cn           */
-/* Version 2018-05-09 - Add Global lock   */
+/* Version 2018-09-30                     */
 /******************************************/
 
-contract NetkillerToken {
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that revert on error
+ */
+library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, reverts on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    // Gas optimization: this is cheaper than requiring 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+    if (a == 0) {
+      return 0;
+    }
+
+    uint256 c = a * b;
+    require(c / a == b);
+
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers truncating the quotient, reverts on division by zero.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    require(b > 0); // Solidity only automatically asserts when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+
+    return c;
+  }
+
+  /**
+  * @dev Subtracts two numbers, reverts on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    require(b <= a);
+    uint256 c = a - b;
+
+    return c;
+  }
+
+  /**
+  * @dev Adds two numbers, reverts on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    require(c >= a);
+
+    return c;
+  }
+
+  /**
+  * @dev Divides two numbers and returns the remainder (unsigned integer modulo),
+  * reverts when dividing by zero.
+  */
+  function mod(uint256 a, uint256 b) internal pure returns (uint256) {
+    require(b != 0);
+    return a % b;
+  }
+}
+
+contract Ownable {
+    
     address public owner;
-    // Public variables of the token
+    
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    
+    constructor() public {
+        owner = msg.sender;
+    }
+    
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+    
+    function transferOwnership(address newOwner) public onlyOwner {
+        require(newOwner != address(0));
+        emit OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+    }
+
+}
+
+contract NetkillerToken is Ownable{
+    
+    using SafeMath for uint256;
+    
     string public name;
     string public symbol;
     uint public decimals;
-    // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
-
+    
     // This creates an array with all balances
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
+    mapping (address => uint256) internal balances;
+    mapping (address => mapping (address => uint256)) internal allowed;
 
     // This generates a public event on the blockchain that will notify clients
     event Transfer(address indexed from, address indexed to, uint256 value);
-
-    // This notifies clients about the amount burnt
-    event Burn(address indexed from, uint256 value);
     event Approval(address indexed owner, address indexed spender, uint256 value);
-    
-    mapping (address => bool) public frozenAccount;
 
-    /* This generates a public event on the blockchain that will notify clients */
-    event FrozenFunds(address target, bool frozen);
-
-    bool lock = false;
-
-    /**
-     * Constrctor function
-     *
-     * Initializes contract with initial supply tokens to the creator of the contract
-     */
-    function NetkillerToken(
+    constructor(
         uint256 initialSupply,
         string tokenName,
         string tokenSymbol,
@@ -54,131 +126,68 @@ contract NetkillerToken {
         symbol = tokenSymbol; 
         decimals = decimalUnits;
         totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
-        balanceOf[msg.sender] = totalSupply;                // Give the creator all initial token
+        balances[msg.sender] = totalSupply;                // Give the creator all initial token
     }
 
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
-    }
-
-    modifier isLock {
-        require(!lock);
-        _;
+    function balanceOf(address _address) view public returns (uint256 balance) {
+        return balances[_address];
     }
     
-    function setLock(bool _lock) onlyOwner public{
-        lock = _lock;
-    }
-
-    function transferOwnership(address newOwner) onlyOwner public {
-        if (newOwner != address(0)) {
-            owner = newOwner;
-        }
-    }
- 
     /* Internal transfer, only can be called by this contract */
-    function _transfer(address _from, address _to, uint _value) isLock internal {
-        require (_to != 0x0);                               // Prevent transfer to 0x0 address. Use burn() instead
-        require (balanceOf[_from] >= _value);               // Check if the sender has enough
-        require (balanceOf[_to] + _value > balanceOf[_to]); // Check for overflows
-        require(!frozenAccount[_from]);                     // Check if sender is frozen
-        require(!frozenAccount[_to]);                       // Check if recipient is frozen
-        balanceOf[_from] -= _value;                         // Subtract from the sender
-        balanceOf[_to] += _value;                           // Add the same to the recipient
+    function _transfer(address _from, address _to, uint256 _value) internal {
+        require (_to != address(0));                        // Prevent transfer to 0x0 address. Use burn() instead
+        require (balances[_from] >= _value);                // Check if the sender has enough
+        require (balances[_to] + _value > balances[_to]);   // Check for overflows
+        balances[_from] = balances[_from].sub(_value);      // Subtract from the sender
+        balances[_to] = balances[_to].add(_value);          // Add the same to the recipient
         emit Transfer(_from, _to, _value);
     }
 
-    /**
-     * Transfer tokens
-     *
-     * Send `_value` tokens to `_to` from your account
-     *
-     * @param _to The address of the recipient
-     * @param _value the amount to send
-     */
-    function transfer(address _to, uint256 _value) public {
+    function transfer(address _to, uint256 _value) public returns (bool success) {
         _transfer(msg.sender, _to, _value);
+        return true;
     }
 
-    /**
-     * Transfer tokens from other address
-     *
-     * Send `_value` tokens to `_to` in behalf of `_from`
-     *
-     * @param _from The address of the sender
-     * @param _to The address of the recipient
-     * @param _value the amount to send
-     */
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        require(_value <= allowance[_from][msg.sender]);     // Check allowance
-        allowance[_from][msg.sender] -= _value;
+        require(_value <= balances[_from]);
+        require(_value <= allowed[_from][msg.sender]);     // Check allowance
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
         _transfer(_from, _to, _value);
         return true;
     }
 
-    /**
-     * Set allowance for other address
-     *
-     * Allows `_spender` to spend no more than `_value` tokens in your behalf
-     *
-     * @param _spender The address authorized to spend
-     * @param _value the max amount they can spend
-     */
     function approve(address _spender, uint256 _value) public returns (bool success) {
-        allowance[msg.sender][_spender] = _value;
+        allowed[msg.sender][_spender] = _value;
         emit Approval(msg.sender, _spender, _value);
         return true;
     }
+    function allowance(address _owner, address _spender) view public returns (uint256 remaining) {
+        return allowed[_owner][_spender];
+    }
 
-    /**
-     * Destroy tokens
-     *
-     * Remove `_value` tokens from the system irreversibly
-     *
-     * @param _value the amount of money to burn
-     */
-    function burn(uint256 _value) onlyOwner public returns (bool success) {
-        require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
-        balanceOf[msg.sender] -= _value;            // Subtract from the sender
-        totalSupply -= _value;                      // Updates totalSupply
-        emit Burn(msg.sender, _value);
+    function airdrop(address[] _to, uint256 _value) onlyOwner public returns (bool success) {
+        
+        require(_value > 0 && balanceOf(msg.sender) >= _value.mul(_to.length));
+        
+        for (uint i=0; i<_to.length; i++) {
+            _transfer(msg.sender, _to[i], _value);
+        }
         return true;
     }
+    
+    function batchTransfer(address[] _to, uint256[] _value) onlyOwner public returns (bool success) {
+        require(_to.length == _value.length);
 
-    /**
-     * Destroy tokens from other account
-     *
-     * Remove `_value` tokens from the system irreversibly on behalf of `_from`.
-     *
-     * @param _from the address of the sender
-     * @param _value the amount of money to burn
-     */
-    function burnFrom(address _from, uint256 _value) onlyOwner public returns (bool success) {
-        require(balanceOf[_from] >= _value);                // Check if the targeted balance is enough
-        require(_value <= allowance[_from][msg.sender]);    // Check allowance
-        balanceOf[_from] -= _value;                         // Subtract from the targeted balance
-        allowance[_from][msg.sender] -= _value;             // Subtract from the sender's allowance
-        totalSupply -= _value;                              // Update totalSupply
-        emit Burn(_from, _value);
+        uint256 amount = 0;
+        for(uint n=0;n<_value.length;n++){
+            amount = amount.add(_value[n]);
+        }
+        
+        require(amount > 0 && balanceOf(msg.sender) >= amount);
+        
+        for (uint i=0; i<_to.length; i++) {
+            transfer(_to[i], _value[i]);
+        }
         return true;
-    }
-
-    /// @notice Create `mintedAmount` tokens and send it to `target`
-    /// @param target Address to receive the tokens
-    /// @param mintedAmount the amount of tokens it will receive
-    function mintToken(address target, uint256 mintedAmount) onlyOwner public {
-        uint256 _amount = mintedAmount * 10 ** uint256(decimals);
-        balanceOf[target] += _amount;
-        totalSupply += _amount;
-        emit Transfer(this, target, _amount);
-    }
-
-    /// @notice `freeze? Prevent | Allow` `target` from sending & receiving tokens
-    /// @param target Address to be frozen
-    /// @param freeze either to freeze it or not
-    function freezeAccount(address target, bool freeze) onlyOwner public {
-        frozenAccount[target] = freeze;
-        emit FrozenFunds(target, freeze);
     }
 }
