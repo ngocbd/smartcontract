@@ -1,7 +1,118 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiTokenDeployer at 0x047a2c85394dd7f475027fc2bf1753babb454094
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiTokenDeployer at 0x181c20ac082aae3398b6e9164ec6926ac7dbf840
 */
 pragma solidity ^0.4.24;
+
+// File: openzeppelin-solidity/contracts/math/SafeMath.sol
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+    if (a == 0) {
+      return 0;
+    }
+
+    c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return a / b;
+  }
+
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+// File: openzeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol
+
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+// File: openzeppelin-solidity/contracts/token/ERC20/ERC20.sol
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender)
+    public view returns (uint256);
+
+  function transferFrom(address from, address to, uint256 value)
+    public returns (bool);
+
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(
+    address indexed owner,
+    address indexed spender,
+    uint256 value
+  );
+}
+
+// File: contracts/ext/CheckedERC20.sol
+
+library CheckedERC20 {
+    using SafeMath for uint;
+
+    function checkedTransfer(ERC20 _token, address _to, uint256 _value) internal {
+        if (_value == 0) {
+            return;
+        }
+        uint256 balance = _token.balanceOf(this);
+        _token.transfer(_to, _value);
+        require(_token.balanceOf(this) == balance.sub(_value), "checkedTransfer: Final balance didn't match");
+    }
+
+    function checkedTransferFrom(ERC20 _token, address _from, address _to, uint256 _value) internal {
+        if (_value == 0) {
+            return;
+        }
+        uint256 toBalance = _token.balanceOf(_to);
+        _token.transferFrom(_from, _to, _value);
+        require(_token.balanceOf(_to) == toBalance.add(_value), "checkedTransfer: Final balance didn't match");
+    }
+}
 
 // File: openzeppelin-solidity/contracts/ownership/Ownable.sol
 
@@ -64,120 +175,36 @@ contract Ownable {
   }
 }
 
-// File: contracts/registry/IDeployer.sol
+// File: contracts/ext/ERC1003Token.sol
 
-contract IDeployer is Ownable {
-    function deploy(bytes data) external returns(address mtkn);
+contract ERC1003Caller is Ownable {
+    function makeCall(address _target, bytes _data) external payable onlyOwner returns (bool) {
+        // solium-disable-next-line security/no-call-value
+        return _target.call.value(msg.value)(_data);
+    }
 }
 
-// File: openzeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol
+contract ERC1003Token is ERC20 {
+    ERC1003Caller public caller_ = new ERC1003Caller();
+    address[] internal sendersStack_;
 
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-// File: openzeppelin-solidity/contracts/token/ERC20/ERC20.sol
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender)
-    public view returns (uint256);
-
-  function transferFrom(address from, address to, uint256 value)
-    public returns (bool);
-
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(
-    address indexed owner,
-    address indexed spender,
-    uint256 value
-  );
-}
-
-// File: openzeppelin-solidity/contracts/math/SafeMath.sol
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
-    // benefit is lost if 'b' is also tested.
-    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
-    if (a == 0) {
-      return 0;
+    function approveAndCall(address _to, uint256 _value, bytes _data) public payable returns (bool) {
+        sendersStack_.push(msg.sender);
+        approve(_to, _value);
+        require(caller_.makeCall.value(msg.value)(_to, _data));
+        sendersStack_.length -= 1;
+        return true;
     }
 
-    c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    // uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return a / b;
-  }
-
-  /**
-  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
-// File: contracts/ext/CheckedERC20.sol
-
-library CheckedERC20 {
-    using SafeMath for uint;
-
-    function checkedTransfer(ERC20 _token, address _to, uint256 _value) internal {
-        if (_value == 0) {
-            return;
-        }
-        uint256 balance = _token.balanceOf(this);
-        _token.transfer(_to, _value);
-        require(_token.balanceOf(this) == balance.sub(_value), "checkedTransfer: Final balance didn't match");
+    function transferAndCall(address _to, uint256 _value, bytes _data) public payable returns (bool) {
+        transfer(_to, _value);
+        require(caller_.makeCall.value(msg.value)(_to, _data));
+        return true;
     }
 
-    function checkedTransferFrom(ERC20 _token, address _from, address _to, uint256 _value) internal {
-        if (_value == 0) {
-            return;
-        }
-        uint256 toBalance = _token.balanceOf(_to);
-        _token.transferFrom(_from, _to, _value);
-        require(_token.balanceOf(_to) == toBalance.add(_value), "checkedTransfer: Final balance didn't match");
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+        address from = (_from != address(caller_)) ? _from : sendersStack_[sendersStack_.length - 1];
+        return super.transferFrom(from, _to, _value);
     }
 }
 
@@ -199,64 +226,28 @@ contract IBasicMultiToken is ERC20 {
 
     function unbundle(address _beneficiary, uint256 _value) public;
     function unbundleSome(address _beneficiary, uint256 _value, ERC20[] _tokens) public;
+
+    function denyBundling() public;
+    function allowBundling() public;
 }
 
-// File: contracts/interface/IMultiToken.sol
-
-contract IMultiToken is IBasicMultiToken {
-    event Update();
-    event Change(address indexed _fromToken, address indexed _toToken, address indexed _changer, uint256 _amount, uint256 _return);
-
-    function getReturn(address _fromToken, address _toToken, uint256 _amount) public view returns (uint256 returnAmount);
-    function change(address _fromToken, address _toToken, uint256 _amount, uint256 _minReturn) public returns (uint256 returnAmount);
-
-    function allWeights() public view returns(uint256[] _weights);
-    function allTokensDecimalsBalancesWeights() public view returns(ERC20[] _tokens, uint8[] _decimals, uint256[] _balances, uint256[] _weights);
-}
-
-// File: openzeppelin-solidity/contracts/lifecycle/Pausable.sol
+// File: openzeppelin-solidity/contracts/token/ERC20/DetailedERC20.sol
 
 /**
- * @title Pausable
- * @dev Base contract which allows children to implement an emergency stop mechanism.
+ * @title DetailedERC20 token
+ * @dev The decimals are only for visualization purposes.
+ * All the operations are done using the smallest and indivisible token unit,
+ * just as on Ethereum all the operations are done in wei.
  */
-contract Pausable is Ownable {
-  event Pause();
-  event Unpause();
+contract DetailedERC20 is ERC20 {
+  string public name;
+  string public symbol;
+  uint8 public decimals;
 
-  bool public paused = false;
-
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is not paused.
-   */
-  modifier whenNotPaused() {
-    require(!paused);
-    _;
-  }
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is paused.
-   */
-  modifier whenPaused() {
-    require(paused);
-    _;
-  }
-
-  /**
-   * @dev called by the owner to pause, triggers stopped state
-   */
-  function pause() onlyOwner whenNotPaused public {
-    paused = true;
-    emit Pause();
-  }
-
-  /**
-   * @dev called by the owner to unpause, returns to normal state
-   */
-  function unpause() onlyOwner whenPaused public {
-    paused = false;
-    emit Unpause();
+  constructor(string _name, string _symbol, uint8 _decimals) public {
+    name = _name;
+    symbol = _symbol;
+    decimals = _decimals;
   }
 }
 
@@ -430,69 +421,29 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-// File: openzeppelin-solidity/contracts/token/ERC20/DetailedERC20.sol
-
-/**
- * @title DetailedERC20 token
- * @dev The decimals are only for visualization purposes.
- * All the operations are done using the smallest and indivisible token unit,
- * just as on Ethereum all the operations are done in wei.
- */
-contract DetailedERC20 is ERC20 {
-  string public name;
-  string public symbol;
-  uint8 public decimals;
-
-  constructor(string _name, string _symbol, uint8 _decimals) public {
-    name = _name;
-    symbol = _symbol;
-    decimals = _decimals;
-  }
-}
-
-// File: contracts/ext/ERC1003Token.sol
-
-contract ERC1003Caller is Ownable {
-    function makeCall(address _target, bytes _data) external payable onlyOwner returns (bool) {
-        // solium-disable-next-line security/no-call-value
-        return _target.call.value(msg.value)(_data);
-    }
-}
-
-contract ERC1003Token is ERC20 {
-    ERC1003Caller public caller_ = new ERC1003Caller();
-    address[] internal sendersStack_;
-
-    function approveAndCall(address _to, uint256 _value, bytes _data) public payable returns (bool) {
-        sendersStack_.push(msg.sender);
-        approve(_to, _value);
-        require(caller_.makeCall.value(msg.value)(_to, _data));
-        sendersStack_.length -= 1;
-        return true;
-    }
-
-    function transferAndCall(address _to, uint256 _value, bytes _data) public payable returns (bool) {
-        transfer(_to, _value);
-        require(caller_.makeCall.value(msg.value)(_to, _data));
-        return true;
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-        address from = (_from != address(caller_)) ? _from : sendersStack_[sendersStack_.length - 1];
-        return super.transferFrom(from, _to, _value);
-    }
-}
-
 // File: contracts/BasicMultiToken.sol
 
-contract BasicMultiToken is Pausable, StandardToken, DetailedERC20, ERC1003Token, IBasicMultiToken {
+contract BasicMultiToken is Ownable, StandardToken, DetailedERC20, ERC1003Token, IBasicMultiToken {
     using CheckedERC20 for ERC20;
 
     ERC20[] public tokens;
+    uint internal inLendingMode;
+    bool public bundlingDenied;
 
     event Bundle(address indexed who, address indexed beneficiary, uint256 value);
     event Unbundle(address indexed who, address indexed beneficiary, uint256 value);
-    
+    event BundlingDenied(bool denied);
+
+    modifier notInLendingMode {
+        require(inLendingMode == 0, "Operation can't be performed while lending");
+        _;
+    }
+
+    modifier bundlingEnabled {
+        require(!bundlingDenied, "Operation can't be performed because bundling is denied");
+        _;
+    }
+
     constructor() public DetailedERC20("", "", 0) {
     }
 
@@ -509,12 +460,12 @@ contract BasicMultiToken is Pausable, StandardToken, DetailedERC20, ERC1003Token
         tokens = _tokens;
     }
 
-    function bundleFirstTokens(address _beneficiary, uint256 _amount, uint256[] _tokenAmounts) public {
-        require(totalSupply_ == 0, "This method can be used with zero total supply only");
+    function bundleFirstTokens(address _beneficiary, uint256 _amount, uint256[] _tokenAmounts) public bundlingEnabled notInLendingMode {
+        require(totalSupply_ == 0, "bundleFirstTokens: This method can be used with zero total supply only");
         _bundle(_beneficiary, _amount, _tokenAmounts);
     }
 
-    function bundle(address _beneficiary, uint256 _amount) public {
+    function bundle(address _beneficiary, uint256 _amount) public bundlingEnabled notInLendingMode {
         require(totalSupply_ != 0, "This method can be used with non zero total supply only");
         uint256[] memory tokenAmounts = new uint256[](tokens.length);
         for (uint i = 0; i < tokens.length; i++) {
@@ -523,11 +474,11 @@ contract BasicMultiToken is Pausable, StandardToken, DetailedERC20, ERC1003Token
         _bundle(_beneficiary, _amount, tokenAmounts);
     }
 
-    function unbundle(address _beneficiary, uint256 _value) public {
+    function unbundle(address _beneficiary, uint256 _value) public notInLendingMode {
         unbundleSome(_beneficiary, _value, tokens);
     }
 
-    function unbundleSome(address _beneficiary, uint256 _value, ERC20[] _tokens) public {
+    function unbundleSome(address _beneficiary, uint256 _value, ERC20[] _tokens) public notInLendingMode {
         require(_tokens.length > 0, "Array of tokens can't be empty");
 
         uint256 totalSupply = totalSupply_;
@@ -545,13 +496,29 @@ contract BasicMultiToken is Pausable, StandardToken, DetailedERC20, ERC1003Token
         }
     }
 
-    function _bundle(address _beneficiary, uint256 _amount, uint256[] _tokenAmounts) internal whenNotPaused {
+    // Admin methods
+
+    function denyBundling() public onlyOwner {
+        require(!bundlingDenied);
+        bundlingDenied = true;
+        emit BundlingDenied(true);
+    }
+
+    function allowBundling() public onlyOwner {
+        require(bundlingDenied);
+        bundlingDenied = false;
+        emit BundlingDenied(false);
+    }
+
+    // Internal methods
+
+    function _bundle(address _beneficiary, uint256 _amount, uint256[] _tokenAmounts) internal {
+        require(_amount != 0, "Bundling amount should be non-zero");
         require(tokens.length == _tokenAmounts.length, "Lenghts of tokens and _tokenAmounts array should be equal");
 
         for (uint i = 0; i < tokens.length; i++) {
-            uint256 prevBalance = tokens[i].balanceOf(this);
-            tokens[i].transferFrom(msg.sender, this, _tokenAmounts[i]); // Can't use require because not all ERC20 tokens return bool
-            require(tokens[i].balanceOf(this) == prevBalance.add(_tokenAmounts[i]), "Invalid token behavior");
+            require(_tokenAmounts[i] != 0, "Token amount should be non-zero");
+            tokens[i].checkedTransferFrom(msg.sender, this, _tokenAmounts[i]); // Can't use require because not all ERC20 tokens return bool
         }
 
         totalSupply_ = totalSupply_.add(_amount);
@@ -565,7 +532,9 @@ contract BasicMultiToken is Pausable, StandardToken, DetailedERC20, ERC1003Token
     function lend(address _to, ERC20 _token, uint256 _amount, address _target, bytes _data) public payable {
         uint256 prevBalance = _token.balanceOf(this);
         _token.transfer(_to, _amount);
+        inLendingMode += 1;
         require(caller_.makeCall.value(msg.value)(_target, _data), "lend: arbitrary call failed");
+        inLendingMode -= 1;
         require(_token.balanceOf(this) >= prevBalance, "lend: lended token must be refilled");
     }
 
@@ -604,14 +573,36 @@ contract BasicMultiToken is Pausable, StandardToken, DetailedERC20, ERC1003Token
     }
 }
 
+// File: contracts/interface/IMultiToken.sol
+
+contract IMultiToken is IBasicMultiToken {
+    event Update();
+    event Change(address indexed _fromToken, address indexed _toToken, address indexed _changer, uint256 _amount, uint256 _return);
+
+    function getReturn(address _fromToken, address _toToken, uint256 _amount) public view returns (uint256 returnAmount);
+    function change(address _fromToken, address _toToken, uint256 _amount, uint256 _minReturn) public returns (uint256 returnAmount);
+
+    function allWeights() public view returns(uint256[] _weights);
+    function allTokensDecimalsBalancesWeights() public view returns(ERC20[] _tokens, uint8[] _decimals, uint256[] _balances, uint256[] _weights);
+
+    function denyChanges() public;
+}
+
 // File: contracts/MultiToken.sol
 
 contract MultiToken is IMultiToken, BasicMultiToken {
     using CheckedERC20 for ERC20;
 
-    uint inLendingMode;
     uint256 internal minimalWeight;
     mapping(address => uint256) public weights;
+    bool public changesDenied;
+
+    event ChangesDenied();
+
+    modifier changesEnabled {
+        require(!changesDenied, "Operation can't be performed because changes are denied");
+        _;
+    }
 
     function init(ERC20[] _tokens, uint256[] _weights, string _name, string _symbol, uint8 _decimals) public {
         super.init(_tokens, _name, _symbol, _decimals);
@@ -640,24 +631,23 @@ contract MultiToken is IMultiToken, BasicMultiToken {
         }
     }
 
-    function change(address _fromToken, address _toToken, uint256 _amount, uint256 _minReturn) public returns(uint256 returnAmount) {
-        require(inLendingMode == 0);
+    function change(address _fromToken, address _toToken, uint256 _amount, uint256 _minReturn) public changesEnabled notInLendingMode returns(uint256 returnAmount) {
         returnAmount = getReturn(_fromToken, _toToken, _amount);
         require(returnAmount > 0, "The return amount is zero");
         require(returnAmount >= _minReturn, "The return amount is less than _minReturn value");
-        
+
         ERC20(_fromToken).checkedTransferFrom(msg.sender, this, _amount);
         ERC20(_toToken).checkedTransfer(msg.sender, returnAmount);
 
         emit Change(_fromToken, _toToken, msg.sender, _amount, returnAmount);
     }
 
-    // Instant Loans
+    // Admin methods
 
-    function lend(address _to, ERC20 _token, uint256 _amount, address _target, bytes _data) public payable {
-        inLendingMode += 1;
-        super.lend(_to, _token, _amount, _target, _data);
-        inLendingMode -= 1;
+    function denyChanges() public onlyOwner {
+        require(!changesDenied);
+        changesDenied = true;
+        emit ChangesDenied();
     }
 
     // Public Getters
@@ -681,7 +671,7 @@ contract MultiToken is IMultiToken, BasicMultiToken {
 contract FeeMultiToken is Ownable, MultiToken {
     using CheckedERC20 for ERC20;
 
-    uint256 public constant ONE_HUNDRED_PERCRENTS = 1000000;
+    uint256 public constant TOTAL_PERCRENTS = 1000000;
     uint256 public lendFee;
     uint256 public changeFee;
     uint256 public refferalFee;
@@ -706,7 +696,7 @@ contract FeeMultiToken is Ownable, MultiToken {
     }
 
     function getReturn(address _fromToken, address _toToken, uint256 _amount) public view returns(uint256 returnAmount) {
-        returnAmount = super.getReturn(_fromToken, _toToken, _amount).mul(ONE_HUNDRED_PERCRENTS.sub(changeFee)).div(ONE_HUNDRED_PERCRENTS);
+        returnAmount = super.getReturn(_fromToken, _toToken, _amount).mul(TOTAL_PERCRENTS.sub(changeFee)).div(TOTAL_PERCRENTS);
     }
 
     function change(address _fromToken, address _toToken, uint256 _amount, uint256 _minReturn) public returns(uint256 returnAmount) {
@@ -716,8 +706,8 @@ contract FeeMultiToken is Ownable, MultiToken {
     function changeWithRef(address _fromToken, address _toToken, uint256 _amount, uint256 _minReturn, address _ref) public returns(uint256 returnAmount) {
         returnAmount = super.change(_fromToken, _toToken, _amount, _minReturn);
         uint256 refferalAmount = returnAmount
-            .mul(changeFee).div(ONE_HUNDRED_PERCRENTS.sub(changeFee))
-            .mul(refferalFee).div(ONE_HUNDRED_PERCRENTS);
+            .mul(changeFee).div(TOTAL_PERCRENTS.sub(changeFee))
+            .mul(refferalFee).div(TOTAL_PERCRENTS);
 
         ERC20(_toToken).checkedTransfer(_ref, refferalAmount);
     }
@@ -725,8 +715,14 @@ contract FeeMultiToken is Ownable, MultiToken {
     function lend(address _to, ERC20 _token, uint256 _amount, address _target, bytes _data) public payable {
         uint256 prevBalance = _token.balanceOf(this);
         super.lend(_to, _token, _amount, _target, _data);
-        require(_token.balanceOf(this) >= prevBalance.mul(ONE_HUNDRED_PERCRENTS.add(lendFee)).div(ONE_HUNDRED_PERCRENTS), "lend: tokens must be returned with lend fee");
+        require(_token.balanceOf(this) >= prevBalance.mul(TOTAL_PERCRENTS.add(lendFee)).div(TOTAL_PERCRENTS), "lend: tokens must be returned with lend fee");
     }
+}
+
+// File: contracts/registry/IDeployer.sol
+
+contract IDeployer is Ownable {
+    function deploy(bytes data) external returns(address mtkn);
 }
 
 // File: contracts/registry/MultiTokenDeployer.sol
