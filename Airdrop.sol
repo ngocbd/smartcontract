@@ -1,47 +1,16 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdrop at 0x0379258fab3707dff45c79a3d017ec3a831ea3ba
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdrop at 0x7038c15f76ad2667837c438c8819fd969899cdbe
 */
 pragma solidity ^0.4.24;
-contract Ownable {
-    address public owner;
-    constructor() public {
-        owner = msg.sender;
-    }
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
+
+contract ERC20 {
+  function transfer(address _recipient, uint256 _value) public returns (bool success);
 }
-contract Pausable is Ownable {
-    event Pause();
-    event Unpause();
-    bool public paused = false;
-    modifier whenNotPaused() {
-        require(!paused, "Contract Paused. Events/Transaction Paused until Further Notice");
-        _;
+
+contract Airdrop {
+  function drop(ERC20 token, address[] recipients, uint256[] values) public {
+    for (uint256 i = 0; i < recipients.length; i++) {
+      token.transfer(recipients[i], values[i]);
     }
-    modifier whenPaused() {
-        require(paused, "Contract Functionality Resumed");
-        _;
-    }
-    function pause() onlyOwner whenNotPaused public {
-        paused = true;
-        emit Pause();
-    }
-    function unpause() onlyOwner whenPaused public {
-        paused = false;
-        emit Unpause();
-    }
-}
-contract ERC20Token {
-    function transferFrom(address _from, address _to, uint _value) public returns (bool);
-}
-contract Airdrop is Ownable, Pausable {
-    event TokenDrop(address indexed _from, address indexed _to, uint256 _value);
-    function drop(ERC20Token _token, address[] _recipients, uint256[] _values) public onlyOwner whenNotPaused {
-        for (uint256 i = 0; i < _recipients.length; i++) {
-            _token.transferFrom(msg.sender, _recipients[i], _values[i]);
-            emit TokenDrop(msg.sender, _recipients[i], _values[i]);
-        }
-    }
+  }
 }
