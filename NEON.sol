@@ -1,50 +1,140 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NEON at 0xafC2CB236D1810307766D44c9CE14E684B6E37CB
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NEON at 0x0ebf925ef4c1f58fc1c4a99a3c88b96d12573694
 */
-contract NEON {
-    /* Public variables of the token */
-    string public standard = 'Token 0.1';
-    string public name;
-    string public symbol;
-    uint8 public decimals;
-    uint256 public initialSupply;
-    uint256 public totalSupply;
+pragma solidity ^0.4.4;
 
-    /* This creates an array with all balances */
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
+contract Token {
 
-  
-    /* Initializes contract with initial supply tokens to the creator of the contract */
-    function NEON() {
+    /// @return total amount of tokens
+    function totalSupply() constant returns (uint256 supply) {}
 
-         initialSupply = 250000000000;
-         name ="NEONT";
-        decimals = 2;
-         symbol = "NEON";
-        
-        balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
-        totalSupply = initialSupply;                        // Update total supply
-                                   
-    }
+    /// @param _owner The address from which the balance will be retrieved
+    /// @return The balance
+    function balanceOf(address _owner) constant returns (uint256 balance) {}
 
-    /* Send coins */
-    function transfer(address _to, uint256 _value) {
-        if (balanceOf[msg.sender] < _value) throw;           // Check if the sender has enough
-        if (balanceOf[_to] + _value < balanceOf[_to]) throw; // Check for overflows
-        balanceOf[msg.sender] -= _value;                     // Subtract from the sender
-        balanceOf[_to] += _value;                            // Add the same to the recipient
-      
-    }
+    /// @notice send `_value` token to `_to` from `msg.sender`
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transfer(address _to, uint256 _value) returns (bool success) {}
 
-   
+    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
+    /// @param _from The address of the sender
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
 
+    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @param _value The amount of wei to be approved for transfer
+    /// @return Whether the approval was successful or not
+    function approve(address _spender, uint256 _value) returns (bool success) {}
+
+    /// @param _owner The address of the account owning tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @return Amount of remaining tokens allowed to spent
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
     
+}
 
-   
 
-    /* This unnamed function is called whenever someone tries to send ether to it */
+
+contract StandardToken is Token {
+
+    function transfer(address _to, uint256 _value) returns (bool success) {
+        //Default assumes totalSupply can't be over max (2^256 - 1).
+        //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
+        //Replace the if with this one instead.
+        //if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+        if (balances[msg.sender] >= _value && _value > 0) {
+            balances[msg.sender] -= _value;
+            balances[_to] += _value;
+            Transfer(msg.sender, _to, _value);
+            return true;
+        } else { return false; }
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+        //same as above. Replace this line with the following if you want to protect against wrapping uints.
+        //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
+            balances[_to] += _value;
+            balances[_from] -= _value;
+            allowed[_from][msg.sender] -= _value;
+            Transfer(_from, _to, _value);
+            return true;
+        } else { return false; }
+    }
+
+    function balanceOf(address _owner) constant returns (uint256 balance) {
+        return balances[_owner];
+    }
+
+    function approve(address _spender, uint256 _value) returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+      return allowed[_owner][_spender];
+    }
+
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
+    uint256 public totalSupply;
+}
+
+
+//name this contract whatever you'd like
+contract NEON is StandardToken {
+
     function () {
-        throw;     // Prevents accidental sending of ether
+        //if ether is sent to this address, send it back.
+        throw;
+    }
+
+    /* Public variables of the token */
+
+    /*
+    NOTE:
+    The following variables are OPTIONAL vanities. One does not have to include them.
+    They allow one to customise the token contract & in no way influences the core functionality.
+    Some wallets/interfaces might not even bother to look at this information.
+    */
+    string public name;                   //fancy name: eg Simon Bucks
+    uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
+    string public symbol;                 //An identifier: eg SBX
+    string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
+
+//
+// 
+//
+
+//make sure this function name matches the contract name above. So if you're token is called TutorialToken, make sure the //contract name above is also TutorialToken instead of ERC20Token
+
+    function NEON(
+        ) {
+        balances[msg.sender] = 100000000000000000000000000;               
+        totalSupply = 100000000000000000000000000;                        
+        name = "NEON";                                   
+        decimals = 18;                            
+        symbol = "NEON";                               
+    }
+
+    /* Approves and then calls the receiving contract */
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+
+        //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
+        //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
+        //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
+        if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
+        return true;
     }
 }
