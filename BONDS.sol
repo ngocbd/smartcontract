@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bonds at 0x330ac216a5a8ccd493f3b9e33a524be3c7124217
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bonds at 0x33dcb440beb0c640fa75ac297bc2e048e6853844
 */
 pragma solidity ^0.4.24;
 
@@ -8,9 +8,15 @@ contract Bonds {
     =        MODIFIERS        =
     =================================*/
 
-    modifier onlyOwner(){
+    uint ACTIVATION_TIME = 1539302400;
 
+    modifier onlyOwner(){
         require(msg.sender == dev);
+        _;
+    }
+
+    modifier isActivated(){
+        require(now >= ACTIVATION_TIME);
         _;
     }
 
@@ -41,7 +47,7 @@ contract Bonds {
     /*=====================================
     =            CONFIGURABLES            =
     =====================================*/
-    string public name = "NASDAQBONDS";
+    string public name = "BONDS";
     string public symbol = "BOND";
 
     uint8 constant public nsDivRate = 10;
@@ -95,8 +101,8 @@ contract Bonds {
         public
     {
         dev = msg.sender;
-        fundsDividendAddr = 0xd2e32AFc2949d37A221FBAe53DadF48270926F26;
-        promoter = 0xC558895aE123BB02b3c33164FdeC34E9Fb66B660;
+        fundsDividendAddr = 0xBA209A9533FEAFA3c53Bc117Faf3561b5AB6B6f2;
+        promoter = 0xEafE863757a2b2a2c5C3f71988b7D59329d09A78;
         nextAvailableBond = 13;
 
         bondOwner[1] = promoter;
@@ -156,6 +162,7 @@ contract Bonds {
     }
 
     function buy(uint _bond, address _referrer)
+        isActivated()
         public
         payable
 
