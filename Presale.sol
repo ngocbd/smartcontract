@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Presale at 0xbb5350b4727835d8da25250719330ff6664bf1c8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Presale at 0xe3c8ff66d14341a35bcf6302047b92c6bc49824d
 */
 pragma solidity ^0.4.21;
 
@@ -338,8 +338,8 @@ contract CommonToken is StandardToken, MultiOwnable {
         //require(tokensSold.add(_value) <= saleLimit);
         require(msg.sender == seller, "User not authorized");
 
-        require(_to != address(0));
-        require(_value > 0);
+        require(_to != address(0), "Not address authorized");
+        require(_value > 0, "Value is 0");
 
         require(_value <= balances[seller]);
 
@@ -369,7 +369,7 @@ contract CommonToken is StandardToken, MultiOwnable {
     }
 
     function burn(uint256 _value) public returns (bool) {
-        require(_value > 0, 'Value is zero');
+        require(_value > 0, "Value is zero");
 
         balances[msg.sender] = balances[msg.sender].sub(_value);
         totalSupply = totalSupply.sub(_value);
@@ -433,11 +433,15 @@ contract CommonTokensale is MultiOwnable, Pausable {
     event ComisionEvent(address indexed _sponsor, address indexed _child, uint256 _value, uint256 _comision);
     event ComisionPayEvent(address indexed _sponsor, uint256 _value, uint256 _comision);
     event ComisionInversorInTokensEvent(address indexed _sponsor, bool status);
-    event ChangeEndTimeEvent(address _sender, uint _date);
+    event ChangeEndTimeEvent(address _sender, uint endTime, uint _date);
     event verifyKycEvent(address _sender, uint _date, bool _status);
     event payComisionSponsorTMSY(address _sponsor, uint _date, uint _value);
     event payComisionSponsorETH(address _sponsor, uint _date, uint _value);
     event withdrawEvent(address _sender, address _to, uint value, uint _date);
+    event conversionToUSDEvent(uint _value, uint rateUsd, uint usds);
+    event newRatioEvent(uint _value, uint date);
+    event conversionETHToTMSYEvent(address _buyer, uint value, uint tokensE18SinBono, uint tokensE18Bono);
+    event createContractEvent(address _token, address _beneficiary, uint _startTime, uint _endTime);
     // ratio USD-ETH
     uint public rateUSDETH;
 
@@ -460,10 +464,12 @@ contract CommonTokensale is MultiOwnable, Pausable {
         require(_token != address(0));
         token = CommonToken(_token);
 
+        emit createContractEvent(_token, _beneficiary, _startTime, _endTime);
+
         beneficiary = _beneficiary;
 
-        startTime = _startTime;
-        endTime   = _endTime;
+        startTime = now;
+        endTime   = 1544313600;
 
 
         minCapUSD = 400000;
@@ -472,6 +478,7 @@ contract CommonTokensale is MultiOwnable, Pausable {
 
     function setRatio(uint _rate) onlyOwner public returns (bool) {
       rateUSDETH = _rate;
+      emit newRatioEvent(rateUSDETH, now);
       return true;
     }
 
@@ -583,7 +590,7 @@ contract CommonTokensale is MultiOwnable, Pausable {
         if(val > 0) {
           require(balanceComision >= valueReady);
           require(balanceComisionHold >= valueHold);
-         uint256 comisionTokens = weiToTokens(val);
+          uint256 comisionTokens = weiToTokens(val);
 
           sponsorToComision[_inversor] = 0;
           sponsorToComisionHold[_inversor] = 0;
@@ -653,7 +660,9 @@ contract CommonTokensale is MultiOwnable, Pausable {
     function balanceComisionOf(address who) public view returns (uint256) {
       return sponsorToComision[who];
     }
-
+    function getNow() public returns (uint) {
+      return now;
+    }
     /** The fallback function corresponds to a donation in ETH. */
     function() public payable {
         //sellTokensForEth(msg.sender, msg.value);
@@ -662,13 +671,16 @@ contract CommonTokensale is MultiOwnable, Pausable {
         address _buyer = msg.sender;
         uint valueUSD = weiToUSD(_amountWei);
 
-        //require(startTime <= now && now <= endTime);
-        require(inversors[_buyer] != false);
-        require(valueUSD >= minPaymentUSD);
+        require(now <= endTime, 'endtime');
+        require(inversors[_buyer] != false, 'No invest');
+        require(valueUSD >= minPaymentUSD, 'Min in USD not allowed');
         //require(totalUSDReceived.add(valueUSD) <= maxCapUSD);
+        emit ReceiveEthEvent(_buyer, _amountWei);
 
         uint tokensE18SinBono = weiToTokens(msg.value);
         uint tokensE18Bono = weiToTokensBono(msg.value);
+        emit conversionETHToTMSYEvent(_buyer, msg.value, tokensE18SinBono, tokensE18Bono);
+
         uint tokensE18 = tokensE18SinBono.add(tokensE18Bono);
 
         //Ejecutamos la transferencia de tokens y paramos si ha fallado
@@ -683,7 +695,6 @@ contract CommonTokensale is MultiOwnable, Pausable {
         totalTokensSold = totalTokensSold.add(tokensE18);
         totalWeiReceived = totalWeiReceived.add(_amountWei);
         buyerToSentWei[_buyer] = buyerToSentWei[_buyer].add(_amountWei);
-        emit ReceiveEthEvent(_buyer, _amountWei);
 
         //por cada compra miramos cual es la cantidad actual de USD... si hemos llegado al softcap lo activamos
         if(!isSoftCapComplete) {
@@ -710,26 +721,6 @@ contract CommonTokensale is MultiOwnable, Pausable {
 
         payComisionSponsor(sponsor);
 
-        // si hemos alcanzado el softcap repartimos comisiones
-      /*  if(isSoftCapComplete) {
-          // si el sponsor ha realizado inversión se le da la comision en caso contratio se le asigna al beneficiario
-          if(balanceOf(sponsor) > 0)
-            if(validateKYC[sponsor])
-              sponsor.transfer(_amountSponsor);
-            else {
-              sponsorToComisionList.push(sponsor);
-              sponsorToComision[sponsor] = sponsorToComision[sponsor].add(_amountSponsor);
-            }
-          else
-            _amountBeneficiary = _amountSponsor + _amountBeneficiary;
-        } else { //en caso contrario no repartimos y lo almacenamos para enviarlo una vez alcanzado el softcap
-          if(balanceOf(sponsor) > 0) {
-            sponsorToComisionList.push(sponsor);
-            sponsorToComision[sponsor] = sponsorToComision[sponsor].add(_amountSponsor);
-          }
-          else
-            _amountBeneficiary = _amountSponsor + _amountBeneficiary;
-        }*/
 
         balance = balance.add(_amountBeneficiary);
     }
@@ -737,9 +728,10 @@ contract CommonTokensale is MultiOwnable, Pausable {
     function weiToUSD(uint _amountWei) public view returns (uint256) {
       uint256 ethers = _amountWei;
 
-      uint256 valueUSD = rateUSDETH.mul(ethers);
+      uint256 valueUSD = rateUSDETH.mul(_amountWei);
 
-      return valueUSD;
+      emit conversionToUSDEvent(_amountWei, rateUSDETH, valueUSD.div(1e18));
+      return valueUSD.div(1e18);
     }
 
     function weiToTokensBono(uint _amountWei) public view returns (uint256) {
@@ -749,11 +741,11 @@ contract CommonTokensale is MultiOwnable, Pausable {
 
       // Calculamos bono
       //Tablas de bonos
-      if(valueUSD >= uint(500 * 1e18))   bono = 10;
-      if(valueUSD >= uint(1000 * 1e18))  bono = 20;
-      if(valueUSD >= uint(2500 * 1e18))  bono = 30;
-      if(valueUSD >= uint(5000 * 1e18))  bono = 40;
-      if(valueUSD >= uint(10000 * 1e18)) bono = 50;
+      if(valueUSD >= uint(500 * 10**18))   bono = 10;
+      if(valueUSD >= uint(1000 * 10**18))   bono = 20;
+      if(valueUSD >= uint(2500 * 10**18))   bono = 30;
+      if(valueUSD >= uint(5000 * 10**18))   bono = 40;
+      if(valueUSD >= uint(10000 * 10**18))   bono = 50;
 
 
       uint256 bonoUsd = valueUSD.mul(bono).div(100);
@@ -786,16 +778,15 @@ contract CommonTokensale is MultiOwnable, Pausable {
 
         balance = balance.sub(value);
         emit withdrawEvent(msg.sender, _to, value,now);
-      return balance;
+        return balance;
     }
 
     //Manage timelimit. For exception
     function changeEndTime(uint _date) onlyOwner public returns (bool) {
-      //TODO; quitar comentarios para el lanzamiento
-      require(endTime < _date);
+     // require(endTime < _date);
       endTime = _date;
       refundDeadlineTime = endTime + 3 * 30 days;
-      emit ChangeEndTimeEvent(msg.sender,_date);
+      emit ChangeEndTimeEvent(msg.sender,endTime,_date);
       return true;
     }
 }
