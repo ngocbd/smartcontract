@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheremonTrade at 0x4ba72f0f8dad13709ee28a992869e79d0fe47030
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheremonTrade at 0xbd4b50bbf385195c410a625681ff29d439ba61f3
 */
 pragma solidity ^0.4.16;
 
@@ -38,7 +38,7 @@ contract BasicAccessControl {
     // address[] public moderators;
     uint16 public totalModerators = 0;
     mapping (address => bool) public moderators;
-    bool public isMaintaining = true;
+    bool public isMaintaining = false;
 
     function BasicAccessControl() public {
         owner = msg.sender;
@@ -145,7 +145,192 @@ contract EtheremonDataBase is EtheremonEnum, BasicAccessControl, SafeMath {
 
 interface EtheremonBattleInterface {
     function isOnBattle(uint64 _objId) constant external returns(bool) ;
-    function getMonsterCP(uint64 _objId) constant external returns(uint64);
+}
+
+interface EtheremonMonsterNFTInterface {
+   function triggerTransferEvent(address _from, address _to, uint _tokenId) external;
+   function getMonsterCP(uint64 _monsterId) constant external returns(uint cp);
+}
+
+contract EtheremonTradeData is BasicAccessControl {
+    struct BorrowItem {
+        uint index;
+        address owner;
+        address borrower;
+        uint price;
+        bool lent;
+        uint releaseTime;
+        uint createTime;
+    }
+    
+    struct SellingItem {
+        uint index;
+        uint price;
+        uint createTime;
+    }
+
+    mapping(uint => SellingItem) public sellingDict; // monster id => item
+    uint[] public sellingList; // monster id
+    
+    mapping(uint => BorrowItem) public borrowingDict;
+    uint[] public borrowingList;
+
+    mapping(address => uint[]) public lendingList;
+    
+    function removeSellingItem(uint _itemId) onlyModerators external {
+        SellingItem storage item = sellingDict[_itemId];
+        if (item.index == 0)
+            return;
+        
+        if (item.index <= sellingList.length) {
+            // Move an existing element into the vacated key slot.
+            sellingDict[sellingList[sellingList.length-1]].index = item.index;
+            sellingList[item.index-1] = sellingList[sellingList.length-1];
+            sellingList.length -= 1;
+            delete sellingDict[_itemId];
+        }
+    }
+    
+    function addSellingItem(uint _itemId, uint _price, uint _createTime) onlyModerators external {
+        SellingItem storage item = sellingDict[_itemId];
+        item.price = _price;
+        item.createTime = _createTime;
+        
+        if (item.index == 0) {
+            item.index = ++sellingList.length;
+            sellingList[item.index - 1] = _itemId;
+        }
+    }
+    
+    function removeBorrowingItem(uint _itemId) onlyModerators external {
+        BorrowItem storage item = borrowingDict[_itemId];
+        if (item.index == 0)
+            return;
+        
+        if (item.index <= borrowingList.length) {
+            // Move an existing element into the vacated key slot.
+            borrowingDict[borrowingList[borrowingList.length-1]].index = item.index;
+            borrowingList[item.index-1] = borrowingList[borrowingList.length-1];
+            borrowingList.length -= 1;
+            delete borrowingDict[_itemId];
+        }
+    }
+
+    function addBorrowingItem(address _owner, uint _itemId, uint _price, address _borrower, bool _lent, uint _releaseTime, uint _createTime) onlyModerators external {
+        BorrowItem storage item = borrowingDict[_itemId];
+        item.owner = _owner;
+        item.borrower = _borrower;
+        item.price = _price;
+        item.lent = _lent;
+        item.releaseTime = _releaseTime;
+        item.createTime = _createTime;
+        
+        if (item.index == 0) {
+            item.index = ++borrowingList.length;
+            borrowingList[item.index - 1] = _itemId;
+        }
+    }
+    
+    function addItemLendingList(address _trainer, uint _objId) onlyModerators external {
+        lendingList[_trainer].push(_objId);
+    }
+    
+    function removeItemLendingList(address _trainer, uint _objId) onlyModerators external {
+        uint foundIndex = 0;
+        uint[] storage objList = lendingList[_trainer];
+        for (; foundIndex < objList.length; foundIndex++) {
+            if (objList[foundIndex] == _objId) {
+                break;
+            }
+        }
+        if (foundIndex < objList.length) {
+            objList[foundIndex] = objList[objList.length-1];
+            delete objList[objList.length-1];
+            objList.length--;
+        }
+    }
+
+    // read access
+    function isOnBorrow(uint _objId) constant external returns(bool) {
+        return (borrowingDict[_objId].index > 0);
+    }
+    
+    function isOnSell(uint _objId) constant external returns(bool) {
+        return (sellingDict[_objId].index > 0);
+    }
+    
+    function isOnLent(uint _objId) constant external returns(bool) {
+        return borrowingDict[_objId].lent;
+    }
+    
+    function getSellPrice(uint _objId) constant external returns(uint) {
+        return sellingDict[_objId].price;
+    }
+    
+    function isOnTrade(uint _objId) constant external returns(bool) {
+        return ((borrowingDict[_objId].index > 0) || (sellingDict[_objId].index > 0)); 
+    }
+    
+    function getBorrowBasicInfo(uint _objId) constant external returns(address owner, bool lent) {
+        BorrowItem storage borrowItem = borrowingDict[_objId];
+        return (borrowItem.owner, borrowItem.lent);
+    }
+    
+    function getBorrowInfo(uint _objId) constant external returns(uint index, address owner, address borrower, uint price, bool lent, uint createTime, uint releaseTime) {
+        BorrowItem storage borrowItem = borrowingDict[_objId];
+        return (borrowItem.index, borrowItem.owner, borrowItem.borrower, borrowItem.price, borrowItem.lent, borrowItem.createTime, borrowItem.releaseTime);
+    }
+    
+    function getSellInfo(uint _objId) constant external returns(uint index, uint price, uint createTime) {
+        SellingItem storage item = sellingDict[_objId];
+        return (item.index, item.price, item.createTime);
+    }
+    
+    function getTotalSellingItem() constant external returns(uint) {
+        return sellingList.length;
+    }
+    
+    function getTotalBorrowingItem() constant external returns(uint) {
+        return borrowingList.length;
+    }
+    
+    function getTotalLendingItem(address _trainer) constant external returns(uint) {
+        return lendingList[_trainer].length;
+    }
+    
+    function getSellingInfoByIndex(uint _index) constant external returns(uint objId, uint price, uint createTime) {
+        objId = sellingList[_index];
+        SellingItem storage item = sellingDict[objId];
+        price = item.price;
+        createTime = item.createTime;
+    }
+    
+    function getBorrowInfoByIndex(uint _index) constant external returns(uint objId, address owner, address borrower, uint price, bool lent, uint createTime, uint releaseTime) {
+        objId = borrowingList[_index];
+        BorrowItem storage borrowItem = borrowingDict[objId];
+        return (objId, borrowItem.owner, borrowItem.borrower, borrowItem.price, borrowItem.lent, borrowItem.createTime, borrowItem.releaseTime);
+    }
+    
+    function getLendingObjId(address _trainer, uint _index) constant external returns(uint) {
+        return lendingList[_trainer][_index];
+    }
+    
+    function getLendingInfo(address _trainer, uint _index) constant external returns(uint objId, address owner, address borrower, uint price, bool lent, uint createTime, uint releaseTime) {
+        objId = lendingList[_trainer][_index];
+        BorrowItem storage borrowItem = borrowingDict[objId];
+        return (objId, borrowItem.owner, borrowItem.borrower, borrowItem.price, borrowItem.lent, borrowItem.createTime, borrowItem.releaseTime);
+    }
+    
+    function getTradingInfo(uint _objId) constant external returns(uint sellingPrice, uint lendingPrice, bool lent, uint releaseTime, address owner, address borrower) {
+        SellingItem storage item = sellingDict[_objId];
+        sellingPrice = item.price;
+        BorrowItem storage borrowItem = borrowingDict[_objId];
+        lendingPrice = borrowItem.price;
+        lent = borrowItem.lent;
+        releaseTime = borrowItem.releaseTime;
+        owner = borrowItem.owner;
+        borrower = borrower;
+    }
 }
 
 contract EtheremonTrade is EtheremonEnum, BasicAccessControl, SafeMath {
@@ -183,67 +368,38 @@ contract EtheremonTrade is EtheremonEnum, BasicAccessControl, SafeMath {
         uint index;
         address owner;
         address borrower;
-        uint256 price;
+        uint price;
         bool lent;
         uint releaseTime;
-    }
-    
-    struct SellingItem {
-        uint index;
-        uint256 price;
-    }
-    
-    struct SoldItem {
-        uint64 objId;
-        uint256 price;
-        uint time;
+        uint createTime;
     }
     
     // data contract
     address public dataContract;
     address public battleContract;
+    address public tradingMonDataContract;
+    address public monsterNFTContract;
+    
     mapping(uint32 => Gen0Config) public gen0Config;
     
-    // for selling
-    mapping(uint64 => SellingItem) public sellingDict;
-    uint32 public totalSellingItem;
-    uint64[] public sellingList;
-    
-    // for borrowing
-    mapping(uint64 => BorrowItem) public borrowingDict;
-    uint32 public totalBorrowingItem;
-    uint64[] public borrowingList;
-    
-    mapping(address => uint64[]) public lendingList;
-    mapping(address => SoldItem[]) public soldList;
-    
     // trading fee
-    uint16 public tradingFeePercentage = 1;
-    uint8 public maxLendingItem = 10;
-    
-    modifier requireDataContract {
-        require(dataContract != address(0));
-        _;
-    }
-    
-    modifier requireBattleContract {
-        require(battleContract != address(0));
-        _;
-    }
+    uint16 public tradingFeePercentage = 3;
     
     // event
-    event EventPlaceSellOrder(address indexed seller, uint64 objId);
-    event EventBuyItem(address indexed buyer, uint64 objId);
-    event EventOfferBorrowingItem(address indexed lender, uint64 objId);
-    event EventAcceptBorrowItem(address indexed borrower, uint64 objId);
-    event EventGetBackItem(address indexed owner, uint64 objId);
-    event EventFreeTransferItem(address indexed sender, address indexed receiver, uint64 objId);
-    event EventRelease(address indexed trainer, uint64 objId);
+    event EventPlaceSellOrder(address indexed seller, uint objId, uint price);
+    event EventRemoveSellOrder(address indexed seller, uint objId);
+    event EventCompleteSellOrder(address indexed seller, address indexed buyer, uint objId, uint price);
+    event EventOfferBorrowingItem(address indexed lender, uint objId, uint price, uint releaseTime);
+    event EventRemoveOfferBorrowingItem(address indexed lender, uint objId);
+    event EventAcceptBorrowItem(address indexed lender, address indexed borrower, uint objId, uint price);
+    event EventGetBackItem(address indexed lender, address indexed borrower, uint objId);
     
     // constructor
-    function EtheremonTrade(address _dataContract, address _battleContract) public {
+    function EtheremonTrade(address _dataContract, address _battleContract, address _tradingMonDataContract, address _monsterNFTContract) public {
         dataContract = _dataContract;
         battleContract = _battleContract;
+        tradingMonDataContract = _tradingMonDataContract;
+        monsterNFTContract = _monsterNFTContract;
     }
     
      // admin & moderators
@@ -274,14 +430,15 @@ contract EtheremonTrade is EtheremonEnum, BasicAccessControl, SafeMath {
         gen0Config[24] = Gen0Config(24, 1 ether, 0.005 ether, 195);
     }
     
-    function setContract(address _dataContract, address _battleContract) onlyModerators public {
+    function setContract(address _dataContract, address _battleContract, address _tradingMonDataContract, address _monsterNFTContract) onlyModerators public {
         dataContract = _dataContract;
         battleContract = _battleContract;
+        tradingMonDataContract = _tradingMonDataContract;
+        monsterNFTContract = _monsterNFTContract;
     }
     
-    function updateConfig(uint16 _fee, uint8 _maxLendingItem) onlyModerators public {
+    function updateConfig(uint16 _fee) onlyModerators public {
         tradingFeePercentage = _fee;
-        maxLendingItem = _maxLendingItem;
     }
     
     function withdrawEther(address _sendTo, uint _amount) onlyModerators public {
@@ -291,491 +448,246 @@ contract EtheremonTrade is EtheremonEnum, BasicAccessControl, SafeMath {
         }
         _sendTo.transfer(_amount);
     }
-    
-    
-    // helper
-    function removeSellingItem(uint64 _itemId) private {
-        SellingItem storage item = sellingDict[_itemId];
-        if (item.index == 0)
-            return;
-        
-        if (item.index <= sellingList.length) {
-            // Move an existing element into the vacated key slot.
-            sellingDict[sellingList[sellingList.length-1]].index = item.index;
-            sellingList[item.index-1] = sellingList[sellingList.length-1];
-            sellingList.length -= 1;
-            delete sellingDict[_itemId];
-        }
-    }
-    
-    function addSellingItem(uint64 _itemId, uint256 _price) private {
-        SellingItem storage item = sellingDict[_itemId];
-        item.price = _price;
-        
-        if (item.index == 0) {
-            item.index = ++sellingList.length;
-            sellingList[item.index - 1] = _itemId;
-        }
-    }
 
-    function removeBorrowingItem(uint64 _itemId) private {
-        BorrowItem storage item = borrowingDict[_itemId];
-        if (item.index == 0)
-            return;
-        
-        if (item.index <= borrowingList.length) {
-            // Move an existing element into the vacated key slot.
-            borrowingDict[borrowingList[borrowingList.length-1]].index = item.index;
-            borrowingList[item.index-1] = borrowingList[borrowingList.length-1];
-            borrowingList.length -= 1;
-            delete borrowingDict[_itemId];
-        }
-    }
-
-    function addBorrowingItem(address _owner, uint64 _itemId, uint256 _price, uint _releaseTime) private {
-        BorrowItem storage item = borrowingDict[_itemId];
-        item.owner = _owner;
-        item.borrower = address(0);
-        item.price = _price;
-        item.lent = false;
-        item.releaseTime = _releaseTime;
-        
-        if (item.index == 0) {
-            item.index = ++borrowingList.length;
-            borrowingList[item.index - 1] = _itemId;
-        }
-    }
-    
-    function transferMonster(address _to, uint64 _objId) private {
-        EtheremonDataBase data = EtheremonDataBase(dataContract);
-
-        MonsterObjAcc memory obj;
-        (obj.monsterId, obj.classId, obj.trainer, obj.exp, obj.createIndex, obj.lastClaimIndex, obj.createTime) = data.getMonsterObj(_objId);
-
-        // clear balance for gen 0
-        if (obj.classId <= GEN0_NO) {
-            Gen0Config storage gen0 = gen0Config[obj.classId];
-            if (gen0.classId == obj.classId) {
-                if (obj.lastClaimIndex < gen0.total) {
-                    uint32 gap = uint32(safeSubtract(gen0.total, obj.lastClaimIndex));
-                    if (gap > 0) {
-                        data.addExtraBalance(obj.trainer, safeMult(gap, gen0.returnPrice));
-                        // reset total (accept name is cleared :( )
-                        data.setMonsterObj(obj.monsterId, " name me ", obj.exp, obj.createIndex, gen0.total);
-                    }
-                }
-            }
-        }
-        
-        // transfer owner
-        data.removeMonsterIdMapping(obj.trainer, _objId);
-        data.addMonsterIdMapping(_to, _objId);
-    }
-    
-    function addItemLendingList(address _trainer, uint64 _objId) private {
-        if (_trainer != address(0)) {
-            uint64[] storage objList = lendingList[_trainer];
-            for (uint index = 0; index < objList.length; index++) {
-                if (objList[index] == _objId) {
-                    return;
-                }
-            }
-            objList.push(_objId);
-        }
-    }
-    
-    function removeItemLendingList(address _trainer, uint64 _objId) private {
-        uint foundIndex = 0;
-        uint64[] storage objList = lendingList[_trainer];
-        for (; foundIndex < objList.length; foundIndex++) {
-            if (objList[foundIndex] == _objId) {
-                break;
-            }
-        }
-        if (foundIndex < objList.length) {
-            objList[foundIndex] = objList[objList.length-1];
-            delete objList[objList.length-1];
-            objList.length--;
-        }
+    function _triggerNFTEvent(address _from, address _to, uint _objId) internal {
+        EtheremonMonsterNFTInterface monsterNFT = EtheremonMonsterNFTInterface(monsterNFTContract);
+        monsterNFT.triggerTransferEvent(_from, _to, _objId);
     }
     
     // public
-    function placeSellOrder(uint64 _objId, uint256 _price) requireDataContract requireBattleContract isActive external {
+    function placeSellOrder(uint _objId, uint _price) isActive external {
         if (_price == 0)
             revert();
+        
         // not on borrowing
-        BorrowItem storage item = borrowingDict[_objId];
-        if (item.index > 0)
+        EtheremonTradeData monTradeData = EtheremonTradeData(tradingMonDataContract);
+        if (monTradeData.isOnBorrow(_objId))
             revert();
+
         // not on battle 
         EtheremonBattleInterface battle = EtheremonBattleInterface(battleContract);
-        if (battle.isOnBattle(_objId))
+        if (battle.isOnBattle(uint64(_objId)))
             revert();
         
         // check ownership
         EtheremonDataBase data = EtheremonDataBase(dataContract);
         MonsterObjAcc memory obj;
-        uint32 _ = 0;
-        (obj.monsterId, obj.classId, obj.trainer, obj.exp, _, _, obj.createTime) = data.getMonsterObj(_objId);
-        
-        if (obj.monsterId != _objId) {
-            revert();
-        }
-        
+        (obj.monsterId, obj.classId, obj.trainer, obj.exp, obj.createIndex, obj.lastClaimIndex, obj.createTime) = data.getMonsterObj(uint64(_objId));
+
         if (obj.trainer != msg.sender) {
             revert();
         }
         
-        // on selling, then just update price
-        if (sellingDict[_objId].index > 0){
-            sellingDict[_objId].price = _price;
-        } else {
-            addSellingItem(_objId, _price);
-        }
-        EventPlaceSellOrder(msg.sender, _objId);
+        monTradeData.addSellingItem(_objId, _price, block.timestamp);
+        EventPlaceSellOrder(msg.sender, _objId, _price);
     }
     
-    function removeSellOrder(uint64 _objId) requireDataContract requireBattleContract isActive external {
-        if (sellingDict[_objId].index == 0)
-            revert();
-        
+    function removeSellOrder(uint _objId) isActive external {
         // check ownership
         EtheremonDataBase data = EtheremonDataBase(dataContract);
         MonsterObjAcc memory obj;
-        uint32 _ = 0;
-        (obj.monsterId, obj.classId, obj.trainer, obj.exp, _, _, obj.createTime) = data.getMonsterObj(_objId);
-        
-        if (obj.monsterId != _objId) {
-            revert();
-        }
-        
+        (obj.monsterId, obj.classId, obj.trainer, obj.exp, obj.createIndex, obj.lastClaimIndex, obj.createTime) = data.getMonsterObj(uint64(_objId));
+
         if (obj.trainer != msg.sender) {
             revert();
         }
         
-        removeSellingItem(_objId);
+        EtheremonTradeData monTradeData = EtheremonTradeData(tradingMonDataContract);
+        monTradeData.removeSellingItem(_objId);
+        
+        EventRemoveSellOrder(msg.sender, _objId);
     }
     
-    function buyItem(uint64 _objId) requireDataContract requireBattleContract isActive external payable {
-        // check item is valid to sell 
-        uint256 requestPrice = sellingDict[_objId].price;
+    function buyItem(uint _objId) isActive external payable {
+        // check item is valid to sell
+        EtheremonTradeData monTradeData = EtheremonTradeData(tradingMonDataContract);
+        uint requestPrice = monTradeData.getSellPrice(_objId);
         if (requestPrice == 0 || msg.value != requestPrice) {
             revert();
         }
-        
-        // check obj
-        EtheremonDataBase data = EtheremonDataBase(dataContract);
-        MonsterObjAcc memory obj;
-        uint32 _ = 0;
-        (obj.monsterId, obj.classId, obj.trainer, obj.exp, _, _, obj.createTime) = data.getMonsterObj(_objId);
-        if (obj.monsterId != _objId) {
-            revert();
-        }
-        // can not buy from yourself
-        if (obj.trainer == msg.sender) {
-            revert();
-        }
-        
-        address oldTrainer = obj.trainer;
-        uint256 fee = requestPrice * tradingFeePercentage / 100;
-        removeSellingItem(_objId);
-        transferMonster(msg.sender, _objId);
-        oldTrainer.transfer(safeSubtract(requestPrice, fee));
-        
-        SoldItem memory soldItem = SoldItem(_objId, requestPrice, block.timestamp);
-        soldList[oldTrainer].push(soldItem);
-        EventBuyItem(msg.sender, _objId);
-    }
-    
-    function offerBorrowingItem(uint64 _objId, uint256 _price, uint _releaseTime) requireDataContract requireBattleContract isActive external {
-        // make sure it is not on sale 
-        if (sellingDict[_objId].price > 0 || _price == 0)
-            revert();
-        // not on lent
-        BorrowItem storage item = borrowingDict[_objId];
-        if (item.lent == true)
-            revert();
-        // not on battle 
-        EtheremonBattleInterface battle = EtheremonBattleInterface(battleContract);
-        if (battle.isOnBattle(_objId))
-            revert();
-        
-        
-        // check ownership
-        EtheremonDataBase data = EtheremonDataBase(dataContract);
-        MonsterObjAcc memory obj;
-        uint32 _ = 0;
-        (obj.monsterId, obj.classId, obj.trainer, obj.exp, _, _, obj.createTime) = data.getMonsterObj(_objId);
-        
-        if (obj.monsterId != _objId) {
-            revert();
-        }
-        
-        if (obj.trainer != msg.sender) {
-            revert();
-        }
-        
-        if (item.index > 0) {
-            // update info 
-            item.price = _price;
-            item.releaseTime = _releaseTime;
-        } else {
-            addBorrowingItem(msg.sender, _objId, _price, _releaseTime);
-        }
-        EventOfferBorrowingItem(msg.sender, _objId);
-    }
-    
-    function removeBorrowingOfferItem(uint64 _objId) requireDataContract requireBattleContract isActive external {
-        BorrowItem storage item = borrowingDict[_objId];
-        if (item.index == 0)
-            revert();
-        
-        if (item.owner != msg.sender)
-            revert();
-        if (item.lent == true)
-            revert();
-        
-        removeBorrowingItem(_objId);
-    }
-    
-    function borrowItem(uint64 _objId) requireDataContract requireBattleContract isActive external payable {
-        BorrowItem storage item = borrowingDict[_objId];
-        if (item.index == 0)
-            revert();
-        if (item.lent == true)
-            revert();
-        uint256 itemPrice = item.price;
-        if (itemPrice != msg.value)
-            revert();
-        
 
         // check obj
         EtheremonDataBase data = EtheremonDataBase(dataContract);
         MonsterObjAcc memory obj;
-        uint32 _ = 0;
-        (obj.monsterId, obj.classId, obj.trainer, obj.exp, _, _, obj.createTime) = data.getMonsterObj(_objId);
-        if (obj.monsterId != _objId) {
-            revert();
-        }
-        // can not borrow from yourself
-        if (obj.trainer == msg.sender) {
+        (obj.monsterId, obj.classId, obj.trainer, obj.exp, obj.createIndex, obj.lastClaimIndex, obj.createTime) = data.getMonsterObj(uint64(_objId));
+        // can not buy from yourself
+        if (obj.monsterId == 0 || obj.trainer == msg.sender) {
             revert();
         }
         
-        uint256 fee = itemPrice * tradingFeePercentage / 100;
-        item.borrower = msg.sender;
-        item.releaseTime += block.timestamp;
-        item.lent = true;
-        address oldOwner = obj.trainer;
-        transferMonster(msg.sender, _objId);
-        oldOwner.transfer(safeSubtract(itemPrice, fee));
-        addItemLendingList(oldOwner, _objId);
-        EventAcceptBorrowItem(msg.sender, _objId);
+        EtheremonMonsterNFTInterface monsterNFT = EtheremonMonsterNFTInterface(monsterNFTContract);
+
+        uint fee = requestPrice * tradingFeePercentage / 100;
+        monTradeData.removeSellingItem(_objId);
+        
+        // transfer owner
+        data.removeMonsterIdMapping(obj.trainer, obj.monsterId);
+        data.addMonsterIdMapping(msg.sender, obj.monsterId);
+        monsterNFT.triggerTransferEvent(obj.trainer, msg.sender, _objId);
+        
+        // transfer money
+        obj.trainer.transfer(safeSubtract(requestPrice, fee));
+        
+        EventCompleteSellOrder(obj.trainer, msg.sender, _objId, requestPrice);
     }
     
-    function getBackLendingItem(uint64 _objId) requireDataContract requireBattleContract isActive external {
-        BorrowItem storage item = borrowingDict[_objId];
-        if (item.index == 0)
-            revert();
-        if (item.lent == false)
-            revert();
-        if (item.releaseTime > block.timestamp)
-            revert();
-        
-        if (msg.sender != item.owner)
-            revert();
-        
-        removeBorrowingItem(_objId);
-        transferMonster(msg.sender, _objId);
-        removeItemLendingList(msg.sender, _objId);
-        EventGetBackItem(msg.sender, _objId);
-    }
-    
-    function freeTransferItem(uint64 _objId, address _receiver) requireDataContract requireBattleContract external {
-        // make sure it is not on sale 
-        if (sellingDict[_objId].price > 0)
-            revert();
-        // not on borrowing
-        BorrowItem storage item = borrowingDict[_objId];
-        if (item.index > 0)
-            revert();
-        // not on battle 
-        EtheremonBattleInterface battle = EtheremonBattleInterface(battleContract);
-        if (battle.isOnBattle(_objId))
-            revert();
-        
-        // check ownership
+    function offerBorrowingItem(uint _objId, uint _price, uint _releaseTime) isActive external {
+        EtheremonTradeData monTradeData = EtheremonTradeData(tradingMonDataContract);
+        if (monTradeData.isOnSell(_objId) || monTradeData.isOnLent(_objId)) revert();
+
+         // check ownership
         EtheremonDataBase data = EtheremonDataBase(dataContract);
         MonsterObjAcc memory obj;
-        uint32 _ = 0;
-        (obj.monsterId, obj.classId, obj.trainer, obj.exp, _, _, obj.createTime) = data.getMonsterObj(_objId);
-        
-        if (obj.monsterId != _objId) {
-            revert();
-        }
-        
+        (obj.monsterId, obj.classId, obj.trainer, obj.exp, obj.createIndex, obj.lastClaimIndex, obj.createTime) = data.getMonsterObj(uint64(_objId));
+
         if (obj.trainer != msg.sender) {
             revert();
         }
-        
-        transferMonster(_receiver, _objId);
-        EventFreeTransferItem(msg.sender, _receiver, _objId);
-    }
-    
-    function release(uint64 _objId) requireDataContract requireBattleContract external {
-        // make sure it is not on sale 
-        if (sellingDict[_objId].price > 0)
-            revert();
-        // not on borrowing
-        BorrowItem storage item = borrowingDict[_objId];
-        if (item.index > 0)
-            revert();
+
         // not on battle 
         EtheremonBattleInterface battle = EtheremonBattleInterface(battleContract);
-        if (battle.isOnBattle(_objId))
+        if (battle.isOnBattle(obj.monsterId))
             revert();
         
-        // check ownership
+        monTradeData.addBorrowingItem(msg.sender, _objId, _price, address(0), false, _releaseTime, block.timestamp);
+        EventOfferBorrowingItem(msg.sender, _objId, _price, _releaseTime);
+    }
+    
+    function removeBorrowingOfferItem(uint _objId) isActive external {
+        EtheremonTradeData monTradeData = EtheremonTradeData(tradingMonDataContract);
+        address owner;
+        bool lent;
+        (owner, lent) = monTradeData.getBorrowBasicInfo(_objId);
+        if (owner != msg.sender || lent == true)
+            revert();
+        
+        monTradeData.removeBorrowingItem(_objId);
+        EventRemoveOfferBorrowingItem(msg.sender, _objId);
+    }
+    
+    function borrowItem(uint _objId) isActive external payable {
+        EtheremonTradeData monTradeData = EtheremonTradeData(tradingMonDataContract);
+        BorrowItem memory borrowItem;
+        (borrowItem.index, borrowItem.owner, borrowItem.borrower, borrowItem.price, borrowItem.lent, borrowItem.createTime, borrowItem.releaseTime) = monTradeData.getBorrowInfo(_objId);
+        if (borrowItem.index == 0 || borrowItem.lent == true) revert();
+        if (borrowItem.owner == msg.sender) revert(); // can not borrow from yourself
+        if (borrowItem.price != msg.value)
+            revert();
+
+        // check obj
         EtheremonDataBase data = EtheremonDataBase(dataContract);
         MonsterObjAcc memory obj;
-        uint32 _ = 0;
-        (obj.monsterId, obj.classId, obj.trainer, obj.exp, _, _, obj.createTime) = data.getMonsterObj(_objId);
-        
-        // can not release gen 0
-        if (obj.classId <= GEN0_NO) {
+        (obj.monsterId, obj.classId, obj.trainer, obj.exp, obj.createIndex, obj.lastClaimIndex, obj.createTime) = data.getMonsterObj(uint64(_objId));
+        if (obj.trainer != borrowItem.owner) {
             revert();
         }
         
-        if (obj.monsterId != _objId) {
-            revert();
-        }
+        // update borrow data
+        monTradeData.addBorrowingItem(borrowItem.owner, _objId, borrowItem.price, msg.sender, true, (borrowItem.releaseTime + block.timestamp), borrowItem.createTime);
         
-        if (obj.trainer != msg.sender) {
-            revert();
-        }
+        data.removeMonsterIdMapping(obj.trainer, obj.monsterId);
+        data.addMonsterIdMapping(msg.sender, obj.monsterId);
+        _triggerNFTEvent(obj.trainer, msg.sender, _objId);
         
-        data.removeMonsterIdMapping(msg.sender, _objId);
-        EventRelease(msg.sender, _objId);
+        obj.trainer.transfer(safeSubtract(borrowItem.price, borrowItem.price * tradingFeePercentage / 100));
+        monTradeData.addItemLendingList(obj.trainer, _objId);
+        EventAcceptBorrowItem(obj.trainer, msg.sender, _objId, borrowItem.price);
+    }
+    
+    function getBackLendingItem(uint64 _objId) isActive external {
+        EtheremonTradeData monTradeData = EtheremonTradeData(tradingMonDataContract);
+        BorrowItem memory borrowItem;
+        (borrowItem.index, borrowItem.owner, borrowItem.borrower, borrowItem.price, borrowItem.lent, borrowItem.createTime, borrowItem.releaseTime) = monTradeData.getBorrowInfo(_objId);
+        
+        if (borrowItem.index == 0)
+            revert();
+        if (borrowItem.lent == false)
+            revert();
+        if (borrowItem.releaseTime > block.timestamp)
+            revert();
+        
+        if (msg.sender != borrowItem.owner)
+            revert();
+        
+        monTradeData.removeBorrowingItem(_objId);
+        
+        EtheremonDataBase data = EtheremonDataBase(dataContract);
+        data.removeMonsterIdMapping(borrowItem.borrower, _objId);
+        data.addMonsterIdMapping(msg.sender, _objId);
+        EtheremonMonsterNFTInterface monsterNFT = EtheremonMonsterNFTInterface(monsterNFTContract);
+        monsterNFT.triggerTransferEvent(borrowItem.borrower, msg.sender, _objId);
+        
+        monTradeData.removeItemLendingList(msg.sender, _objId);
+        EventGetBackItem(msg.sender, borrowItem.borrower, _objId);
     }
     
     // read access
-    
-    function getBasicObjInfo(uint64 _objId) constant public returns(uint32, address, uint32, uint32){
+    function getObjInfoWithBp(uint64 _objId) constant public returns(address owner, uint32 classId, uint32 exp, uint32 createIndex, uint bp) {
         EtheremonDataBase data = EtheremonDataBase(dataContract);
         MonsterObjAcc memory obj;
-        (obj.monsterId, obj.classId, obj.trainer, obj.exp, obj.createIndex, obj.lastClaimIndex, obj.createTime) = data.getMonsterObj(_objId);
-        return (obj.classId, obj.trainer, obj.exp, obj.createIndex);
+        (obj.monsterId, classId, owner, exp, createIndex, obj.lastClaimIndex, obj.createTime) = data.getMonsterObj(_objId);
+        EtheremonMonsterNFTInterface monsterNFT = EtheremonMonsterNFTInterface(monsterNFTContract);
+        bp = monsterNFT.getMonsterCP(_objId);
     }
     
-    function getBasicObjInfoWithBp(uint64 _objId) constant public returns(uint32, uint32, uint32, uint64) {
-        EtheremonDataBase data = EtheremonDataBase(dataContract);
-        MonsterObjAcc memory obj;
-        (obj.monsterId, obj.classId, obj.trainer, obj.exp, obj.createIndex, obj.lastClaimIndex, obj.createTime) = data.getMonsterObj(_objId);
-        EtheremonBattleInterface battle = EtheremonBattleInterface(battleContract);
-        uint64 bp = battle.getMonsterCP(_objId);
-        return (obj.classId, obj.exp, obj.createIndex, bp);
+    function getTotalSellingMonsters() constant external returns(uint) {
+        EtheremonTradeData monTradeData = EtheremonTradeData(tradingMonDataContract);
+        return monTradeData.getTotalSellingItem();
     }
     
-    function getTotalSellingItem() constant external returns(uint) {
-        return sellingList.length;
+    function getTotalBorrowingMonsters() constant external returns(uint) {
+        EtheremonTradeData monTradeData = EtheremonTradeData(tradingMonDataContract);
+        return monTradeData.getTotalBorrowingItem();
     }
 
-    function getSellingItem(uint _index) constant external returns(uint64 objId, uint32 classId, uint32 exp, uint64 bp, address trainer, uint createIndex, uint256 price) {
-        objId = sellingList[_index];
+    function getSellingItem(uint _index) constant external returns(uint objId, uint32 classId, uint32 exp, uint bp, address trainer, uint32 createIndex, uint256 price, uint createTime) {
+        EtheremonTradeData monTradeData = EtheremonTradeData(tradingMonDataContract);
+        (objId, price, createTime) = monTradeData.getSellingInfoByIndex(_index);
         if (objId > 0) {
-            (classId, trainer, exp, createIndex) = getBasicObjInfo(objId);
-            EtheremonBattleInterface battle = EtheremonBattleInterface(battleContract);
-            bp = battle.getMonsterCP(objId);
-            price = sellingDict[objId].price;
+            (trainer, classId, exp, createIndex, bp) = getObjInfoWithBp(uint64(objId));
         }
     }
     
-    function getSellingItemByObjId(uint64 _objId) constant external returns(uint32 classId, uint32 exp, uint64 bp, address trainer, uint createIndex, uint256 price) {
-        price = sellingDict[_objId].price;
+    function getSellingItemByObjId(uint64 _objId) constant external returns(uint32 classId, uint32 exp, uint bp, address trainer, uint32 createIndex, uint256 price, uint createTime) {
+        EtheremonTradeData monTradeData = EtheremonTradeData(tradingMonDataContract);
+        uint index;
+        (index, price, createTime) = monTradeData.getSellInfo(_objId);
         if (price > 0) {
-            (classId, trainer, exp, createIndex) = getBasicObjInfo(_objId);
-            EtheremonBattleInterface battle = EtheremonBattleInterface(battleContract);
-            bp = battle.getMonsterCP(_objId);
+            (trainer, classId, exp, createIndex, bp) = getObjInfoWithBp(_objId);
         }
     }
 
-    function getTotalBorrowingItem() constant external returns(uint) {
-        return borrowingList.length;
-    }
-
-    function getBorrowingItem(uint _index) constant external returns(uint64 objId, address owner, address borrower, 
-        uint256 price, bool lent, uint releaseTime, uint32 classId, uint32 exp, uint32 createIndex, uint64 bp) {
-        objId = borrowingList[_index];
-        BorrowItem storage item = borrowingDict[objId];
-        owner = item.owner;
-        borrower = item.borrower;
-        price = item.price;
-        lent = item.lent;
-        releaseTime = item.releaseTime;
-        
-        (classId, exp, createIndex, bp) = getBasicObjInfoWithBp(objId);
+    function getBorrowingItem(uint _index) constant external returns(uint objId, address owner, address borrower, 
+        uint256 price, bool lent, uint createTime, uint releaseTime) {
+        EtheremonTradeData monTradeData = EtheremonTradeData(tradingMonDataContract);    
+        (objId, owner, borrower, price, lent, createTime, releaseTime) = monTradeData.getBorrowInfoByIndex(_index);
     }
     
     function getBorrowingItemByObjId(uint64 _objId) constant external returns(uint index, address owner, address borrower, 
-        uint256 price, bool lent, uint releaseTime, uint32 classId, uint32 exp, uint32 createIndex, uint64 bp) {
-        BorrowItem storage item = borrowingDict[_objId];
-        index = item.index;
-        owner = item.owner;
-        borrower = item.borrower;
-        price = item.price;
-        lent = item.lent;
-        releaseTime = item.releaseTime;
-        
-        (classId, exp, createIndex, bp) = getBasicObjInfoWithBp(_objId);
+        uint256 price, bool lent, uint createTime, uint releaseTime) {
+        EtheremonTradeData monTradeData = EtheremonTradeData(tradingMonDataContract);    
+        (index, owner, borrower, price, lent, createTime, releaseTime) = monTradeData.getBorrowInfo(_objId);
     }
     
-    function getSoldItemLength(address _trainer) constant external returns(uint) {
-        return soldList[_trainer].length;
-    }
-    
-    function getSoldItem(address _trainer, uint _index) constant external returns(uint64 objId, uint32 classId, uint32 exp, uint64 bp, address currentOwner, 
-        uint createIndex, uint256 price, uint time) {
-        if (_index > soldList[_trainer].length)
-            return;
-        SoldItem memory soldItem = soldList[_trainer][_index];
-        objId = soldItem.objId;
-        price = soldItem.price;
-        time = soldItem.time;
-        if (objId > 0) {
-            (classId, currentOwner, exp, createIndex) = getBasicObjInfo(objId);
-            EtheremonBattleInterface battle = EtheremonBattleInterface(battleContract);
-            bp = battle.getMonsterCP(objId);
-        }
-    }
     
     function getLendingItemLength(address _trainer) constant external returns(uint) {
-        return lendingList[_trainer].length;
+        EtheremonTradeData monTradeData = EtheremonTradeData(tradingMonDataContract);    
+        return monTradeData.getTotalLendingItem(_trainer);
     }
     
-    function getLendingItemInfo(address _trainer, uint _index) constant external returns(uint64 objId, address owner, address borrower, 
-        uint256 price, bool lent, uint releaseTime, uint32 classId, uint32 exp, uint32 createIndex, uint64 bp) {
-        if (_index > lendingList[_trainer].length)
-            return;
-        objId = lendingList[_trainer][_index];
-        BorrowItem storage item = borrowingDict[objId];
-        owner = item.owner;
-        borrower = item.borrower;
-        price = item.price;
-        lent = item.lent;
-        releaseTime = item.releaseTime;
-        
-        (classId, exp, createIndex, bp) = getBasicObjInfoWithBp(objId);
+    function getLendingItemInfo(address _trainer, uint _index) constant external returns(uint objId, address owner, address borrower, 
+        uint256 price, bool lent, uint createTime, uint releaseTime) {
+        EtheremonTradeData monTradeData = EtheremonTradeData(tradingMonDataContract);
+        (objId, owner, borrower, price, lent, createTime, releaseTime) = monTradeData.getLendingInfo(_trainer, _index);
     }
     
-    function getTradingInfo(uint64 _objId) constant external returns(uint256 sellingPrice, uint256 lendingPrice, bool lent, uint releaseTime) {
-        sellingPrice = sellingDict[_objId].price;
-        BorrowItem storage item = borrowingDict[_objId];
-        lendingPrice = item.price;
-        lent = item.lent;
-        releaseTime = item.releaseTime;
+    function getTradingInfo(uint _objId) constant external returns(address owner, address borrower, uint256 sellingPrice, uint256 lendingPrice, bool lent, uint releaseTime) {
+        EtheremonTradeData monTradeData = EtheremonTradeData(tradingMonDataContract);
+        (sellingPrice, lendingPrice, lent, releaseTime, owner, borrower) = monTradeData.getTradingInfo(_objId);
     }
     
-    function isOnTrading(uint64 _objId) constant external returns(bool) {
-        return (sellingDict[_objId].price > 0 || borrowingDict[_objId].owner != address(0));
+    function isOnTrading(uint _objId) constant external returns(bool) {
+        EtheremonTradeData monTradeData = EtheremonTradeData(tradingMonDataContract);
+        return monTradeData.isOnTrade(_objId);
     }
 }
