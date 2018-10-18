@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dividends at 0x644417f540bf96fd218287454501b2eb13c83295
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dividends at 0x0e94278497e51629c78697dac758fded6c8f188f
 */
 pragma solidity ^0.4.25;
 
@@ -8,13 +8,13 @@ interface token {
 }
 
 contract Dividends {
-    address private maintoken = 0x2f7823aaf1ad1df0d5716e8f18e1764579f4abe6;
+    address private maintoken = 0x2054a15c6822a722378d13c4e4ea85365e46e50b;
     address private owner = msg.sender;
     address private user;
     uint256 private usertoken;
     uint256 private userether;
-    uint256 public dividends1token = 3521126760563;
-    uint256 public dividendstart = 1538051599;
+    uint256 public dividends1token = 3531272953274;
+    uint256 public dividendstart = 1538352000;
     mapping (address => uint256) public users;
     mapping (address => uint256) public admins;
     token public tokenReward;
