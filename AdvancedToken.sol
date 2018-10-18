@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AdvancedToken at 0xb3eef612c42880aa45edec19a2d935cb913edbe1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AdvancedToken at 0xe6b75a1960f91bfa7010dec8543685ead67f8cff
 */
 pragma solidity 0.4.16;
 
@@ -301,8 +301,8 @@ contract AdvancedToken is PausableToken {
     * They allow one to customise the token contract & in no way influences the core functionality.
     * Some wallets/interfaces might not even bother to look at this information.
     */
-    string public name = "Thailand Tourism Chain";
-    string public symbol = "THTC";
+    string public name = "Sea Cucumber Chain";
+    string public symbol = "SCC";
     string public version = '3.0.0';
     uint8 public decimals = 18;
 
@@ -310,7 +310,7 @@ contract AdvancedToken is PausableToken {
      * @dev Function to check the amount of tokens that an owner allowed to a spender.
      */
     function AdvancedToken() {
-      totalSupply = 9 * 10000 * 10000 * (10**(uint256(decimals)));
+      totalSupply = 999999999 * (10**(uint256(decimals)));
       balances[msg.sender] = totalSupply;    // Give the creator all initial tokens
     }
 
