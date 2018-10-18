@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OMICrowdsale at 0x61581cf69181c8ef88cf47cb3b2615dd51ad29d7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OMICrowdsale at 0x06d855f451160b892e8d1d1c7d8879705aab1fec
 */
 pragma solidity ^0.4.13;
 
@@ -386,7 +386,6 @@ contract OMICrowdsale is WhitelistedCrowdsale, Pausable {
    *  Constants
    */
   uint256 constant crowdsaleStartTime = 1530273600; // Pacific/Auckland 2018-06-30 00:00:00 
-  uint256 constant crowdsaleFinishTime = 1538222400; // Pacific/Auckland 2018-09-30 00:00:00
   uint256 constant crowdsaleUSDGoal = 22125000;
   uint256 constant crowdsaleTokenGoal = 362500000*1e18;
   uint256 constant minimumTokenPurchase = 2500*1e18;
@@ -401,6 +400,7 @@ contract OMICrowdsale is WhitelistedCrowdsale, Pausable {
   uint256 public totalUSDRaised;
   uint256 public totalTokensSold;
   bool public isFinalized = false;
+  uint256 public crowdsaleFinishTime = 1540983599; // Pacific/Auckland 2018-10-31 11:59:59
 
   mapping(address => uint256) public purchaseRecords;
 
@@ -527,6 +527,15 @@ contract OMICrowdsale is WhitelistedCrowdsale, Pausable {
   /// @dev Finalizes the crowdsale
   function finalize() external onlyOwner {
     _finalization();
+  }
+
+  /// @dev set finish time
+  function setFinishTime(uint256 _newCrowdsaleFinishTime) external
+    whenNotFinalized
+    onlyOwner
+  {
+    require(_newCrowdsaleFinishTime > crowdsaleStartTime);
+    crowdsaleFinishTime = _newCrowdsaleFinishTime;
   }
 
   /*
