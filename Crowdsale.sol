@@ -1,171 +1,143 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xcd081a2e3acd8f96e2219db992caa5a214338a43
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xda823ef2d0de994b329ca6e4e95934b3bc0db8d1
 */
 pragma solidity ^0.4.24;
+// This contract has the burn option
+interface token {
+    function transfer(address receiver, uint amount);
+    function burn(uint256 _value) returns (bool);
+    function balanceOf(address _address) returns (uint256);
+}
+contract owned { //Contract used to only allow the owner to call some functions
+	address public owner;
 
-library SafeMath {
-    function add(uint a, uint b) internal pure returns (uint c) {
-        c = a + b;
-        require(c >= a);
-    }
-    function sub(uint a, uint b) internal pure returns (uint c) {
-        require(b <= a);
-        c = a - b;
-    }
-    function mul(uint a, uint b) internal pure returns (uint c) {
-        c = a * b;
-        require(a == 0 || c / a == b);
-    }
-    function div(uint a, uint b) internal pure returns (uint c) {
-        require(b > 0);
-        c = a / b;
-    }
+	function owned() public {
+	owner = msg.sender;
+	}
+
+	modifier onlyOwner {
+	require(msg.sender == owner);
+	_;
+	}
+
+	function transferOwnership(address newOwner) onlyOwner public {
+	owner = newOwner;
+	}
 }
 
-contract ERC20Interface {
-    function totalSupply() public constant returns (uint);
-    function balanceOf(address tokenOwner) public constant returns (uint balance);
-    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
-    function transfer(address to, uint tokens) public returns (bool success);
-    function approve(address spender, uint tokens) public returns (bool success);
-    function transferFrom(address from, address to, uint tokens) public returns (bool success);
+contract SafeMath {
+    //internals
 
-    event Transfer(address indexed from, address indexed to, uint tokens);
-    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
+    function safeMul(uint a, uint b) internal returns(uint) {
+        uint c = a * b;
+        assert(a == 0 || c / a == b);
+        return c;
+    }
+
+    function safeSub(uint a, uint b) internal returns(uint) {
+        assert(b <= a);
+        return a - b;
+    }
+
+    function safeAdd(uint a, uint b) internal returns(uint) {
+        uint c = a + b;
+        assert(c >= a && c >= b);
+        return c;
+    }
+
 }
 
-contract Owned {
-    address public owner;
-    address public newOwner;
+contract Crowdsale is owned, SafeMath {
+    address public beneficiary;
+    uint public fundingGoal;
+    uint public amountRaised;  //The amount being raised by the crowdsale
+    uint public deadline; /* the end date of the crowdsale*/
+    uint public rate; //rate for the crowdsale
+    uint public tokenDecimals;
+    token public tokenReward; //
+    uint public tokensSold = 0;  //the amount of UzmanbuCoin sold  
+    uint public start; /* the start date of the crowdsale*/
+    uint public bonusEndDate;
+    mapping(address => uint256) public balanceOf;  //Ether deposited by the investor
+    bool crowdsaleClosed = false; //It will be true when the crowsale gets closed
 
-    event OwnershipTransferred(address indexed _from, address indexed _to);
+    event GoalReached(address beneficiary, uint capital);
+    event FundTransfer(address backer, uint amount, bool isContribution);
 
-    constructor() public {
-        owner = msg.sender;
+    /**
+     * Constrctor function
+     *
+     * Setup the owner
+     */
+    function Crowdsale( ) {
+        beneficiary = 0xe579891b98a3f58e26c4b2edb54e22250899363c;
+        rate = 250000; // 25.000.000 TORC/Ether 
+        tokenDecimals=8;
+        fundingGoal = 7500000000 * (10 ** tokenDecimals); 
+        start = 1536688800; //      
+        deadline = 1539356400; //    
+        bonusEndDate =1539356400;
+        tokenReward = token(0x2DC5b9F85a5EcCC24A3abd396F9d0c43dF3D284c); //Token address. Modify by the current token address
+    }    
+
+    /**
+     * Fallback function
+     *
+     * The function without name is the default function that is called whenever anyone sends funds to a contract
+     */
+     /*
+   
+     */
+    function () payable {
+        uint amount = msg.value;  //amount received by the contract
+        uint numTokens; //number of token which will be send to the investor
+        numTokens = getNumTokens(amount);   //It will be true if the soft capital was reached
+        require(numTokens>0 && !crowdsaleClosed && now > start && now < deadline);
+        balanceOf[msg.sender] = safeAdd(balanceOf[msg.sender], amount);
+        amountRaised = safeAdd(amountRaised, amount); //Amount raised increments with the amount received by the investor
+        tokensSold += numTokens; //Tokens sold increased too
+        tokenReward.transfer(msg.sender, numTokens); //The contract sends the corresponding tokens to the investor
+        beneficiary.transfer(amount);               //Forward ether to beneficiary
+        FundTransfer(msg.sender, amount, true);
+    }
+    /*
+    It calculates the amount of tokens to send to the investor 
+    */
+    function getNumTokens(uint _value) internal returns(uint numTokens) {
+        require(_value>=10000000000000000 * 1 wei); //Min amount to invest: 0.01 ETH
+        numTokens = safeMul(_value,rate)/(10 ** tokenDecimals); //Number of tokens to give is equal to the amount received by the rate 
+        
+        if(now <= bonusEndDate){
+            if(_value>= 0.5 ether && _value< 5 * 1 ether){ // +10% tokens
+                numTokens += safeMul(numTokens,10)/100;
+            }else if(_value>=1 * 1 ether){              // +20% tokens
+                numTokens += safeMul(numTokens,20)/100;
+            }
+        }
+
+        return numTokens;
     }
 
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
+    function changeBeneficiary(address newBeneficiary) onlyOwner {
+        beneficiary = newBeneficiary;
     }
 
-    function transferOwnership(address _newOwner) public onlyOwner {
-        newOwner = _newOwner;
+    modifier afterDeadline() { if (now >= deadline) _; }
+
+    /**
+     * Check if goal was reached
+     *
+     * Checks if the goal or time limit has been reached and ends the campaign and burn the tokens
+     */
+    function checkGoalReached() afterDeadline {
+        require(msg.sender == owner); //Checks if the one who executes the function is the owner of the contract
+        if (tokensSold >=fundingGoal){
+            GoalReached(beneficiary, amountRaised);
+        }
+        tokenReward.burn(tokenReward.balanceOf(this)); //Burns all the remaining tokens in the contract 
+        crowdsaleClosed = true; //The crowdsale gets closed if it has expired
     }
-    function acceptOwnership() public {
-        require(msg.sender == newOwner);
-        emit OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
-        newOwner = address(0);
-    }
-}
 
-contract Crowdsale is Owned{
 
-  	using SafeMath for uint256;
-  	
-  	ERC20Interface private token;
-  	
-  	// Amount Raised
-  	uint256 public weiRaised;
-	
-	// Wallet where funds will be transfered
-	address public wallet;
-	
-	// Is the crowdsale paused?
-	bool isCrowdsalePaused = false;
-	
-	// the exchange rate
-	uint256 public rate;
-	
-	// total ETH for sale
-	uint256 public cap;
-	
-	uint8 public decimals;
-	
-	event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
 
-	constructor() public {
-		wallet = 0x73b8D31A7FF02C3608FDaF3770D40c487CA9b11D;
-		token = ERC20Interface(0x5D9f5D8d878Deb8DB5a4940fE7e86664E58c38FA);
-		decimals = 18;
-	 	cap = 20000 * 10**uint(decimals);
-    	rate = 1000;
-    	require(wallet != address(0));
-		require(token != address(0));
-		require(cap > 0);
-		require(rate > 0);
-	}
-	
-	function () external payable {
-    	buyTokens(msg.sender);
- 	}
- 	
- 	function buyTokens(address beneficiary) public payable {
- 	
-   		require(beneficiary != 0x0);
-
-	    uint256 amount = msg.value;
-	    
-	    require(isCrowdsalePaused == false);
-	    
-	    require(weiRaised.add(amount) <= cap);
-
-    	uint256 tokens = getTokenAmount(amount);
-
-    	weiRaised = weiRaised.add(amount);
-
-    	processPurchase(beneficiary, tokens);
-    	
-		emit TokenPurchase(msg.sender, beneficiary, amount, tokens);
-
-    	forwardFunds();
-    	
-	}
-	
-	function rate() public view returns(uint256){
-		return rate;
-	}
-	
-	function weiRaised() public view returns (uint256) {
-    	return weiRaised;
-	}
-	
-	function deliverTokens(address beneficiary,uint256 tokenAmount) internal{
-		token.transferFrom(wallet, beneficiary, tokenAmount);
-	}
-	
-	function processPurchase(address beneficiary,uint256 tokenAmount) internal{
-		deliverTokens(beneficiary, tokenAmount);
-	}
-
-	function getTokenAmount(uint256 amount) internal view returns (uint256){
-    	return rate.mul(amount);
-  	}
-  	
-  	function forwardFunds() internal {
-		wallet.transfer(msg.value);
-	}
-	
-	function remainingTokens() public view returns (uint256) {
-		return token.allowance(wallet, this);
-	}
-
-	function capReached() public view returns (bool) {
-		return weiRaised >= cap;
-	}
-	
-	function pauseCrowdsale() public onlyOwner {
-        isCrowdsalePaused = true;
-    }
-    
-    function resumeCrowdsale() public onlyOwner {
-        isCrowdsalePaused = false;
-    }
-    
-    function takeTokensBack() public onlyOwner
-     {
-         uint remainingTokensInTheContract = token.balanceOf(address(this));
-         token.transfer(owner,remainingTokensInTheContract);
-     }
 }
