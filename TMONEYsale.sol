@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TMONEYsale at 0x827b358e0b2a1d795ca0be2b90e1b2da6fe12536
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TMONEYsale at 0xafac96616383d825a86a1495fbeb7dda26b1fbd9
 */
 pragma solidity ^0.4.18;
 
@@ -34,17 +34,17 @@ contract TMONEYsale{
 
 
 	    address ifSuccessfulSendTo = 0xb2769a802438C39f01C700D718Aea13754C7D378;
-        uint fundingGoalInEthers = 8000;
-        uint durationInMinutes = 43200;
+        uint fundingGoalInEthers = 800;
+        uint durationInMinutes = 102480;
         uint weiCostOfEachToken = 213000000000000;
         address addressOfTokenUsedAsReward = 0x66d544B100966F99A72734c7eB471fB9556BadFd;
 	
         beneficiary = ifSuccessfulSendTo;
         fundingGoal = fundingGoalInEthers * 1 ether;
         deadline = now + durationInMinutes * 1 minutes;
-        priceT1 = weiCostOfEachToken;
-        priceT2 = weiCostOfEachToken + 12000000000000;
-        priceT3 = weiCostOfEachToken + 24000000000000;
+        priceT1 = weiCostOfEachToken + 26000000000000;
+        priceT2 = weiCostOfEachToken + 26000000000000;
+        priceT3 = weiCostOfEachToken + 26000000000000;
         priceT4 = weiCostOfEachToken + 26000000000000;
         tokenReward = token(addressOfTokenUsedAsReward);
         
