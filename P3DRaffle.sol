@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract P3DRaffle at 0xb84fa29beb0a5ca786150a069765bd10bab179de
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract P3DRaffle at 0x9fadca9fec3c163f1c80ba96e21c3281aee4515c
 */
 pragma solidity ^0.4.24;
 // Game by spielley
 // If you want a cut of the 1% dev share on P3D divs
 // buy shares at => 0xfaAe60F2CE6491886C9f7C9356bd92F688cA66a1
 // P3D masternode rewards for the UI builder
-// Raffle3D v 1.02
+// Raffle3D v 1.01
 // spielley is not liable for any known or unknown bugs contained by contract
 // This is not a TEAM JUST product!
 
@@ -166,13 +166,11 @@ contract P3DRaffle is  Owned {
 }
 function fetchdivstopot () public{
     uint256 divs = harvestabledivs();
-    
+    P3Dcontract_.withdraw();
     uint256 base = divs.div(100);
     SPASM_.disburse.value(base)();// to dev fee sharing contract SPASM
     rafflepot = rafflepot.add(base.mul(90));// allocation to raffle
     jackpot = jackpot.add(base.mul(9)); // allocation to jackpot
-    P3Dcontract_.withdraw();
-    SPASM_.disburse.value(base)();// to dev fee sharing contract SPASM
 }
 function changevanity(string van) public payable{
     require(msg.value >= 100  finney);
