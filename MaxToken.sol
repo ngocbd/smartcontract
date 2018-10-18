@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MaxToken at 0xA4D1dBFE6850b4e9b8935C8B80AE11b1c12a0927
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MaxToken at 0xe7976c4Efc60d9f4C200Cc1bCEF1A1e3B02c73e7
 */
 pragma solidity 0.4.24;
 
@@ -528,7 +528,7 @@ contract MaxToken is PausableToken, CappedToken, BurnableToken {
     using SafeMath for uint256;
 
     string public name = "MAX Token";
-    string public symbol = "MAXT";
+    string public symbol = "MAX";
     uint public decimals = 18;
     
     /**
