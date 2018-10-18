@@ -1,8 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CQT at 0x820954634b1c66085e5e7a7244995a1b4c4525b5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CQT at 0xde3802f1fc53340c272007d647d36c54ee075187
 */
 pragma solidity ^0.4.8;
-/*third version*/
+/*1st version*/
 /**
  * Math operations with safety checks
  */
