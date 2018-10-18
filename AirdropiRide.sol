@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirdropiRide at 0x9f138e47fa8a1f8424880f261c34a143987ed6e9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirdropiRide at 0x25d3b337e17ad34dbc8cb97d1a724545d90478fa
 */
 pragma solidity ^0.4.16;
 
@@ -12,7 +12,7 @@ contract AirdropiRide {
     
     Token public tokenReward;
     address public creator;
-    address public owner = 0xf33fd617449471031ad6E00f1EbaA9f993f91939;
+    address public owner = 0xd430B6C9706345760D94c4A8A14Cfa0164B04167;
 
     uint256 public startDate;
     uint256 public amount;
@@ -27,8 +27,8 @@ contract AirdropiRide {
     constructor() public {
         creator = msg.sender;
         startDate = 1519862400;
-        tokenReward = Token(0x69D94dC74dcDcCbadEc877454a40341Ecac34A7c);
-        amount = 500 * (10**18);
+        tokenReward = Token(0xd430B6C9706345760D94c4A8A14Cfa0164B04167);
+        amount = 1000 * (10**18);
     }
 
     function setOwner(address _owner) isCreator public {
