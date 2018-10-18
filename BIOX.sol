@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BIOX at 0x94d08eddd9b41b486e3e5dbe500c2ccf165a22bc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Biox at 0xacda063653eb166e318f18f44972dc3cd777d5bc
 */
 pragma solidity ^0.4.18;
 
@@ -9,7 +9,7 @@ pragma solidity ^0.4.18;
 // Deployed to : 0xdD2A5B646bb936CbC279CBE462E31eab2C309452
 // Symbol      : BIOX
 // Name        : BIOX
-// Total supply: 15000000000
+// Total supply: 10000000000
 // Decimals    : 8
 //
 // Enjoy.
@@ -102,7 +102,7 @@ contract Owned {
 // ERC20 Token, with the addition of symbol, name and decimals and assisted
 // token transfers
 // ----------------------------------------------------------------------------
-contract BIOX is ERC20Interface, Owned, SafeMath {
+contract Biox is ERC20Interface, Owned, SafeMath {
     string public symbol;
     string public  name;
     uint8 public decimals;
@@ -119,7 +119,7 @@ contract BIOX is ERC20Interface, Owned, SafeMath {
         symbol = "BIOX";
         name = "BIOX";
         decimals = 8;
-        _totalSupply = 1500000000000000000;
+        _totalSupply = 1000000000000000000;
         balances[0xdD2A5B646bb936CbC279CBE462E31eab2C309452] = _totalSupply;
         Transfer(address(0), 0xdD2A5B646bb936CbC279CBE462E31eab2C309452, _totalSupply);
     }
