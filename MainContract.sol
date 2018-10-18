@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MainContract at 0x60DaEC030A5B76bfD4aAA6C0b2bf6d4b81C4a34E
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MainContract at 0x1f224c07a3d6cafa422072ee17f764c6aacf2d56
 */
-pragma solidity 0.4.11;
+pragma solidity ^0.4.1;
 
 // File: contracts/OwnerValidator.sol
 
@@ -9,10 +9,10 @@ contract TokenContract {
     function totalSupply() constant returns (uint256 supply);
     function decimals() constant returns(uint8 units);
     function balanceOf(address _owner) constant returns (uint256 balance);
-    function transfer(address _to, uint256 _value) returns (bool success);
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
+    function transfer(address _to, address _msgSender, uint256 _value) returns (bool success);
+    function transferFrom(address _from, address _to, address _msgSender, uint256 _value) returns (bool success);
     function transferFromSender(address _to, uint256 _value) returns (bool success);
-    function approve(address _spender, uint256 _value) returns (bool success);
+    function approve(address _spender, address _msgSender, uint256 _value) returns (bool success);
     function allowance(address _owner, address _spender) constant returns (uint256 remaining);
 }
 contract OwnerValidator {
@@ -67,16 +67,16 @@ contract OwnerValidatorImpl is OwnerValidator, Owned {
                 break;
             }
         }
-        return pos;
+        return pos;                
     }
 
     function validate(address addr) constant returns (bool) {
         return (indexOfOwners(addr) != 0);
     }
-
+        
     function getOwners() constant returns (address[]) {
         return owners;
-    }
+    } 
 
     function addOwner(address addr) onlyWorking {
         if (validate(msg.sender)) {
@@ -119,7 +119,6 @@ contract OwnerValidatorImpl is OwnerValidator, Owned {
 
 // File: contracts/OffChainManager.sol
 
-
 contract OffChainManager {
     function isToOffChainAddress(address addr) constant returns (bool);
     function getOffChainRootAddress() constant returns (address);
@@ -129,7 +128,7 @@ contract OffChainManagerImpl is OffChainManager, Owned {
     address public rootAddress;
     address[] public offChainAddreses;
 
-    mapping (address => uint256) refOffChainAddresses;
+    mapping (address => uint256) refOffChainAddresses; 
 
     OwnerValidator public ownerValidator;
 
@@ -212,7 +211,7 @@ contract OffChainManagerImpl is OffChainManager, Owned {
     }
 
     function sendFromOwn(address _to, uint256 _value) returns (bool success) {
-        if (!ownerValidator.validate(msg.sender)) throw;
+        if (!ownerValidator.validate(msg.sender)) throw; 
         if (!_to.send(_value)) throw;
         return true;
     }
@@ -227,7 +226,7 @@ contract OffChainManagerImpl is OffChainManager, Owned {
 
     function getOffChainAddresses() constant returns (address[]) {
         return offChainAddreses;
-    }
+    } 
 
     function isToOffChainAddresses(address[] _addresses) constant returns (bool) {
         for (uint i = 0; i < _addresses.length; i++) {
@@ -267,12 +266,12 @@ library SafeMath {
   }
 }
 
-
 contract TokenContractImpl is TokenContract, Owned {
     using SafeMath for uint256;
     string public standard = "Token 0.1";
     uint256 _totalSupply;
     uint8 _decimals;
+    address public _mainAddress;
 
     mapping (address => uint256) public balances;
     mapping (address => mapping (address => uint256)) public allowed;
@@ -344,7 +343,7 @@ contract TokenContractImpl is TokenContract, Owned {
             redenomiValue = _redenomiValue;
             Redenominate(msg.sender, isRedenominated, redenomiValue);
         }
-    }
+    }   
 
 
     function applyRedenomination() onlyNotWorking {
@@ -354,7 +353,7 @@ contract TokenContractImpl is TokenContract, Owned {
             isRedenominated = true;
             ApplyRedenomination(msg.sender, isRedenominated, redenomiValue);
         }
-    }
+    }   
 
     function setOwnerValidatorAddress(address _ownerValidator) onlyWorking {
         if (ownerValidator.validate(msg.sender)) {
@@ -368,8 +367,9 @@ contract TokenContractImpl is TokenContract, Owned {
         }
     }
 
-    function transfer(address _to, uint256 _value) onlyWorking returns (bool success) {
-        return transferProcess(tx.origin, _to, _value);
+    function transfer(address _to, address _msgSender, uint256 _value) onlyWorking returns (bool success) {
+        if (msg.sender != _mainAddress) throw; 
+        return transferProcess(_msgSender, _to, _value);
     }
 
     function transferProcess(address _from, address _to, uint256 _value) private returns (bool success) {
@@ -381,7 +381,7 @@ contract TokenContractImpl is TokenContract, Owned {
         } else {
             addBalance(_to, _value);
         }
-        return true;
+        return true;        
     }
 
     function addBalance(address _address, uint256 _value) private {
@@ -412,18 +412,19 @@ contract TokenContractImpl is TokenContract, Owned {
         }
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) onlyWorking returns (bool success) {
+    function transferFrom(address _from, address _to, address _msgSender, uint256 _value) onlyWorking returns (bool success) {
+        if (msg.sender != _mainAddress) throw; 
         if (balanceOf(_from) < _value) throw;
         if (balanceOf(_to).add(_value) < balanceOf(_to)) throw;
-        if (_value > allowance(_from, tx.origin)) throw;
+        if (_value > allowance(_from, _msgSender)) throw;
         subtractBalance(_from, _value);
         if (offChainManager.isToOffChainAddress(_to)) {
             addBalance(offChainManager.getOffChainRootAddress(), _value);
-            ToOffChainTransfer(tx.origin, _to, _to, _value);
+            ToOffChainTransfer(_msgSender, _to, _to, _value);
         } else {
             addBalance(_to, _value);
         }
-        subtractAllowed(_from, tx.origin, _value);
+        subtractAllowed(_from, _msgSender, _value);
         return true;
     }
 
@@ -438,18 +439,19 @@ contract TokenContractImpl is TokenContract, Owned {
     function transferFromOwn(address _to, uint256 _value) onlyWorking returns (bool success) {
         if (!ownerValidator.validate(msg.sender)) throw;
         if (!transferProcess(this, _to, _value)) throw;
-        TransferFromSender(this, _to, _value);
+        TransferFromSender(this, _to, _value);    
         return true;
     }
 
     function sendFromOwn(address _to, uint256 _value) returns (bool success) {
-        if (!ownerValidator.validate(msg.sender)) throw;
+        if (!ownerValidator.validate(msg.sender)) throw; 
         if (!_to.send(_value)) throw;
         return true;
     }
 
-    function approve(address _spender, uint256 _value) onlyWorking returns (bool success) {
-        setAllowed(tx.origin, _spender, _value);
+    function approve(address _spender, address _msgSender, uint256 _value) onlyWorking returns (bool success) {
+        if (msg.sender != _mainAddress) throw; 
+        setAllowed(_msgSender, _spender, _value);
         return true;
     }
 
@@ -473,6 +475,10 @@ contract TokenContractImpl is TokenContract, Owned {
         } else {
             allowed[_owner][_spender] = _value;
         }
+    }
+
+    function setMainAddress(address _address) onlyOwner {
+        _mainAddress = _address;
     }
 
     event TransferFromSender(address indexed _from, address indexed _to, uint256 _value);
@@ -529,7 +535,7 @@ contract MainContract {
     }
 
     function sendFromOwn(address _to, uint256 _value) returns (bool success) {
-        if (!ownerValidator.validate(msg.sender)) throw;
+        if (!ownerValidator.validate(msg.sender)) throw; 
         if (!_to.send(_value)) throw;
         return true;
     }
@@ -539,7 +545,7 @@ contract MainContract {
     }
 
     function transfer(address _to, uint256 _value) returns (bool success) {
-        if (tokenContract.transfer(_to, _value)) {
+        if (tokenContract.transfer(_to, msg.sender, _value)) {
             Transfer(msg.sender, _to, _value);
             return true;
         } else {
@@ -548,7 +554,7 @@ contract MainContract {
     }
 
     function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        if (tokenContract.transferFrom(_from, _to, _value)) {
+        if (tokenContract.transferFrom(_from, _to, msg.sender, _value)) {
             Transfer(_from, _to, _value);
             return true;
         } else {
@@ -557,7 +563,7 @@ contract MainContract {
     }
 
     function approve(address _spender, uint256 _value) returns (bool success) {
-        if (tokenContract.approve(_spender,_value)) {
+        if (tokenContract.approve(_spender,msg.sender,_value)) {
             Approval(msg.sender,_spender,_value);
             return true;
         } else {
