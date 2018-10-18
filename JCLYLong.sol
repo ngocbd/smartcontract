@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JCLYLong at 0xac5a4f78924d74518338a6c19bae24dbe7da44f5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JCLYLong at 0x5d94d1d382fcaaaa6567f979cfaaf91a1e5b9878
 */
 pragma solidity ^0.4.24;
 
@@ -25,29 +25,80 @@ contract Ownable {
 }
 
 contract Pausable is Ownable {
-    event Pause();
-    event Unpause();
+    event Pause(uint256 _id);
+    event Unpause(uint256 _id);
 
-    bool public paused = false;
+    bool public paused_1 = false;
+    bool public paused_2 = false;
+    bool public paused_3 = false;
+    bool public paused_4 = false;
 
-    modifier whenNotPaused() {
-        require(!paused);
+    modifier whenNotPaused_1() {
+        require(!paused_1);
+        _;
+    }
+    modifier whenNotPaused_2() {
+        require(!paused_2);
+        _;
+    }
+    modifier whenNotPaused_3() {
+        require(!paused_3);
+        _;
+    }
+    modifier whenNotPaused_4() {
+        require(!paused_4);
         _;
     }
 
-    modifier whenPaused() {
-        require(paused);
+    modifier whenPaused_1() {
+        require(paused_1);
+        _;
+    }
+    modifier whenPaused_2() {
+        require(paused_2);
+        _;
+    }
+    modifier whenPaused_3() {
+        require(paused_3);
+        _;
+    }
+    modifier whenPaused_4() {
+        require(paused_4);
         _;
     }
 
-    function pause() onlyOwner whenNotPaused public {
-        paused = true;
-        emit Pause();
+    function pause_1() onlyOwner whenNotPaused_1 public {
+        paused_1 = true;
+        emit Pause(1);
+    }
+    function pause_2() onlyOwner whenNotPaused_2 public {
+        paused_2 = true;
+        emit Pause(2);
+    }
+    function pause_3() onlyOwner whenNotPaused_3 public {
+        paused_3 = true;
+        emit Pause(3);
+    }
+    function pause_4() onlyOwner whenNotPaused_4 public {
+        paused_4 = true;
+        emit Pause(4);
     }
 
-    function unpause() onlyOwner whenPaused public {
-        paused = false;
-        emit Unpause();
+    function unpause_1() onlyOwner whenPaused_1 public {
+        paused_1 = false;
+        emit Unpause(1);
+    }
+    function unpause_2() onlyOwner whenPaused_2 public {
+        paused_2 = false;
+        emit Unpause(2);
+    }
+    function unpause_3() onlyOwner whenPaused_3 public {
+        paused_3 = false;
+        emit Unpause(3);
+    }
+    function unpause_4() onlyOwner whenPaused_4 public {
+        paused_4 = false;
+        emit Unpause(4);
     }
 }
 
@@ -61,7 +112,7 @@ contract JCLYLong is Pausable  {
     address private constant WALLET_ETH_COM2   = 0x18d9fc8e3b65124744553d642989e3ba9e41a95a; 
 
     // Configurables  ====================
-    uint256 constant private rndInit_ = 1 hours;      
+    uint256 constant private rndInit_ = 10 hours;      
     uint256 constant private rndInc_ = 30 seconds;   
     uint256 constant private rndMax_ = 24 hours;    
 
@@ -72,7 +123,7 @@ contract JCLYLong is Pausable  {
     uint256 constant private ethLimiter2_ = 7e18;
 
     // whitelist range
-    uint256 constant private whitelistRange_ = 3 days;
+    uint256 constant private whitelistRange_ = 1 days;
 
     // for price 
     uint256 constant private priceStage1_ = 500e18;
@@ -109,12 +160,15 @@ contract JCLYLong is Pausable  {
 // AIRDROP DATA 
     uint256 public airDropPot_;             // person who gets the airdrop wins part of this pot
     uint256 public airDropTracker_ = 0;     // incremented each time a "qualified" tx occurs.  used to determine winning air drop
+    mapping (uint256 => mapping (uint256 => uint256)) public airDropWinners_; // counter => pID => winAmt
+    uint256 public airDropCount_;
 // LEEKSTEAL DATA 
     uint256 public leekStealPot_;             // person who gets the first leeksteal wins part of this pot
     uint256 public leekStealTracker_ = 0;     // incremented each time a "qualified" tx occurs.  used to determine winning leek steal
     uint256 public leekStealToday_;
     bool public leekStealOn_;
     mapping (uint256 => uint256) public dayStealTime_; // dayNum => time that makes leekSteal available
+    mapping (uint256 => uint256) public leekStealWins_; // pID => winAmt
 // PLAYER DATA 
     uint256 public pID_;        // total number of players
     mapping (address => uint256) public pIDxAddr_;          // (addr => pID) returns player id by address
@@ -136,6 +190,8 @@ contract JCLYLong is Pausable  {
         public
     {
         // set genesis player
+        pIDxAddr_[owner] = 0; 
+        plyr_[0].addr = owner; 
         pIDxAddr_[WALLET_ETH_COM1] = 1; 
         plyr_[1].addr = WALLET_ETH_COM1; 
         pIDxAddr_[WALLET_ETH_COM2] = 2; 
@@ -160,15 +216,142 @@ contract JCLYLong is Pausable  {
     }
 
     modifier isWithinLimits(uint256 _eth) {
-        require(_eth >= 1000000000, "pocket lint: not a valid currency");
-        require(_eth <= 100000000000000000000000, "no vitalik, no");
+        require(_eth >= 1000000000);
+        require(_eth <= 100000000000000000000000);
         _;    
+    }
+
+    modifier withinMigrationPeriod() {
+        require(now < 1535637600);
+        _;
     }
     
 // Public functions ====================
-    /**
-     * @dev emergency buy uses last stored affiliate ID
-     */
+
+    function deposit() 
+        isWithinLimits(msg.value)
+        onlyOwner
+        public
+        payable
+    {}
+
+    function migrateBasicData(uint256 allMaskGu, uint256 allGuGiven,
+        uint256 airDropPot, uint256 airDropTracker, uint256 leekStealPot, uint256 leekStealTracker, uint256 leekStealToday, 
+        uint256 pID, uint256 rID)
+        withinMigrationPeriod
+        onlyOwner
+        public
+    {
+        allMaskGu_ = allMaskGu;
+        allGuGiven_ = allGuGiven;
+        airDropPot_ = airDropPot;
+        airDropTracker_ = airDropTracker;
+        leekStealPot_ = leekStealPot;
+        leekStealTracker_ = leekStealTracker;
+        leekStealToday_ = leekStealToday;
+        pID_ = pID;
+        rID_ = rID;
+    }
+
+    function migratePlayerData1(uint256 _pID, address addr, uint256 win,
+        uint256 gen, uint256 genGu, uint256 aff, uint256 refund, uint256 lrnd, 
+        uint256 laff, uint256 withdraw)
+        withinMigrationPeriod
+        onlyOwner
+        public
+    {
+        pIDxAddr_[addr] = _pID;
+
+        plyr_[_pID].addr = addr;
+        plyr_[_pID].win = win;
+        plyr_[_pID].gen = gen;
+        plyr_[_pID].genGu = genGu;
+        plyr_[_pID].aff = aff;
+        plyr_[_pID].refund = refund;
+        plyr_[_pID].lrnd = lrnd;
+        plyr_[_pID].laff = laff;
+        plyr_[_pID].withdraw = withdraw;
+    }
+
+    function migratePlayerData2(uint256 _pID, address addr, uint256 maskGu, 
+    uint256 gu, uint256 referEth, uint256 lastClaimedPhID)
+        withinMigrationPeriod
+        onlyOwner
+        public
+    {
+        pIDxAddr_[addr] = _pID;
+        plyr_[_pID].addr = addr;
+
+        plyr_[_pID].maskGu = maskGu;
+        plyr_[_pID].gu = gu;
+        plyr_[_pID].referEth = referEth;
+        plyr_[_pID].lastClaimedPhID = lastClaimedPhID;
+    }
+
+    function migratePlayerRoundsData(uint256 _pID, uint256 eth, uint256 keys, uint256 maskKey, uint256 genWithdraw)
+        withinMigrationPeriod
+        onlyOwner
+        public
+    {
+        plyrRnds_[_pID][1].eth = eth;
+        plyrRnds_[_pID][1].keys = keys;
+        plyrRnds_[_pID][1].maskKey = maskKey;
+        plyrRnds_[_pID][1].genWithdraw = genWithdraw;
+    }
+
+    function migratePlayerPhrasesData(uint256 _pID, uint256 eth, uint256 guRewarded)
+        withinMigrationPeriod
+        onlyOwner
+        public
+    {
+        // pIDxAddr_[addr] = _pID;
+        plyrPhas_[_pID][1].eth = eth;
+        plyrPhas_[_pID][1].guRewarded = guRewarded;
+    }
+
+    function migrateRoundData(uint256 plyr, uint256 end, bool ended, uint256 strt,
+        uint256 allkeys, uint256 keys, uint256 eth, uint256 pot, uint256 maskKey, uint256 playCtr, uint256 withdraw)
+        withinMigrationPeriod
+        onlyOwner
+        public
+    {
+        round_[1].plyr = plyr;
+        round_[1].end = end;
+        round_[1].ended = ended;
+        round_[1].strt = strt;
+        round_[1].allkeys = allkeys;
+        round_[1].keys = keys;
+        round_[1].eth = eth;
+        round_[1].pot = pot;
+        round_[1].maskKey = maskKey;
+        round_[1].playCtr = playCtr;
+        round_[1].withdraw = withdraw;
+    }
+
+    function migratePhraseData(uint256 eth, uint256 guGiven, uint256 mask, 
+        uint256 minEthRequired, uint256 guPoolAllocation)
+        withinMigrationPeriod
+        onlyOwner
+        public
+    {
+        phrase_[1].eth = eth;
+        phrase_[1].guGiven = guGiven;
+        phrase_[1].mask = mask;
+        phrase_[1].minEthRequired = minEthRequired;
+        phrase_[1].guPoolAllocation = guPoolAllocation;
+    }
+
+
+    function updateWhitelist(address[] _addrs, bool _isWhitelisted)
+        public
+        onlyOwner
+    {
+        for (uint i = 0; i < _addrs.length; i++) {
+            whitelisted_Prebuy[_addrs[i]] = _isWhitelisted;
+        }
+    }
+
+    // buy using last stored affiliate ID
     function()
         isActivated()
         isHuman()
@@ -256,10 +439,11 @@ contract JCLYLong is Pausable  {
         if (_now > round_[_rID].strt && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0))) 
         {
             uint256 _eth = withdrawEarnings(_pID, false);
-            plyr_[_pID].gen = 0;
             
-            // call core 
-            core(_rID, _pID, _eth, _affID);
+            if (_eth > 0) {
+                // call core 
+                core(_rID, _pID, _eth, _affID);
+            }
         
         // if round is not active and end round needs to be ran   
         } else if (_now > round_[_rID].end && round_[_rID].ended == false) {
@@ -312,183 +496,8 @@ contract JCLYLong is Pausable  {
         }
     }
 
-    function updateWhitelist(address[] _addrs, bool _isWhitelisted)
-        public
-        onlyOwner
-    {
-        for (uint i = 0; i < _addrs.length; i++) {
-            whitelisted_Prebuy[_addrs[i]] = _isWhitelisted;
-
-            // determine if player is new or not
-            uint256 _pID = pIDxAddr_[msg.sender];
-            if (_pID == 0)
-            {
-                pID_++; 
-                pIDxAddr_[_addrs[i]] = pID_;
-                plyr_[pID_].addr = _addrs[i];
-            } 
-        }
-    }
-
-    function safeDrain() 
-        public
-        onlyOwner
-    {
-        owner.transfer(this.balance);
-    }
-    
-
-// Getters ====================
-    
-    function getPrice()
-        public
-        view
-        returns(uint256)
-    {   
-        uint256 keys = keysRec(round_[rID_].eth, 1e18);
-        return (1e36 / keys);
-    }
-    
-    function getTimeLeft()
-        public
-        view
-        returns(uint256)
-    {
-        // setup local rID
-        uint256 _rID = rID_;
-        
-        // grab time
-        uint256 _now = now;
-        
-        if (_now < round_[_rID].end)
-            if (_now > round_[_rID].strt)
-                return( (round_[_rID].end).sub(_now) );
-            else
-                return( (round_[_rID].strt).sub(_now) );
-        else
-            return(0);
-    }
-    
-    function getPlayerVaults(uint256 _pID)
-        public
-        view
-        returns(uint256 ,uint256, uint256, uint256, uint256)
-    {
-        // setup local rID
-        uint256 _rID = rID_;
-        
-        // if round has ended.  but round end has not been run (so contract has not distributed winnings)
-        if (now > round_[_rID].end && round_[_rID].ended == false && round_[_rID].plyr != 0)
-        {
-            // if player is winner 
-            if (round_[_rID].plyr == _pID)
-            {
-                return
-                (
-                    (plyr_[_pID].win).add( ((round_[_rID].pot).mul(48)) / 100 ),
-                    (plyr_[_pID].gen).add(calcUnMaskedKeyEarnings(_pID, plyr_[_pID].lrnd)),
-                    (plyr_[_pID].genGu).add(calcUnMaskedGuEarnings(_pID)),
-                    plyr_[_pID].aff,
-                    plyr_[_pID].refund
-                );
-            // if player is not the winner
-            } else {
-                return
-                (
-                    plyr_[_pID].win,
-                    (plyr_[_pID].gen).add(calcUnMaskedKeyEarnings(_pID, plyr_[_pID].lrnd)),
-                    (plyr_[_pID].genGu).add(calcUnMaskedGuEarnings(_pID)),
-                    plyr_[_pID].aff,
-                    plyr_[_pID].refund
-                );
-            }
-            
-        // if round is still going on, or round has ended and round end has been ran
-        } else {
-            return
-            (
-                plyr_[_pID].win,
-                (plyr_[_pID].gen).add(calcUnMaskedKeyEarnings(_pID, plyr_[_pID].lrnd)),
-                (plyr_[_pID].genGu).add(calcUnMaskedGuEarnings(_pID)),
-                plyr_[_pID].aff,
-                plyr_[_pID].refund
-            );
-        }
-    }
-    
-    function getCurrentRoundInfo()
-        public
-        view
-        returns(uint256, uint256, uint256, uint256, uint256, uint256, uint256, address, uint256, uint256)
-    {
-        // setup local rID
-        uint256 _rID = rID_;
-        
-        return
-        (
-            _rID,                           //0
-            round_[_rID].allkeys,           //1
-            round_[_rID].keys,              //2
-            allGuGiven_,                    //3
-            round_[_rID].end,               //4
-            round_[_rID].strt,              //5
-            round_[_rID].pot,               //6
-            plyr_[round_[_rID].plyr].addr,  //7
-            round_[_rID].eth,               //8
-            airDropTracker_ + (airDropPot_ * 1000)   //9
-        );
-    }
-
-    function getCurrentPhraseInfo()
-        public
-        view
-        returns(uint256, uint256, uint256, uint256, uint256)
-    {
-        // setup local phID
-        uint256 _phID = phID_;
-        
-        return
-        (
-            _phID,                            //0
-            phrase_[_phID].eth,               //1
-            phrase_[_phID].guGiven,           //2
-            phrase_[_phID].minEthRequired,    //3
-            phrase_[_phID].guPoolAllocation   //4
-        );
-    }
-
-    function getPlayerInfoByAddress(address _addr)
-        public 
-        view 
-        returns(uint256, uint256, uint256, uint256, uint256, uint256, uint256, uint256, uint256, uint256)
-    {
-        // setup local rID, phID
-        uint256 _rID = rID_;
-        uint256 _phID = phID_;
-        
-        if (_addr == address(0))
-        {
-            _addr == msg.sender;
-        }
-        uint256 _pID = pIDxAddr_[_addr];
-        
-        return
-        (
-            _pID,      // 0
-            plyrRnds_[_pID][_rID].keys,         //1
-            plyr_[_pID].gu,                     //2
-            plyr_[_pID].laff,                    //3
-            (plyr_[_pID].gen).add(calcUnMaskedKeyEarnings(_pID, plyr_[_pID].lrnd)).add(plyr_[_pID].genGu).add(calcUnMaskedGuEarnings(_pID)), //4
-            plyr_[_pID].aff,                    //5
-            plyrRnds_[_pID][_rID].eth,           //6      totalIn for the round
-            plyrPhas_[_pID][_phID].eth,          //7      curr phrase referral eth
-            plyr_[_pID].referEth,               // 8      total referral eth
-            plyr_[_pID].withdraw                // 9      totalOut
-        );
-    }
-
     function buyCore(uint256 _pID, uint256 _affID)
-        whenNotPaused
+        whenNotPaused_1
         private
     {
         // setup local rID
@@ -612,6 +621,10 @@ contract JCLYLong is Pausable  {
 
                     // reset air drop tracker
                     airDropTracker_ = 0;
+
+                    // NEW
+                    airDropCount_++;
+                    airDropWinners_[airDropCount_][_pID] = _prize;
                 }
             }   
             
@@ -640,6 +653,7 @@ contract JCLYLong is Pausable  {
         }
     }
 
+    // zero out keys if the accumulated profit doubled
     function checkDoubledProfit(uint256 _pID, uint256 _rID)
         private
     {   
@@ -647,14 +661,21 @@ contract JCLYLong is Pausable  {
         uint256 _keys = plyrRnds_[_pID][_rID].keys;
         if (_keys > 0) {
 
-            // zero out keys if the accumulated profit doubled
-            uint256 _balance = (plyr_[_pID].gen).add(calcUnMaskedKeyEarnings(_pID, plyr_[_pID].lrnd));
-            if (_balance.add(plyrRnds_[_pID][_rID].genWithdraw) >= (plyrRnds_[_pID][_rID].eth))
+            uint256 _genVault = plyr_[_pID].gen;
+            uint256 _genWithdraw = plyrRnds_[_pID][_rID].genWithdraw;
+            uint256 _genEarning = calcUnMaskedKeyEarnings(_pID, plyr_[_pID].lrnd);
+            uint256 _doubleProfit = (plyrRnds_[_pID][_rID].eth).mul(2);
+            if (_genVault.add(_genWithdraw).add(_genEarning) >= _doubleProfit)
             {
-                updateGenVault(_pID, plyr_[_pID].lrnd);
+                // put only calculated-remain-profit into gen vault
+                uint256 _remainProfit = _doubleProfit.sub(_genVault).sub(_genWithdraw);
+                plyr_[_pID].gen = _remainProfit.add(plyr_[_pID].gen); 
+                plyrRnds_[_pID][_rID].keyProfit = _remainProfit.add(plyrRnds_[_pID][_rID].keyProfit); // follow maskKey
 
                 round_[_rID].keys = round_[_rID].keys.sub(_keys);
                 plyrRnds_[_pID][_rID].keys = plyrRnds_[_pID][_rID].keys.sub(_keys);
+
+                plyrRnds_[_pID][_rID].maskKey = 0; // treat this player like a new player
             }   
         }
     }
@@ -787,19 +808,36 @@ contract JCLYLong is Pausable  {
 
     function transferGu(address _to, uint256 _guAmt) 
         public
-        whenNotPaused
+        whenNotPaused_2
         returns (bool) 
     {
-        uint256 _pIDFrom = pIDxAddr_[msg.sender];
+       require(_to != address(0));
 
-        // check if the sender (_pIDFrom) is not found or admin player
-        require(plyr_[_pIDFrom].addr == msg.sender);
+        if (_guAmt > 0) {
+            uint256 _pIDFrom = pIDxAddr_[msg.sender];
+            uint256 _pIDTo = pIDxAddr_[_to];
 
-        uint256 _pIDTo = pIDxAddr_[_to];
+            require(plyr_[_pIDFrom].addr == msg.sender);
+            require(plyr_[_pIDTo].addr == _to);
 
-        plyr_[_pIDFrom].gu = plyr_[_pIDFrom].gu.sub(_guAmt);
-        plyr_[_pIDTo].gu = plyr_[_pIDTo].gu.add(_guAmt);
-        return true;
+            // update profit for playerFrom
+            uint256 _profit = (allMaskGu_.mul(_guAmt)/1e18).sub(  (plyr_[_pIDFrom].maskGu.mul(_guAmt) / plyr_[_pIDFrom].gu)   ); 
+            plyr_[_pIDFrom].genGu = _profit.add(plyr_[_pIDFrom].genGu); // put in genGu vault
+            plyr_[_pIDFrom].guProfit = _profit.add(plyr_[_pIDFrom].guProfit);
+
+            // update mask for playerFrom
+            plyr_[_pIDFrom].maskGu = plyr_[_pIDFrom].maskGu.sub(  (allMaskGu_.mul(_guAmt)/1e18).sub(_profit)  );
+
+            // for playerTo
+            plyr_[_pIDTo].maskGu = (allMaskGu_.mul(_guAmt)/1e18).add(plyr_[_pIDTo].maskGu);
+
+            plyr_[_pIDFrom].gu = plyr_[_pIDFrom].gu.sub(_guAmt);
+            plyr_[_pIDTo].gu = plyr_[_pIDTo].gu.add(_guAmt);
+
+            return true;
+        } 
+        else
+            return false;
     }
     
     function updateGuPhrase() 
@@ -859,37 +897,6 @@ contract JCLYLong is Pausable  {
         phrase_[11].minEthRequired = 0;
         phrase_[11].guPoolAllocation = 0;
         return 11;
-    }
-
-    function leekStealGo() private {
-        // get a number for today dayNum 
-        uint leekStealToday_ = (now.sub(round_[rID_].strt) / 1 days); 
-        if (dayStealTime_[leekStealToday_] == 0) // if there hasn't a winner today, proceed
-        {
-            leekStealTracker_++;
-            if (randomNum(leekStealTracker_) == true)
-            {
-                dayStealTime_[leekStealToday_] = now;
-                leekStealOn_ = true;
-            }
-        }
-    }
-
-    function stealTheLeek() public {
-        if (leekStealOn_)
-        {   
-            if (now.sub(dayStealTime_[leekStealToday_]) > 300) // if time passed 5min, turn off and exit
-            {
-                leekStealOn_ = false;
-            } else {   
-                // if yes then assign the 1eth, if the pool has 1eth
-                if (leekStealPot_ > 1e18) {
-                    uint256 _pID = pIDxAddr_[msg.sender]; // fetch player ID
-                    plyr_[_pID].win = plyr_[_pID].win.add(1e18);
-                    leekStealPot_ = leekStealPot_.sub(1e18);
-                }
-            }
-        }
     }
 
     function calcUnMaskedKeyEarnings(uint256 _pID, uint256 _rIDlast)
@@ -979,6 +986,7 @@ contract JCLYLong is Pausable  {
             plyr_[_pID].gen = _earnings.add(plyr_[_pID].gen);
             // zero out their earnings by updating mask
             plyrRnds_[_pID][_rIDlast].maskKey = _earnings.add(plyrRnds_[_pID][_rIDlast].maskKey);
+            plyrRnds_[_pID][_rIDlast].keyProfit = _earnings.add(plyrRnds_[_pID][_rIDlast].keyProfit); // NEW: follow maskKey
         }
     }
 
@@ -992,9 +1000,11 @@ contract JCLYLong is Pausable  {
             plyr_[_pID].genGu = _earnings.add(plyr_[_pID].genGu);
             // zero out their earnings by updating mask
             plyr_[_pID].maskGu = _earnings.add(plyr_[_pID].maskGu);
+            plyr_[_pID].guProfit = _earnings.add(plyr_[_pID].guProfit);
         }
     }
 
+    // update gu-reward for referrals
     function updateReferralGu(uint256 _pID)
         private 
     {
@@ -1004,24 +1014,27 @@ contract JCLYLong is Pausable  {
         // get last claimed phID till
         uint256 _lastClaimedPhID = plyr_[_pID].lastClaimedPhID;
 
-        // calculate the gu Shares using these two input
-        uint256 _guShares;
-        for (uint i = (_lastClaimedPhID + 1); i < _phID; i++) {
-            _guShares = (((phrase_[i].mask).mul(plyrPhas_[_pID][i].eth))/1e18).add(_guShares);
-           
-            // update record
-            plyr_[_pID].lastClaimedPhID = i;
-            phrase_[i].guGiven = _guShares.add(phrase_[i].guGiven);
-            plyrPhas_[_pID][i].guRewarded = _guShares.add(plyrPhas_[_pID][i].guRewarded);
+        if (_phID > _lastClaimedPhID)
+        {
+            // calculate the gu Shares using these two input
+            uint256 _guShares;
+            for (uint i = (_lastClaimedPhID + 1); i < _phID; i++) {
+                _guShares = (((phrase_[i].mask).mul(plyrPhas_[_pID][i].eth))/1e18).add(_guShares);
+            
+                // update record
+                plyr_[_pID].lastClaimedPhID = i;
+                phrase_[i].guGiven = _guShares.add(phrase_[i].guGiven);
+                plyrPhas_[_pID][i].guRewarded = _guShares.add(plyrPhas_[_pID][i].guRewarded);
+            }
+
+            // put gu in player
+            plyr_[_pID].gu = _guShares.add(plyr_[_pID].gu);
+
+            // zero out their earnings by updating mask
+            plyr_[_pID].maskGu = ((allMaskGu_.mul(_guShares)) / 1e18).add(plyr_[_pID].maskGu);
+
+            allGuGiven_ = _guShares.add(allGuGiven_);
         }
-
-        // put gu in player
-        plyr_[_pID].gu = _guShares.add(plyr_[_pID].gu);
-
-        // zero out their earnings by updating mask
-        plyr_[_pID].maskGu = ((allMaskGu_.mul(_guShares)) / 1e18).add(plyr_[_pID].maskGu);
-
-        allGuGiven_ = _guShares.add(allGuGiven_);
     }
     
     function updateTimer(uint256 _keys, uint256 _rID)
@@ -1142,6 +1155,7 @@ contract JCLYLong is Pausable  {
         round_[_rID].pot = _pot.add(_dustKey).add(_dustGu).add(round_[_rID].pot);
     }
 
+    // update profit to key-holders
     function updateKeyMasks(uint256 _rID, uint256 _pID, uint256 _gen, uint256 _keys)
         private
         returns(uint256)
@@ -1159,6 +1173,7 @@ contract JCLYLong is Pausable  {
         return(_gen.sub((_ppt.mul(round_[_rID].keys)) / (1e18)));
     }
 
+    // update profit to gu-holders
     function updateGuMasks(uint256 _pID, uint256 _jcg)
         private
         returns(uint256)
@@ -1167,11 +1182,6 @@ contract JCLYLong is Pausable  {
             // calc profit per gu & round mask based on this buy:  (dust goes to pot)
             uint256 _ppg = (_jcg.mul(1e18)) / allGuGiven_;
             allMaskGu_ = _ppg.add(allMaskGu_);
-
-            // calculate player earning from their own buy
-            // & update player earnings mask
-            uint256 _pearn = (_ppg.mul(plyr_[_pID].gu)) / (1e18);
-            plyr_[_pID].maskGu = (((allMaskGu_.mul(plyr_[_pID].gu)) / (1e18)).sub(_pearn)).add(plyr_[_pID].maskGu);
             
             // calculate & return dust
             return (_jcg.sub((_ppg.mul(allGuGiven_)) / (1e18)));
@@ -1181,27 +1191,39 @@ contract JCLYLong is Pausable  {
     }
     
     function withdrawEarnings(uint256 _pID, bool isWithdraw)
-        whenNotPaused
+        whenNotPaused_3
         private
         returns(uint256)
     {
+        uint256 _rID = plyr_[_pID].lrnd;
+
         updateGenGuVault(_pID);
 
         updateReferralGu(_pID);
 
-        updateGenVault(_pID, plyr_[_pID].lrnd);
-        if (isWithdraw) plyrRnds_[_pID][plyr_[_pID].lrnd].genWithdraw = plyr_[_pID].gen.add(plyrRnds_[_pID][plyr_[_pID].lrnd].genWithdraw); // for doubled profit
+        checkDoubledProfit(_pID, _rID);
+        updateGenVault(_pID, _rID);
+        
 
         // from all vaults 
         uint256 _earnings = plyr_[_pID].gen.add(plyr_[_pID].win).add(plyr_[_pID].genGu).add(plyr_[_pID].aff).add(plyr_[_pID].refund);
         if (_earnings > 0)
         {
+            if (isWithdraw) {
+                plyrRnds_[_pID][_rID].winWithdraw = plyr_[_pID].win.add(plyrRnds_[_pID][_rID].winWithdraw);
+                plyrRnds_[_pID][_rID].genWithdraw = plyr_[_pID].gen.add(plyrRnds_[_pID][_rID].genWithdraw); // for doubled profit
+                plyrRnds_[_pID][_rID].genGuWithdraw = plyr_[_pID].genGu.add(plyrRnds_[_pID][_rID].genGuWithdraw);
+                plyrRnds_[_pID][_rID].affWithdraw = plyr_[_pID].aff.add(plyrRnds_[_pID][_rID].affWithdraw);
+                plyrRnds_[_pID][_rID].refundWithdraw = plyr_[_pID].refund.add(plyrRnds_[_pID][_rID].refundWithdraw);
+                plyr_[_pID].withdraw = _earnings.add(plyr_[_pID].withdraw);
+                round_[_rID].withdraw = _earnings.add(round_[_rID].withdraw);
+            }
+
             plyr_[_pID].win = 0;
             plyr_[_pID].gen = 0;
             plyr_[_pID].genGu = 0;
             plyr_[_pID].aff = 0;
             plyr_[_pID].refund = 0;
-            if (isWithdraw) plyr_[_pID].withdraw = _earnings.add(plyr_[_pID].withdraw);
         }
 
         return(_earnings);
@@ -1224,6 +1246,219 @@ contract JCLYLong is Pausable  {
         round_[1].strt = now;
         round_[1].end = now + rndInit_;
     }
+
+    function leekStealGo() 
+        private 
+    {
+        // get a number for today dayNum 
+        uint leekStealToday_ = (now.sub(round_[rID_].strt)) / 1 days; 
+        if (dayStealTime_[leekStealToday_] == 0) // if there hasn't a winner today, proceed
+        {
+            leekStealTracker_++;
+            if (randomNum(leekStealTracker_) == true)
+            {
+                dayStealTime_[leekStealToday_] = now;
+                leekStealOn_ = true;
+            }
+        }
+    }
+
+    function stealTheLeek() 
+        whenNotPaused_4
+        public 
+    {
+        if (leekStealOn_)
+        {   
+            if (now.sub(dayStealTime_[leekStealToday_]) > 300) // if time passed 5min, turn off and exit
+            {
+                leekStealOn_ = false;
+            } else {   
+                // if yes then assign the 1eth, if the pool has 1eth
+                if (leekStealPot_ > 1e18) {
+                    uint256 _pID = pIDxAddr_[msg.sender]; // fetch player ID
+                    plyr_[_pID].win = plyr_[_pID].win.add(1e18);
+                    leekStealPot_ = leekStealPot_.sub(1e18);
+                    leekStealWins_[_pID] = leekStealWins_[_pID].add(1e18);
+                }
+            }
+        }
+    }
+
+// Getters ====================
+    
+    function getPrice()
+        public
+        view
+        returns(uint256)
+    {   
+        uint256 keys = keysRec(round_[rID_].eth, 1e18);
+        return (1e36 / keys);
+    }
+    
+    function getTimeLeft()
+        public
+        view
+        returns(uint256)
+    {
+        // setup local rID
+        uint256 _rID = rID_;
+        
+        // grab time
+        uint256 _now = now;
+        
+        if (_now < round_[_rID].end)
+            if (_now > round_[_rID].strt)
+                return( (round_[_rID].end).sub(_now) );
+            else
+                return( (round_[_rID].strt).sub(_now) );
+        else
+            return(0);
+    }
+    
+    function getDisplayGenVault(uint256 _pID)
+        private
+        view
+        returns(uint256)
+    {
+        uint256 _rID = rID_;
+        uint256 _lrnd = plyr_[_pID].lrnd;
+
+        uint256 _genVault = plyr_[_pID].gen;
+        uint256 _genEarning = calcUnMaskedKeyEarnings(_pID, _lrnd);
+        uint256 _doubleProfit = (plyrRnds_[_pID][_rID].eth).mul(2);
+        
+        uint256 _displayGenVault = _genVault.add(_genEarning);
+        if (_genVault.add(_genEarning) > _doubleProfit)
+            _displayGenVault = _doubleProfit;
+
+        return _displayGenVault;
+    }
+
+    function getPlayerVaults(uint256 _pID)
+        public
+        view
+        returns(uint256 ,uint256, uint256, uint256, uint256)
+    {
+        uint256 _rID = rID_;
+        
+        // if round has ended.  but round end has not been run (so contract has not distributed winnings)
+        if (now > round_[_rID].end && round_[_rID].ended == false && round_[_rID].plyr != 0)
+        {   
+            uint256 _winVault;
+            if (round_[_rID].plyr == _pID) // if player is winner 
+            {   
+                _winVault = (plyr_[_pID].win).add( ((round_[_rID].pot).mul(40)) / 100 );
+            } else {
+                _winVault = plyr_[_pID].win;
+            }
+
+            return
+            (
+                _winVault,
+                getDisplayGenVault(_pID),
+                (plyr_[_pID].genGu).add(calcUnMaskedGuEarnings(_pID)),
+                plyr_[_pID].aff,
+                plyr_[_pID].refund
+            );
+        // if round is still going on, or round has ended and round end has been ran
+        } else {
+            return
+            (
+                plyr_[_pID].win,
+                getDisplayGenVault(_pID),
+                (plyr_[_pID].genGu).add(calcUnMaskedGuEarnings(_pID)),
+                plyr_[_pID].aff,
+                plyr_[_pID].refund
+            );
+        }
+    }
+    
+    function getCurrentRoundInfo()
+        public
+        view
+        returns(uint256, uint256, uint256, uint256, uint256, uint256, uint256, address, uint256, uint256)
+    {
+        // setup local rID
+        uint256 _rID = rID_;
+        
+        return
+        (
+            _rID,                           //0
+            round_[_rID].allkeys,           //1
+            round_[_rID].keys,              //2
+            allGuGiven_,                    //3
+            round_[_rID].end,               //4
+            round_[_rID].strt,              //5
+            round_[_rID].pot,               //6
+            plyr_[round_[_rID].plyr].addr,  //7
+            round_[_rID].eth,               //8
+            airDropTracker_ + (airDropPot_ * 1000)   //9
+        );
+    }
+
+    function getCurrentPhraseInfo()
+        public
+        view
+        returns(uint256, uint256, uint256, uint256, uint256)
+    {
+        // setup local phID
+        uint256 _phID = phID_;
+        
+        return
+        (
+            _phID,                            //0
+            phrase_[_phID].eth,               //1
+            phrase_[_phID].guGiven,           //2
+            phrase_[_phID].minEthRequired,    //3
+            phrase_[_phID].guPoolAllocation   //4
+        );
+    }
+
+    function getPlayerInfoByAddress(address _addr)
+        public 
+        view 
+        returns(uint256, uint256, uint256, uint256, uint256, uint256, uint256, uint256, uint256, uint256)
+    {
+        // setup local rID, phID
+        uint256 _rID = rID_;
+        uint256 _phID = phID_;
+        
+        if (_addr == address(0))
+        {
+            _addr == msg.sender;
+        }
+        uint256 _pID = pIDxAddr_[_addr];
+        
+        return
+        (
+            _pID,      // 0
+            plyrRnds_[_pID][_rID].keys,         //1
+            plyr_[_pID].gu,                     //2
+            plyr_[_pID].laff,                    //3
+            (plyr_[_pID].gen).add(calcUnMaskedKeyEarnings(_pID, plyr_[_pID].lrnd)).add(plyr_[_pID].genGu).add(calcUnMaskedGuEarnings(_pID)), //4
+            plyr_[_pID].aff,                    //5
+            plyrRnds_[_pID][_rID].eth,           //6      totalIn for the round
+            plyrPhas_[_pID][_phID].eth,          //7      curr phrase referral eth
+            plyr_[_pID].referEth,               // 8      total referral eth
+            plyr_[_pID].withdraw                // 9      totalOut
+        );
+    }
+
+    function getPlayerWithdrawal(uint256 _pID, uint256 _rID)
+        public 
+        view 
+        returns(uint256, uint256, uint256, uint256, uint256)
+    {
+        return
+        (
+            plyrRnds_[_pID][_rID].winWithdraw,     //0
+            plyrRnds_[_pID][_rID].genWithdraw,     //1
+            plyrRnds_[_pID][_rID].genGuWithdraw,   //2
+            plyrRnds_[_pID][_rID].affWithdraw,     //3
+            plyrRnds_[_pID][_rID].refundWithdraw   //4
+        );
+    }
+
 }
 
 library Datasets {
@@ -1239,14 +1474,20 @@ library Datasets {
         uint256 withdraw; // sum of withdraw
         uint256 maskGu; // player mask gu: for sharing eth-profit by holding gu
         uint256 gu;     
-        uint256 referEth; // total referral 
+        uint256 guProfit; // record profit by gu
+        uint256 referEth; // total referral eth
         uint256 lastClaimedPhID; // at which phID player has claimed the remaining gu
     }
     struct PlayerRounds {
         uint256 eth;    // eth player has added to round
         uint256 keys;   // keys
+        uint256 keyProfit; // record key profit
         uint256 maskKey;   // player mask key: for sharing eth-profit by holding keys
+        uint256 winWithdraw;  // eth withdraw from gen vault
         uint256 genWithdraw;  // eth withdraw from gen vault
+        uint256 genGuWithdraw;  // eth withdraw from gen vault
+        uint256 affWithdraw;  // eth withdraw from gen vault
+        uint256 refundWithdraw;  // eth withdraw from gen vault
     }
     struct Round {
         uint256 plyr;   // pID of player in lead
@@ -1259,6 +1500,7 @@ library Datasets {
         uint256 pot;    // eth to pot (during round) / final amount paid to winner (after round ends)
         uint256 maskKey;   // global mask on key shares: for sharing eth-profit by holding keys
         uint256 playCtr;   // play counter for playOrders
+        uint256 withdraw;
     }
     struct PlayerPhrases {
         uint256 eth;   // amount of eth in of the referral
