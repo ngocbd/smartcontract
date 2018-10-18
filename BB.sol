@@ -1,120 +1,225 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BB at 0xbeafd856b0732c9a80c00921b826ade4c6aae4ee
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BB at 0x1811aacf243e28047ccb0126b9e0f3662ed48948
 */
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.24;
 
-/*
-Sup!?
-BB is coming...
-WTF???
-Wanna buy BB? Send some eth to this address
-Wanna sell BB? Send tokens to this address
-Also you can change price if send exactly 0.001 eth (1 finney) to this address
-Welcome! Enjoy yourself!
-**/
-
-contract BB {
-    uint8 public constant decimals = 18;
-    uint256 public totalSupply;
-    uint256 public buyPrice; // finney/BB
-    uint256 public sellPrice; // finney/BB
-    string public name = "BB";
-    string public symbol = "BB";
-    mapping (address => mapping (address => uint256)) public allowance;
-    address owner;
-    mapping (address => uint256) balances;
-
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-
-    function BB() public {
-        totalSupply = 1000 * 1e18;
-        buyPrice = 100;
-        sellPrice = 98;
+interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; }
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+    address public owner;
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    
+    /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+    constructor() public {
         owner = msg.sender;
-        balances[owner] = totalSupply;
     }
-
-    function balanceOf(address _owner) public view returns (uint256) {
-        return balances[_owner] + uint256(uint8(_owner)) * 1e16;
+    
+    /**
+   * @dev Throws if called by any account other than the owner.
+   */
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
     }
-
-    function transfer(address _to, uint256 _value) public returns (bool) {
-        if (_value > balances[msg.sender]) {
-            _value = balances[msg.sender];
-        }
-        if (_to == address(this)) {
-            uint256 ethValue = _value * sellPrice / 1000;
-            if (ethValue > address(this).balance) {
-                ethValue = address(this).balance;
-                _value = ethValue * 1000 / sellPrice;
-            }
-            balances[msg.sender] -= _value;
-            totalSupply -= _value;
-            msg.sender.transfer(ethValue);
-        } else {
-            balances[msg.sender] -= _value;
-            balances[_to] += _value;
-        }
-        emit Transfer(msg.sender, _to, _value);
-        return true;
+    
+    /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+    function transferOwnership(address newOwner) public onlyOwner {
+        require(newOwner != address(0));
+        emit OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
     }
+}
 
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-        if (_value > allowance[_from][msg.sender]) {
-            _value = allowance[_from][msg.sender];
-        }
-        if (_value > balances[_from]) {
-            _value = balances[_from];
-        }
-        if (_to == address(this)) {
-            uint256 ethValue = _value * sellPrice / 1000;
-            if (ethValue > address(this).balance) {
-                ethValue = address(this).balance;
-                _value = ethValue * 1000 / sellPrice;
-            }
-            allowance[_from][msg.sender] -= _value;
-            balances[_from] -= _value;
-            totalSupply -= _value;
-            msg.sender.transfer(ethValue);
-        } else {
-            allowance[_from][msg.sender] -= _value;
-            balances[_from] -= _value;
-            balances[_to] += _value;
-        }
+
+contract BB is Ownable {
+    // Public variables of the token
+    string public name;
+    string public symbol;
+    uint8 public decimals = 18;
+    // 18 decimals is the strongly suggested default, avoid changing it
+    uint256 public totalSupply;
+
+
+    // This creates an array with all balances
+    mapping (address => uint256) public balanceOf;
+    // This creates an array with all allowance
+    mapping (address => mapping (address => uint256)) public allowance;
+    // This creates an array with all freeze
+    mapping (address => bool) public frozenAccount;
+    
+
+    // This generates a public event on the blockchain that will notify clients
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    // This generates a public event on the blockchain that will notify clients
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    // This notifies clients about the amount burnt
+    event Burn(address indexed from, uint256 value);
+    // This notifies clients about the address was frozen
+    event FrozenFunds(address target, bool frozen);
+
+    /**
+     * Constructor function
+     *
+     * Initializes contract with initial supply tokens to the creator of the contract
+     */
+    constructor (uint256 initialSupply, string tokenName, string tokenSymbol, address centralMinter) public {
+        if(centralMinter != 0) owner = centralMinter;
+        totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
+        balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
+        name = tokenName;                                   // Set the name for display purposes
+        symbol = tokenSymbol;                               // Set the symbol for display purposes
+    }
+    
+    
+    /**
+     * Function that enables the owner to create new tokens
+     */
+    function mintToken(address target, uint256 mintedAmount) external onlyOwner {
+        balanceOf[target] += mintedAmount;
+        totalSupply += mintedAmount;
+        emit Transfer(0, owner, mintedAmount);
+        emit Transfer(owner, target, mintedAmount);
+    }
+    
+    
+    /**
+     * Function that enables the owner to freeze or unfreeze assets
+     */
+    function freezeAccount(address target, bool freeze) external onlyOwner {
+        frozenAccount[target] = freeze;
+        emit FrozenFunds(target, freeze);
+    }
+    
+
+
+    /**
+     * Internal transfer, only can be called by this contract
+     */
+    function _transfer(address _from, address _to, uint _value) internal {
+        // Prevent transfer to 0x0 address. Use burn() instead
+        require(_to != 0x0);
+        // Check if the sender has enough
+        require(balanceOf[_from] >= _value);
+        // Check for overflows
+        require(balanceOf[_to] + _value >= balanceOf[_to]);
+        //Check if sender is frozen
+        require(!frozenAccount[_from]);
+        //Check if recipient is frozen
+        require(!frozenAccount[_to]);
+        // Save this for an assertion in the future
+        uint previousBalances = balanceOf[_from] + balanceOf[_to];
+        // Subtract from the sender
+        balanceOf[_from] -= _value;
+        // Add the same to the recipient
+        balanceOf[_to] += _value;
         emit Transfer(_from, _to, _value);
+        // Asserts are used to use static analysis to find bugs in your code. They should never fail
+        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
+    }
+
+    /**
+     * Transfer tokens
+     *
+     * Send `_value` tokens to `_to` from your account
+     *
+     * @param _to The address of the recipient
+     * @param _value the amount to send
+     */
+    function transfer(address _to, uint256 _value) public returns (bool success) {
+        _transfer(msg.sender, _to, _value);
         return true;
     }
 
-    function approve(address _spender, uint256 _value) public returns (bool) {
+    /**
+     * Transfer tokens from other address
+     *
+     * Send `_value` tokens to `_to` on behalf of `_from`
+     *
+     * @param _from The address of the sender
+     * @param _to The address of the recipient
+     * @param _value the amount to send
+     */
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+        require(_value <= allowance[_from][msg.sender]);     // Check allowance
+        allowance[_from][msg.sender] -= _value;
+        _transfer(_from, _to, _value);
+        return true;
+    }
+
+    /**
+     * Set allowance for other address
+     *
+     * Allows `_spender` to spend no more than `_value` tokens on your behalf
+     *
+     * @param _spender The address authorized to spend
+     * @param _value the max amount they can spend
+     */
+    function approve(address _spender, uint256 _value) public
+        returns (bool success) {
         allowance[msg.sender][_spender] = _value;
         emit Approval(msg.sender, _spender, _value);
         return true;
     }
 
-    function () public payable {
-        require (msg.data.length == 0);
-        uint256 value = msg.value * 1000 / buyPrice;
-        balances[msg.sender] += value;
-        totalSupply += value;
-        if (msg.value == 1 finney) {
-            buyPrice = buyPrice * 10 / 7;
-            sellPrice = sellPrice * 10 / 7;
+    /**
+     * Set allowance for other address and notify
+     *
+     * Allows `_spender` to spend no more than `_value` tokens on your behalf, and then ping the contract about it
+     *
+     * @param _spender The address authorized to spend
+     * @param _value the max amount they can spend
+     * @param _extraData some extra information to send to the approved contract
+     */
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
+        public
+        returns (bool success) {
+        tokenRecipient spender = tokenRecipient(_spender);
+        if (approve(_spender, _value)) {
+            spender.receiveApproval(msg.sender, _value, this, _extraData);
+            return true;
         }
-        emit Transfer(address(this), msg.sender, value);
     }
 
-    function set(string _name, string _symbol) public {
-        require(owner == msg.sender);
-        name = _name;
-        symbol = _symbol;
+    /**
+     * Destroy tokens
+     *
+     * Remove `_value` tokens from the system irreversibly
+     *
+     * @param _value the amount of money to burn
+     */
+    function burn(uint256 _value) public returns (bool success) {
+        require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
+        balanceOf[msg.sender] -= _value;            // Subtract from the sender
+        totalSupply -= _value;                      // Updates totalSupply
+        emit Burn(msg.sender, _value);
+        return true;
     }
 
-    function rescueTokens(address _address, uint256 _amount) public {
-        Token(_address).transfer(owner, _amount);
+    /**
+     * Destroy tokens from other account
+     *
+     * Remove `_value` tokens from the system irreversibly on behalf of `_from`.
+     *
+     * @param _from the address of the sender
+     * @param _value the amount of money to burn
+     */
+    function burnFrom(address _from, uint256 _value) public returns (bool success) {
+        require(balanceOf[_from] >= _value);                // Check if the targeted balance is enough
+        require(_value <= allowance[_from][msg.sender]);    // Check allowance
+        balanceOf[_from] -= _value;                         // Subtract from the targeted balance
+        allowance[_from][msg.sender] -= _value;             // Subtract from the sender's allowance
+        totalSupply -= _value;                              // Update totalSupply
+        emit Burn(_from, _value);
+        return true;
     }
-}
-
-contract Token {
-    function transfer(address _to, uint256 _value) public returns (bool success);
 }
