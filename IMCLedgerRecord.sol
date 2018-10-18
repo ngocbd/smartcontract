@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IMCLedgerRecord at 0xfdb9a98af7216818a8e07dad21122f02361a2a83
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IMCLedgerRecord at 0x78325d42be3130ba6afa3c3f88b989f8b85ded29
 */
 pragma solidity ^0.4.24;
 
@@ -50,12 +50,24 @@ contract IMCLedgerRecord is Owned{
         bytes32 balanceHash;  // ????hash
         uint balanceDepth;  // ????
     }
+
+    // ?????
+    address public executorAddress;
     
     // ????
     mapping(uint => RecordInfo) public ledgerRecord;
     
     constructor() public{
-
+        // ????????
+        executorAddress = msg.sender;
+    }
+    
+    /**
+     * ??executorAddress???owner????
+     * @param _addr address ??
+     */
+    function modifyExecutorAddr(address _addr) public onlyOwner {
+        executorAddress = _addr;
     }
     
      
@@ -70,10 +82,11 @@ contract IMCLedgerRecord is Owned{
      * @param _balanceDepth uint ????
      * @return success ????
      */
-    function ledgerRecordAdd(uint _date, bytes32 _hash, uint _depth, string _fileFormat, uint _stripLen, bytes32 _balanceHash, uint _balanceDepth) public onlyOwner returns (bool) {
-        
+    function ledgerRecordAdd(uint _date, bytes32 _hash, uint _depth, string _fileFormat, uint _stripLen, bytes32 _balanceHash, uint _balanceDepth) public returns (bool) {
+        // ?????Owner??????????
+        require(msg.sender == executorAddress);
         // ??????
-        require(!(ledgerRecord[_date].date > 0));
+        require(ledgerRecord[_date].date != _date);
 
         // ??????
         ledgerRecord[_date] = RecordInfo(_date, _hash, _depth, _fileFormat, _stripLen, _balanceHash, _balanceDepth);
