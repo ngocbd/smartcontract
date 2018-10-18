@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Burner at 0xcdbcf7dee81948f16a8b343ed7aa787791d34e1f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Burner at 0xa542fe082a194bf164c244cba6eaeb0483d53440
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.25;
 
 contract ERC223ReceiverMixin {
   function tokenFallback(address _from, uint256 _value, bytes _data) public;
