@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ALpay at 0xadecefea77510cf09906cb445cc69c2e49d4a468
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ALpay at 0x8263195641b8654cff3b2a7332c8e2903c0b2abd
 */
 pragma solidity ^0.4.16;
 
@@ -22,14 +22,13 @@ contract owned {
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; }
 
-contract ALpay {
+contract TokenERC20 {
     // Public variables of the token
     string public name;
     string public symbol;
     uint8 public decimals = 18;
     // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
-
 
     // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
@@ -49,7 +48,7 @@ contract ALpay {
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    function ALpay(
+    function TokenERC20(
         uint256 initialSupply,
         string tokenName,
         string tokenSymbol
@@ -182,7 +181,7 @@ contract ALpay {
 /*       ADVANCED TOKEN STARTS HERE       */
 /******************************************/
 
-contract MyAdvancedToken is owned, ALpay {
+contract ALpay is owned, TokenERC20 {
 
     uint256 public sellPrice;
     uint256 public buyPrice;
@@ -193,11 +192,11 @@ contract MyAdvancedToken is owned, ALpay {
     event FrozenFunds(address target, bool frozen);
 
     /* Initializes contract with initial supply tokens to the creator of the contract */
-    function MyAdvancedToken(
+    function ALpay(
         uint256 initialSupply,
         string tokenName,
         string tokenSymbol
-    ) ALpay(initialSupply, tokenName, tokenSymbol) public {}
+    ) TokenERC20(initialSupply, tokenName, tokenSymbol) public {}
 
     /* Internal transfer, only can be called by this contract */
     function _transfer(address _from, address _to, uint _value) internal {
