@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract lucky9io at 0xef53230d3f15880ba0313c9f7892cb490be0e0fe
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract lucky9io at 0x2d7765c44e44b9ec01d30ea367e8403aa4415cb3
 */
 pragma solidity ^0.4.24;
 
@@ -11,8 +11,8 @@ pragma solidity ^0.4.24;
 //
 // - The winnings are distributed by the Smart Contract automatically.
 //
-// - Smart Contract address: 0xef53230d3f15880ba0313c9f7892cb490be0e0fe
-// - More details at: https://etherscan.io/address/0xef53230d3f15880ba0313c9f7892cb490be0e0fe
+// - Smart Contract address: 0x2d7765c44e44b9ec01d30ea367e8403aa4415cb3
+// - More details at: https://etherscan.io/address/0x2d7765c44e44b9ec01d30ea367e8403aa4415cb3
 //
 // - NOTE: Ensure sufficient gas limit for transaction to succeed. Gas limit 150000 should be sufficient.
 //
@@ -43,6 +43,9 @@ contract lucky9io {
         // Only accept ticket purchases if the game is ON
         require(game_alive == true);
 
+        // No contract calls
+        require(isContract(msg.sender) != true);
+
         // Price of the ticket is 0.009 ETH
         require(msg.value / 1000000000000000 == 9);
 
@@ -58,7 +61,20 @@ contract lucky9io {
 
         // Let's see if the ticket is the 999th...
         if(entry_number % 999 == 0) {
-            msg.sender.transfer(jackpot * 80 / 100);
+            // We have a WINNER !!!
+
+            // Calculate the prize money
+            uint win_amount_999 = jackpot * 80 / 100;
+            jackpot = jackpot - win_amount_999;
+
+            // Set the statistics
+            last_winner = msg.sender;
+            last_win_wei = win_amount;
+            total_wins_count = total_wins_count + 1;
+            total_wins_wei = total_wins_wei + win_amount_999;
+
+            // Pay the winning
+            msg.sender.transfer(win_amount_999);
             return;
         } else {
             // Get the lucky number
@@ -87,6 +103,15 @@ contract lucky9io {
 
             return;
         }
+    }
+
+    function isContract(address addr) private view returns (bool) {
+          uint size;
+          assembly {
+              size := extcodesize(addr)
+
+          }
+          return size > 0;
     }
 
     function getBalance() constant public returns (uint256) {
