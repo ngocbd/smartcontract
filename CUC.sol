@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CUC at 0x0372ddb7c5e849383252243348bbe65da456e97d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CUC at 0x164d2148af868ef4e02e95744947b707d9255144
 */
 pragma solidity 0.4.24;
 
@@ -99,11 +99,11 @@ contract CUC is ERC20,Pausable {
     string public constant symbol = "CUC";
     uint8 public constant decimals = 18; 
 
-    uint256 public totalDistributed = 1050000000e18;  
+    uint256 public totalDistributed = 1349700000e18;  
 	uint256 public teamDistributed = 450000000e18;  
 	uint256 public platformDistributed = 1200000000e18;  
-    uint256 public totalRemaining; 
-    uint256 public value = 3000e18;
+    uint256 public totalRemaining;  
+    uint256 public value = 20e18; 
 	
     address private _team_beneficiary;
     address private _platform_beneficiary;
@@ -186,8 +186,6 @@ contract CUC is ERC20,Pausable {
 		if (toGive > 0) {
 			blacklist[investor] = true;
 		}
-		
-		value = value.mul(99999).div(100000);   
     }
 
     function balanceOf(address _owner) constant public returns (uint256) {
