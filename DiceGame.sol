@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DiceGame at 0x230b529e4fb71227266965084c76e7d0ffd4e44f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DiceGame at 0x84b7d95165328d790a34cc5d7ecf528be55c65ed
 */
 pragma solidity ^0.4.24;
 
@@ -55,7 +55,6 @@ contract DiceGame {
     }
 
     uint constant BET_EXPIRATION_BLOCKS = 250;
-
     uint constant public maxNumber = 96;
     uint constant public minNumber = 2;
     uint public maxProfit = 4 ether;
@@ -70,7 +69,6 @@ contract DiceGame {
         uint40 placeBlockNumber;
         uint8 roll;
         bool lessThan;
-        bool isInvited;
         address player;
     }
 
@@ -89,6 +87,9 @@ contract DiceGame {
 
     constructor() payable public {
         owner = msg.sender;
+        playerIdxAddr[msg.sender] = pID;
+        playerAddrIdx[pID] = msg.sender;
+
     }
 
     function setSecretSigner(address _signer) external onlyOwner {
@@ -97,6 +98,7 @@ contract DiceGame {
 
     function setMinBet(uint _minBet) public onlyOwner {
         minBet = _minBet;
+
     }
 
 
@@ -145,40 +147,40 @@ contract DiceGame {
         Bet storage bet = bets[commit];
         require(bet.player == address(0x0));
 
-        bool isInvited = affID > 150000 && affID <= pID;
 
-        uint profit = getDiceWinAmount(amount, roll, lessThan, isInvited);
+        uint possibleWinAmount = getDiceWinAmount(amount, roll, lessThan);
 
-        require(profit <= amount + maxProfit, "maxProfit limit violation.");
+        require(possibleWinAmount <=  amount + maxProfit, "maxProfit limit violation.");
 
-        maxPendingPayouts = maxPendingPayouts.add(profit);
+        maxPendingPayouts = maxPendingPayouts.add(possibleWinAmount);
 
-        require(maxPendingPayouts < address(this).balance, "insufficient contract balance for payout.");
+        require(maxPendingPayouts  <=   address(this).balance, "insufficient contract balance for payout.");
 
 
         bet.amount = amount;
         bet.placeBlockNumber = uint40(block.number);
-        bet.roll = roll;
+        bet.roll = uint8(roll);
         bet.lessThan = lessThan;
-        bet.isInvited = isInvited;
         bet.player = msg.sender;
 
         emit LogBet(commit, msg.sender, amount, bet.roll, bet.lessThan, now);
 
-        if (isInvited) {
+        if (affID > 150000 && affID <= pID) {
             address affAddress = playerAddrIdx[affID];
-            playerPendingWithdrawals[affAddress] = playerPendingWithdrawals[affAddress].add(amount.div(200));
+            if(affAddress != address(0x0)) {
+                playerPendingWithdrawals[affAddress] = playerPendingWithdrawals[affAddress].add(amount.div(100));
+            }
         }
 
 
     }
 
 
-    function getDiceWinAmount(uint amount, uint roll, bool lessThan, bool isInvited) private pure returns (uint) {
+    function getDiceWinAmount(uint amount, uint roll, bool lessThan) private pure returns (uint) {
 
         uint rollNumber = lessThan ? roll : 101 - roll;
 
-        return amount * ((1000 - (isInvited ? 15 : 20)) - rollNumber * 10) / rollNumber / 10;
+        return amount * 98 / rollNumber;
     }
 
     /**
@@ -196,7 +198,7 @@ contract DiceGame {
 
         // Move bet into 'processed' state, release funds.
         bet.amount = 0;
-        uint profit = getDiceWinAmount(amount, bet.roll, bet.lessThan, bet.isInvited);
+        uint profit = getDiceWinAmount(amount, bet.roll, bet.lessThan);
         maxPendingPayouts = maxPendingPayouts.sub(profit);
 
         // Send the refund.
@@ -205,7 +207,7 @@ contract DiceGame {
     }
 
 
-    function settleBet(bytes32 reveal, bytes32 blockHash) external {
+    function settleBet(bytes32 reveal) external {
 
 
         bytes32 commit = keccak256(abi.encodePacked(reveal));
@@ -217,20 +219,17 @@ contract DiceGame {
         uint placeBlockNumber = bet.placeBlockNumber;
         uint8 roll = bet.roll;
         bool lessThan = bet.lessThan;
-        bool isInvited = bet.isInvited;
         address player = bet.player;
 
         require(amount != 0);
         require(block.number > placeBlockNumber);
         require(block.number <= placeBlockNumber + BET_EXPIRATION_BLOCKS);
-        require(blockhash(placeBlockNumber) == blockHash);
 
         bet.amount = 0;
 
-        bytes32 entropy = keccak256(abi.encodePacked(reveal, blockhash(placeBlockNumber)));
-        uint dice = uint(entropy) % 100 + 1;
+        uint dice = uint(reveal) % 100 + 1;
 
-        uint diceWinAmount = getDiceWinAmount(amount, roll, lessThan, isInvited);
+        uint diceWinAmount = getDiceWinAmount(amount, roll, lessThan);
 
 
         maxPendingPayouts = maxPendingPayouts.sub(diceWinAmount);
@@ -238,7 +237,7 @@ contract DiceGame {
         uint diceWin = 0;
 
         if ((lessThan && dice <= roll) || (!lessThan && dice >= roll)){ //win
-            diceWin = amount.add(diceWinAmount);
+            diceWin = diceWinAmount;
             safeSendFunds(player, diceWin);
         }
 
