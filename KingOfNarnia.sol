@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KingOfNarnia at 0x46d7f2fc523728670e1eb7184a7c8a4a0f0a4cfa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KingOfNarnia at 0x76880e1ab0bf868bd7ff97264dc23880739dfbdc
 */
 pragma solidity ^0.4.18;
 
@@ -78,8 +78,8 @@ contract KingOfNarnia {
     uint256 indexed bidBlockNumber
   );
 
-  function ActiveAdmin () public {
-    owner = 0xdA01A4923A2884E67445CE4f63D9C895Be488FAD;
+  function KingOfTheEthill () public {
+    owner = msg.sender;
   }
 
   modifier onlyOwner() {
@@ -88,12 +88,12 @@ contract KingOfNarnia {
   }
   
   function setDevFee (uint256 _n) onlyOwner() public {
-	  require(_n >= 0 && _n <= 90);
+	  require(_n >= 0 && _n <= 10);
     devFeePercent = _n;
   }
 
   function setRollover (uint256 _n) onlyOwner() public {
-	  require(_n >= 1 && _n <= 10);
+	  require(_n >= 1 && _n <= 30);
     rolloverPercent = _n;
   }
 
