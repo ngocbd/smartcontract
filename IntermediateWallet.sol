@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IntermediateWallet at 0xe03c6162292ba2ec5c535d54710addeeca261e07
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IntermediateWallet at 0x6634e2a08fa738eb63d47e7d40e6172845fbadf5
 */
 pragma solidity ^0.4.24;
 
@@ -93,9 +93,9 @@ contract ERC20Basic {
 
 contract IntermediateWallet is ReceivingContractCallback, Ownable {
     
-  address public token = 0xB36F13C4e2df1b5201e3D64cd79b1897e0E80D39;  
+  address public token = 0x2D3E7D4870a51b918919E7B851FE19983E4c38d5;  
 
-  address public wallet =0x9ff88775a5212373733D041816A2f114769358C6;
+  address public wallet =0xf45aaB548368edfD37997bD6a8Ab74c413dfa48B;
 
   struct TokenTx {
     address from;
