@@ -1,98 +1,54 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDropper at 0x4f51481de64eae998e797ee66b1d1c700c0b1052
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdropper at 0xff0110762d93a755b73874777525b48b08121963
 */
-pragma solidity 0.4.24;
-
+pragma solidity ^0.4.11;
 
 /**
  * @title Ownable
- * The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
+ * @dev The Ownable contract has an owner address, and provides basic authorization control 
+ * functions, this simplifies the implementation of "user permissions". 
  */
 contract Ownable {
-    address public owner;
+  address public owner;
 
-
-    event OwnershipRenounced(address indexed previousOwner);
-    event OwnershipTransferred(
-        address indexed previousOwner,
-        address indexed newOwner
-    );
-
-
-    /**
-    * The Ownable constructor sets the original `owner` of the contract to the sender
-    * account.
-    */
-    constructor() public {
-        owner = msg.sender;
+  function Ownable() {
+    owner = msg.sender;
+  }
+ 
+  modifier onlyOwner() {
+    if (msg.sender != owner) {
+      revert();
     }
-
-    /**
-    * Throws if called by any account other than the owner.
-    */
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
+    _;
+  }
+ 
+  function transferOwnership(address newOwner) onlyOwner {
+    if (newOwner != address(0)) {
+      owner = newOwner;
     }
+  }
 
-    /**
-    * Allows the current owner to relinquish control of the contract.
-    * @notice Renouncing to ownership will leave the contract without an owner.
-    * It will not be possible to call the functions with the `onlyOwner`
-    * modifier anymore.
-    */
-    function renounceOwnership() public onlyOwner {
-        emit OwnershipRenounced(owner);
-        owner = address(0);
-    }
-
-    /**
-    * Allows the current owner to transfer control of the contract to a newOwner.
-    * @param _newOwner The address to transfer ownership to.
-    */
-    function transferOwnership(address _newOwner) public onlyOwner {
-        _transferOwnership(_newOwner);
-    }
-
-    /**
-    * Transfers control of the contract to a newOwner.
-    * @param _newOwner The address to transfer ownership to.
-    */
-    function _transferOwnership(address _newOwner) internal {
-        require(_newOwner != address(0));
-        emit OwnershipTransferred(owner, _newOwner);
-        owner = _newOwner;
-    }
 }
-
 
 contract ERC20Basic {
-    function totalSupply() public view returns (uint256);
-    function balanceOf(address who) public view returns (uint256);
-    function transfer(address to, uint256 value) public returns (bool);
-    event Transfer(address indexed from, address indexed to, uint256 value);
+  uint public totalSupply;
+  function balanceOf(address who) constant returns (uint);
+  function transfer(address to, uint value);
+  event Transfer(address indexed from, address indexed to, uint value);
 }
-
+ 
 contract ERC20 is ERC20Basic {
-    function allowance(address owner, address spender)
-        public view returns (uint256);
-
-    function transferFrom(address from, address to, uint256 value)
-        public returns (bool);
-
-    function approve(address spender, uint256 value) public returns (bool);
-    event Approval(
-        address indexed owner,
-        address indexed spender,
-        uint256 value
-    );
+  function allowance(address owner, address spender) constant returns (uint);
+  function transferFrom(address from, address to, uint value);
+  function approve(address spender, uint value);
+  event Approval(address indexed owner, address indexed spender, uint value);
 }
 
+contract Airdropper is Ownable {
 
-contract AirDropper is Ownable {
-
-    function multisend(address _tokenAddr, address[] dests, uint256[] values) public onlyOwner returns (uint256) {
+    function multisend(address _tokenAddr, address[] dests, uint256[] values)
+    onlyOwner
+    returns (uint256) {
         uint256 i = 0;
         while (i < dests.length) {
            ERC20(_tokenAddr).transfer(dests[i], values[i]);
