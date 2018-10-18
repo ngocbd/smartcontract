@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KingOfTheEthill at 0xbfe7deafa51587e00e1c5f24f8a16addea07104b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KingOfTheEthill at 0x7199c542a62987d72a2c035530243cf1fe722208
 */
 pragma solidity ^0.4.18;
 
@@ -57,13 +57,13 @@ contract KingOfTheEthill {
   string public kingsMessage;
   uint256 public bidExpireBlockLength = 12;
   uint256 public nextBidExpireBlockLength;
-  uint256 public devFeePercent = 1;
-  uint256 public rolloverPercent = 5;
+  uint256 public devFeePercent = 5;
+  uint256 public rolloverPercent = 10;
   uint256 public lastBidAmount;
   uint256 public lastBidBlock;
   uint256 public currentRoundNumber;
   uint256 public currentBidNumber;
-  uint256 public maxMessageChars = 140;
+  uint256 public maxMessageChars = 17;
   mapping(uint256 => address) roundToKing;
   mapping(uint256 => uint256) roundToWinnings;
   mapping(uint256 => uint256) roundToFinalBid;
