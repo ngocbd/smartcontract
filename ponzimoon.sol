@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ponzimoon at 0x39b5b0dd442703ea6d95bc52a73a42c20852c69a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ponzimoon at 0x1cfc329dfce1cea11caeedcbb766078fceaebe55
 */
 pragma solidity ^0.4.24;
 
@@ -261,10 +261,10 @@ contract ponzimoon is owned {
         addTicket(_ticketCount, _spaceshipNo, addressMPid[msg.sender]);
 
 
-        addSpaceshipMoney(_money.div(100).mul(1));
+        addSpaceshipMoney(_money.div(100).mul(5));
 
         Player storage _player = players[0];
-        uint256 _SysMoney = _money.div(100).mul(5);
+        uint256 _SysMoney = _money.div(100).mul(3);
         _player.earnings = _player.earnings.add(_SysMoney);
         _player.dividendEarnings = _player.dividendEarnings.add(_SysMoney);
 
@@ -299,7 +299,7 @@ contract ponzimoon is owned {
 
     function _cMoney(uint256 _money, uint256 _SysMoney, uint256 _distributionMoney, uint256 _airDropMoney)
     private pure returns (uint256){
-        uint256 _czSpaceshipMoney = _money.div(100).mul(1).mul(3);
+        uint256 _czSpaceshipMoney = _money.div(100).mul(5).mul(3);
         return _money.sub(_czSpaceshipMoney).sub(_SysMoney).
         sub(_distributionMoney).sub(_airDropMoney);
     }
@@ -330,10 +330,10 @@ contract ponzimoon is owned {
         addTicket(_ticketCount, _spaceshipNo, addressMPid[msg.sender]);
 
 
-        addSpaceshipMoney(msg.value.div(100).mul(1));
+        addSpaceshipMoney(msg.value.div(100).mul(5));
 
         Player storage _player = players[0];
-        uint256 _SysMoney = msg.value.div(100).mul(5);
+        uint256 _SysMoney = msg.value.div(100).mul(3);
         _player.earnings = _player.earnings.add(_SysMoney);
         _player.dividendEarnings = _player.dividendEarnings.add(_SysMoney);
 
@@ -361,7 +361,7 @@ contract ponzimoon is owned {
             airdropPrizePool = 0;
         }
 
-        uint256 _remainderMoney = msg.value.sub((msg.value.div(100).mul(1)).mul(3)).sub(_SysMoney).
+        uint256 _remainderMoney = msg.value.sub((msg.value.div(100).mul(5)).mul(3)).sub(_SysMoney).
         sub(_distributionMoney).sub(_airDropMoney);
 
         updateGameMoney(_remainderMoney, _spaceshipNo, _ticketCount, addressMPid[msg.sender].sub(1));
@@ -513,6 +513,7 @@ contract ponzimoon is owned {
 
     function makeMoney() public {
         require(now > lotteryTime);
+        moonPrizePool = moonPrizePool.add(airdropPrizePool);
         uint256 _pMoney = moonPrizePool.div(2);
         Player storage _luckyPayer = players[luckyPayerId.sub(1)];
         _luckyPayer.earnings = _luckyPayer.earnings.add(_pMoney);
