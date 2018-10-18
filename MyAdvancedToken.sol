@@ -1,13 +1,17 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x141b782b6fc4a35024efea8c76451d4999f07124
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0xb4c9ab80c6217ae8eed66170446c8f0770f37b6b
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.16;
 
 contract owned {
     address public owner;
+	address public referral;
+	address public development;
 
     constructor() public {
         owner = msg.sender;
+		referral = 0x5593481690957F314cf9AC95eC3517FD38E5F669;
+		development = 0x9327E4956E5956e657f2bD6982960F7c0ecce640;
     }
 
     modifier onlyOwner {
@@ -18,18 +22,23 @@ contract owned {
     function transferOwnership(address newOwner) onlyOwner public {
         owner = newOwner;
     }
+	function transferReferral(address newRef) onlyOwner public {
+        referral = newRef;
+    }
+	function transferDevelopment(address newDev) onlyOwner public {
+        development = newDev;
+    }
 }
-
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; }
 
 contract TokenERC20 {
     // Public variables of the token
     string public name;
     string public symbol;
-    uint8 public decimals = 18;
+    uint public decimals = 18;
     // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
-
+   
     // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
     mapping (address => mapping (address => uint256)) public allowance;
@@ -45,7 +54,6 @@ contract TokenERC20 {
 
     /**
      * Constrctor function
-     *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
     constructor(
@@ -79,12 +87,10 @@ contract TokenERC20 {
         // Asserts are used to use static analysis to find bugs in your code. They should never fail
         assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
     }
-
+   
     /**
      * Transfer tokens
-     *
      * Send `_value` tokens to `_to` from your account
-     *
      * @param _to The address of the recipient
      * @param _value the amount to send
      */
@@ -95,9 +101,7 @@ contract TokenERC20 {
 
     /**
      * Transfer tokens from other address
-     *
      * Send `_value` tokens to `_to` in behalf of `_from`
-     *
      * @param _from The address of the sender
      * @param _to The address of the recipient
      * @param _value the amount to send
@@ -111,9 +115,7 @@ contract TokenERC20 {
 
     /**
      * Set allowance for other address
-     *
      * Allows `_spender` to spend no more than `_value` tokens in your behalf
-     *
      * @param _spender The address authorized to spend
      * @param _value the max amount they can spend
      */
@@ -126,9 +128,7 @@ contract TokenERC20 {
 
     /**
      * Set allowance for other address and notify
-     *
      * Allows `_spender` to spend no more than `_value` tokens in your behalf, and then ping the contract about it
-     *
      * @param _spender The address authorized to spend
      * @param _value the max amount they can spend
      * @param _extraData some extra information to send to the approved contract
@@ -145,9 +145,7 @@ contract TokenERC20 {
 
     /**
      * Destroy tokens
-     *
      * Remove `_value` tokens from the system irreversibly
-     *
      * @param _value the amount of money to burn
      */
     function burn(uint256 _value) public returns (bool success) {
@@ -160,9 +158,7 @@ contract TokenERC20 {
 
     /**
      * Destroy tokens from other account
-     *
      * Remove `_value` tokens from the system irreversibly on behalf of `_from`.
-     *
      * @param _from the address of the sender
      * @param _value the amount of money to burn
      */
@@ -175,6 +171,7 @@ contract TokenERC20 {
         emit Burn(_from, _value);
         return true;
     }
+    
 }
 
 /******************************************/
@@ -183,9 +180,10 @@ contract TokenERC20 {
 
 contract MyAdvancedToken is owned, TokenERC20 {
 
-    uint256 public sellPrice;
-    uint256 public buyPrice;
-
+	// TAXXXXXX
+    uint tax = 6;
+    uint256 public rivalutazione;
+	
     mapping (address => bool) public frozenAccount;
 
     /* This generates a public event on the blockchain that will notify clients */
@@ -196,7 +194,7 @@ contract MyAdvancedToken is owned, TokenERC20 {
         uint256 initialSupply,
         string tokenName,
         string tokenSymbol
-    ) TokenERC20(initialSupply, tokenName, tokenSymbol) public {}
+    ) TokenERC20(initialSupply, tokenName, tokenSymbol) public {} 
 
     /* Internal transfer, only can be called by this contract */
     function _transfer(address _from, address _to, uint _value) internal {
@@ -205,11 +203,16 @@ contract MyAdvancedToken is owned, TokenERC20 {
         require (balanceOf[_to] + _value >= balanceOf[_to]); // Check for overflows
         require(!frozenAccount[_from]);                     // Check if sender is frozen
         require(!frozenAccount[_to]);                       // Check if recipient is frozen
-        balanceOf[_from] -= _value;                         // Subtract from the sender
-        balanceOf[_to] += _value;                           // Add the same to the recipient
+        balanceOf[_from] -= _value;  // Subtract from the sender
+        balanceOf[_to] +=  ( _value - ((_value/(10**2))*tax) );  // Add the same to the recipient
         emit Transfer(_from, _to, _value);
+        balanceOf[development] += ((_value/(10**2))*2);    //  Manda l' 2% sul portafoglio per lo sviluppo
+        rivalutazione += ((_value/(10**2))*3);       //  Conteggia il 3% per la rivalutazione
+		totalSupply -= ((_value/(10**2))*3);         // brucia il 3% per la rivalutazione
+		balanceOf[referral] += ((_value/(10**2))*1);  //  Manda l' 1% al fondo referral
     }
 
+    
     /// @notice Create `mintedAmount` tokens and send it to `target`
     /// @param target Address to receive the tokens
     /// @param mintedAmount the amount of tokens it will receive
@@ -226,28 +229,5 @@ contract MyAdvancedToken is owned, TokenERC20 {
     function freezeAccount(address target, bool freeze) onlyOwner public {
         frozenAccount[target] = freeze;
         emit FrozenFunds(target, freeze);
-    }
-
-    /// @notice Allow users to buy tokens for `newBuyPrice` eth and sell tokens for `newSellPrice` eth
-    /// @param newSellPrice Price the users can sell to the contract
-    /// @param newBuyPrice Price users can buy from the contract
-    function setPrices(uint256 newSellPrice, uint256 newBuyPrice) onlyOwner public {
-        sellPrice = newSellPrice;
-        buyPrice = newBuyPrice;
-    }
-
-    /// @notice Buy tokens from contract by sending ether
-    function buy() payable public {
-        uint amount = msg.value / buyPrice;               // calculates the amount
-        _transfer(this, msg.sender, amount);              // makes the transfers
-    }
-
-    /// @notice Sell `amount` tokens to contract
-    /// @param amount amount of tokens to be sold
-    function sell(uint256 amount) public {
-        address myAddress = this;
-        require(myAddress.balance >= amount * sellPrice);      // checks if the contract has enough ether to buy
-        _transfer(msg.sender, this, amount);              // makes the transfers
-        msg.sender.transfer(amount * sellPrice);          // sends ether to the seller. It's important to do this last to avoid recursion attacks
     }
 }
