@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BulDex at 0x3c030774a49b308eb3c1be94fb97a7bcc24f4f2d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BulDex at 0xbe404e1fc0c3024f506f0353d67e7fe4eb95952f
 */
 pragma solidity ^0.4.24;
 
@@ -186,7 +186,7 @@ contract BulDex is Ownable {
     ERC20 public bullToken;
 
     uint public minVal = 365000000000000000000;
-    uint public bullAmount = 100000000000000000;
+    uint public bullAmount = 3140000000000000000;
 
     constructor(address _promoToken, address _bullToken) public {
         promoToken = ERC20(_promoToken);
@@ -218,4 +218,8 @@ contract BulDex is Ownable {
         token.transfer(owner, balance);
     }
 
+
+    function setBullAmount(uint _amount) onlyOwner public {
+        bullAmount = _amount;
+    }
 }
