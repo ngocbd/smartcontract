@@ -1,26 +1,27 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VestingContractCT at 0x81a3593b9625b735870cb5c40b0c32e45145d55d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VestingContractCT at 0x6017a7752dc1dd299293947bf8463d50a77bf10f
 */
 pragma solidity ^0.4.24;
 
-contract Ownable {}
-contract AddressesFilterFeature is Ownable {}
 contract ERC20Basic {}
+contract ERC20 is ERC20Basic {}
+contract Ownable {}
 contract BasicToken is ERC20Basic {}
-contract ERC20 {}
 contract StandardToken is ERC20, BasicToken {}
-contract MintableToken is AddressesFilterFeature, StandardToken {}
+contract Pausable is Ownable {}
+contract PausableToken is StandardToken, Pausable {}
+contract MintableToken is StandardToken, Ownable {}
 
-contract Token is MintableToken {
+contract OpiriaToken is MintableToken, PausableToken {
   mapping(address => uint256) balances;
   function transfer(address _to, uint256 _value) public returns (bool);
-  function balanceOf(address owner) public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
 }
 
 contract VestingContractCT {
   //storage
   address public owner;
-  Token public company_token;
+  OpiriaToken public company_token;
 
   address public PartnerAccount;
   uint public originalBalance;
@@ -46,11 +47,11 @@ contract VestingContractCT {
 
 
   //constructor
-  constructor (Token _company_token) public {
+  constructor (OpiriaToken _company_token) public {
     owner = msg.sender;
-    PartnerAccount = 0xD99cc20B0699Ae9C8DA1640e03D05925ddD8acd2;
+    PartnerAccount = 0x89a380E3d71a71C51441EBd7bf512543a4F6caE7;
     company_token = _company_token;
-    originalBalance = 1785714 * 10**18; // 1 785 714 WPT
+    originalBalance = 2500000 * 10**18; // 2 500 000 PDATA
     currentBalance = originalBalance;
     alreadyTransfered = 0;
     startDateOfPayments = 1554069600; //From 01 Apr 2019, 00:00:00
