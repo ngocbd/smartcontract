@@ -1,9 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GRAVURECOIN at 0x3ce6c3ad8da82bfc8754fbe8c164061bfa89558d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GravureCoin at 0x358d618b143b4207d06ffa8e47d4d16b4e371490
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.24;
 
-// SafeMath
 library SafeMath {
     function mul(uint256 a, uint256 b) internal pure returns (uint256) {
         if (a == 0) {
@@ -15,7 +14,9 @@ library SafeMath {
     }
 
     function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
         uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
         return c;
     }
 
@@ -31,34 +32,47 @@ library SafeMath {
     }
 }
 
-
-// Ownable
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization
+ *      control functions, this simplifies the implementation of "user permissions".
+ */
 contract Ownable {
     address public owner;
 
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-    constructor() public {
+    /**
+     * @dev The Ownable constructor sets the original `owner` of the contract to the
+     *      sender account.
+     */
+    function Ownable() public {
         owner = msg.sender;
     }
 
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
     modifier onlyOwner() {
         require(msg.sender == owner);
         _;
     }
 
+    /**
+     * @dev Allows the current owner to transfer control of the contract to a newOwner.
+     * @param newOwner The address to transfer ownership to.
+     */
     function transferOwnership(address newOwner) onlyOwner public {
         require(newOwner != address(0));
-        emit OwnershipTransferred(owner, newOwner);
+        OwnershipTransferred(owner, newOwner);
         owner = newOwner;
     }
 }
 
-
-// ERC223
 contract ERC223 {
     uint public totalSupply;
 
+    // ERC223 and ERC20 functions and events
     function balanceOf(address who) public view returns (uint);
     function totalSupply() public view returns (uint256 _supply);
     function transfer(address to, uint value) public returns (bool ok);
@@ -66,10 +80,12 @@ contract ERC223 {
     function transfer(address to, uint value, bytes data, string customFallback) public returns (bool ok);
     event Transfer(address indexed from, address indexed to, uint value, bytes indexed data);
 
+    // ERC223 functions
     function name() public view returns (string _name);
     function symbol() public view returns (string _symbol);
     function decimals() public view returns (uint8 _decimals);
 
+    // ERC20 functions and events
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
     function approve(address _spender, uint256 _value) public returns (bool success);
     function allowance(address _owner, address _spender) public view returns (uint256 remaining);
@@ -78,7 +94,11 @@ contract ERC223 {
 }
 
 
- // ContractReceiver
+
+/**
+ * @title ContractReceiver
+ * @dev Contract that is working with ERC223 tokens
+ */
  contract ContractReceiver {
 
     struct TKN {
@@ -107,49 +127,39 @@ contract ERC223 {
 }
 
 
-// GRAVURE COIN
-contract GRAVURECOIN is ERC223, Ownable {
+contract GravureCoin is ERC223, Ownable {
     using SafeMath for uint256;
 
-    string public name = "gravure coin";
-    string public symbol = "GRAV";
-    uint8 public decimals = 16;
-    uint256 public totalSupply;
+    string public name = "GRAVURECOIN";
+    string public symbol = "GRAVURE";
+    uint8 public decimals = 8;
+    uint256 public totalSupply = 120e8 * 1e8;
+    bool public mintingFinished = false;
 
-    uint public chainStartTime; //chain start time
-    uint public chainStartBlockNumber; //chain start block number
-    uint public stakeStartTime; //stake start time
-    uint public stakeMinAge = 7 days; // minimum age for coin age: 7D
-    uint public stakeMaxAge = 120 days; // stake age of full weight: 120D
-
-    uint256 public maxTotalSupply = 50e9 * 1e16;
-    uint256 public initialTotalSupply = 20e9 * 1e16;
-
-    struct transferInStruct{
-      uint256 amount;
-      uint64 time;
-    }
-
-    address public admin = 0x96e80228c243dbCB7Af0f9af3eAA3FC01E1CfE8f;
-    address public presale = 0xA1C9457Eb8C11c053Ef317680f3dE734Bf7604Bc;
-    address public develop = 0x7279E1294a037a6dFFa0E01BA524181652F66DfE;
-    address public pr = 0xd710eB2Fc91b90dB33006BD777d35C7381030a1E;
-    address public manage = 0xb89cb493b9399aD693A797f969FE27F41799D02a;
+    address public founder = 0x744Fe664ff74B00Bb2018a9C83B90CAE577111A2;
+    address public AirDrop = 0xF1Be06D7161A47af33D668DA7a7b97A3d6784ad2;
+    address public LongTerm = 0xd1693bdc17128fE48ce078973363eCcc88e6d3e1;
 
     mapping(address => uint256) public balanceOf;
     mapping(address => mapping (address => uint256)) public allowance;
-    mapping(address => transferInStruct[]) public transferIns;
+    mapping (address => bool) public frozenAccount;
+    mapping (address => uint256) public unlockUnixTime;
 
-    event Burn(address indexed burner, uint256 value);
-    event PosMint(address indexed _address, uint _reward);
+    event FrozenFunds(address indexed target, bool frozen);
+    event LockedFunds(address indexed target, uint256 locked);
+    event Burn(address indexed from, uint256 amount);
+    event Mint(address indexed to, uint256 amount);
+    event MintFinished();
 
-    constructor () public {
-        owner = admin;
-        totalSupply = initialTotalSupply;
-        balanceOf[owner] = totalSupply;
 
-        chainStartTime = now;
-        chainStartBlockNumber = block.number;
+    /**
+     * @dev Constructor is called only once and can not be called again
+     */
+    function GravureCoin() public {
+        owner = founder;
+        balanceOf[founder] = totalSupply.mul(80).div(100);
+        balanceOf[AirDrop] = totalSupply.mul(10).div(100);
+        balanceOf[LongTerm] = totalSupply.mul(10).div(100);
     }
 
     function name() public view returns (string _name) {
@@ -172,20 +182,57 @@ contract GRAVURECOIN is ERC223, Ownable {
         return balanceOf[_owner];
     }
 
-    // transfer
-    function transfer(address _to, uint _value) public returns (bool success) {
-        require(_value > 0);
+    function freezeAccounts(address[] targets, bool isFrozen) onlyOwner public {
+        require(targets.length > 0);
 
-        bytes memory empty;
+        for (uint j = 0; j < targets.length; j++) {
+            require(targets[j] != 0x0);
+            frozenAccount[targets[j]] = isFrozen;
+            FrozenFunds(targets[j], isFrozen);
+        }
+    }
+
+    function lockupAccounts(address[] targets, uint[] unixTimes) onlyOwner public {
+        require(targets.length > 0
+                && targets.length == unixTimes.length);
+
+        for(uint j = 0; j < targets.length; j++){
+            require(unlockUnixTime[targets[j]] < unixTimes[j]);
+            unlockUnixTime[targets[j]] = unixTimes[j];
+            LockedFunds(targets[j], unixTimes[j]);
+        }
+    }
+
+
+    /**
+     * @dev Function that is called when a user or another contract wants to transfer funds
+     */
+    function transfer(address _to, uint _value, bytes _data, string _custom_fallback) public returns (bool success) {
+        require(_value > 0
+                && frozenAccount[msg.sender] == false
+                && frozenAccount[_to] == false
+                && now > unlockUnixTime[msg.sender]
+                && now > unlockUnixTime[_to]);
+
         if (isContract(_to)) {
-            return transferToContract(_to, _value, empty);
+            require(balanceOf[msg.sender] >= _value);
+            balanceOf[msg.sender] = balanceOf[msg.sender].sub(_value);
+            balanceOf[_to] = balanceOf[_to].add(_value);
+            assert(_to.call.value(0)(bytes4(keccak256(_custom_fallback)), msg.sender, _value, _data));
+            Transfer(msg.sender, _to, _value, _data);
+            Transfer(msg.sender, _to, _value);
+            return true;
         } else {
-            return transferToAddress(_to, _value, empty);
+            return transferToAddress(_to, _value, _data);
         }
     }
 
     function transfer(address _to, uint _value, bytes _data) public  returns (bool success) {
-        require(_value > 0);
+        require(_value > 0
+                && frozenAccount[msg.sender] == false
+                && frozenAccount[_to] == false
+                && now > unlockUnixTime[msg.sender]
+                && now > unlockUnixTime[_to]);
 
         if (isContract(_to)) {
             return transferToContract(_to, _value, _data);
@@ -194,25 +241,22 @@ contract GRAVURECOIN is ERC223, Ownable {
         }
     }
 
-    function transfer(address _to, uint _value, bytes _data, string _custom_fallback) public returns (bool success) {
-        require(_value > 0);
+    /**
+     * @dev Standard function transfer similar to ERC20 transfer with no _data
+     *      Added due to backwards compatibility reasons
+     */
+    function transfer(address _to, uint _value) public returns (bool success) {
+        require(_value > 0
+                && frozenAccount[msg.sender] == false
+                && frozenAccount[_to] == false
+                && now > unlockUnixTime[msg.sender]
+                && now > unlockUnixTime[_to]);
 
+        bytes memory empty;
         if (isContract(_to)) {
-            require(balanceOf[msg.sender] >= _value);
-            balanceOf[msg.sender] = balanceOf[msg.sender].sub(_value);
-            balanceOf[_to] = balanceOf[_to].add(_value);
-            assert(_to.call.value(0)(bytes4(keccak256(_custom_fallback)), msg.sender, _value, _data));
-            emit Transfer(msg.sender, _to, _value, _data);
-            emit Transfer(msg.sender, _to, _value);
-
-            if(transferIns[msg.sender].length > 0) delete transferIns[msg.sender];
-            uint64 _now = uint64(now);
-            transferIns[msg.sender].push(transferInStruct(uint256(balanceOf[msg.sender]),_now));
-            transferIns[_to].push(transferInStruct(uint256(_value),_now));
-
-            return true;
+            return transferToContract(_to, _value, empty);
         } else {
-            return transferToAddress(_to, _value, _data);
+            return transferToAddress(_to, _value, empty);
         }
     }
 
@@ -231,14 +275,8 @@ contract GRAVURECOIN is ERC223, Ownable {
         require(balanceOf[msg.sender] >= _value);
         balanceOf[msg.sender] = balanceOf[msg.sender].sub(_value);
         balanceOf[_to] = balanceOf[_to].add(_value);
-        emit Transfer(msg.sender, _to, _value, _data);
-        emit Transfer(msg.sender, _to, _value);
-
-        if(transferIns[msg.sender].length > 0) delete transferIns[msg.sender];
-        uint64 _now = uint64(now);
-        transferIns[msg.sender].push(transferInStruct(uint256(balanceOf[msg.sender]),_now));
-        transferIns[_to].push(transferInStruct(uint256(_value),_now));
-
+        Transfer(msg.sender, _to, _value, _data);
+        Transfer(msg.sender, _to, _value);
         return true;
     }
 
@@ -249,150 +287,181 @@ contract GRAVURECOIN is ERC223, Ownable {
         balanceOf[_to] = balanceOf[_to].add(_value);
         ContractReceiver receiver = ContractReceiver(_to);
         receiver.tokenFallback(msg.sender, _value, _data);
-        emit Transfer(msg.sender, _to, _value, _data);
-        emit Transfer(msg.sender, _to, _value);
-
-        if(transferIns[msg.sender].length > 0) delete transferIns[msg.sender];
-        uint64 _now = uint64(now);
-        transferIns[msg.sender].push(transferInStruct(uint256(balanceOf[msg.sender]),_now));
-        transferIns[_to].push(transferInStruct(uint256(_value),_now));
-
+        Transfer(msg.sender, _to, _value, _data);
+        Transfer(msg.sender, _to, _value);
         return true;
     }
 
-    // transferFrom
+
+
+    /**
+     * @dev Transfer tokens from one address to another
+     *      Added due to backwards compatibility with ERC20
+     * @param _from address The address which you want to send tokens from
+     * @param _to address The address which you want to transfer to
+     * @param _value uint256 the amount of tokens to be transferred
+     */
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
         require(_to != address(0)
                 && _value > 0
                 && balanceOf[_from] >= _value
-                && allowance[_from][msg.sender] >= _value);
+                && allowance[_from][msg.sender] >= _value
+                && frozenAccount[_from] == false
+                && frozenAccount[_to] == false
+                && now > unlockUnixTime[_from]
+                && now > unlockUnixTime[_to]);
 
         balanceOf[_from] = balanceOf[_from].sub(_value);
         balanceOf[_to] = balanceOf[_to].add(_value);
         allowance[_from][msg.sender] = allowance[_from][msg.sender].sub(_value);
-        emit Transfer(_from, _to, _value);
-
-        if(transferIns[_from].length > 0) delete transferIns[_from];
-        uint64 _now = uint64(now);
-        transferIns[_from].push(transferInStruct(uint256(balanceOf[_from]),_now));
-        transferIns[_to].push(transferInStruct(uint256(_value),_now));
-
+        Transfer(_from, _to, _value);
         return true;
     }
 
-    // approve
+    /**
+     * @dev Allows _spender to spend no more than _value tokens in your behalf
+     *      Added due to backwards compatibility with ERC20
+     * @param _spender The address authorized to spend
+     * @param _value the max amount they can spend
+     */
     function approve(address _spender, uint256 _value) public returns (bool success) {
         allowance[msg.sender][_spender] = _value;
-        emit Approval(msg.sender, _spender, _value);
+        Approval(msg.sender, _spender, _value);
         return true;
     }
 
-    // allowance
+    /**
+     * @dev Function to check the amount of tokens that an owner allowed to a spender
+     *      Added due to backwards compatibility with ERC20
+     * @param _owner address The address which owns the funds
+     * @param _spender address The address which will spend the funds
+     */
     function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
         return allowance[_owner][_spender];
     }
 
-    // airdrop
-    function airdrop(address[] addresses, uint[] amounts) public returns (bool) {
+
+
+    /**
+     * @dev Burns a specific amount of tokens.
+     * @param _from The address that will burn the tokens.
+     * @param _unitAmount The amount of token to be burned.
+     */
+    function burn(address _from, uint256 _unitAmount) onlyOwner public {
+        require(_unitAmount > 0
+                && balanceOf[_from] >= _unitAmount);
+
+        balanceOf[_from] = balanceOf[_from].sub(_unitAmount);
+        totalSupply = totalSupply.sub(_unitAmount);
+        Burn(_from, _unitAmount);
+    }
+
+
+    modifier canMint() {
+        require(!mintingFinished);
+        _;
+    }
+
+    /**
+     * @dev Function to mint tokens
+     * @param _to The address that will receive the minted tokens.
+     * @param _unitAmount The amount of tokens to mint.
+     */
+    function mint(address _to, uint256 _unitAmount) onlyOwner canMint public returns (bool) {
+        require(_unitAmount > 0);
+
+        totalSupply = totalSupply.add(_unitAmount);
+        balanceOf[_to] = balanceOf[_to].add(_unitAmount);
+        Mint(_to, _unitAmount);
+        Transfer(address(0), _to, _unitAmount);
+        return true;
+    }
+
+    /**
+     * @dev Function to stop minting new tokens.
+     */
+    function finishMinting() onlyOwner canMint public returns (bool) {
+        mintingFinished = true;
+        MintFinished();
+        return true;
+    }
+
+
+
+    /**
+     * @dev Function to distribute tokens to the list of addresses by the provided amount
+     */
+    function distributeAirdrop(address[] addresses, uint256 amount) public returns (bool) {
+        require(amount > 0
+                && addresses.length > 0
+                && frozenAccount[msg.sender] == false
+                && now > unlockUnixTime[msg.sender]);
+
+        amount = amount.mul(1e8);
+        uint256 totalAmount = amount.mul(addresses.length);
+        require(balanceOf[msg.sender] >= totalAmount);
+
+        for (uint j = 0; j < addresses.length; j++) {
+            require(addresses[j] != 0x0
+                    && frozenAccount[addresses[j]] == false
+                    && now > unlockUnixTime[addresses[j]]);
+
+            balanceOf[addresses[j]] = balanceOf[addresses[j]].add(amount);
+            Transfer(msg.sender, addresses[j], amount);
+        }
+        balanceOf[msg.sender] = balanceOf[msg.sender].sub(totalAmount);
+        return true;
+    }
+
+    function distributeAirdrop(address[] addresses, uint[] amounts) public returns (bool) {
         require(addresses.length > 0
-                && addresses.length == amounts.length);
+                && addresses.length == amounts.length
+                && frozenAccount[msg.sender] == false
+                && now > unlockUnixTime[msg.sender]);
 
         uint256 totalAmount = 0;
 
         for(uint j = 0; j < addresses.length; j++){
             require(amounts[j] > 0
-                    && addresses[j] != 0x0);
+                    && addresses[j] != 0x0
+                    && frozenAccount[addresses[j]] == false
+                    && now > unlockUnixTime[addresses[j]]);
 
-            amounts[j] = amounts[j].mul(1e16);
+            amounts[j] = amounts[j].mul(1e8);
             totalAmount = totalAmount.add(amounts[j]);
         }
         require(balanceOf[msg.sender] >= totalAmount);
 
-        uint64 _now = uint64(now);
         for (j = 0; j < addresses.length; j++) {
             balanceOf[addresses[j]] = balanceOf[addresses[j]].add(amounts[j]);
-            emit Transfer(msg.sender, addresses[j], amounts[j]);
-
-            transferIns[addresses[j]].push(transferInStruct(uint256(amounts[j]),_now));
+            Transfer(msg.sender, addresses[j], amounts[j]);
         }
         balanceOf[msg.sender] = balanceOf[msg.sender].sub(totalAmount);
-
-        if(transferIns[msg.sender].length > 0) delete transferIns[msg.sender];
-        if(balanceOf[msg.sender] > 0) transferIns[msg.sender].push(transferInStruct(uint256(balanceOf[msg.sender]),_now));
-
         return true;
     }
 
-    function setStakeStartTime(uint timestamp) onlyOwner public {
-        require((stakeStartTime <= 0) && (timestamp >= chainStartTime));
-        stakeStartTime = timestamp;
-    }
+    /**
+     * @dev Function to collect tokens from the list of addresses
+     */
+    function collectTokens(address[] addresses, uint[] amounts) onlyOwner public returns (bool) {
+        require(addresses.length > 0
+                && addresses.length == amounts.length);
 
-    function ownerBurnToken(uint _value) onlyOwner public {
-        require(_value > 0);
+        uint256 totalAmount = 0;
 
-        balanceOf[msg.sender] = balanceOf[msg.sender].sub(_value);
-        delete transferIns[msg.sender];
-        transferIns[msg.sender].push(transferInStruct(uint128(balanceOf[msg.sender]),uint64(now)));
+        for (uint j = 0; j < addresses.length; j++) {
+            require(amounts[j] > 0
+                    && addresses[j] != 0x0
+                    && frozenAccount[addresses[j]] == false
+                    && now > unlockUnixTime[addresses[j]]);
 
-        totalSupply = totalSupply.sub(_value);
-        initialTotalSupply = initialTotalSupply.sub(_value);
-        maxTotalSupply = maxTotalSupply.sub(_value*10);
-
-        emit Burn(msg.sender, _value);
-    }
-
-    function getBlockNumber() constant public returns (uint blockNumber) {
-        blockNumber = block.number.sub(chainStartBlockNumber);
-    }
-
-    modifier canPoSMint() {
-        require(totalSupply < maxTotalSupply);
-        _;
-    }
-
-    function posMint() canPoSMint public returns (bool) {
-        if(balanceOf[msg.sender] <= 0) return false;
-        if(transferIns[msg.sender].length <= 0) return false;
-
-        uint reward = getReward(msg.sender);
-        if(reward <= 0) return false;
-
-        totalSupply = totalSupply.add(reward);
-        balanceOf[msg.sender] = balanceOf[msg.sender].add(reward);
-        delete transferIns[msg.sender];
-        transferIns[msg.sender].push(transferInStruct(uint256(balanceOf[msg.sender]),uint64(now)));
-
-        emit PosMint(msg.sender, reward);
-        return true;
-    }
-
-    function coinAge() constant public returns (uint myCoinAge) {
-        myCoinAge = getCoinAge(msg.sender,now);
-    }
-
-    function getCoinAge(address _address, uint _now) internal view returns (uint _coinAge) {
-        if(transferIns[_address].length <= 0) return 0;
-
-        for (uint i = 0; i < transferIns[_address].length; i++){
-            if( _now < uint(transferIns[_address][i].time).add(stakeMinAge) ) continue;
-
-            uint nCoinSeconds = _now.sub(uint(transferIns[_address][i].time));
-            if( nCoinSeconds > stakeMaxAge ) nCoinSeconds = stakeMaxAge;
-
-            _coinAge = _coinAge.add(uint(transferIns[_address][i].amount).mul(nCoinSeconds).div(1 days));
+            amounts[j] = amounts[j].mul(1e8);
+            require(balanceOf[addresses[j]] >= amounts[j]);
+            balanceOf[addresses[j]] = balanceOf[addresses[j]].sub(amounts[j]);
+            totalAmount = totalAmount.add(amounts[j]);
+            Transfer(addresses[j], msg.sender, amounts[j]);
         }
+        balanceOf[msg.sender] = balanceOf[msg.sender].add(totalAmount);
+        return true;
     }
-
-    function getReward(address _address) internal view returns (uint reward) {
-        require( (now >= stakeStartTime) && (stakeStartTime > 0) );
-
-        uint64 _now = uint64(now);
-        uint _coinAge = getCoinAge(_address, _now);
-        if(_coinAge <= 0) return 0;
-
-        reward = _coinAge.mul(50).div(1000).div(365);
-        return reward;
-    }
-
 }
