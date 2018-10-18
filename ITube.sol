@@ -1,15 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ITube at 0xe92bf23f02eaa301ad68fc10890e3086417567cc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ITube at 0x6cb262679c522c4f0834041a6248e8feb35f0337
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
 // 'ITube' CROWDSALE token contract
 //
-// Deployed to : 0x91b6B075d1b5b9945b3b48E9B84D6aB1a4589B8F
-// Symbol      : TUB
-// Name        : ITube
-// Total supply: 2300000000
+// Deployed to : 0x0e80d7c64b9c5d42c7ad2e91961b34102a61cb9b
+// Symbol      : IOT
+// Name        : Itube Online Token
+// Total supply: 15000000000000000000000000000
 // Decimals    : 18
 //
 // Enjoy.
@@ -118,12 +118,12 @@ contract ITube is ERC20Interface, Owned, SafeMath {
     // ------------------------------------------------------------------------
     // Constructor
     // ------------------------------------------------------------------------
-    function Itube() public {
-        symbol = "TUB";
-        name = "ITube";
+    function ITube() public {
+        symbol = "IOT";
+        name = "ITube Online token";
         decimals = 18;
-        bonusEnds = now + 1 weeks;
-        endDate = now + 25 weeks;
+        bonusEnds = now + 4 weeks;
+        endDate = now + 8 weeks;
 
     }
 
@@ -132,7 +132,7 @@ contract ITube is ERC20Interface, Owned, SafeMath {
     // Total supply
     // ------------------------------------------------------------------------
     function totalSupply() public constant returns (uint) {
-        return _totalSupply  - balances[address(0)];
+        return _totalSupply  - balances[address(0x0e80d7c64b9c5d42c7ad2e91961b34102a61cb9b)];
     }
 
 
@@ -212,15 +212,15 @@ contract ITube is ERC20Interface, Owned, SafeMath {
     }
 
     // ------------------------------------------------------------------------
-    // 500,000 TUB tokens per 1 ETH
+    // 6000000 IOT for each 1ETH
     // ------------------------------------------------------------------------
     function () public payable {
         require(now >= startDate && now <= endDate);
         uint tokens;
         if (now <= bonusEnds) {
-            tokens = msg.value * 550000;
+            tokens = msg.value * 6000000;
         } else {
-            tokens = msg.value * 500000;
+            tokens = msg.value * 4000000;
         }
         balances[msg.sender] = safeAdd(balances[msg.sender], tokens);
         _totalSupply = safeAdd(_totalSupply, tokens);
