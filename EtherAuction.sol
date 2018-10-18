@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Etherauction at 0x39f996a2cafca0e593d0c46b8365d3936b6cc1cf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Etherauction at 0x56190ef084441dfde78fe6cb9a0c5b03b108ef48
 */
 pragma solidity ^0.4.17;
 
@@ -125,10 +125,32 @@ contract Etherauction is ContractOwner {
   function adminAddMoney() public payable {
     reward = reward + msg.value * 80 / 100;
     nextReward = nextReward + msg.value * 20 / 100;
+
+    Contributor memory c;
+    contributors[gameId].push(c);
+    contributors[gameId][contributors[gameId].length - 1].addr = owner;
+    contributors[gameId][contributors[gameId].length - 1].money = msg.value * 80 / 100;
   }
 
   function addAuctionReward() public payable {
-    reward = reward + msg.value;
+    uint256 minBid = getMinAuctionValue();
+    if (msg.value < minBid)
+      revert('value error');
+
+    uint value = msg.value - minBid;
+
+    reward = reward + value * 98 / 100;
+    nextReward = nextReward + value * 2 / 100;
+
+    Contributor memory c;
+    contributors[gameId].push(c);
+    contributors[gameId][contributors[gameId].length - 1].addr = msg.sender;
+    contributors[gameId][contributors[gameId].length - 1].money = msg.value - minBid;
+
+    if (!_isUserInGame(msg.sender)) {
+      _auction(minBid, address(0x00));
+    }
+    
   }
 
 
@@ -145,33 +167,53 @@ contract Etherauction is ContractOwner {
   uint256 dividends;  // total dividends for players
   uint256 nextReward; // reward for next round
   uint256 dividendForDev;
+  uint256 dividendForContributor;
 
 
   ////////////////////////// api
 
-  OracleBase oracleAPI;
+  // OracleBase oracleAPI;
 
-  function setOracleAPIAddress(address _addr) public onlyOwner {
-    oracleAPI = OracleBase(_addr);
-  }
+  // function setOracleAPIAddress(address _addr) public onlyOwner {
+  //   oracleAPI = OracleBase(_addr);
+  // }
 
-  uint rollCount = 100;
+  // uint rollCount = 100;
 
-  function getRandom() internal returns (uint256) {
-    rollCount = rollCount + 1;
-    return oracleAPI.getRandomForContract(100, rollCount);
-  }
+  // function getRandom() internal returns (uint256) {
+  //   rollCount = rollCount + 1;
+  //   return oracleAPI.getRandomForContract(100, rollCount);
+  // }
 
 
 
   ////////////////////////// game money
 
-  function _inMoney(uint _m) internal {
-    dividends = dividends + _m * 7 / 100;
-    dividendForDev = dividendForDev + _m * 2 / 100;
+  // 17%
+  function _inMoney(uint _m, address invitorAddr) internal {
+    if (invitorAddr != 0x00 && _isUserInGame(invitorAddr)) {
 
-    reward = reward + _m * 2 / 100;
-    nextReward = nextReward + _m * 4 / 100;
+      shareds[gameId][invitorAddr].addr = invitorAddr;
+      shareds[gameId][invitorAddr].money = shareds[gameId][invitorAddr].money + _m * 1 / 100;
+
+      dividends = dividends + _m * 6 / 100;
+      dividendForDev = dividendForDev + _m * 1 / 100;
+      dividendForContributor = dividendForContributor + _m * 3 / 100;
+
+      reward = reward + _m * 2 / 100;
+      nextReward = nextReward + _m * 4 / 100;
+
+      // emit GameInvited(gameId, invitorAddr, _m);
+    } else {
+
+      dividends = dividends + _m * 7 / 100;
+      dividendForDev = dividendForDev + _m * 1 / 100;
+      dividendForContributor = dividendForContributor + _m * 3 / 100;
+
+      reward = reward + _m * 2 / 100;
+      nextReward = nextReward + _m * 4 / 100;
+
+    }
   }
 
   function _startNewRound(address _addr) internal {
@@ -183,7 +225,7 @@ contract Etherauction is ContractOwner {
     gameStartTime = block.timestamp;
     gameLastAuctionTime = block.timestamp;
 
-
+    // have to make sure enough reward, or may get exception
     uint256 price = _getMinAuctionStartPrice();
     reward = reward.sub(price);
 
@@ -197,6 +239,11 @@ contract Etherauction is ContractOwner {
 
     gameLastAuctionMoney = price;
     gameSecondLeft = _getInitAuctionSeconds();
+
+    Contributor memory c;
+    contributors[gameId].push(c);
+    contributors[gameId][0].addr = owner;
+    contributors[gameId][0].money = reward;
 
     emit GameAuction(gameId, _addr, price, price, gameSecondLeft, block.timestamp);
   }
@@ -212,7 +259,10 @@ contract Etherauction is ContractOwner {
     uint256 gameId;
     uint256 reward;
     uint256 dividends;
+    uint256 dividendForContributor;
   }
+
+  GameData[] gameData;
 
   struct PlayerAuction {
     address addr;
@@ -224,7 +274,19 @@ contract Etherauction is ContractOwner {
 
   mapping(uint256 => PlayerAuction[]) gameAuction;
 
-  GameData[] gameData;
+  struct Contributor {
+    address addr;
+    uint256 money;
+  }
+
+  mapping(uint256 => Contributor[]) contributors;
+
+  struct Shared {
+    address addr;
+    uint256 money;
+  }
+
+  mapping(uint256 => mapping(address => Shared)) shareds;
 
   ////////////////////////// game event
 
@@ -236,6 +298,27 @@ contract Etherauction is ContractOwner {
 
   event GameEnd(uint indexed gameId, address indexed winner, uint money, uint datetime);
 
+  event GameInvited(uint indexed gameId, address player, uint money);
+
+
+  ////////////////////////// invite 
+
+  // key is msgSender, value is invitor address
+  mapping(address => address) public inviteMap;
+
+  function registerInvitor(address msgSender, address invitor) internal {
+    if (invitor == 0x0 || msgSender == 0x0) {
+      return;
+    }
+
+    inviteMap[msgSender] = invitor;
+  }
+
+  function getInvitor(address msgSender) internal view returns (address){
+    return inviteMap[msgSender];
+  }
+
+
   ////////////////////////// game play
 
   function getMinAuctionValue() public view returns (uint256) {
@@ -244,7 +327,11 @@ contract Etherauction is ContractOwner {
     return auctionValue;
   }
 
-  function auction() public payable {
+  function auction(address invitorAddr) public payable {
+    _auction(msg.value, invitorAddr);
+  }
+
+  function _auction(uint256 value, address invitorAddr) internal {
     bool ended = (block.timestamp > gameLastAuctionTime + gameSecondLeft) ? true: false;
     if (ended) {
       revert('this round end!!!');
@@ -261,32 +348,40 @@ contract Etherauction is ContractOwner {
     uint256 auctionValue = gap + gameLastAuctionMoney;
     uint256 maxAuctionValue = 3 * gap + gameLastAuctionMoney;
 
-    if (msg.value < auctionValue) {
+    if (value < auctionValue) {
       revert("wrong eth value!");
     }
 
-    if (msg.value >= maxAuctionValue) {
+
+    if (invitorAddr != 0x00) {
+      registerInvitor(msg.sender, invitorAddr);
+    } else
+      invitorAddr = getInvitor(msg.sender);
+
+
+    if (value >= maxAuctionValue) {
       auctionValue = maxAuctionValue;
     } else {
-      auctionValue = msg.value;
+      auctionValue = value;
     }
 
     gameLastAuctionMoney = auctionValue;
-    _inMoney(auctionValue);
+    _inMoney(auctionValue, invitorAddr);
     gameLastAuctionTime = block.timestamp;
 
-    uint256 random = getRandom();
-    gameSecondLeft = random * (_getMaxAuctionSeconds() - _getMinAuctionSeconds()) / 100 + _getMinAuctionSeconds();
+    // uint256 random = getRandom();
+    // gameSecondLeft = random * (_getMaxAuctionSeconds() - _getMinAuctionSeconds()) / 100 + _getMinAuctionSeconds();
+    gameSecondLeft = _getMaxAuctionSeconds();
 
     PlayerAuction memory p;
     gameAuction[gameId].push(p);
     gameAuction[gameId][gameAuction[gameId].length - 1].addr = msg.sender;
-    gameAuction[gameId][gameAuction[gameId].length - 1].money = msg.value;
+    gameAuction[gameId][gameAuction[gameId].length - 1].money = value;
     gameAuction[gameId][gameAuction[gameId].length - 1].bid = auctionValue;
     gameAuction[gameId][gameAuction[gameId].length - 1].refunded = false;
     gameAuction[gameId][gameAuction[gameId].length - 1].dividended = false;
 
-    emit GameAuction(gameId, msg.sender, msg.value, auctionValue, gameSecondLeft, block.timestamp);
+    emit GameAuction(gameId, msg.sender, value, auctionValue, gameSecondLeft, block.timestamp);
   }
 
   function claimReward(uint256 _id) public {
@@ -310,6 +405,10 @@ contract Etherauction is ContractOwner {
     (_myMoney, _myDividends, _myRefund, _myReward, _claimed) = _getGameInfoPart1(_addr, _id);
     (_reward, _dividends) = _getGameInfoPart2(_id);
 
+    uint256 contributeValue = 0;
+    uint256 sharedValue = 0;
+    (contributeValue, sharedValue) = _getGameInfoPart3(_addr, _id);
+
     if (_claimed)
       revert('already claimed!');
 
@@ -319,7 +418,7 @@ contract Etherauction is ContractOwner {
       }
     }
 
-    _addr.transfer(_myDividends + _myRefund + _myReward); 
+    _addr.transfer(_myDividends + _myRefund + _myReward + contributeValue + sharedValue); 
     emit GameRewardClaim(_id, _addr, _myDividends + _myRefund + _myReward);
   }
 
@@ -331,12 +430,26 @@ contract Etherauction is ContractOwner {
         && msg.sender != gameAuction[gameId][len - 1].addr) {
 
         uint256 money = 0;
-
-        for (uint k = 0; k < gameAuction[gameId].length; k++) {
+        uint k = 0;
+        for (k = 0; k < gameAuction[gameId].length; k++) {
           if (gameAuction[gameId][k].addr == msg.sender && gameAuction[gameId][k].refunded == false) {
-            money = money + gameAuction[gameId][k].bid * 85 / 100 + gameAuction[gameId][k].money;
+            money = money + gameAuction[gameId][k].bid * 83 / 100 + gameAuction[gameId][k].money;
             gameAuction[gameId][k].refunded = true;
           }
+        }
+
+        // if user have contribute 
+        k = 0;
+        for (k = 0; k < contributors[gameId].length; k++) {
+          if (contributors[gameId][k].addr == msg.sender) {
+            contributors[gameId][k].money = 0;  // he cannot get any dividend from his contributor
+          }
+        }
+
+        // if user have invited 
+        if (shareds[gameId][msg.sender].money > 0) {
+          dividends = dividends + shareds[gameId][msg.sender].money;
+          delete shareds[gameId][msg.sender];
         }
 
         msg.sender.transfer(money); 
@@ -362,6 +475,7 @@ contract Etherauction is ContractOwner {
     gameData[gameData.length - 1].gameId = gameId;
     gameData[gameData.length - 1].reward = reward;
     gameData[gameData.length - 1].dividends = dividends;
+    gameData[gameData.length - 1].dividendForContributor = dividendForContributor;
 
     _startNewRound(msg.sender);
 
@@ -384,7 +498,12 @@ contract Etherauction is ContractOwner {
     }
   }
 
-  function getCurrGameInfo() public view returns (uint256 _gameId, 
+
+  function getCurrGameInfoPart2() public view returns (uint256 _myContributeMoney, uint256 _mySharedMoney) {
+    (_myContributeMoney, _mySharedMoney) = _getGameInfoPart3(msg.sender, gameId);
+  }
+
+  function getCurrGameInfoPart1() public view returns (uint256 _gameId, 
                                                           uint256 _reward, 
                                                           uint256 _dividends,
                                                           uint256 _lastAuction, 
@@ -421,7 +540,7 @@ contract Etherauction is ContractOwner {
           if ((i == gameAuction[gameId].length - 2) || (i == gameAuction[gameId].length - 1)) {
             _myRefund = _myRefund.add(gameAuction[gameId][i].money).sub(gameAuction[gameId][i].bid);
           } else {
-            _myRefund = _myRefund.add(gameAuction[gameId][i].money).sub(gameAuction[gameId][i].bid.mul(15).div(100));
+            _myRefund = _myRefund.add(gameAuction[gameId][i].money).sub(gameAuction[gameId][i].bid.mul(17).div(100));
           }
 
           _myMoney = _myMoney + gameAuction[gameId][i].money;
@@ -449,9 +568,10 @@ contract Etherauction is ContractOwner {
     }
   }
 
-  function getGameInfo(uint256 _id) public view returns (uint256 _reward, uint256 _dividends, uint256 _myMoney, uint256 _myDividends, uint256 _myRefund, uint256 _myReward, bool _claimed) {
+  function getGameInfo(uint256 _id) public view returns (uint256 _reward, uint256 _dividends, uint256 _myMoney, uint256 _myDividends, uint256 _myRefund, uint256 _myReward, uint256 _myInvestIncome, uint256 _myShared, bool _claimed) {
     (_reward, _dividends) = _getGameInfoPart2(_id);
     (_myMoney, _myRefund, _myDividends, _myReward, _claimed) = _getGameInfoPart1(msg.sender, _id);
+    (_myInvestIncome, _myShared) = _getGameInfoPart3(msg.sender, _id);
   }
 
   function _getGameInfoPart1(address _addr, uint256 _id) internal view returns (uint256 _myMoney, uint256 _myRefund, uint256 _myDividends, uint256 _myReward, bool _claimed) {
@@ -490,7 +610,7 @@ contract Etherauction is ContractOwner {
 
               // k != (gameAuction[d.gameId].length - 2): for no.2 bidder, who cannot refund this bid
               if (gameAuction[d.gameId][k].addr == _addr && gameAuction[d.gameId][k].refunded == false && k != (gameAuction[d.gameId].length - 2)) {
-                _myRefund = _myRefund.add( gameAuction[d.gameId][k].money.sub( gameAuction[d.gameId][k].bid.mul(15).div(100) ) );
+                _myRefund = _myRefund.add( gameAuction[d.gameId][k].money.sub( gameAuction[d.gameId][k].bid.mul(17).div(100) ) );
                 _moneyForCal = _moneyForCal.add( (gameAuction[d.gameId][k].money.div(10**15)).mul( gameAuction[d.gameId][k].money.div(10**15) ).mul( gameAuction[d.gameId].length + 1 - k) );
                 _myMoney = _myMoney.add(gameAuction[d.gameId][k].money);
               }
@@ -526,6 +646,58 @@ contract Etherauction is ContractOwner {
     }
   }
 
+  function _getGameInfoPart3(address addr, uint256 _id) public view returns (uint256 _contributeReward, uint256 _shareReward) {
+    uint256 contributeDividend = 0;
+    uint256 total = 0;
+    uint256 money = 0;
+
+    uint256 i = 0;
+
+    if (_id == gameId) {
+      contributeDividend = dividendForContributor;
+    } else {
+      for (i = 0; i < gameData.length; i++) {
+        GameData memory d = gameData[i];
+        if (d.gameId == _id) {
+          contributeDividend = d.dividendForContributor;
+          break;
+        }
+      }
+    }
+
+    for (i = 0; i < contributors[_id].length; i++) {
+      total = total + contributors[_id][i].money;
+      if (contributors[_id][i].addr == addr) {
+        money = money + contributors[_id][i].money;
+      }
+    }
+
+    if (total > 0)
+      _contributeReward = contributeDividend.mul(money).div(total);
+
+    // for invited money 
+    _shareReward = shareds[_id][addr].money;
+
+  }
+
+  function getCurrTotalInvest() public view returns (uint256 invest) {
+    for (uint i = 0; i < contributors[gameId].length; i++) {
+      if (contributors[gameId][i].addr == msg.sender) {
+        invest = invest + contributors[gameId][i].money;
+      }
+    }
+  }
+
+  function _isUserInGame(address addr) internal view returns (bool) {
+    uint256 k = 0;
+    for (k = 0; k < gameAuction[gameId].length; k++) {
+      if (gameAuction[gameId][k].addr == addr && gameAuction[gameId][k].refunded == false) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   ////////////////////////// game rule
 
   function _getGameStartAuctionMoney() internal pure returns (uint256) {
@@ -553,8 +725,8 @@ contract Etherauction is ContractOwner {
   }
 
   function _getMaxAuctionSeconds() internal pure returns (uint256) {
-    return 12 * 60 * 60;
-    // return 3 * 60;  //test
+    return 24 * 60 * 60;
+    // return 5 * 60;  //test
   }
 
   function _getInitAuctionSeconds() internal pure returns (uint256) {
