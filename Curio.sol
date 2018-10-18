@@ -1,618 +1,428 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Curio at 0xc22faf9f506e63e6f4f0088d15e9197b27c77ac7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Curio at 0xbba2c2a094100f2666febafc78eae00b2327533c
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.24;
 
+// File: openzeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol
 
 /**
- * @title Interface for contracts conforming to ERC-721: Non-Fungible Tokens
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * See https://github.com/ethereum/EIPs/issues/179
  */
-contract ERC721 {
-  event Transfer(
-    address indexed from,
-    address indexed to,
-    uint256 indexed tokenId
-  );
-  event Approval(
-    address indexed owner,
-    address indexed approved,
-    uint256 indexed tokenId
-  );
-
-  function implementsERC721() public pure returns (bool);
-  function totalSupply() public view returns (uint256 total);
-  function balanceOf(address _owner) public view returns (uint256 balance);
-  function ownerOf(uint256 _tokenId) external view returns (address owner);
-  function approve(address _to, uint256 _tokenId) external;
-  function transfer(address _to, uint256 _tokenId) external;
-  function transferFrom(address _from, address _to, uint256 _tokenId) external;
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address _who) public view returns (uint256);
+  function transfer(address _to, uint256 _value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
+// File: openzeppelin-solidity/contracts/math/SafeMath.sol
 
 /**
- * @title Interface of auction contract
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
  */
-interface CurioAuction {
-  function isCurioAuction() external returns (bool);
-  function withdrawBalance() external;
-  function setAuctionPriceLimit(uint256 _newAuctionPriceLimit) external;
-  function createAuction(
-    uint256 _tokenId,
-    uint256 _startingPrice,
-    uint256 _endingPrice,
-    uint256 _duration,
-    address _seller
-  )
-    external;
-}
+library SafeMath {
 
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
+    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+    if (_a == 0) {
+      return 0;
+    }
 
-/**
- * @title Curio
- * @dev Curio core contract implements ERC721 token.
- */
-contract Curio is ERC721 {
-  event Create(
-    address indexed owner,
-    uint256 indexed tokenId,
-    string name
-  );
-  event ContractUpgrade(address newContract);
-
-  struct Token {
-    string name;
+    c = _a * _b;
+    assert(c / _a == _b);
+    return c;
   }
 
-  // Name and symbol of ERC721 token
-  string public constant NAME = "Curio";
-  string public constant SYMBOL = "CUR";
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 _a, uint256 _b) internal pure returns (uint256) {
+    // assert(_b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = _a / _b;
+    // assert(_a == _b * c + _a % _b); // There is no case in which this doesn't hold
+    return _a / _b;
+  }
 
-  // Array of token's data
-  Token[] tokens;
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 _a, uint256 _b) internal pure returns (uint256) {
+    assert(_b <= _a);
+    return _a - _b;
+  }
 
-  // A mapping from token IDs to the address that owns them
-  mapping (uint256 => address) public tokenIndexToOwner;
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
+    c = _a + _b;
+    assert(c >= _a);
+    return c;
+  }
+}
 
-  // A mapping from owner address to count of tokens that address owns
-  mapping (address => uint256) ownershipTokenCount;
+// File: openzeppelin-solidity/contracts/token/ERC20/BasicToken.sol
 
-  // A mapping from token IDs to an address that has been approved
-  mapping (uint256 => address) public tokenIndexToApproved;
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
+ */
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint256;
 
-  address public ownerAddress;
-  address public adminAddress;
+  mapping(address => uint256) internal balances;
 
-  bool public paused = false;
+  uint256 internal totalSupply_;
 
-  // The address of new contract when this contract was upgraded
-  address public newContractAddress;
+  /**
+  * @dev Total number of tokens in existence
+  */
+  function totalSupply() public view returns (uint256) {
+    return totalSupply_;
+  }
 
-  // The address of CurioAuction contract that handles sales of tokens
-  CurioAuction public auction;
+  /**
+  * @dev Transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_value <= balances[msg.sender]);
+    require(_to != address(0));
 
-  // Restriction on release of tokens
-  uint256 public constant TOTAL_SUPPLY_LIMIT = 900;
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    emit Transfer(msg.sender, _to, _value);
+    return true;
+  }
 
-  // Count of released tokens
-  uint256 public releaseCreatedCount;
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) public view returns (uint256) {
+    return balances[_owner];
+  }
+
+}
+
+// File: openzeppelin-solidity/contracts/token/ERC20/ERC20.sol
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address _owner, address _spender)
+    public view returns (uint256);
+
+  function transferFrom(address _from, address _to, uint256 _value)
+    public returns (bool);
+
+  function approve(address _spender, uint256 _value) public returns (bool);
+  event Approval(
+    address indexed owner,
+    address indexed spender,
+    uint256 value
+  );
+}
+
+// File: openzeppelin-solidity/contracts/token/ERC20/StandardToken.sol
+
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * https://github.com/ethereum/EIPs/issues/20
+ * Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
+contract StandardToken is ERC20, BasicToken {
+
+  mapping (address => mapping (address => uint256)) internal allowed;
+
+
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amount of tokens to be transferred
+   */
+  function transferFrom(
+    address _from,
+    address _to,
+    uint256 _value
+  )
+    public
+    returns (bool)
+  {
+    require(_value <= balances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
+    require(_to != address(0));
+
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    emit Transfer(_from, _to, _value);
+    return true;
+  }
+
+  /**
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   * Beware that changing an allowance with this method brings the risk that someone may use both the old
+   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) public returns (bool) {
+    allowed[msg.sender][_spender] = _value;
+    emit Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
+   */
+  function allowance(
+    address _owner,
+    address _spender
+   )
+    public
+    view
+    returns (uint256)
+  {
+    return allowed[_owner][_spender];
+  }
+
+  /**
+   * @dev Increase the amount of tokens that an owner allowed to a spender.
+   * approve should be called when allowed[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _addedValue The amount of tokens to increase the allowance by.
+   */
+  function increaseApproval(
+    address _spender,
+    uint256 _addedValue
+  )
+    public
+    returns (bool)
+  {
+    allowed[msg.sender][_spender] = (
+      allowed[msg.sender][_spender].add(_addedValue));
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  /**
+   * @dev Decrease the amount of tokens that an owner allowed to a spender.
+   * approve should be called when allowed[_spender] == 0. To decrement
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _subtractedValue The amount of tokens to decrease the allowance by.
+   */
+  function decreaseApproval(
+    address _spender,
+    uint256 _subtractedValue
+  )
+    public
+    returns (bool)
+  {
+    uint256 oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue >= oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    }
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+}
+
+// File: openzeppelin-solidity/contracts/ownership/Ownable.sol
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipRenounced(address indexed previousOwner);
+  event OwnershipTransferred(
+    address indexed previousOwner,
+    address indexed newOwner
+  );
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  constructor() public {
+    owner = msg.sender;
+  }
 
   /**
    * @dev Throws if called by any account other than the owner.
    */
   modifier onlyOwner() {
-    require(msg.sender == ownerAddress);
+    require(msg.sender == owner);
     _;
   }
 
   /**
-   * @dev Throws if called by any account other than the admin.
+   * @dev Allows the current owner to relinquish control of the contract.
+   * @notice Renouncing to ownership will leave the contract without an owner.
+   * It will not be possible to call the functions with the `onlyOwner`
+   * modifier anymore.
    */
-  modifier onlyAdmin() {
-    require(msg.sender == adminAddress);
+  function renounceOwnership() public onlyOwner {
+    emit OwnershipRenounced(owner);
+    owner = address(0);
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address _newOwner) public onlyOwner {
+    _transferOwnership(_newOwner);
+  }
+
+  /**
+   * @dev Transfers control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function _transferOwnership(address _newOwner) internal {
+    require(_newOwner != address(0));
+    emit OwnershipTransferred(owner, _newOwner);
+    owner = _newOwner;
+  }
+}
+
+// File: openzeppelin-solidity/contracts/token/ERC20/MintableToken.sol
+
+/**
+ * @title Mintable token
+ * @dev Simple ERC20 Token example, with mintable token creation
+ * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
+ */
+contract MintableToken is StandardToken, Ownable {
+  event Mint(address indexed to, uint256 amount);
+  event MintFinished();
+
+  bool public mintingFinished = false;
+
+
+  modifier canMint() {
+    require(!mintingFinished);
+    _;
+  }
+
+  modifier hasMintPermission() {
+    require(msg.sender == owner);
     _;
   }
 
   /**
-   * @dev Throws if called by any account other than the owner or admin.
+   * @dev Function to mint tokens
+   * @param _to The address that will receive the minted tokens.
+   * @param _amount The amount of tokens to mint.
+   * @return A boolean that indicates if the operation was successful.
    */
-  modifier onlyOwnerOrAdmin() {
-    require(
-      msg.sender == adminAddress ||
-      msg.sender == ownerAddress
-    );
-    _;
-  }
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is not paused.
-   */
-  modifier whenNotPaused() {
-    require(!paused);
-    _;
-  }
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is paused.
-   */
-  modifier whenPaused() {
-    require(paused);
-    _;
-  }
-
-  /**
-   * @dev Constructor function
-   */
-  constructor() public {
-    // Contract paused after start
-    paused = true;
-
-    // Set owner and admin addresses
-    ownerAddress = msg.sender;
-    adminAddress = msg.sender;
-  }
-
-
-  // -----------------------------------------
-  // External interface
-  // -----------------------------------------
-
-
-  /**
-   * @dev Check implementing ERC721 standard (needed in auction contract).
-   */
-  function implementsERC721() public pure returns (bool) {
+  function mint(
+    address _to,
+    uint256 _amount
+  )
+    public
+    hasMintPermission
+    canMint
+    returns (bool)
+  {
+    totalSupply_ = totalSupply_.add(_amount);
+    balances[_to] = balances[_to].add(_amount);
+    emit Mint(_to, _amount);
+    emit Transfer(address(0), _to, _amount);
     return true;
   }
 
   /**
-   * @dev Default payable function rejects all Ether from being sent here, unless it's from auction contract.
+   * @dev Function to stop minting new tokens.
+   * @return True if the operation was successful.
    */
-  function() external payable {
-    require(msg.sender == address(auction));
+  function finishMinting() public onlyOwner canMint returns (bool) {
+    mintingFinished = true;
+    emit MintFinished();
+    return true;
+  }
+}
+
+// File: openzeppelin-solidity/contracts/token/ERC20/CappedToken.sol
+
+/**
+ * @title Capped token
+ * @dev Mintable token with a token cap.
+ */
+contract CappedToken is MintableToken {
+
+  uint256 public cap;
+
+  constructor(uint256 _cap) public {
+    require(_cap > 0);
+    cap = _cap;
   }
 
   /**
-   * @dev Transfer all Ether from this contract to owner.
+   * @dev Function to mint tokens
+   * @param _to The address that will receive the minted tokens.
+   * @param _amount The amount of tokens to mint.
+   * @return A boolean that indicates if the operation was successful.
    */
-  function withdrawBalance() external onlyOwner {
-    ownerAddress.transfer(address(this).balance);
-  }
-
-  /**
-   * @dev Returns the total number of tokens currently in existence.
-   */
-  function totalSupply() public view returns (uint) {
-    return tokens.length;
-  }
-
-  /**
-   * @dev Returns the number of tokens owned by a specific address.
-   * @param _owner The owner address to check
-   */
-  function balanceOf(address _owner) public view returns (uint256 count) {
-    return ownershipTokenCount[_owner];
-  }
-
-  /**
-   * @dev Returns the address currently assigned ownership of a given token.
-   * @param _tokenId The ID of the token
-   */
-  function ownerOf(uint256 _tokenId) external view returns (address owner) {
-    owner = tokenIndexToOwner[_tokenId];
-
-    require(owner != address(0));
-  }
-
-  /**
-   * @dev Returns information about token.
-   * @param _id The ID of the token
-   */
-  function getToken(uint256 _id) external view returns (string name) {
-    Token storage token = tokens[_id];
-
-    name = token.name;
-  }
-
-  /**
-   * @dev Set new owner address. Only available to the current owner.
-   * @param _newOwner The address of the new owner
-   */
-  function setOwner(address _newOwner) onlyOwner external {
-    require(_newOwner != address(0));
-
-    ownerAddress = _newOwner;
-  }
-
-  /**
-   * @dev Set new admin address. Only available to owner.
-   * @param _newAdmin The address of the new admin
-   */
-  function setAdmin(address _newAdmin) onlyOwner external {
-    require(_newAdmin != address(0));
-
-    adminAddress = _newAdmin;
-  }
-
-  /**
-   * @dev Set new auction price limit.
-   * @param _newAuctionPriceLimit Start and end price limit
-   */
-  function setAuctionPriceLimit(uint256 _newAuctionPriceLimit) onlyOwnerOrAdmin external {
-    auction.setAuctionPriceLimit(_newAuctionPriceLimit);
-  }
-
-  /**
-   * @dev Set the address of upgraded contract.
-   * @param _newContract Address of new contract
-   */
-  function setNewAddress(address _newContract) onlyOwner whenPaused external {
-    newContractAddress = _newContract;
-
-    emit ContractUpgrade(_newContract);
-  }
-
-  /**
-   * @dev Pause the contract. Called by owner or admin to pause the contract.
-   */
-  function pause() onlyOwnerOrAdmin whenNotPaused external {
-    paused = true;
-  }
-
-  /**
-   * @dev Unpause the contract. Can only be called by owner, since
-   *      one reason we may pause the contract is when admin account is
-   *      compromised. Requires auction contract addresses
-   *      to be set before contract can be unpaused. Also, we can't have
-   *      newContractAddress set either, because then the contract was upgraded.
-   */
-  function unpause() onlyOwner whenPaused public {
-    require(auction != address(0));
-    require(newContractAddress == address(0));
-
-    paused = false;
-  }
-
-  /**
-   * @dev Transfer a token to another address.
-   * @param _to The address of the recipient, can be a user or contract
-   * @param _tokenId The ID of the token to transfer
-   */
-  function transfer(
+  function mint(
     address _to,
-    uint256 _tokenId
+    uint256 _amount
   )
-    whenNotPaused
-    external
-  {
-    // Safety check to prevent against an unexpected 0x0 default.
-    require(_to != address(0));
-
-    // Disallow transfers to this contract to prevent accidental misuse.
-    // The contract should never own any tokens (except very briefly
-    // after a release token is created and before it goes on auction).
-    require(_to != address(this));
-
-    // Disallow transfers to the auction contract to prevent accidental
-    // misuse. Auction contracts should only take ownership of tokens
-    // through the allow + transferFrom flow.
-    require(_to != address(auction));
-
-    // Check token ownership
-    require(_owns(msg.sender, _tokenId));
-
-    // Reassign ownership, clear pending approvals, emit Transfer event.
-    _transfer(msg.sender, _to, _tokenId);
-  }
-
-  /**
-   * @dev Grant another address the right to transfer a specific token via
-   *      transferFrom(). This is the preferred flow for transfering NFTs to contracts.
-   * @param _to The address to be granted transfer approval. Pass address(0) to
-   *            clear all approvals
-   * @param _tokenId The ID of the token that can be transferred if this call succeeds
-   */
-  function approve(
-    address _to,
-    uint256 _tokenId
-  )
-    whenNotPaused
-    external
-  {
-    // Only an owner can grant transfer approval.
-    require(_owns(msg.sender, _tokenId));
-
-    // Register the approval (replacing any previous approval).
-    _approve(_tokenId, _to);
-
-    // Emit approval event.
-    emit Approval(msg.sender, _to, _tokenId);
-  }
-
-  /**
-   * @dev Transfers a token owned by another address, for which the calling address
-   *      has previously been granted transfer approval by the owner.
-   * @param _from The address that owns the token to be transferred
-   * @param _to The address that should take ownership of the token. Can be any address,
-   *            including the caller
-   * @param _tokenId The ID of the token to be transferred
-   */
-  function transferFrom(
-    address _from,
-    address _to,
-    uint256 _tokenId
-  )
-    whenNotPaused
-    external
-  {
-    // Safety check to prevent against an unexpected 0x0 default.
-    require(_to != address(0));
-
-    // Disallow transfers to this contract to prevent accidental misuse.
-    // The contract should never own any tokens (except very briefly
-    // after a release token is created and before it goes on auction).
-    require(_to != address(this));
-
-    // Check for approval and valid ownership
-    require(_approvedFor(msg.sender, _tokenId));
-    require(_owns(_from, _tokenId));
-
-    // Reassign ownership (also clears pending approvals and emits Transfer event).
-    _transfer(_from, _to, _tokenId);
-  }
-
-  /**
-   * @dev Returns a list of all tokens assigned to an address.
-   * @param _owner The owner whose tokens we are interested in
-   * @notice This method MUST NEVER be called by smart contract code. First, it's fairly
-   *         expensive (it walks the entire token array looking for tokens belonging to owner),
-   *         but it also returns a dynamic array, which is only supported for web3 calls, and
-   *         not contract-to-contract calls.
-   */
-  function tokensOfOwner(address _owner) external view returns(uint256[] ownerTokens) {
-    uint256 tokenCount = balanceOf(_owner);
-
-    if (tokenCount == 0) {
-      // Return an empty array
-      return new uint256[](0);
-    } else {
-      uint256[] memory result = new uint256[](tokenCount);
-      uint256 totalTokens = totalSupply();
-      uint256 resultIndex = 0;
-
-      uint256 tokenId;
-
-      for (tokenId = 0; tokenId <= totalTokens; tokenId++) {
-        if (tokenIndexToOwner[tokenId] == _owner) {
-          result[resultIndex] = tokenId;
-          resultIndex++;
-        }
-      }
-
-      return result;
-    }
-  }
-
-  /**
-   * @dev Set the reference to the auction contract.
-   * @param _address Address of auction contract
-   */
-  function setAuctionAddress(address _address) onlyOwner external {
-    CurioAuction candidateContract = CurioAuction(_address);
-
-    require(candidateContract.isCurioAuction());
-
-    // Set the new contract address
-    auction = candidateContract;
-  }
-
-  /**
-   * @dev Put a token up for auction.
-   * @param _tokenId ID of token to auction, sender must be owner
-   * @param _startingPrice Price of item (in wei) at beginning of auction
-   * @param _endingPrice Price of item (in wei) at end of auction
-   * @param _duration Length of auction (in seconds)
-   */
-  function createAuction(
-    uint256 _tokenId,
-    uint256 _startingPrice,
-    uint256 _endingPrice,
-    uint256 _duration
-  )
-    whenNotPaused
-    external
-  {
-    // Auction contract checks input sizes
-    // If token is already on any auction, this will throw because it will be owned by the auction contract
-    require(_owns(msg.sender, _tokenId));
-
-    // Set auction contract as approved for token
-    _approve(_tokenId, auction);
-
-    // Sale auction throws if inputs are invalid
-    auction.createAuction(
-      _tokenId,
-      _startingPrice,
-      _endingPrice,
-      _duration,
-      msg.sender
-    );
-  }
-
-  /**
-   * @dev Transfers the balance of the auction contract to this contract by owner or admin.
-   */
-  function withdrawAuctionBalance() onlyOwnerOrAdmin external {
-    auction.withdrawBalance();
-  }
-
-  /**
-   * @dev Creates a new release token with the given name and creates an auction for it.
-   * @param _name Name ot the token
-   * @param _startingPrice Price of item (in wei) at beginning of auction
-   * @param _endingPrice Price of item (in wei) at end of auction
-   * @param _duration Length of auction (in seconds)
-   */
-  function createReleaseTokenAuction(
-    string _name,
-    uint256 _startingPrice,
-    uint256 _endingPrice,
-    uint256 _duration
-  )
-    onlyAdmin
-    external
-  {
-    // Check release tokens limit
-    require(releaseCreatedCount < TOTAL_SUPPLY_LIMIT);
-
-    // Create token and tranfer ownership to this contract
-    uint256 tokenId = _createToken(_name, address(this));
-
-    // Set auction address as approved for release token
-    _approve(tokenId, auction);
-
-    // Call createAuction in auction contract
-    auction.createAuction(
-      tokenId,
-      _startingPrice,
-      _endingPrice,
-      _duration,
-      address(this)
-    );
-
-    releaseCreatedCount++;
-  }
-
-  /**
-   * @dev Creates free token and transfer it to recipient.
-   * @param _name Name of the token
-   * @param _to The address of the recipient, can be a user or contract
-   */
-  function createFreeToken(
-    string _name,
-    address _to
-  )
-    onlyAdmin
-    external
-  {
-    require(_to != address(0));
-    require(_to != address(this));
-    require(_to != address(auction));
-
-    // Check release tokens limit
-    require(releaseCreatedCount < TOTAL_SUPPLY_LIMIT);
-
-    // Create token and transfer to owner
-    _createToken(_name, _to);
-
-    releaseCreatedCount++;
-  }
-
-
-  // -----------------------------------------
-  // Internal interface
-  // -----------------------------------------
-
-
-  /**
-   * @dev Create a new token and stores it.
-   * @param _name Token name
-   * @param _owner The initial owner of this token, must be non-zero
-   */
-  function _createToken(
-    string _name,
-    address _owner
-  )
-    internal
-    returns (uint)
-  {
-    Token memory _token = Token({
-      name: _name
-    });
-
-    uint256 newTokenId = tokens.push(_token) - 1;
-
-    // Check overflow newTokenId
-    require(newTokenId == uint256(uint32(newTokenId)));
-
-    emit Create(_owner, newTokenId, _name);
-
-    // This will assign ownership
-    _transfer(0, _owner, newTokenId);
-
-    return newTokenId;
-  }
-
-  /**
-   * @dev Check claimant address as token owner.
-   * @param _claimant The address we are validating against
-   * @param _tokenId Token id, only valid when > 0
-   */
-  function _owns(
-    address _claimant,
-    uint256 _tokenId
-  )
-    internal
-    view
+    public
     returns (bool)
   {
-    return tokenIndexToOwner[_tokenId] == _claimant;
+    require(totalSupply_.add(_amount) <= cap);
+
+    return super.mint(_to, _amount);
   }
 
-  /**
-   * @dev Check if a given address currently has transferApproval for a particular token.
-   * @param _claimant The address we are confirming token is approved for
-   * @param _tokenId Token id, only valid when > 0
-   */
-  function _approvedFor(
-    address _claimant,
-    uint256 _tokenId
-  )
-    internal
-    view
-    returns (bool)
-  {
-    return tokenIndexToApproved[_tokenId] == _claimant;
-  }
+}
 
-  /**
-   * @dev Marks an address as being approved for transferFrom().
-   *      Setting _approved to address(0) clears all transfer approval.
-   *      NOTE: _approve() does NOT send the Approval event. This is intentional because
-   *      _approve() and transferFrom() are used together for putting tokens on auction, and
-   *      there is no value in spamming the log with Approval events in that case.
-   */
-  function _approve(
-    uint256 _tokenId,
-    address _approved
-  )
-    internal
-  {
-    tokenIndexToApproved[_tokenId] = _approved;
-  }
+// File: contracts/Curio.sol
 
-  /**
-   * @dev Assigns ownership of a specific token to an address.
-   */
-  function _transfer(
-    address _from,
-    address _to,
-    uint256 _tokenId
-  )
-    internal
-  {
-    ownershipTokenCount[_to]++;
+contract Curio is CappedToken {
+    string public name = "CURIO";
+    string public symbol = "CURIO";
+    uint8 public decimals = 18;
+    uint256 internal _totalCap = 8888888888 * (10**uint256(decimals));
 
-    // Transfer ownership
-    tokenIndexToOwner[_tokenId] = _to;
-
-    // When creating new token _from is 0x0, but we can't account that address
-    if (_from != address(0)) {
-      ownershipTokenCount[_from]--;
-
-      // Clear any previously approved ownership exchange
-      delete tokenIndexToApproved[_tokenId];
-    }
-
-    emit Transfer(_from, _to, _tokenId);
-  }
+    constructor() CappedToken(_totalCap) public {
+        mint(owner, _totalCap);
+        finishMinting();
+    } 
 }
