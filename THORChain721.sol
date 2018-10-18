@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract THORChain721 at 0x3fa9bdcbd17bd75d1dec10d52c65f41503e344f2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract THORChain721 at 0x3eabd96bb1db0c78261858e5a3d94425471238ab
 */
 pragma solidity ^0.4.24;
 
@@ -844,7 +844,7 @@ contract THORChain721 is ERC721Token {
         _;
     }
 
-    constructor () public ERC721Token("testTC", "testTC") {
+    constructor () public ERC721Token("testTC1", "testTC1") {
         owner = msg.sender;
     }
 
