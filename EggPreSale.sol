@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EggPreSale at 0x521be9d04bb13647a193cd917fc18c59652fdf10
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EggPreSale at 0x137d6f206d2dce0995adc0ddd4fa5aa657b68eb4
 */
 pragma solidity ^0.4.23;
 
@@ -291,28 +291,6 @@ contract EggPreSale {
         (uint256)
     {
         return usdRaised_;
-    }
-    
-    function isWhiteListed(
-        address _address
-    )
-        view
-        public
-        returns
-        (bool)
-    {
-        return whiteList_[_address];
-    }
-    
-    function isWhiteListManager(
-        address _address
-    ) 
-        view
-        public
-        returns
-        (bool)
-    {
-        return whiteListManager_[_address];
     }
    
     /**
