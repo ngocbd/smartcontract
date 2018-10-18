@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BZRxToken at 0x75d1d5b95558f6320f707943b85e951426521673
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BZRxToken at 0x1c74cff0376fb4031cd7492cd6db2d66c3f2c6b9
 */
 /**
  * Copyright 2017–2018, bZeroX, LLC. All Rights Reserved.
@@ -411,7 +411,7 @@ contract BZRxToken is UnlimitedAllowanceToken, DetailedERC20, Ownable {
     constructor()
         public
         DetailedERC20(
-            "BZRX Protocol Token",
+            "bZx Protocol Token",
             "BZRX", 
             18
         )
@@ -442,11 +442,10 @@ contract BZRxToken is UnlimitedAllowanceToken, DetailedERC20, Ownable {
         revert("this token is locked for transfers");
     }
 
-    /**
-    * @dev ERC20 transfer function
-    * @param _to The address to transfer to.
-    * @param _value The amount to be transferred.
-    */
+    /// @dev ERC20 transfer function
+    /// @param _to Address to transfer to.
+    /// @param _value Amount to transfer.
+    /// @return Success of transfer.
     function transfer(
         address _to, 
         uint256 _value) 
@@ -527,11 +526,9 @@ contract BZRxToken is UnlimitedAllowanceToken, DetailedERC20, Ownable {
         public 
         onlyOwner 
         canMint 
-        returns (bool)
     {
         mintingFinished = true;
         emit MintFinished();
-        return true;
     }
 
     /**
@@ -542,11 +539,9 @@ contract BZRxToken is UnlimitedAllowanceToken, DetailedERC20, Ownable {
         public 
         onlyOwner 
         isLocked 
-        returns (bool)
     {
         lockingFinished = true;
         emit LockingFinished();
-        return true;
     }
 
     /**
@@ -558,10 +553,8 @@ contract BZRxToken is UnlimitedAllowanceToken, DetailedERC20, Ownable {
         public 
         onlyOwner 
         canMint 
-        returns (bool)
     {
         minters[_minter] = true;
-        return true;
     }
 
     /**
@@ -573,10 +566,8 @@ contract BZRxToken is UnlimitedAllowanceToken, DetailedERC20, Ownable {
         public 
         onlyOwner 
         canMint 
-        returns (bool)
     {
         minters[_minter] = false;
-        return true;
     }
 
     /**
