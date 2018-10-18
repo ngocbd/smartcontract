@@ -1,208 +1,36 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LiabilityFactory at 0x15e90976b01cbc38e203cf9f367fba6f3462b5ff
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LiabilityFactory at 0xefab1d4e5b8177c80cce30c7feb2b5f23bfc465a
 */
 pragma solidity 0.4.24;
 
-/**
- * @title Eliptic curve signature operations
- *
- * @dev Based on https://gist.github.com/axic/5b33912c6f61ae6fd96d6c4a47afde6d
- *
- * TODO Remove this library once solidity supports passing a signature to ecrecover.
- * See https://github.com/ethereum/solidity/issues/864
- *
- */
-
-library ECRecovery {
-
-  /**
-   * @dev Recover signer address from a message by using their signature
-   * @param hash bytes32 message, the hash is the signed message. What is recovered is the signer address.
-   * @param sig bytes signature, the signature is generated using web3.eth.sign()
-   */
-  function recover(bytes32 hash, bytes sig)
-    internal
-    pure
-    returns (address)
-  {
-    bytes32 r;
-    bytes32 s;
-    uint8 v;
-
-    // Check the signature length
-    if (sig.length != 65) {
-      return (address(0));
-    }
-
-    // Divide the signature in r, s and v variables
-    // ecrecover takes the signature parameters, and the only way to get them
-    // currently is to use assembly.
-    // solium-disable-next-line security/no-inline-assembly
-    assembly {
-      r := mload(add(sig, 32))
-      s := mload(add(sig, 64))
-      v := byte(0, mload(add(sig, 96)))
-    }
-
-    // Version of signature should be 27 or 28, but 0 and 1 are also possible versions
-    if (v < 27) {
-      v += 27;
-    }
-
-    // If the version is correct return the signer address
-    if (v != 27 && v != 28) {
-      return (address(0));
-    } else {
-      // solium-disable-next-line arg-overflow
-      return ecrecover(hash, v, r, s);
-    }
-  }
-
-  /**
-   * toEthSignedMessageHash
-   * @dev prefix a bytes32 value with "\x19Ethereum Signed Message:"
-   * @dev and hash the result
-   */
-  function toEthSignedMessageHash(bytes32 hash)
-    internal
-    pure
-    returns (bytes32)
-  {
-    // 32 is the length in bytes of hash,
-    // enforced by the type signature above
-    return keccak256(
-      "\x19Ethereum Signed Message:\n32",
-      hash
-    );
-  }
-}
-
-// File: openzeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol
-
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * See https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address _who) public view returns (uint256);
-  function transfer(address _to, uint256 _value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-// File: openzeppelin-solidity/contracts/math/SafeMath.sol
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
-    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
-    // benefit is lost if 'b' is also tested.
-    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
-    if (_a == 0) {
-      return 0;
-    }
-
-    c = _a * _b;
-    assert(c / _a == _b);
-    return c;
-  }
-
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 _a, uint256 _b) internal pure returns (uint256) {
-    // assert(_b > 0); // Solidity automatically throws when dividing by 0
-    // uint256 c = _a / _b;
-    // assert(_a == _b * c + _a % _b); // There is no case in which this doesn't hold
-    return _a / _b;
-  }
-
-  /**
-  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 _a, uint256 _b) internal pure returns (uint256) {
-    assert(_b <= _a);
-    return _a - _b;
-  }
-
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
-    c = _a + _b;
-    assert(c >= _a);
-    return c;
-  }
-}
-
-// File: openzeppelin-solidity/contracts/token/ERC20/BasicToken.sol
-
-/**
- * @title Basic token
- * @dev Basic version of StandardToken, with no allowances.
- */
-contract BasicToken is ERC20Basic {
-  using SafeMath for uint256;
-
-  mapping(address => uint256) internal balances;
-
-  uint256 internal totalSupply_;
-
-  /**
-  * @dev Total number of tokens in existence
-  */
-  function totalSupply() public view returns (uint256) {
-    return totalSupply_;
-  }
-
-  /**
-  * @dev Transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
-  function transfer(address _to, uint256 _value) public returns (bool) {
-    require(_value <= balances[msg.sender]);
-    require(_to != address(0));
-
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    emit Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-  /**
-  * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of.
-  * @return An uint256 representing the amount owned by the passed address.
-  */
-  function balanceOf(address _owner) public view returns (uint256) {
-    return balances[_owner];
-  }
-
-}
-
-// File: openzeppelin-solidity/contracts/token/ERC20/ERC20.sol
+// File: openzeppelin-solidity/contracts/token/ERC20/IERC20.sol
 
 /**
  * @title ERC20 interface
  * @dev see https://github.com/ethereum/EIPs/issues/20
  */
-contract ERC20 is ERC20Basic {
-  function allowance(address _owner, address _spender)
-    public view returns (uint256);
+interface IERC20 {
+  function totalSupply() external view returns (uint256);
 
-  function transferFrom(address _from, address _to, uint256 _value)
-    public returns (bool);
+  function balanceOf(address who) external view returns (uint256);
 
-  function approve(address _spender, uint256 _value) public returns (bool);
+  function allowance(address owner, address spender)
+    external view returns (uint256);
+
+  function transfer(address to, uint256 value) external returns (bool);
+
+  function approve(address spender, uint256 value)
+    external returns (bool);
+
+  function transferFrom(address from, address to, uint256 value)
+    external returns (bool);
+
+  event Transfer(
+    address indexed from,
+    address indexed to,
+    uint256 value
+  );
+
   event Approval(
     address indexed owner,
     address indexed spender,
@@ -210,42 +38,135 @@ contract ERC20 is ERC20Basic {
   );
 }
 
-// File: openzeppelin-solidity/contracts/token/ERC20/StandardToken.sol
+// File: openzeppelin-solidity/contracts/math/SafeMath.sol
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that revert on error
+ */
+library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, reverts on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    // Gas optimization: this is cheaper than requiring 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+    if (a == 0) {
+      return 0;
+    }
+
+    uint256 c = a * b;
+    require(c / a == b);
+
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers truncating the quotient, reverts on division by zero.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    require(b > 0); // Solidity only automatically asserts when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+
+    return c;
+  }
+
+  /**
+  * @dev Subtracts two numbers, reverts on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    require(b <= a);
+    uint256 c = a - b;
+
+    return c;
+  }
+
+  /**
+  * @dev Adds two numbers, reverts on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    require(c >= a);
+
+    return c;
+  }
+
+  /**
+  * @dev Divides two numbers and returns the remainder (unsigned integer modulo),
+  * reverts when dividing by zero.
+  */
+  function mod(uint256 a, uint256 b) internal pure returns (uint256) {
+    require(b != 0);
+    return a % b;
+  }
+}
+
+// File: openzeppelin-solidity/contracts/token/ERC20/ERC20.sol
 
 /**
  * @title Standard ERC20 token
  *
  * @dev Implementation of the basic standard token.
- * https://github.com/ethereum/EIPs/issues/20
- * Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ * https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md
+ * Originally based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
  */
-contract StandardToken is ERC20, BasicToken {
+contract ERC20 is IERC20 {
+  using SafeMath for uint256;
 
-  mapping (address => mapping (address => uint256)) internal allowed;
+  mapping (address => uint256) private _balances;
 
+  mapping (address => mapping (address => uint256)) private _allowed;
+
+  uint256 private _totalSupply;
 
   /**
-   * @dev Transfer tokens from one address to another
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amount of tokens to be transferred
-   */
-  function transferFrom(
-    address _from,
-    address _to,
-    uint256 _value
-  )
-    public
-    returns (bool)
-  {
-    require(_value <= balances[_from]);
-    require(_value <= allowed[_from][msg.sender]);
-    require(_to != address(0));
+  * @dev Total number of tokens in existence
+  */
+  function totalSupply() public view returns (uint256) {
+    return _totalSupply;
+  }
 
-    balances[_from] = balances[_from].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    emit Transfer(_from, _to, _value);
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address owner) public view returns (uint256) {
+    return _balances[owner];
+  }
+
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param owner address The address which owns the funds.
+   * @param spender address The address which will spend the funds.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
+   */
+  function allowance(
+    address owner,
+    address spender
+   )
+    public
+    view
+    returns (uint256)
+  {
+    return _allowed[owner][spender];
+  }
+
+  /**
+  * @dev Transfer token for a specified address
+  * @param to The address to transfer to.
+  * @param value The amount to be transferred.
+  */
+  function transfer(address to, uint256 value) public returns (bool) {
+    require(value <= _balances[msg.sender]);
+    require(to != address(0));
+
+    _balances[msg.sender] = _balances[msg.sender].sub(value);
+    _balances[to] = _balances[to].add(value);
+    emit Transfer(msg.sender, to, value);
     return true;
   }
 
@@ -255,189 +176,255 @@ contract StandardToken is ERC20, BasicToken {
    * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
    * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
    * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-   * @param _spender The address which will spend the funds.
-   * @param _value The amount of tokens to be spent.
+   * @param spender The address which will spend the funds.
+   * @param value The amount of tokens to be spent.
    */
-  function approve(address _spender, uint256 _value) public returns (bool) {
-    allowed[msg.sender][_spender] = _value;
-    emit Approval(msg.sender, _spender, _value);
+  function approve(address spender, uint256 value) public returns (bool) {
+    require(spender != address(0));
+
+    _allowed[msg.sender][spender] = value;
+    emit Approval(msg.sender, spender, value);
     return true;
   }
 
   /**
-   * @dev Function to check the amount of tokens that an owner allowed to a spender.
-   * @param _owner address The address which owns the funds.
-   * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifying the amount of tokens still available for the spender.
+   * @dev Transfer tokens from one address to another
+   * @param from address The address which you want to send tokens from
+   * @param to address The address which you want to transfer to
+   * @param value uint256 the amount of tokens to be transferred
    */
-  function allowance(
-    address _owner,
-    address _spender
-   )
-    public
-    view
-    returns (uint256)
-  {
-    return allowed[_owner][_spender];
-  }
-
-  /**
-   * @dev Increase the amount of tokens that an owner allowed to a spender.
-   * approve should be called when allowed[_spender] == 0. To increment
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   * @param _spender The address which will spend the funds.
-   * @param _addedValue The amount of tokens to increase the allowance by.
-   */
-  function increaseApproval(
-    address _spender,
-    uint256 _addedValue
+  function transferFrom(
+    address from,
+    address to,
+    uint256 value
   )
     public
     returns (bool)
   {
-    allowed[msg.sender][_spender] = (
-      allowed[msg.sender][_spender].add(_addedValue));
-    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    require(value <= _balances[from]);
+    require(value <= _allowed[from][msg.sender]);
+    require(to != address(0));
+
+    _balances[from] = _balances[from].sub(value);
+    _balances[to] = _balances[to].add(value);
+    _allowed[from][msg.sender] = _allowed[from][msg.sender].sub(value);
+    emit Transfer(from, to, value);
+    return true;
+  }
+
+  /**
+   * @dev Increase the amount of tokens that an owner allowed to a spender.
+   * approve should be called when allowed_[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param spender The address which will spend the funds.
+   * @param addedValue The amount of tokens to increase the allowance by.
+   */
+  function increaseAllowance(
+    address spender,
+    uint256 addedValue
+  )
+    public
+    returns (bool)
+  {
+    require(spender != address(0));
+
+    _allowed[msg.sender][spender] = (
+      _allowed[msg.sender][spender].add(addedValue));
+    emit Approval(msg.sender, spender, _allowed[msg.sender][spender]);
     return true;
   }
 
   /**
    * @dev Decrease the amount of tokens that an owner allowed to a spender.
-   * approve should be called when allowed[_spender] == 0. To decrement
+   * approve should be called when allowed_[_spender] == 0. To decrement
    * allowed value is better to use this function to avoid 2 calls (and wait until
    * the first transaction is mined)
    * From MonolithDAO Token.sol
-   * @param _spender The address which will spend the funds.
-   * @param _subtractedValue The amount of tokens to decrease the allowance by.
+   * @param spender The address which will spend the funds.
+   * @param subtractedValue The amount of tokens to decrease the allowance by.
    */
-  function decreaseApproval(
-    address _spender,
-    uint256 _subtractedValue
+  function decreaseAllowance(
+    address spender,
+    uint256 subtractedValue
   )
     public
     returns (bool)
   {
-    uint256 oldValue = allowed[msg.sender][_spender];
-    if (_subtractedValue >= oldValue) {
-      allowed[msg.sender][_spender] = 0;
-    } else {
-      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
-    }
-    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    require(spender != address(0));
+
+    _allowed[msg.sender][spender] = (
+      _allowed[msg.sender][spender].sub(subtractedValue));
+    emit Approval(msg.sender, spender, _allowed[msg.sender][spender]);
     return true;
   }
 
-}
-
-// File: openzeppelin-solidity/contracts/ownership/Ownable.sol
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipRenounced(address indexed previousOwner);
-  event OwnershipTransferred(
-    address indexed previousOwner,
-    address indexed newOwner
-  );
-
+  /**
+   * @dev Internal function that mints an amount of the token and assigns it to
+   * an account. This encapsulates the modification of balances such that the
+   * proper events are emitted.
+   * @param account The account that will receive the created tokens.
+   * @param amount The amount that will be created.
+   */
+  function _mint(address account, uint256 amount) internal {
+    require(account != 0);
+    _totalSupply = _totalSupply.add(amount);
+    _balances[account] = _balances[account].add(amount);
+    emit Transfer(address(0), account, amount);
+  }
 
   /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * @dev Internal function that burns an amount of the token of a given
    * account.
+   * @param account The account whose tokens will be burnt.
+   * @param amount The amount that will be burnt.
    */
-  constructor() public {
-    owner = msg.sender;
+  function _burn(address account, uint256 amount) internal {
+    require(account != 0);
+    require(amount <= _balances[account]);
+
+    _totalSupply = _totalSupply.sub(amount);
+    _balances[account] = _balances[account].sub(amount);
+    emit Transfer(account, address(0), amount);
   }
 
   /**
-   * @dev Throws if called by any account other than the owner.
+   * @dev Internal function that burns an amount of the token of a given
+   * account, deducting from the sender's allowance for said account. Uses the
+   * internal burn function.
+   * @param account The account whose tokens will be burnt.
+   * @param amount The amount that will be burnt.
    */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
+  function _burnFrom(address account, uint256 amount) internal {
+    require(amount <= _allowed[account][msg.sender]);
 
-  /**
-   * @dev Allows the current owner to relinquish control of the contract.
-   * @notice Renouncing to ownership will leave the contract without an owner.
-   * It will not be possible to call the functions with the `onlyOwner`
-   * modifier anymore.
-   */
-  function renounceOwnership() public onlyOwner {
-    emit OwnershipRenounced(owner);
-    owner = address(0);
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param _newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address _newOwner) public onlyOwner {
-    _transferOwnership(_newOwner);
-  }
-
-  /**
-   * @dev Transfers control of the contract to a newOwner.
-   * @param _newOwner The address to transfer ownership to.
-   */
-  function _transferOwnership(address _newOwner) internal {
-    require(_newOwner != address(0));
-    emit OwnershipTransferred(owner, _newOwner);
-    owner = _newOwner;
+    // Should https://github.com/OpenZeppelin/zeppelin-solidity/issues/707 be accepted,
+    // this function needs to emit an event with the updated approval.
+    _allowed[account][msg.sender] = _allowed[account][msg.sender].sub(
+      amount);
+    _burn(account, amount);
   }
 }
 
-// File: openzeppelin-solidity/contracts/token/ERC20/MintableToken.sol
+// File: openzeppelin-solidity/contracts/access/Roles.sol
 
 /**
- * @title Mintable token
- * @dev Simple ERC20 Token example, with mintable token creation
- * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
+ * @title Roles
+ * @dev Library for managing addresses assigned to a Role.
  */
-contract MintableToken is StandardToken, Ownable {
-  event Mint(address indexed to, uint256 amount);
-  event MintFinished();
+library Roles {
+  struct Role {
+    mapping (address => bool) bearer;
+  }
 
-  bool public mintingFinished = false;
+  /**
+   * @dev give an account access to this role
+   */
+  function add(Role storage role, address account) internal {
+    require(account != address(0));
+    role.bearer[account] = true;
+  }
 
+  /**
+   * @dev remove an account's access to this role
+   */
+  function remove(Role storage role, address account) internal {
+    require(account != address(0));
+    role.bearer[account] = false;
+  }
 
-  modifier canMint() {
-    require(!mintingFinished);
+  /**
+   * @dev check if an account has this role
+   * @return bool
+   */
+  function has(Role storage role, address account)
+    internal
+    view
+    returns (bool)
+  {
+    require(account != address(0));
+    return role.bearer[account];
+  }
+}
+
+// File: openzeppelin-solidity/contracts/access/roles/MinterRole.sol
+
+contract MinterRole {
+  using Roles for Roles.Role;
+
+  event MinterAdded(address indexed account);
+  event MinterRemoved(address indexed account);
+
+  Roles.Role private minters;
+
+  constructor() public {
+    minters.add(msg.sender);
+  }
+
+  modifier onlyMinter() {
+    require(isMinter(msg.sender));
     _;
   }
 
-  modifier hasMintPermission() {
-    require(msg.sender == owner);
+  function isMinter(address account) public view returns (bool) {
+    return minters.has(account);
+  }
+
+  function addMinter(address account) public onlyMinter {
+    minters.add(account);
+    emit MinterAdded(account);
+  }
+
+  function renounceMinter() public {
+    minters.remove(msg.sender);
+  }
+
+  function _removeMinter(address account) internal {
+    minters.remove(account);
+    emit MinterRemoved(account);
+  }
+}
+
+// File: openzeppelin-solidity/contracts/token/ERC20/ERC20Mintable.sol
+
+/**
+ * @title ERC20Mintable
+ * @dev ERC20 minting logic
+ */
+contract ERC20Mintable is ERC20, MinterRole {
+  event MintingFinished();
+
+  bool private _mintingFinished = false;
+
+  modifier onlyBeforeMintingFinished() {
+    require(!_mintingFinished);
     _;
+  }
+
+  /**
+   * @return true if the minting is finished.
+   */
+  function mintingFinished() public view returns(bool) {
+    return _mintingFinished;
   }
 
   /**
    * @dev Function to mint tokens
-   * @param _to The address that will receive the minted tokens.
-   * @param _amount The amount of tokens to mint.
+   * @param to The address that will receive the minted tokens.
+   * @param amount The amount of tokens to mint.
    * @return A boolean that indicates if the operation was successful.
    */
   function mint(
-    address _to,
-    uint256 _amount
+    address to,
+    uint256 amount
   )
     public
-    hasMintPermission
-    canMint
+    onlyMinter
+    onlyBeforeMintingFinished
     returns (bool)
   {
-    totalSupply_ = totalSupply_.add(_amount);
-    balances[_to] = balances[_to].add(_amount);
-    emit Mint(_to, _amount);
-    emit Transfer(address(0), _to, _amount);
+    _mint(to, amount);
     return true;
   }
 
@@ -445,59 +432,177 @@ contract MintableToken is StandardToken, Ownable {
    * @dev Function to stop minting new tokens.
    * @return True if the operation was successful.
    */
-  function finishMinting() public onlyOwner canMint returns (bool) {
-    mintingFinished = true;
-    emit MintFinished();
+  function finishMinting()
+    public
+    onlyMinter
+    onlyBeforeMintingFinished
+    returns (bool)
+  {
+    _mintingFinished = true;
+    emit MintingFinished();
     return true;
   }
 }
 
-// File: openzeppelin-solidity/contracts/token/ERC20/BurnableToken.sol
+// File: openzeppelin-solidity/contracts/token/ERC20/ERC20Burnable.sol
 
 /**
  * @title Burnable Token
  * @dev Token that can be irreversibly burned (destroyed).
  */
-contract BurnableToken is BasicToken {
-
-  event Burn(address indexed burner, uint256 value);
+contract ERC20Burnable is ERC20 {
 
   /**
    * @dev Burns a specific amount of tokens.
-   * @param _value The amount of token to be burned.
+   * @param value The amount of token to be burned.
    */
-  function burn(uint256 _value) public {
-    _burn(msg.sender, _value);
+  function burn(uint256 value) public {
+    _burn(msg.sender, value);
   }
 
-  function _burn(address _who, uint256 _value) internal {
-    require(_value <= balances[_who]);
-    // no need to require value <= totalSupply, since that would imply the
-    // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+  /**
+   * @dev Burns a specific amount of tokens from the target address and decrements allowance
+   * @param from address The address which you want to send tokens from
+   * @param value uint256 The amount of token to be burned
+   */
+  function burnFrom(address from, uint256 value) public {
+    _burnFrom(from, value);
+  }
 
-    balances[_who] = balances[_who].sub(_value);
-    totalSupply_ = totalSupply_.sub(_value);
-    emit Burn(_who, _value);
-    emit Transfer(_who, address(0), _value);
+  /**
+   * @dev Overrides ERC20._burn in order for burn and burnFrom to emit
+   * an additional Burn event.
+   */
+  function _burn(address who, uint256 value) internal {
+    super._burn(who, value);
+  }
+}
+
+// File: openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol
+
+/**
+ * @title ERC20Detailed token
+ * @dev The decimals are only for visualization purposes.
+ * All the operations are done using the smallest and indivisible token unit,
+ * just as on Ethereum all the operations are done in wei.
+ */
+contract ERC20Detailed is IERC20 {
+  string private _name;
+  string private _symbol;
+  uint8 private _decimals;
+
+  constructor(string name, string symbol, uint8 decimals) public {
+    _name = name;
+    _symbol = symbol;
+    _decimals = decimals;
+  }
+
+  /**
+   * @return the name of the token.
+   */
+  function name() public view returns(string) {
+    return _name;
+  }
+
+  /**
+   * @return the symbol of the token.
+   */
+  function symbol() public view returns(string) {
+    return _symbol;
+  }
+
+  /**
+   * @return the number of decimals of the token.
+   */
+  function decimals() public view returns(uint8) {
+    return _decimals;
   }
 }
 
 // File: contracts/robonomics/XRT.sol
 
-contract XRT is MintableToken, BurnableToken {
-    string public constant name     = "Robonomics Beta";
-    string public constant symbol   = "XRT";
-    uint   public constant decimals = 9;
-
-    uint256 public constant INITIAL_SUPPLY = 1000 * (10 ** uint256(decimals));
-
-    constructor() public {
-        totalSupply_ = INITIAL_SUPPLY;
-        balances[msg.sender] = INITIAL_SUPPLY;
-        emit Transfer(0x0, msg.sender, INITIAL_SUPPLY);
+contract XRT is ERC20Mintable, ERC20Burnable, ERC20Detailed {
+    constructor() public ERC20Detailed("XRT", "Robonomics Beta", 9) {
+        uint256 INITIAL_SUPPLY = 1000 * (10 ** 9);
+        _mint(msg.sender, INITIAL_SUPPLY);
     }
 }
 
+// File: contracts/robonomics/RobotLiabilityAPI.sol
+
+//import './LiabilityFactory.sol';
+
+
+contract RobotLiabilityAPI {
+    bytes   public model;
+    bytes   public objective;
+    bytes   public result;
+
+    ERC20   public token;
+    uint256 public cost;
+    uint256 public lighthouseFee;
+    uint256 public validatorFee;
+
+    bytes32 public demandHash;
+    bytes32 public offerHash;
+
+    address public promisor;
+    address public promisee;
+    address public validator;
+
+    bool    public isSuccess;
+    bool    public isFinalized;
+
+    LiabilityFactory public factory;
+
+    event Finalized(bool indexed success, bytes result);
+}
+
+// File: contracts/robonomics/LightContract.sol
+
+contract LightContract {
+    /**
+     * @dev Shared code smart contract 
+     */
+    address lib;
+
+    constructor(address _library) public {
+        lib = _library;
+    }
+
+    function() public {
+        require(lib.delegatecall(msg.data));
+    }
+}
+
+// File: contracts/robonomics/RobotLiability.sol
+
+// Standard robot liability light contract
+contract RobotLiability is RobotLiabilityAPI, LightContract {
+    constructor(address _lib) public LightContract(_lib)
+    { factory = LiabilityFactory(msg.sender); }
+}
+
+// File: contracts/robonomics/SingletonHash.sol
+
+contract SingletonHash {
+    event HashConsumed(bytes32 indexed hash);
+
+    /**
+     * @dev Used hash accounting
+     */
+    mapping(bytes32 => bool) public isHashConsumed;
+
+    /**
+     * @dev Parameter can be used only once
+     * @param _hash Single usage hash
+     */
+    function singletonHash(bytes32 _hash) internal {
+        require(!isHashConsumed[_hash]);
+        isHashConsumed[_hash] = true;
+        emit HashConsumed(_hash);
+    }
+}
 
 // File: contracts/robonomics/DutchAuction.sol
 
@@ -514,7 +619,7 @@ contract DutchAuction {
     /*
      *  Constants
      */
-    uint constant public MAX_TOKENS_SOLD = 8000 * 10**9; // 8M XRT = 10M - 1M (Foundation) - 1M (Early investors base)
+    uint constant public MAX_TOKENS_SOLD = 800 * 10**9; // 8M XRT = 10M - 1M (Foundation) - 1M (Early investors base)
     uint constant public WAITING_PERIOD = 0; // 1 days;
 
     /*
@@ -588,7 +693,8 @@ contract DutchAuction {
     constructor(address _wallet, uint _ceiling, uint _priceFactor)
         public
     {
-        require(_wallet != 0 && _ceiling != 0 && _priceFactor != 0);
+        require(_wallet != 0 && _ceiling > 0 && _priceFactor > 0);
+
         owner = msg.sender;
         wallet = _wallet;
         ceiling = _ceiling;
@@ -606,6 +712,7 @@ contract DutchAuction {
     {
         // Validate argument
         require(_xrt != 0 && _ambix != 0);
+
         xrt = XRT(_xrt);
         ambix = _ambix;
 
@@ -623,18 +730,6 @@ contract DutchAuction {
     {
         stage = Stages.AuctionStarted;
         startBlock = block.number;
-    }
-
-    /// @dev Changes auction ceiling and start price factor before auction is started.
-    /// @param _ceiling Updated auction ceiling.
-    /// @param _priceFactor Updated start price factor.
-    function changeSettings(uint _ceiling, uint _priceFactor)
-        public
-        isWallet
-        atStage(Stages.AuctionSetUp)
-    {
-        ceiling = _ceiling;
-        priceFactor = _priceFactor;
     }
 
     /// @dev Calculates current token price.
@@ -694,7 +789,7 @@ contract DutchAuction {
 
         bids[receiver] += amount;
         totalReceived += amount;
-        BidSubmission(receiver, amount);
+        emit BidSubmission(receiver, amount);
 
         // Finalize auction when maxWei reached
         if (amount == maxWei)
@@ -758,294 +853,17 @@ contract DutchAuction {
     }
 }
 
-// File: ens/contracts/ENS.sol
+// File: contracts/robonomics/LighthouseAPI.sol
 
-interface ENS {
+//import './LiabilityFactory.sol';
 
-    // Logged when the owner of a node assigns a new owner to a subnode.
-    event NewOwner(bytes32 indexed node, bytes32 indexed label, address owner);
-
-    // Logged when the owner of a node transfers ownership to a new account.
-    event Transfer(bytes32 indexed node, address owner);
-
-    // Logged when the resolver for a node changes.
-    event NewResolver(bytes32 indexed node, address resolver);
-
-    // Logged when the TTL of a node changes
-    event NewTTL(bytes32 indexed node, uint64 ttl);
-
-
-    function setSubnodeOwner(bytes32 node, bytes32 label, address owner) public;
-    function setResolver(bytes32 node, address resolver) public;
-    function setOwner(bytes32 node, address owner) public;
-    function setTTL(bytes32 node, uint64 ttl) public;
-    function owner(bytes32 node) public view returns (address);
-    function resolver(bytes32 node) public view returns (address);
-    function ttl(bytes32 node) public view returns (uint64);
-
-}
-
-// File: ens/contracts/PublicResolver.sol
-
-/**
- * A simple resolver anyone can use; only allows the owner of a node to set its
- * address.
- */
-contract PublicResolver {
-
-    bytes4 constant INTERFACE_META_ID = 0x01ffc9a7;
-    bytes4 constant ADDR_INTERFACE_ID = 0x3b3b57de;
-    bytes4 constant CONTENT_INTERFACE_ID = 0xd8389dc5;
-    bytes4 constant NAME_INTERFACE_ID = 0x691f3431;
-    bytes4 constant ABI_INTERFACE_ID = 0x2203ab56;
-    bytes4 constant PUBKEY_INTERFACE_ID = 0xc8690233;
-    bytes4 constant TEXT_INTERFACE_ID = 0x59d1d43c;
-    bytes4 constant MULTIHASH_INTERFACE_ID = 0xe89401a1;
-
-    event AddrChanged(bytes32 indexed node, address a);
-    event ContentChanged(bytes32 indexed node, bytes32 hash);
-    event NameChanged(bytes32 indexed node, string name);
-    event ABIChanged(bytes32 indexed node, uint256 indexed contentType);
-    event PubkeyChanged(bytes32 indexed node, bytes32 x, bytes32 y);
-    event TextChanged(bytes32 indexed node, string indexedKey, string key);
-    event MultihashChanged(bytes32 indexed node, bytes hash);
-
-    struct PublicKey {
-        bytes32 x;
-        bytes32 y;
-    }
-
-    struct Record {
-        address addr;
-        bytes32 content;
-        string name;
-        PublicKey pubkey;
-        mapping(string=>string) text;
-        mapping(uint256=>bytes) abis;
-        bytes multihash;
-    }
-
-    ENS ens;
-
-    mapping (bytes32 => Record) records;
-
-    modifier only_owner(bytes32 node) {
-        require(ens.owner(node) == msg.sender);
-        _;
-    }
-
-    /**
-     * Constructor.
-     * @param ensAddr The ENS registrar contract.
-     */
-    function PublicResolver(ENS ensAddr) public {
-        ens = ensAddr;
-    }
-
-    /**
-     * Sets the address associated with an ENS node.
-     * May only be called by the owner of that node in the ENS registry.
-     * @param node The node to update.
-     * @param addr The address to set.
-     */
-    function setAddr(bytes32 node, address addr) public only_owner(node) {
-        records[node].addr = addr;
-        AddrChanged(node, addr);
-    }
-
-    /**
-     * Sets the content hash associated with an ENS node.
-     * May only be called by the owner of that node in the ENS registry.
-     * Note that this resource type is not standardized, and will likely change
-     * in future to a resource type based on multihash.
-     * @param node The node to update.
-     * @param hash The content hash to set
-     */
-    function setContent(bytes32 node, bytes32 hash) public only_owner(node) {
-        records[node].content = hash;
-        ContentChanged(node, hash);
-    }
-
-    /**
-     * Sets the multihash associated with an ENS node.
-     * May only be called by the owner of that node in the ENS registry.
-     * @param node The node to update.
-     * @param hash The multihash to set
-     */
-    function setMultihash(bytes32 node, bytes hash) public only_owner(node) {
-        records[node].multihash = hash;
-        MultihashChanged(node, hash);
-    }
-    
-    /**
-     * Sets the name associated with an ENS node, for reverse records.
-     * May only be called by the owner of that node in the ENS registry.
-     * @param node The node to update.
-     * @param name The name to set.
-     */
-    function setName(bytes32 node, string name) public only_owner(node) {
-        records[node].name = name;
-        NameChanged(node, name);
-    }
-
-    /**
-     * Sets the ABI associated with an ENS node.
-     * Nodes may have one ABI of each content type. To remove an ABI, set it to
-     * the empty string.
-     * @param node The node to update.
-     * @param contentType The content type of the ABI
-     * @param data The ABI data.
-     */
-    function setABI(bytes32 node, uint256 contentType, bytes data) public only_owner(node) {
-        // Content types must be powers of 2
-        require(((contentType - 1) & contentType) == 0);
-        
-        records[node].abis[contentType] = data;
-        ABIChanged(node, contentType);
-    }
-    
-    /**
-     * Sets the SECP256k1 public key associated with an ENS node.
-     * @param node The ENS node to query
-     * @param x the X coordinate of the curve point for the public key.
-     * @param y the Y coordinate of the curve point for the public key.
-     */
-    function setPubkey(bytes32 node, bytes32 x, bytes32 y) public only_owner(node) {
-        records[node].pubkey = PublicKey(x, y);
-        PubkeyChanged(node, x, y);
-    }
-
-    /**
-     * Sets the text data associated with an ENS node and key.
-     * May only be called by the owner of that node in the ENS registry.
-     * @param node The node to update.
-     * @param key The key to set.
-     * @param value The text data value to set.
-     */
-    function setText(bytes32 node, string key, string value) public only_owner(node) {
-        records[node].text[key] = value;
-        TextChanged(node, key, key);
-    }
-
-    /**
-     * Returns the text data associated with an ENS node and key.
-     * @param node The ENS node to query.
-     * @param key The text data key to query.
-     * @return The associated text data.
-     */
-    function text(bytes32 node, string key) public view returns (string) {
-        return records[node].text[key];
-    }
-
-    /**
-     * Returns the SECP256k1 public key associated with an ENS node.
-     * Defined in EIP 619.
-     * @param node The ENS node to query
-     * @return x, y the X and Y coordinates of the curve point for the public key.
-     */
-    function pubkey(bytes32 node) public view returns (bytes32 x, bytes32 y) {
-        return (records[node].pubkey.x, records[node].pubkey.y);
-    }
-
-    /**
-     * Returns the ABI associated with an ENS node.
-     * Defined in EIP205.
-     * @param node The ENS node to query
-     * @param contentTypes A bitwise OR of the ABI formats accepted by the caller.
-     * @return contentType The content type of the return value
-     * @return data The ABI data
-     */
-    function ABI(bytes32 node, uint256 contentTypes) public view returns (uint256 contentType, bytes data) {
-        Record storage record = records[node];
-        for (contentType = 1; contentType <= contentTypes; contentType <<= 1) {
-            if ((contentType & contentTypes) != 0 && record.abis[contentType].length > 0) {
-                data = record.abis[contentType];
-                return;
-            }
-        }
-        contentType = 0;
-    }
-
-    /**
-     * Returns the name associated with an ENS node, for reverse records.
-     * Defined in EIP181.
-     * @param node The ENS node to query.
-     * @return The associated name.
-     */
-    function name(bytes32 node) public view returns (string) {
-        return records[node].name;
-    }
-
-    /**
-     * Returns the content hash associated with an ENS node.
-     * Note that this resource type is not standardized, and will likely change
-     * in future to a resource type based on multihash.
-     * @param node The ENS node to query.
-     * @return The associated content hash.
-     */
-    function content(bytes32 node) public view returns (bytes32) {
-        return records[node].content;
-    }
-
-    /**
-     * Returns the multihash associated with an ENS node.
-     * @param node The ENS node to query.
-     * @return The associated multihash.
-     */
-    function multihash(bytes32 node) public view returns (bytes) {
-        return records[node].multihash;
-    }
-
-    /**
-     * Returns the address associated with an ENS node.
-     * @param node The ENS node to query.
-     * @return The associated address.
-     */
-    function addr(bytes32 node) public view returns (address) {
-        return records[node].addr;
-    }
-
-    /**
-     * Returns true if the resolver implements the interface specified by the provided hash.
-     * @param interfaceID The ID of the interface to check for.
-     * @return True if the contract implements the requested interface.
-     */
-    function supportsInterface(bytes4 interfaceID) public pure returns (bool) {
-        return interfaceID == ADDR_INTERFACE_ID ||
-        interfaceID == CONTENT_INTERFACE_ID ||
-        interfaceID == NAME_INTERFACE_ID ||
-        interfaceID == ABI_INTERFACE_ID ||
-        interfaceID == PUBKEY_INTERFACE_ID ||
-        interfaceID == TEXT_INTERFACE_ID ||
-        interfaceID == MULTIHASH_INTERFACE_ID ||
-        interfaceID == INTERFACE_META_ID;
-    }
-}
-
-contract LightContract {
-    /**
-     * @dev Shared code smart contract 
-     */
-    address lib;
-
-    constructor(address _library) public {
-        lib = _library;
-    }
-
-    function() public {
-        require(lib.delegatecall(msg.data));
-    }
-}
-
-contract LighthouseABI {
-    function refill(uint256 _value) external;
-    function withdraw(uint256 _value) external;
-    function to(address _to, bytes _data) external;
-    function () external;
-}
 
 contract LighthouseAPI {
     address[] public members;
+
+    function membersLength() public view returns (uint256)
+    { return members.length; }
+
     mapping(address => uint256) indexOf;
 
     mapping(address => uint256) public balances;
@@ -1064,92 +882,7 @@ contract LighthouseAPI {
     { return balances[_member] / minimalFreeze; }
 }
 
-contract LighthouseLib is LighthouseAPI, LighthouseABI {
-
-    function refill(uint256 _value) external {
-        require(xrt.transferFrom(msg.sender, this, _value));
-        require(_value >= minimalFreeze);
-
-        if (balances[msg.sender] == 0) {
-            indexOf[msg.sender] = members.length;
-            members.push(msg.sender);
-        }
-        balances[msg.sender] += _value;
-    }
-
-    function withdraw(uint256 _value) external {
-        require(balances[msg.sender] >= _value);
-
-        balances[msg.sender] -= _value;
-        require(xrt.transfer(msg.sender, _value));
-
-        // Drop member if quota go to zero
-        if (quotaOf(msg.sender) == 0) {
-            uint256 balance = balances[msg.sender];
-            balances[msg.sender] = 0;
-            require(xrt.transfer(msg.sender, balance)); 
-            
-            uint256 senderIndex = indexOf[msg.sender];
-            uint256 lastIndex = members.length - 1;
-            if (senderIndex < lastIndex)
-                members[senderIndex] = members[lastIndex];
-            members.length -= 1;
-        }
-    }
-
-    function nextMember() internal
-    { marker = (marker + 1) % members.length; }
-
-    modifier quoted {
-        if (quota == 0) {
-            // Step over marker
-            nextMember();
-
-            // Allocate new quota
-            quota = quotaOf(members[marker]);
-        }
-
-        // Consume one quota for transaction sending
-        assert(quota > 0);
-        quota -= 1;
-
-        _;
-    }
-
-    modifier keepalive {
-        if (timeoutBlocks < block.number - keepaliveBlock) {
-            // Search keepalive sender
-            while (msg.sender != members[marker])
-                nextMember();
-
-            // Allocate new quota
-            quota = quotaOf(members[marker]);
-        }
-
-        _;
-    }
-
-    modifier member {
-        // Zero members guard
-        require(members.length > 0);
-
-        // Only member with marker can to send transaction
-        require(msg.sender == members[marker]);
-
-        // Store transaction sending block
-        keepaliveBlock = block.number;
-
-        _;
-    }
-
-    function to(address _to, bytes _data) external keepalive quoted member {
-        require(factory.gasUtilizing(_to) > 0);
-        require(_to.call(_data));
-    }
-
-    function () external keepalive quoted member
-    { require(factory.call(msg.data)); }
-}
+// File: contracts/robonomics/Lighthouse.sol
 
 contract Lighthouse is LighthouseAPI, LightContract {
     constructor(
@@ -1160,6 +893,8 @@ contract Lighthouse is LighthouseAPI, LightContract {
         public
         LightContract(_lib)
     {
+        require(_minimalFreeze > 0 && _timeoutBlocks > 0);
+
         minimalFreeze = _minimalFreeze;
         timeoutBlocks = _timeoutBlocks;
         factory = LiabilityFactory(msg.sender);
@@ -1167,208 +902,261 @@ contract Lighthouse is LighthouseAPI, LightContract {
     }
 }
 
-contract RobotLiabilityABI {
-    function ask(
-        bytes   _model,
-        bytes   _objective,
+// File: ens/contracts/AbstractENS.sol
 
-        ERC20   _token,
-        uint256 _cost,
+contract AbstractENS {
+    function owner(bytes32 node) constant returns(address);
+    function resolver(bytes32 node) constant returns(address);
+    function ttl(bytes32 node) constant returns(uint64);
+    function setOwner(bytes32 node, address owner);
+    function setSubnodeOwner(bytes32 node, bytes32 label, address owner);
+    function setResolver(bytes32 node, address resolver);
+    function setTTL(bytes32 node, uint64 ttl);
 
-        address _validator,
-        uint256 _validator_fee,
+    // Logged when the owner of a node assigns a new owner to a subnode.
+    event NewOwner(bytes32 indexed node, bytes32 indexed label, address owner);
 
-        uint256 _deadline,
-        bytes32 _nonce,
-        bytes   _signature
-    ) external returns (bool);
+    // Logged when the owner of a node transfers ownership to a new account.
+    event Transfer(bytes32 indexed node, address owner);
 
-    function bid(
-        bytes   _model,
-        bytes   _objective,
-        
-        ERC20   _token,
-        uint256 _cost,
+    // Logged when the resolver for a node changes.
+    event NewResolver(bytes32 indexed node, address resolver);
 
-        uint256 _lighthouse_fee,
-
-        uint256 _deadline,
-        bytes32 _nonce,
-        bytes   _signature
-    ) external returns (bool);
-
-    function finalize(
-        bytes _result,
-        bytes _signature,
-        bool  _agree
-    ) external returns (bool);
+    // Logged when the TTL of a node changes
+    event NewTTL(bytes32 indexed node, uint64 ttl);
 }
 
-contract RobotLiabilityAPI {
-    bytes   public model;
-    bytes   public objective;
-    bytes   public result;
+// File: ens/contracts/ENS.sol
 
-    ERC20   public token;
-    uint256 public cost;
-    uint256 public lighthouseFee;
-    uint256 public validatorFee;
-
-    bytes32 public askHash;
-    bytes32 public bidHash;
-
-    address public promisor;
-    address public promisee;
-    address public validator;
-
-    bool    public isConfirmed;
-    bool    public isFinalized;
-
-    LiabilityFactory public factory;
-}
-
-contract RobotLiabilityLib is RobotLiabilityABI
-                            , RobotLiabilityAPI {
-    using ECRecovery for bytes32;
-
-    function ask(
-        bytes   _model,
-        bytes   _objective,
-
-        ERC20   _token,
-        uint256 _cost,
-
-        address _validator,
-        uint256 _validator_fee,
-
-        uint256 _deadline,
-        bytes32 _nonce,
-        bytes   _signature
-    )
-        external
-        returns (bool)
-    {
-        require(msg.sender == address(factory));
-        require(block.number < _deadline);
-
-        model        = _model;
-        objective    = _objective;
-        token        = _token;
-        cost         = _cost;
-        validator    = _validator;
-        validatorFee = _validator_fee;
-
-        askHash = keccak256(abi.encodePacked(
-            _model
-          , _objective
-          , _token
-          , _cost
-          , _validator
-          , _validator_fee
-          , _deadline
-          , _nonce
-        ));
-
-        promisee = askHash
-            .toEthSignedMessageHash()
-            .recover(_signature);
-        return true;
+/**
+ * The ENS registry contract.
+ */
+contract ENS is AbstractENS {
+    struct Record {
+        address owner;
+        address resolver;
+        uint64 ttl;
     }
 
-    function bid(
-        bytes   _model,
-        bytes   _objective,
-        
-        ERC20   _token,
-        uint256 _cost,
+    mapping(bytes32=>Record) records;
 
-        uint256 _lighthouse_fee,
-
-        uint256 _deadline,
-        bytes32 _nonce,
-        bytes   _signature
-    )
-        external
-        returns (bool)
-    {
-        require(msg.sender == address(factory));
-        require(block.number < _deadline);
-        require(keccak256(model) == keccak256(_model));
-        require(keccak256(objective) == keccak256(_objective));
-        require(_token == token);
-        require(_cost == cost);
-
-        lighthouseFee = _lighthouse_fee;
-
-        bidHash = keccak256(abi.encodePacked(
-            _model
-          , _objective
-          , _token
-          , _cost
-          , _lighthouse_fee
-          , _deadline
-          , _nonce
-        ));
-
-        promisor = bidHash
-            .toEthSignedMessageHash()
-            .recover(_signature);
-        return true;
+    // Permits modifications only by the owner of the specified node.
+    modifier only_owner(bytes32 node) {
+        if(records[node].owner != msg.sender) throw;
+        _;
     }
 
     /**
-     * @dev Finalize this liability
-     * @param _result Result data hash
-     * @param _agree Validation network confirmation
-     * @param _signature Result sender signature
+     * Constructs a new ENS registrar.
      */
-    function finalize(
-        bytes _result,
-        bytes _signature,
-        bool  _agree
-    )
-        external
-        returns (bool)
-    {
-        uint256 gasinit = gasleft();
-        require(!isFinalized);
+    function ENS() {
+        records[0].owner = msg.sender;
+    }
 
-        address resultSender = keccak256(abi.encodePacked(this, _result))
-            .toEthSignedMessageHash()
-            .recover(_signature);
-        require(resultSender == promisor);
+    /**
+     * Returns the address that owns the specified node.
+     */
+    function owner(bytes32 node) constant returns (address) {
+        return records[node].owner;
+    }
 
-        result = _result;
-        isFinalized = true;
+    /**
+     * Returns the address of the resolver for the specified node.
+     */
+    function resolver(bytes32 node) constant returns (address) {
+        return records[node].resolver;
+    }
 
-        if (validator == 0) {
-            require(factory.isLighthouse(msg.sender));
-            require(token.transfer(promisor, cost));
-        } else {
-            require(msg.sender == validator);
+    /**
+     * Returns the TTL of a node, and any records associated with it.
+     */
+    function ttl(bytes32 node) constant returns (uint64) {
+        return records[node].ttl;
+    }
 
-            isConfirmed = _agree;
-            if (isConfirmed)
-                require(token.transfer(promisor, cost));
-            else
-                require(token.transfer(promisee, cost));
+    /**
+     * Transfers ownership of a node to a new address. May only be called by the current
+     * owner of the node.
+     * @param node The node to transfer ownership of.
+     * @param owner The address of the new owner.
+     */
+    function setOwner(bytes32 node, address owner) only_owner(node) {
+        Transfer(node, owner);
+        records[node].owner = owner;
+    }
 
-            if (validatorFee > 0)
-                require(factory.xrt().transfer(validator, validatorFee));
-        }
+    /**
+     * Transfers ownership of a subnode sha3(node, label) to a new address. May only be
+     * called by the owner of the parent node.
+     * @param node The parent node.
+     * @param label The hash of the label specifying the subnode.
+     * @param owner The address of the new owner.
+     */
+    function setSubnodeOwner(bytes32 node, bytes32 label, address owner) only_owner(node) {
+        var subnode = sha3(node, label);
+        NewOwner(node, label, owner);
+        records[subnode].owner = owner;
+    }
 
-        require(factory.liabilityFinalized(gasinit));
-        return true;
+    /**
+     * Sets the resolver address for the specified node.
+     * @param node The node to update.
+     * @param resolver The address of the resolver.
+     */
+    function setResolver(bytes32 node, address resolver) only_owner(node) {
+        NewResolver(node, resolver);
+        records[node].resolver = resolver;
+    }
+
+    /**
+     * Sets the TTL for the specified node.
+     * @param node The node to update.
+     * @param ttl The TTL in seconds.
+     */
+    function setTTL(bytes32 node, uint64 ttl) only_owner(node) {
+        NewTTL(node, ttl);
+        records[node].ttl = ttl;
     }
 }
 
-// Standard robot liability light contract
-contract RobotLiability is RobotLiabilityAPI, LightContract {
-    constructor(address _lib) public LightContract(_lib)
-    { factory = LiabilityFactory(msg.sender); }
+// File: ens/contracts/PublicResolver.sol
+
+/**
+ * A simple resolver anyone can use; only allows the owner of a node to set its
+ * address.
+ */
+contract PublicResolver {
+    AbstractENS ens;
+    mapping(bytes32=>address) addresses;
+    mapping(bytes32=>bytes32) hashes;
+
+    modifier only_owner(bytes32 node) {
+        if(ens.owner(node) != msg.sender) throw;
+        _;
+    }
+
+    /**
+     * Constructor.
+     * @param ensAddr The ENS registrar contract.
+     */
+    function PublicResolver(AbstractENS ensAddr) {
+        ens = ensAddr;
+    }
+
+    /**
+     * Fallback function.
+     */
+    function() {
+        throw;
+    }
+
+    /**
+     * Returns true if the specified node has the specified record type.
+     * @param node The ENS node to query.
+     * @param kind The record type name, as specified in EIP137.
+     * @return True if this resolver has a record of the provided type on the
+     *         provided node.
+     */
+    function has(bytes32 node, bytes32 kind) constant returns (bool) {
+        return (kind == "addr" && addresses[node] != 0) || (kind == "hash" && hashes[node] != 0);
+    }
+
+    /**
+     * Returns true if the resolver implements the interface specified by the provided hash.
+     * @param interfaceID The ID of the interface to check for.
+     * @return True if the contract implements the requested interface.
+     */
+    function supportsInterface(bytes4 interfaceID) constant returns (bool) {
+        return interfaceID == 0x3b3b57de || interfaceID == 0xd8389dc5;
+    }
+
+    /**
+     * Returns the address associated with an ENS node.
+     * @param node The ENS node to query.
+     * @return The associated address.
+     */
+    function addr(bytes32 node) constant returns (address ret) {
+        ret = addresses[node];
+    }
+
+    /**
+     * Sets the address associated with an ENS node.
+     * May only be called by the owner of that node in the ENS registry.
+     * @param node The node to update.
+     * @param addr The address to set.
+     */
+    function setAddr(bytes32 node, address addr) only_owner(node) {
+        addresses[node] = addr;
+    }
+
+    /**
+     * Returns the content hash associated with an ENS node.
+     * Note that this resource type is not standardized, and will likely change
+     * in future to a resource type based on multihash.
+     * @param node The ENS node to query.
+     * @return The associated content hash.
+     */
+    function content(bytes32 node) constant returns (bytes32 ret) {
+        ret = hashes[node];
+    }
+
+    /**
+     * Sets the content hash associated with an ENS node.
+     * May only be called by the owner of that node in the ENS registry.
+     * Note that this resource type is not standardized, and will likely change
+     * in future to a resource type based on multihash.
+     * @param node The node to update.
+     * @param hash The content hash to set
+     */
+    function setContent(bytes32 node, bytes32 hash) only_owner(node) {
+        hashes[node] = hash;
+    }
 }
 
-contract LiabilityFactory {
+// File: openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol
+
+/**
+ * @title SafeERC20
+ * @dev Wrappers around ERC20 operations that throw on failure.
+ * To use this library you can add a `using SafeERC20 for ERC20;` statement to your contract,
+ * which allows you to call the safe operations as `token.safeTransfer(...)`, etc.
+ */
+library SafeERC20 {
+  function safeTransfer(
+    IERC20 token,
+    address to,
+    uint256 value
+  )
+    internal
+  {
+    require(token.transfer(to, value));
+  }
+
+  function safeTransferFrom(
+    IERC20 token,
+    address from,
+    address to,
+    uint256 value
+  )
+    internal
+  {
+    require(token.transferFrom(from, to, value));
+  }
+
+  function safeApprove(
+    IERC20 token,
+    address spender,
+    uint256 value
+  )
+    internal
+  {
+    require(token.approve(spender, value));
+  }
+}
+
+// File: contracts/robonomics/LiabilityFactory.sol
+
+contract LiabilityFactory is SingletonHash {
     constructor(
         address _robot_liability_lib,
         address _lighthouse_lib,
@@ -1382,6 +1170,9 @@ contract LiabilityFactory {
         xrt = _xrt;
         ens = _ens;
     }
+
+    using SafeERC20 for XRT;
+    using SafeERC20 for ERC20;
 
     /**
      * @dev New liability created 
@@ -1429,11 +1220,6 @@ contract LiabilityFactory {
     uint256 public constant gasPrice = 10 * 10**9;
 
     /**
-     * @dev Used market orders accounting
-     */
-    mapping(bytes32 => bool) public usedHash;
-
-    /**
      * @dev Lighthouse accounting
      */
     mapping(address => bool) public isLighthouse;
@@ -1475,22 +1261,13 @@ contract LiabilityFactory {
     }
 
     /**
-     * @dev Parameter can be used only once
-     * @param _hash Single usage hash
-     */
-    function usedHashGuard(bytes32 _hash) internal {
-        require(!usedHash[_hash]);
-        usedHash[_hash] = true;
-    }
-
-    /**
      * @dev Create robot liability smart contract
-     * @param _ask ABI-encoded ASK order message 
-     * @param _bid ABI-encoded BID order message 
+     * @param _demand ABI-encoded demand message 
+     * @param _offer ABI-encoded offer message 
      */
     function createLiability(
-        bytes _ask,
-        bytes _bid
+        bytes _demand,
+        bytes _offer
     )
         external 
         onlyLighthouse
@@ -1504,28 +1281,30 @@ contract LiabilityFactory {
         emit NewLiability(liability);
 
         // Parse messages
-        require(liability.call(abi.encodePacked(bytes4(0x82fbaa25), _ask))); // liability.ask(...)
-        usedHashGuard(liability.askHash());
+        require(liability.call(abi.encodePacked(bytes4(0x0be8947a), _demand))); // liability.demand(...)
+        singletonHash(liability.demandHash());
 
-        require(liability.call(abi.encodePacked(bytes4(0x66193359), _bid))); // liability.bid(...)
-        usedHashGuard(liability.bidHash());
+        require(liability.call(abi.encodePacked(bytes4(0x87bca1cf), _offer))); // liability.offer(...)
+        singletonHash(liability.offerHash());
 
         // Transfer lighthouse fee to lighthouse worker directly
-        require(xrt.transferFrom(liability.promisor(),
+        if (liability.lighthouseFee() > 0)
+            xrt.safeTransferFrom(liability.promisor(),
                                  tx.origin,
-                                 liability.lighthouseFee()));
+                                 liability.lighthouseFee());
 
         // Transfer liability security and hold on contract
         ERC20 token = liability.token();
-        require(token.transferFrom(liability.promisee(),
+        if (liability.cost() > 0)
+            token.safeTransferFrom(liability.promisee(),
                                    liability,
-                                   liability.cost()));
+                                   liability.cost());
 
         // Transfer validator fee and hold on contract
         if (address(liability.validator()) != 0 && liability.validatorFee() > 0)
-            require(xrt.transferFrom(liability.promisee(),
-                                     liability,
-                                     liability.validatorFee()));
+            xrt.safeTransferFrom(liability.promisee(),
+                                 liability,
+                                 liability.validatorFee());
 
         // Accounting gas usage of transaction
         uint256 gas = gasinit - gasleft() + 110525; // Including observation error
@@ -1549,8 +1328,8 @@ contract LiabilityFactory {
         returns (address lighthouse)
     {
         bytes32 lighthouseNode
-            // lighthouse.1.robonomics.eth
-            = 0x3662a5d633e9a5ca4b4bd25284e1b343c15a92b5347feb9b965a2b1ef3e1ea1a;
+            // lighthouse.2.robonomics.eth
+            = 0xa058d6058d5ec525aa555c572720908a8d6ea6e2781b460bdecb2abf8bf56d4c;
 
         // Name reservation check
         bytes32 subnode = keccak256(abi.encodePacked(lighthouseNode, keccak256(_name)));
@@ -1583,6 +1362,8 @@ contract LiabilityFactory {
         require(gasUtilizing[msg.sender] > 0);
 
         uint256 gas = _gas - gasleft();
+        require(_gas > gas);
+
         totalGasUtilizing        += gas;
         gasUtilizing[msg.sender] += gas;
         require(xrt.mint(tx.origin, wnFromGas(gasUtilizing[msg.sender])));
