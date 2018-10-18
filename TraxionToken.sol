@@ -1,14 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TraxionToken at 0x6ddf77654768edab156fda08b2e3afb74ff0630b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TraxionToken at 0xaaf099a16cb37dfdaffc1a169f6e99f41aaaf75c
 */
 pragma solidity ^0.4.21;
-
-// zeppelin v1.8.0
-
-
-
-
-
 
 /**
  * @title ERC20Basic
@@ -21,6 +14,8 @@ contract ERC20Basic {
   function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
+
+pragma solidity ^0.4.18;
 
 
 /**
@@ -69,7 +64,6 @@ library SafeMath {
   }
 }
 
-
 /**
  * @title Basic token
  * @dev Basic version of StandardToken, with no allowances.
@@ -114,8 +108,6 @@ contract BasicToken is ERC20Basic {
   }
 
 }
-
-
 
 /**
  * @title ERC20 interface
@@ -224,9 +216,6 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-
-
-
 /**
  * @title Ownable
  * @dev The Ownable contract has an owner address, and provides basic authorization control
@@ -266,7 +255,6 @@ contract Ownable {
   }
 
 }
-
 
 /**
  * @title Pausable
@@ -355,9 +343,9 @@ contract TraxionToken is PausableToken {
 
   constructor()  public {
     totalSupply_ = INITIAL_SUPPLY;
-    transferOwnership(0xC889dFBDc9C1D0FC3E77e46c3b82A3903b2D919c);
-    balances[0xC889dFBDc9C1D0FC3E77e46c3b82A3903b2D919c] = INITIAL_SUPPLY;
-    emit Transfer(0x0, 0xC889dFBDc9C1D0FC3E77e46c3b82A3903b2D919c, INITIAL_SUPPLY);
+    transferOwnership(0xdf4CF47303a3607732f9bF193771F54Bb288a2dF);
+    balances[0xdf4CF47303a3607732f9bF193771F54Bb288a2dF] = INITIAL_SUPPLY;
+    emit Transfer(0x0, 0xdf4CF47303a3607732f9bF193771F54Bb288a2dF, INITIAL_SUPPLY);
   }
 
   // The following functions cannot be executed when the contract is paused,
