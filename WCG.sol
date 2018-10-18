@@ -1,8 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WCG at 0x9d3dd65bb54c70f4b1498bada9a14b92e7a93e21
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WCG at 0xc39459f4d3d9c87551f7c0fb0982bfea0d14dda6
 */
-pragma solidity 0.4.25;
-contract SafeMath {
+pragma solidity ^0.4.25;
+library SafeMath {
     uint256 constant public MAX_UINT256 =
     0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
     /*
@@ -24,10 +24,9 @@ contract ERC223 {
   uint public totalSupply;
   function balanceOf(address who) public constant returns (uint);
   function totalSupply()public constant returns (uint256 _supply);
-  function name() public constant returns (string _name);
-  function symbol()public constant returns (string _symbol);
 }
-contract WCG is SafeMath{
+contract WCG{
+    using SafeMath for uint256;
     address owner;
     //The token holds to the message
    struct userToken{
@@ -39,7 +38,6 @@ contract WCG is SafeMath{
         uint totalBuyPrice;
     }
     userToken[] _userTokenInfo;
-    mapping(address => userToken[]) private userTokenInfos; 
     mapping(address => uint256) private balances;
     //Bonus pools
     mapping(address => uint256) private bonusPools;
@@ -57,16 +55,16 @@ contract WCG is SafeMath{
        require(msg.sender == owner);
         _;
   }
-  modifier upToTime(){
-      require(now < presellUpToTime);
+  modifier upToTimeOrTotalSupply(){
+      require(now < presellUpToTime || totalSupply < presellToKenAmount);
       _;
   }
   function getUserTokenInfosLength()public view returns(uint length){
       length = _userTokenInfo.length;
   }
   
-  function getUserTokenInfos(address contractAddr,uint index)public view returns(address buyer,uint currentPrice,uint _token,uint totalToKenPrice,uint charge,uint totalBuyPrice){
-     userToken storage _userToKen = userTokenInfos[contractAddr][index];
+  function getUserTokenInfos(uint index)public view returns(address buyer,uint currentPrice,uint _token,uint totalToKenPrice,uint charge,uint totalBuyPrice){
+     userToken storage _userToKen = _userTokenInfo[index];
      buyer = _userToKen.buyer;
      currentPrice = _userToKen.currentPrice;
      _token = _userToKen._token;
@@ -77,27 +75,26 @@ contract WCG is SafeMath{
   constructor(uint _presellToKen,uint _presellUpToTime)public{
       presellUpToTime = now + (_presellUpToTime * 1 days);
       owner = msg.sender;
-      presellToKenAmount = EthTurnWCG(_presellToKen);
+      presellToKenAmount = _presellToKen* 1e18 / initPrice;
   }
   //Buy WCG
-  function buyToKen(uint _token)public payable upToTime{
+  function buyToKen(uint _token)public payable upToTimeOrTotalSupply{
       uint totalToKenPrice = buyPrice(_token);
       uint charge = computingCharge(totalToKenPrice);
       if( msg.value < totalToKenPrice+charge)revert();
-      bonusPools[this] = safeAdd(bonusPools[this],charge);
-      capitalPool[this] = safeAdd(capitalPool[this],totalToKenPrice);
+      bonusPools[this] = SafeMath.safeAdd(bonusPools[this],charge);
+      capitalPool[this] = SafeMath.safeAdd(capitalPool[this],totalToKenPrice);
       address(this).transfer(msg.value);
-      balances[this] = safeAdd(balances[this],msg.value);
+      balances[this] = SafeMath.safeAdd(balances[this],msg.value);
       _userTokenInfo.push(userToken(msg.sender,currentPrice(),_token,totalToKenPrice,charge,totalToKenPrice+charge));
-      totalSupply =  safeAdd(totalSupply,_token);
-      balances[msg.sender] = safeAdd(balances[msg.sender],_token);
-      userTokenInfos[this] = _userTokenInfo;
+      totalSupply =  SafeMath.safeAdd(totalSupply,_token);
+      balances[msg.sender] = SafeMath.safeAdd(balances[msg.sender],_token);
       emit transfer(msg.sender,address(this),_token,totalSupply);
   }
   
   function()public payable{}
   function EthTurnWCG(uint eth)public pure returns(uint){
-      return eth * 1e18 / initPrice;
+      return eth * 1e18 / (initPrice+initPrice/10);
   }
   function currentPrice()public pure returns(uint){
       return initPrice;
@@ -125,6 +122,9 @@ contract WCG is SafeMath{
   }
   function totalSupply()public constant returns (uint256 _supply){
       return totalSupply;
+  }
+  function setPresellUpToTime(uint time)public onlyOwner{
+      presellUpToTime = now + (time * 1 days);
   }
 
   function destroy()public onlyOwner {
