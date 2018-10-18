@@ -1,54 +1,152 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Topinvestmentcoin at 0xa5db1d6f7a0d5bccc17d0bfd39d7af32d5e5edc6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Topinvestmentcoin at 0x7f4b2a690605a7cbb66f7aa6885ebd906a5e2e9e
 */
-pragma solidity ^ 0.4 .2;
-contract Topinvestmentcoin  {
-    string public standard = 'Token 0.1';
-    string public name;
-    string public symbol;
-    uint8 public decimals;
-    uint256 public totalSupply;
-    address public owner;
-    address[] public users;
-    mapping(address => uint256) public balanceOf;
-    string public filehash;
-    mapping(address => mapping(address => uint256)) public allowance;
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    modifier onlyOwner() {
-        if (owner != msg.sender) {
-            throw;
-        } else {
-            _;
+pragma solidity ^0.4.25;
+
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+    // ERC20 Token Smart Contract
+    contract Topinvestmentcoin {
+        
+        string public constant name = "Topinvestmentcoin";
+        string public constant symbol = "TICO";
+        uint8 public constant decimals = 8;
+        uint public _totalSupply = 20000000000000000;
+        uint256 public RATE = 500;
+        bool public isMinting = true;
+        
+        using SafeMath for uint256;
+        address public owner;
+        
+         // Functions with this modifier can only be executed by the owner
+         modifier onlyOwner() {
+            if (msg.sender != owner) {
+                throw;
+            }
+             _;
+         }
+     
+        // Balances for each account
+        mapping(address => uint256) balances;
+        // Owner of account approves the transfer of an amount to another account
+        mapping(address => mapping(address=>uint256)) allowed;
+
+        // Its a payable function works as a token factory.
+        function () payable{
+            createTokens();
         }
-    }
 
-    function Topinvestmentcoin () {
-        owner = 0x1850363833e923c99e555710f889716c5bb46bb1;
-        address firstOwner = owner;
-        balanceOf[firstOwner] = 3000000000000000;
-        totalSupply = 3000000000000000;
-        name = 'Topinvestmentcoin ';
-        symbol = 'TICO';
-        filehash = '';
-        decimals = 5;
-        msg.sender.send(msg.value);
-    }
+        // Constructor
+        constructor() public {
+            owner = 0x1850363833e923c99e555710f889716c5bb46bb1; 
+            balances[owner] = _totalSupply;
+        }
 
-    function transfer(address _to, uint256 _value) {
-        if (balanceOf[msg.sender] < _value) throw;
-        if (balanceOf[_to] + _value < balanceOf[_to]) throw;
-        balanceOf[msg.sender] -= _value;
-        balanceOf[_to] += _value;
-        Transfer(msg.sender, _to, _value);
-    }
+        //allows owner to burn tokens that are not sold in a crowdsale
+        function burnTokens(uint256 _value) onlyOwner {
 
-    function approve(address _spender, uint256 _value) returns(bool success) {
-        allowance[msg.sender][_spender] = _value;
+             require(balances[msg.sender] >= _value && _value > 0 );
+             _totalSupply = _totalSupply.sub(_value);
+             balances[msg.sender] = balances[msg.sender].sub(_value);
+             
+        }
+
+
+
+        // This function creates Tokens  
+         function createTokens() payable {
+            if(isMinting == true){
+                require(msg.value > 0);
+                uint256  tokens = msg.value.mul(RATE);
+                balances[msg.sender] = balances[msg.sender].add(tokens);
+                _totalSupply = _totalSupply.add(tokens);
+                owner.transfer(msg.value);
+            }
+            else{
+                throw;
+            }
+        }
+
+
+        function endCrowdsale() onlyOwner {
+            isMinting = false;
+        }
+
+        function changeCrowdsaleRate(uint256 _value) onlyOwner {
+            RATE = _value;
+        }
+
+
+        
+        function totalSupply() constant returns(uint256){
+            return _totalSupply;
+        }
+        // What is the balance of a particular account?
+        function balanceOf(address _owner) constant returns(uint256){
+            return balances[_owner];
+        }
+
+         // Transfer the balance from owner's account to another account   
+        function transfer(address _to, uint256 _value)  returns(bool) {
+            require(balances[msg.sender] >= _value && _value > 0 );
+            balances[msg.sender] = balances[msg.sender].sub(_value);
+            balances[_to] = balances[_to].add(_value);
+            Transfer(msg.sender, _to, _value);
+            return true;
+        }
+        
+    // Send _value amount of tokens from address _from to address _to
+    // The transferFrom method is used for a withdraw workflow, allowing contracts to send
+    // tokens on your behalf, for example to "deposit" to a contract address and/or to charge
+    // fees in sub-currencies; the command should fail unless the _from account has
+    // deliberately authorized the sender of the message via some mechanism; we propose
+    // these standardized APIs for approval:
+    function transferFrom(address _from, address _to, uint256 _value)  returns(bool) {
+        require(allowed[_from][msg.sender] >= _value && balances[_from] >= _value && _value > 0);
+        balances[_from] = balances[_from].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+        Transfer(_from, _to, _value);
         return true;
     }
-
-    function collectExcess() onlyOwner {
+    
+    // Allow _spender to withdraw from your account, multiple times, up to the _value amount.
+    // If this function is called again it overwrites the current allowance with _value.
+    function approve(address _spender, uint256 _value) returns(bool){
+        allowed[msg.sender][_spender] = _value; 
+        Approval(msg.sender, _spender, _value);
+        return true;
     }
-
-    function() {}
+    
+    // Returns the amount which _spender is still allowed to withdraw from _owner
+    function allowance(address _owner, address _spender) constant returns(uint256){
+        return allowed[_owner][_spender];
+    }
+    
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
