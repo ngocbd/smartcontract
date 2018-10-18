@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSeller at 0x050498d93422da4e201675dc48a4e1f828631ef3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSeller at 0x0318b6ed6eab2770aeb936fea505e0866c4fc22c
 */
 pragma solidity ^0.4.24;
 
@@ -90,30 +90,6 @@ contract ERC20 is ERC20Basic {
   );
 }
 
-// File: contracts/ext/CheckedERC20.sol
-
-library CheckedERC20 {
-    using SafeMath for uint;
-
-    function checkedTransfer(ERC20 _token, address _to, uint256 _value) internal {
-        if (_value == 0) {
-            return;
-        }
-        uint256 balance = _token.balanceOf(this);
-        _token.transfer(_to, _value);
-        require(_token.balanceOf(this) == balance.sub(_value), "checkedTransfer: Final balance didn't match");
-    }
-
-    function checkedTransferFrom(ERC20 _token, address _from, address _to, uint256 _value) internal {
-        if (_value == 0) {
-            return;
-        }
-        uint256 toBalance = _token.balanceOf(_to);
-        _token.transferFrom(_from, _to, _value);
-        require(_token.balanceOf(_to) == toBalance.add(_value), "checkedTransfer: Final balance didn't match");
-    }
-}
-
 // File: contracts/interface/IBasicMultiToken.sol
 
 contract IBasicMultiToken is ERC20 {
@@ -152,33 +128,28 @@ contract IMultiToken is IBasicMultiToken {
     function denyChanges() public;
 }
 
-// File: openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol
+// File: contracts/ext/CheckedERC20.sol
 
-/**
- * @title SafeERC20
- * @dev Wrappers around ERC20 operations that throw on failure.
- * To use this library you can add a `using SafeERC20 for ERC20;` statement to your contract,
- * which allows you to call the safe operations as `token.safeTransfer(...)`, etc.
- */
-library SafeERC20 {
-  function safeTransfer(ERC20Basic token, address to, uint256 value) internal {
-    require(token.transfer(to, value));
-  }
+library CheckedERC20 {
+    using SafeMath for uint;
 
-  function safeTransferFrom(
-    ERC20 token,
-    address from,
-    address to,
-    uint256 value
-  )
-    internal
-  {
-    require(token.transferFrom(from, to, value));
-  }
+    function checkedTransfer(ERC20 _token, address _to, uint256 _value) internal {
+        if (_value == 0) {
+            return;
+        }
+        uint256 balance = _token.balanceOf(this);
+        _token.transfer(_to, _value);
+        require(_token.balanceOf(this) == balance.sub(_value), "checkedTransfer: Final balance didn't match");
+    }
 
-  function safeApprove(ERC20 token, address spender, uint256 value) internal {
-    require(token.approve(spender, value));
-  }
+    function checkedTransferFrom(ERC20 _token, address _from, address _to, uint256 _value) internal {
+        if (_value == 0) {
+            return;
+        }
+        uint256 toBalance = _token.balanceOf(_to);
+        _token.transferFrom(_from, _to, _value);
+        require(_token.balanceOf(_to) == toBalance.add(_value), "checkedTransfer: Final balance didn't match");
+    }
 }
 
 // File: openzeppelin-solidity/contracts/ownership/Ownable.sol
@@ -239,6 +210,35 @@ contract Ownable {
     require(_newOwner != address(0));
     emit OwnershipTransferred(owner, _newOwner);
     owner = _newOwner;
+  }
+}
+
+// File: openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol
+
+/**
+ * @title SafeERC20
+ * @dev Wrappers around ERC20 operations that throw on failure.
+ * To use this library you can add a `using SafeERC20 for ERC20;` statement to your contract,
+ * which allows you to call the safe operations as `token.safeTransfer(...)`, etc.
+ */
+library SafeERC20 {
+  function safeTransfer(ERC20Basic token, address to, uint256 value) internal {
+    require(token.transfer(to, value));
+  }
+
+  function safeTransferFrom(
+    ERC20 token,
+    address from,
+    address to,
+    uint256 value
+  )
+    internal
+  {
+    require(token.transferFrom(from, to, value));
+  }
+
+  function safeApprove(ERC20 token, address spender, uint256 value) internal {
+    require(token.approve(spender, value));
   }
 }
 
@@ -305,35 +305,25 @@ contract IKyberNetworkProxy {
 contract MultiChanger is CanReclaimToken {
     using SafeMath for uint256;
 
-    // https://github.com/Arachnid/solidity-stringutils/blob/master/src/strings.sol#L45
-    function memcpy(uint dest, uint src, uint len) private pure {
-        // Copy word-length chunks while possible
-        for(; len >= 32; len -= 32) {
-            assembly {
-                mstore(dest, mload(src))
-            }
-            dest += 32;
-            src += 32;
-        }
-
-        // Copy remaining bytes
-        uint mask = 256 ** (32 - len) - 1;
+    // Source: https://github.com/gnosis/MultiSigWallet/blob/master/contracts/MultiSigWallet.sol
+    // call has been separated into its own function in order to take advantage
+    // of the Solidity's code generator to produce a loop that copies tx.data into memory.
+    function externalCall(address destination, uint value, bytes data, uint dataOffset, uint dataLength) internal returns (bool result) {
         assembly {
-            let srcpart := and(mload(src), not(mask))
-            let destpart := and(mload(dest), mask)
-            mstore(dest, or(destpart, srcpart))
+            let x := mload(0x40)   // "Allocate" memory for output (0x40 is where "free memory" pointer is stored by convention)
+            let d := add(data, 32) // First 32 bytes are the padded length of data, so exclude that
+            result := call(
+                sub(gas, 34710),   // 34710 is the value that solidity is currently emitting
+                                   // It includes callGas (700) + callVeryLow (3, to pay for SUB) + callValueTransferGas (9000) +
+                                   // callNewAccountGas (25000, in case the destination address does not exist and needs creating)
+                destination,
+                value,
+                add(d, dataOffset),
+                dataLength,        // Size of the input (in bytes) - this is what fixes the padding problem
+                x,
+                0                  // Output is ignored, therefore the output size is zero
+            )
         }
-    }
-
-    function subbytes(bytes _data, uint _start, uint _length) private pure returns(bytes) {
-        bytes memory result = new bytes(_length);
-        uint from;
-        uint to;
-        assembly { 
-            from := add(_data, _start) 
-            to := result
-        }
-        memcpy(to, from, _length);
     }
 
     function change(
@@ -343,12 +333,7 @@ contract MultiChanger is CanReclaimToken {
         internal
     {
         for (uint i = 0; i < _starts.length - 1; i++) {
-            bytes memory data = subbytes(
-                _callDatas,
-                _starts[i],
-                _starts[i + 1] - _starts[i]
-            );
-            require(address(this).call(data));
+            require(externalCall(this, 0, _callDatas, _starts[i], _starts[i + 1] - _starts[i]));
         }
     }
 
