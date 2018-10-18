@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EasyInvestPI at 0x3689f372eb8ae130b1767664ad1c75528c815811
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EasyInvestPI at 0x5cd478fd07ca7a02e090a9d0ccbb51cc51f6e56e
 */
 pragma solidity ^0.4.24;
 
@@ -15,7 +15,7 @@ pragma solidity ^0.4.24;
  *  OR
  *  2b. Send more ether to reinvest AND get your profit at the same time
  *
- * RECOMMENDED GAS LIMIT: 120000
+ * RECOMMENDED GAS LIMIT: 70000
  * RECOMMENDED GAS PRICE: https://ethgasstation.info/
  *
  * Contract reviewed and approved by pros!
