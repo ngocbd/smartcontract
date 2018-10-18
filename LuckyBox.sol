@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LuckyBox at 0xe19866986976e84b2c2691169c9f9b1baa433893
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LuckyBox at 0x520b5c15d6b272bf01cf6160ef1f4be78c867705
 */
 pragma solidity ^0.4.24;
 
@@ -213,8 +213,8 @@ contract LuckyBox is Pausable {
 
     address public wallet;
 
-    mapping (address => uint256) public goldSalesRecord;
-    mapping (address => uint256) public silverSalesRecord;
+    mapping (address => uint256) goldSalesRecord;
+    mapping (address => uint256) silverSalesRecord;
 
     uint256 public goldSaleLimit;
     uint256 public silverSaleLimit;
