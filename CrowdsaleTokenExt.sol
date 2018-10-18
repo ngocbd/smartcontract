@@ -1,6 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleTokenExt at 0x4712a6eab660b22B4D88B2d82fd208C1F6d6889F
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleTokenExt at 0x0b5447fdbe3543cba1adcd75018a44007a055217
 */
+// Created using Token Wizard https://github.com/poanetwork/token-wizard by POA Network 
 pragma solidity ^0.4.11;
 
 
@@ -601,9 +602,9 @@ contract MintableTokenExt is StandardToken, Ownable {
   }
 
   function setReservedTokensListMultiple(
-    address[] addrs,
-    uint[] inTokens,
-    uint[] inPercentageUnit,
+    address[] addrs, 
+    uint[] inTokens, 
+    uint[] inPercentageUnit, 
     uint[] inPercentageDecimals
   ) public canMint onlyOwner {
     assert(!reservedTokensDestinationsAreSet);
@@ -648,8 +649,8 @@ contract MintableTokenExt is StandardToken, Ownable {
     }
 
     reservedTokensList[addr] = ReservedTokensData({
-      inTokens: inTokens,
-      inPercentageUnit: inPercentageUnit,
+      inTokens: inTokens, 
+      inPercentageUnit: inPercentageUnit, 
       inPercentageDecimals: inPercentageDecimals,
       isReserved: true,
       isDistributed: false
