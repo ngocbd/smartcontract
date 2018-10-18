@@ -1,68 +1,83 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x4d3b775a793aa40e52e5ebd76d1904318fcf4989
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xc84a8788843f007b1a9e073f777248fd48d0d265
 */
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.16;
 
-interface token {
-    function setxiudao(address _owner,uint256 _value,bool zhenjia)   external returns(bool); 
-}
+interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
-contract Ownable {
-  address  owner;
-  address public admin = 0x24F929f9Ab84f1C540b8FF1f67728246BFec12e1;
- 
-  
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+contract TokenERC20 {
+    string public name;
+    string public symbol;
+    uint8 public decimals = 2;  // 18 ???????
+    uint256 public totalSupply;
 
-  function Ownable() public {
-    owner = msg.sender;
-  }
+    mapping (address => uint256) public balanceOf;  // 
+    mapping (address => mapping (address => uint256)) public allowance;
 
-  modifier onlyOwner() {
-    require(msg.sender == owner || msg.sender == admin);
-    _;
-  }
+    event Transfer(address indexed from, address indexed to, uint256 value);
+
+    event Burn(address indexed from, uint256 value);
 
 
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
-    admin = newOwner;
-  }
+    function TokenERC20(uint256 initialSupply, string tokenName, string tokenSymbol) public {
+        totalSupply = initialSupply * 10 ** uint256(decimals);
+        balanceOf[msg.sender] = totalSupply;
+        name = tokenName;
+        symbol = tokenSymbol;
+    }
 
-}
 
-contract TokenERC20 is Ownable{
+    function _transfer(address _from, address _to, uint _value) internal {
+        require(_to != 0x0);
+        require(balanceOf[_from] >= _value);
+        require(balanceOf[_to] + _value > balanceOf[_to]);
+        uint previousBalances = balanceOf[_from] + balanceOf[_to];
+        balanceOf[_from] -= _value;
+        balanceOf[_to] += _value;
+        Transfer(_from, _to, _value);
+        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
+    }
 
-    token public tokenReward = token(0x778E763C4a09c74b2de221b4D3c92d8c7f27a038);
-    
-    uint256 public bili = 7500;
-    uint256 public endtime = 1540051199;
-    uint256 public amount;
-    address public addr = 0x2aCf431877107176c88B6300830C6b696d744344;
-    address public addr2 = 0x6090275ca0AD1b36e651bCd3C696622b96a25cFF;
-    
-	
-	function TokenERC20(
-    
-    ) public {
-      
-    } 
-    
-    function setbili(uint256 _value,uint256 _value2)public onlyOwner returns(bool){
-        bili = _value;
-        endtime = _value2;
+    function transfer(address _to, uint256 _value) public {
+        _transfer(msg.sender, _to, _value);
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+        require(_value <= allowance[_from][msg.sender]);     // Check allowance
+        allowance[_from][msg.sender] -= _value;
+        _transfer(_from, _to, _value);
         return true;
     }
-    function ()public payable{
-        if(amount <= 50000000 ether && now <= 1540051199){
-            addr2.transfer(msg.value / 2);
-            addr.transfer(msg.value / 2); 
-            uint256 a = msg.value * bili;
-            amount = amount + a;
-            tokenReward.setxiudao(msg.sender,a,true);    
-        }
-        
+
+    function approve(address _spender, uint256 _value) public
+        returns (bool success) {
+        allowance[msg.sender][_spender] = _value;
+        return true;
     }
-     
+
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData) public returns (bool success) {
+        tokenRecipient spender = tokenRecipient(_spender);
+        if (approve(_spender, _value)) {
+            spender.receiveApproval(msg.sender, _value, this, _extraData);
+            return true;
+        }
+    }
+
+    function burn(uint256 _value) public returns (bool success) {
+        require(balanceOf[msg.sender] >= _value);
+        balanceOf[msg.sender] -= _value;
+        totalSupply -= _value;
+        Burn(msg.sender, _value);
+        return true;
+    }
+
+    function burnFrom(address _from, uint256 _value) public returns (bool success) {
+        require(balanceOf[_from] >= _value);
+        require(_value <= allowance[_from][msg.sender]);
+        balanceOf[_from] -= _value;
+        allowance[_from][msg.sender] -= _value;
+        totalSupply -= _value;
+        Burn(_from, _value);
+        return true;
+    }
 }
