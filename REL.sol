@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract REL at 0x0eee3715d385ecefc6afd9fbf30ddee725be3de1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract REL at 0x358887027b13e646d93cc05c586faf18aece926b
 */
 pragma solidity ^0.4.18;
 
@@ -32,12 +32,12 @@ contract SafeMath {
   }
 
   function assert(bool assertion) internal {
-    if (!assertion) {
-      throw;
-    }
+    require (assertion);
   }
 }
 contract REL is SafeMath{
+    uint previousBalances;
+    uint currentBalance;
     string public name;
     string public symbol;
     uint8 public decimals;
@@ -49,16 +49,16 @@ contract REL is SafeMath{
 	mapping (address => uint256) public freezeOf;
     mapping (address => mapping (address => uint256)) public allowance;
 
-    /* This generates a public event on the blockchain that will notify clients */
+    /* This generates a public event on the blockchain that will notrequirey clients */
     event Transfer(address indexed from, address indexed to, uint256 value);
 
-    /* This notifies clients about the amount burnt */
+    /* This notrequireies clients about the amount burnt */
     event Burn(address indexed from, uint256 value);
 	
-	/* This notifies clients about the amount frozen */
+	/* This notrequireies clients about the amount frozen */
     event Freeze(address indexed from, uint256 value);
 	
-	/* This notifies clients about the amount unfrozen */
+	/* This notrequireies clients about the amount unfrozen */
     event Unfreeze(address indexed from, uint256 value);
 
     /* Initializes contract with initial supply tokens to the creator of the contract */
@@ -75,22 +75,37 @@ contract REL is SafeMath{
         decimals = decimalUnits;                            // Amount of decimals for display purposes
 		owner = msg.sender;
     }
+	
+	//change owner
+	function changeowner(
+        address _newowner
+    )
+    public
+    returns (bool)  {
+        require(msg.sender == owner);
+        require(_newowner != address(0));
+        owner = _newowner;
+        return true;
+    }
 
     /* Send coins */
     function transfer(address _to, uint256 _value) {
-        if (_to == 0x0) throw;                               // Prevent transfer to 0x0 address. Use burn() instead
-		if (_value <= 0) throw; 
-        if (balanceOf[msg.sender] < _value) throw;           // Check if the sender has enough
-        if (balanceOf[_to] + _value < balanceOf[_to]) throw; // Check for overflows
+        require (_to != 0x0) ;                               // Prevent transfer to 0x0 address. Use burn() instead
+		require (_value >= 0); 
+        require (balanceOf[msg.sender] >= _value);           // Check require the sender has enough
+        require (balanceOf[_to] + _value >= balanceOf[_to]) ; // Check for overflows
+        previousBalances=safeAdd(balanceOf[msg.sender],balanceOf[_to]);
         balanceOf[msg.sender] = SafeMath.safeSub(balanceOf[msg.sender], _value);                     // Subtract from the sender
         balanceOf[_to] = SafeMath.safeAdd(balanceOf[_to], _value);                            // Add the same to the recipient
-        Transfer(msg.sender, _to, _value);                   // Notify anyone listening that this transfer took place
+        currentBalance=safeAdd(balanceOf[msg.sender],balanceOf[_to]);
+        require(previousBalances==currentBalance);
+        Transfer(msg.sender, _to, _value);                   // Notrequirey anyone listening that this transfer took place
     }
 
     /* Allow another contract to spend some tokens in your behalf */
     function approve(address _spender, uint256 _value)
         returns (bool success) {
-		if (_value <= 0) throw; 
+		require (_value >= 0) ; 
         allowance[msg.sender][_spender] = _value;
         return true;
     }
@@ -98,21 +113,25 @@ contract REL is SafeMath{
 
     /* A contract attempts to get the coins */
     function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        if (_to == 0x0) throw;                                // Prevent transfer to 0x0 address. Use burn() instead
-		if (_value <= 0) throw; 
-        if (balanceOf[_from] < _value) throw;                 // Check if the sender has enough
-        if (balanceOf[_to] + _value < balanceOf[_to]) throw;  // Check for overflows
-        if (_value > allowance[_from][msg.sender]) throw;     // Check allowance
+        require (_to != 0x0) ;                                // Prevent transfer to 0x0 address. Use burn() instead
+		require (_value >= 0) ; 
+        require (balanceOf[_from] >= _value) ;                 // Check require the sender has enough
+        require (balanceOf[_to] + _value >= balanceOf[_to])  ;  // Check for overflows
+        require (allowance[_from][msg.sender]>=_value) ;     // Check allowance
+        previousBalances=safeAdd(balanceOf[_from],balanceOf[_to]);
         balanceOf[_from] = SafeMath.safeSub(balanceOf[_from], _value);                           // Subtract from the sender
         balanceOf[_to] = SafeMath.safeAdd(balanceOf[_to], _value);                             // Add the same to the recipient
+        currentBalance=safeAdd(balanceOf[_from],balanceOf[_to]);
+        require(previousBalances==currentBalance);
         allowance[_from][msg.sender] = SafeMath.safeSub(allowance[_from][msg.sender], _value);
         Transfer(_from, _to, _value);
         return true;
     }
 
     function burn(uint256 _value) returns (bool success) {
-        if (balanceOf[msg.sender] < _value) throw;            // Check if the sender has enough
-		if (_value <= 0) throw; 
+        require(msg.sender == owner);
+        require (balanceOf[msg.sender] >= _value) ;            // Check require the sender has enough
+		require (_value >= 0) ; 
         balanceOf[msg.sender] = SafeMath.safeSub(balanceOf[msg.sender], _value);                      // Subtract from the sender
         totalSupply = SafeMath.safeSub(totalSupply,_value);                                // Updates totalSupply
         Burn(msg.sender, _value);
@@ -120,8 +139,9 @@ contract REL is SafeMath{
     }
 	
 	function freeze(uint256 _value) returns (bool success) {
-        if (balanceOf[msg.sender] < _value) throw;            // Check if the sender has enough
-		if (_value <= 0) throw; 
+        require(msg.sender == owner);
+        require (balanceOf[msg.sender] >= _value) ;            // Check require the sender has enough
+		require (_value >= 0) ; 
         balanceOf[msg.sender] = SafeMath.safeSub(balanceOf[msg.sender], _value);                      // Subtract from the sender
         freezeOf[msg.sender] = SafeMath.safeAdd(freezeOf[msg.sender], _value);                                // Updates totalSupply
         Freeze(msg.sender, _value);
@@ -129,8 +149,9 @@ contract REL is SafeMath{
     }
 	
 	function unfreeze(uint256 _value) returns (bool success) {
-        if (freezeOf[msg.sender] < _value) throw;            // Check if the sender has enough
-		if (_value <= 0) throw; 
+        require(msg.sender == owner);
+        require (freezeOf[msg.sender] >= _value) ;            // Check require the sender has enough
+		require (_value >= 0) ; 
         freezeOf[msg.sender] = SafeMath.safeSub(freezeOf[msg.sender], _value);                      // Subtract from the sender
 		balanceOf[msg.sender] = SafeMath.safeAdd(balanceOf[msg.sender], _value);
         Unfreeze(msg.sender, _value);
@@ -139,7 +160,7 @@ contract REL is SafeMath{
 	
 	// transfer balance to owner
 	function withdrawEther(uint256 amount) {
-		if(msg.sender != owner)throw;
+		require(msg.sender == owner);
 		owner.transfer(amount);
 	}
 	
