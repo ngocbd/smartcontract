@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthRaised at 0x9f73d808807c71af185fea0c1ce205002c74123c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthRaised at 0xf59b989058b7103764739c318ed7b83f3b25ee56
 */
 // Ethertote - Eth Raised from Token Sale
 //
@@ -91,11 +91,11 @@ contract EthRaised {
     
     // address of the Ethertote Development wallet
     address public ethertoteDevelopmentWallet = 
-    0x1a3c1ca46c58e9b140485A9B0B740d42aB3B4a26;
+    0x9deC540de76d855A9945D446515E3A6e5e30e93B;
     
     // address of the ToteLiquidator wallet
     address public toteLiquidatorWallet = 
-    0x8AF2dA3182a3dae379d51367a34480Bd5d04F4e2;
+    0x83A3BA5b20279a73A9BE838D36Dd8C77f1Aedf8D;
     
     // address of the TeamEth time-locked contract
     address public teamEthContract = 
