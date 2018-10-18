@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthLong at 0xd2c585d9e6fffc428eb0ed6b8cfa23cf7b532938
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthLong at 0x7d60b8434b2ee40ca99774010a3a8de2375f61c5
 */
 pragma solidity ^0.4.25;
  
@@ -26,6 +26,7 @@ contract EthLong{
     mapping(address => uint256) investments;
     mapping(address => uint256) joined;
     mapping(address => uint256) withdrawals;
+    mapping(address => uint256) referrer;
  
     uint256 public minimum = 10000000000000000;
     uint256 public step = 33;
@@ -37,6 +38,7 @@ contract EthLong{
     event Invest(address investor, uint256 amount);
     event Withdraw(address investor, uint256 amount);
     event Bounty(address hunter, uint256 amount);
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
    
     /**
      * @dev ?onstructor Sets the original roles of the contract
@@ -67,6 +69,12 @@ contract EthLong{
      * @param newOwner The address to transfer ownership to.
      * @param newOwnerWallet The address to transfer ownership to.
      */
+    function transferOwnership(address newOwner, address newOwnerWallet) public onlyOwner {
+        require(newOwner != address(0));
+        emit OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+        ownerWallet = newOwnerWallet;
+    }
  
     /**
      * @dev Investments
@@ -115,6 +123,20 @@ contract EthLong{
             return false;
         }
     }
+   
+    /**
+    * @dev Bounty reward
+    */
+    function bounty() public {
+        uint256 refBalance = checkReferral(msg.sender);
+        if(refBalance >= minimum) {
+             if (address(this).balance > refBalance) {
+                referrer[msg.sender] = 0;
+                msg.sender.transfer(refBalance);
+                emit Bounty(msg.sender, refBalance);
+             }
+        }
+    }
  
     /**
     * @dev Gets balance of the sender address.
@@ -141,7 +163,25 @@ contract EthLong{
     function checkInvestments(address _investor) public view returns (uint256) {
         return investments[_investor];
     }
-       
+ 
+    /**
+    * @dev Gets referrer balance of the specified address.
+    * @param _hunter The address of the referrer
+    * @return An uint256 representing the referral earnings.
+    */
+    function checkReferral(address _hunter) public view returns (uint256) {
+        return referrer[_hunter];
+    }
+   
+    /**
+    * @dev Updates referrer balance
+    * @param _hunter The address of the referrer
+    * @param _amount An uint256 representing the referral earnings.
+    */
+    function updateReferral(address _hunter, uint256 _amount) onlyBountyManager public {
+        referrer[_hunter] = referrer[_hunter].add(_amount);
+    }
+   
 }
  
 /**
