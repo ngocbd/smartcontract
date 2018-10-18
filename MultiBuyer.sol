@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiBuyer at 0x6c571b8b19c84060e8405d79cb980a5aba9fe7a1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiBuyer at 0x8766ce44f56a07e5fe0242763ce2b3cfc1fd925b
 */
 pragma solidity ^0.4.24;
 
@@ -262,7 +262,7 @@ contract MultiBuyer is CanReclaimToken {
             }
 
             if (_throughToken != address(0) && i > 0) {
-                if (_throughToken.allowance(this, _exchanges[i]) == 0) {
+                if (_throughToken.allowance(_exchanges[i], this) == 0) {
                     _throughToken.approve(_exchanges[i], uint256(-1));
                 }
                 require(_exchanges[i].call(data), "buy: exchange arbitrary call failed");
@@ -367,7 +367,7 @@ contract MultiBuyer is CanReclaimToken {
             }
 
             if (_throughToken != address(0) && i > 0) {
-                if (_throughToken.allowance(this, _exchanges[i]) == 0) {
+                if (_throughToken.allowance(_exchanges[i], this) == 0) {
                     _throughToken.approve(_exchanges[i], uint256(-1));
                 }
                 require(_exchanges[i].call(data), "buy: exchange arbitrary call failed");
