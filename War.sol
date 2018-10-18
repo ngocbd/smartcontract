@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract War at 0xc42c450abd63cc77fedcc22f124a7783f6958a79
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract War at 0x1e8bcaa2f8da4bb862877fec5dda2632caa3e1ae
 */
 pragma solidity 0.4.24;
 
@@ -2246,7 +2246,6 @@ contract War is usingOraclize, Pausable, PlayToken, CustomEvents, TestMode {
     mapping (address => uint) public refundPool;
 
     constructor() public {
-      OAR = OraclizeAddrResolverI(0x6f485C8BF6fc43eA212E93BBF8ce046C7f1cb475);
       oraclize_setCustomGasPrice(20000000000);
     }
     function() public payable {}
