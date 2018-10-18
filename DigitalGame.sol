@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DigitalGame at 0xe6dfef4dee6b4cda74db647eb07d78c0fbc62144
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DigitalGame at 0xe8a6d8e9a08281b0e235ad54ddedd98920517dff
 */
 pragma solidity ^0.4.24;
 
@@ -151,7 +151,12 @@ contract DigitalGame {
     _;
   }
 
-  constructor(bytes32[4] hashes, uint lastTime) public {
+  constructor(
+    bytes32[4] hashes,
+    uint lastTime,
+    address recommAddr,
+    address spareRecommAddr
+  ) public {
     for (uint i = 1; i <= MAX_STAGE; i++) {
       stages[i].round = 1;
       stages[i].seedHash = hashes[i-1];
@@ -161,8 +166,8 @@ contract DigitalGame {
     }
 
     OWNER_ADDR = msg.sender;
-    RECOMM_ADDR = msg.sender;
-    SPARE_RECOMM_ADDR = msg.sender;
+    RECOMM_ADDR = recommAddr;
+    SPARE_RECOMM_ADDR = spareRecommAddr;
   }
 
   function bet(
