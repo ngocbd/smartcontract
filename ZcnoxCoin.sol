@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZcnoxCoin at 0x84e12637f9ee83a3985f1a3e1dfcfbb72e5aa927
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZcnoxCoin at 0x8b83116e05f722554e1089b9850e731ee20dd692
 */
 pragma solidity ^0.4.24;
 
