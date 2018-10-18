@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSeller at 0xf750092e2339fc64bd2c97a3d6cd74d019a95f94
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSeller at 0xd7293f80c77fec2abaeed126cf33cacc49e80c3c
 */
 pragma solidity ^0.4.24;
 
@@ -574,7 +574,6 @@ contract MultiChanger is CanReclaimToken {
 // File: contracts/registry/MultiSeller.sol
 
 contract MultiSeller is MultiChanger {
-    using CheckedERC20 for ERC20;
     using CheckedERC20 for IMultiToken;
 
     function() public payable {
@@ -669,22 +668,22 @@ contract MultiSeller is MultiChanger {
 
             if (i == _exchanges.length - 1 && _throughToken != address(0)) {
                 if (_throughToken.allowance(this, _exchanges[i]) == 0) {
-                    _throughToken.asmApprove(_exchanges[i], uint256(-1));
+                    _throughToken.approve(_exchanges[i], uint256(-1));
                 }
             } else {
                 ERC20 token = _mtkn.tokens(i);
                 if (_exchanges[i] == 0) {
-                    token.asmTransfer(_for, token.balanceOf(this));
+                    token.transfer(_for, token.balanceOf(this));
                     continue;
                 }
-                token.asmApprove(_exchanges[i], token.balanceOf(this));
+                token.approve(_exchanges[i], token.balanceOf(this));
             }
             require(_exchanges[i].call(data), "sell: exchange arbitrary call failed");
         }
 
         _for.transfer(address(this).balance);
         if (_throughToken != address(0) && _throughToken.balanceOf(this) > 0) {
-            _throughToken.asmTransfer(_for, _throughToken.balanceOf(this));
+            _throughToken.transfer(_for, _throughToken.balanceOf(this));
         }
     }
 }
