@@ -1,13 +1,40 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DailyDivs at 0xe8c73332eda7af625b872d36643d058330c982d2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DailyDivs at 0xd2bfceeab8ffa24cdf94faa2683df63df4bcbdc8
 */
 pragma solidity ^0.4.21;
 
 
+/*
+******************** DailyDivs.com *********************
+*
+*  ____        _ _       ____  _                                
+* |  _ \  __ _(_) |_   _|  _ \(_)_   _____   ___ ___  _ __ ___  
+* | | | |/ _` | | | | | | | | | \ \ / / __| / __/ _ \| '_ ` _ \ 
+* | |_| | (_| | | | |_| | |_| | |\ V /\__ \| (_| (_) | | | | | |
+* |____/ \__,_|_|_|\__, |____/|_| \_/ |___(_)___\___/|_| |_| |_|
+*                  |___/                                        
+*
+******************** DailyDivs.com *********************
+*
+*
+* [x] 0% TRANSFER FEES
+* [x] 20% DIVIDENDS AND MASTERNODES
+* [x] 5% FEE ON EACH BUY AND SELL GO TO Smart Contract Fund 0xd9092D94F74E6b5D408DBd3eCC88f3e5810d1e98
+*     How 5% is divided and used: 
+*     80% to Buy Tokens from the exchange to be transferred to DDT Surplus and fund other DailyDivs Games
+*     20% to Dev Fund For Platform Development
+* [x] Only 1 DDT Token is needed to have a masternode! This allows virtually anyone to earn via buys from their masternode!
+* [x] DailyDivs Token can be used for future games
+*
+* Official Website: https://dailydivs.com/ 
+* Official Discord: https://discord.gg/J4Bvu32
+* Official Telegram: https://t.me/dailydivs
+*/
+
 
 /**
  * Definition of contract accepting DailyDivs tokens
- * Games, casinos, anything can reuse this contract to support DailyDivs tokens
+ * DDT Lending and other games can reuse this contract to support DailyDivs tokens
  */
 contract AcceptsDailyDivs {
     DailyDivs public tokenContract;
@@ -68,7 +95,7 @@ contract DailyDivs {
         _;
     }
     
-    uint ACTIVATION_TIME = 1537743600;
+    uint ACTIVATION_TIME = 1538938800;
 
 
     // ensures that the first tokens in the contract will be equally distributed
@@ -144,29 +171,28 @@ contract DailyDivs {
     /*=====================================
     =            CONFIGURABLES            =
     =====================================*/
-    string public name = "EXODUS XCHANGE";
-    string public symbol = "EXE";
+    string public name = "DailyDivs";
+    string public symbol = "DDT";
     uint8 constant public decimals = 18;
     uint8 constant internal dividendFee_ = 20; // 20% dividend fee on each buy and sell
-    uint8 constant internal fundFee_ = 5; // 5% investment fund fee on each buy and sell
+    uint8 constant internal fundFee_ = 5; // 5% fund tax on buys/sells/reinvest (split 80/20)
     uint256 constant internal tokenPriceInitial_ = 0.00000001 ether;
     uint256 constant internal tokenPriceIncremental_ = 0.000000001 ether;
     uint256 constant internal magnitude = 2**64;
 
-    // Address to send the 5% Fee
-    //  70% to Earn Game / 30% to Dev Fund
     
-    address constant public giveEthFundAddress = 0x447FF830ba5F7fAf3d504273394370053d086C08;
-    uint256 public totalEthFundRecieved; // total ETH charity recieved from this contract
-    uint256 public totalEthFundCollected; // total ETH charity collected in this contract
+    // 80/20 FUND TAX CONTRACT ADDRESS
+    address constant public giveEthFundAddress = 0xd9092D94F74E6b5D408DBd3eCC88f3e5810d1e98;
+    uint256 public totalEthFundRecieved; // total ETH FUND recieved from this contract
+    uint256 public totalEthFundCollected; // total ETH FUND collected in this contract
 
     // proof of stake (defaults at 100 tokens)
-    uint256 public stakingRequirement = 25e18;
+    uint256 public stakingRequirement = 1e18;
 
     // ambassador program
     mapping(address => bool) internal ambassadors_;
-    uint256 constant internal ambassadorMaxPurchase_ = 1 ether;
-    uint256 constant internal ambassadorQuota_ = 7 ether;
+    uint256 constant internal ambassadorMaxPurchase_ = 8 ether;
+    uint256 constant internal ambassadorQuota_ = 8 ether;
 
 
 
@@ -190,7 +216,7 @@ contract DailyDivs {
     // Special DailyDivs Platform control from scam game contracts on DailyDivs platform
     mapping(address => bool) public canAcceptTokens_; // contracts, which can accept DailyDivs tokens
 
-    mapping(address => address) public stickyRef;
+
 
     /*=======================================
     =            PUBLIC FUNCTIONS            =
@@ -202,22 +228,38 @@ contract DailyDivs {
         public
     {
         // add administrators here
-        administrators[0x2f4A12500A2E512090D164a52322583Bd293f3fE] = true;
+        administrators[0x0E7b52B895E3322eF341004DC6CB5C63e1d9b1c5] = true;
+        
+        // admin
+        ambassadors_[0x0E7b52B895E3322eF341004DC6CB5C63e1d9b1c5] = true;
 
-        // add the ambassadors here - Tokens will be distributed to these addresses from main premine
-        ambassadors_[0xbb5976509F41dEbA91F6249901B0BC0Ca7ada275] = true;
-        // add the ambassadors here - Tokens will be distributed to these addresses from main premine
-        ambassadors_[0x1174D17880121CfE44ae4d0cF84B4EA7C52f33d2] = true;
-       // add the ambassadors here - Tokens will be distributed to these addresses from main premine
-        ambassadors_[0x8721a7477c697fE56Cba5Bfb769cA24a697CFB16] = true;
-        // add the ambassadors here - Tokens will be distributed to these addresses from main premine
-        ambassadors_[0xae28A91Fc7dF7FE7aE8E891E8580564eCA65e7CC] = true;
-        // add the ambassadors here - Tokens will be distributed to these addresses from main premine
-        ambassadors_[0xBd4D528f5b0C99775679d2A6d71821516E3f90BE] = true;
-        // add the ambassadors here - Tokens will be distributed to these addresses from main premine
-        ambassadors_[0x41FE3738B503cBaFD01C1Fd8DD66b7fE6Ec11b01] = true;
-        // add the ambassadors here - Tokens will be distributed to these addresses from main premine
-            ambassadors_[0x723A38b08c7282521d7E6Fab9fF146035658222E] = true;
+        // add the ambassadors
+        ambassadors_[0x4A42500b817439cF9B10b4d3edf68bb63Ed0A89B] = true;
+        
+        // add the ambassadors
+        ambassadors_[0x642e0ce9ae8c0d8007e0acaf82c8d716ff8c74c1] = true;
+        
+        // add the ambassadors
+        ambassadors_[0xeafe863757a2b2a2c5c3f71988b7d59329d09a78] = true;
+        
+        // add the ambassadors
+        ambassadors_[0x03B434e2dC43184538ED148f71c097b54f87EBBd] = true;
+        
+        // add the ambassadors
+        ambassadors_[0x8f1A667590014BF2e78b88EB112970F9E3E340E5] = true;
+        
+        // add the ambassadors
+        ambassadors_[0x6CF441B689683D3049f11B02c001E14bd0d86421] = true;
+        
+        // add the ambassadors
+            ambassadors_[0xa39334D8363d6aAF50372313efaa4cF8bDD50a30] = true;
+        
+        // add the ambassadors
+        ambassadors_[0xEc31176d4df0509115abC8065A8a3F8275aafF2b] = true;
+        
+        
+        
+        
         
     }
 
@@ -232,7 +274,7 @@ contract DailyDivs {
     {
         
         require(tx.gasprice <= 0.05 szabo);
-        purchaseTokens(msg.value, _referredBy);
+        purchaseInternal(msg.value, _referredBy);
     }
 
     /**
@@ -244,13 +286,13 @@ contract DailyDivs {
         public
     {
         
-        require(tx.gasprice <= 0.05 szabo);
-        purchaseTokens(msg.value, 0x0);
+        require(tx.gasprice <= 0.01 szabo);
+        purchaseInternal(msg.value, 0x0);
     }
 
     /**
-     * Sends FUND money to the 70/30 Contract
-   
+     * Sends FUND TAX to the FUND TAX addres. (Remember 80% of the Fund is used to support DDT Lending and other platform games)
+     * This is the FUND TAX address that splits the ETH (80/20): https://etherscan.io/address/0xd9092D94F74E6b5D408DBd3eCC88f3e5810d1e98
      */
     function payFund() payable public {
       uint256 ethToPay = SafeMath.sub(totalEthFundCollected, totalEthFundRecieved);
@@ -342,14 +384,11 @@ contract DailyDivs {
 
         uint256 _dividends = SafeMath.div(SafeMath.mul(_ethereum, dividendFee_), 100);
         uint256 _fundPayout = SafeMath.div(SafeMath.mul(_ethereum, fundFee_), 100);
-        uint256 _refPayout = _dividends / 3;
-        _dividends = SafeMath.sub(_dividends, _refPayout);
-        (_dividends,) = handleRef(stickyRef[msg.sender], _refPayout, _dividends, 0);
 
         // Take out dividends and then _fundPayout
         uint256 _taxedEthereum =  SafeMath.sub(SafeMath.sub(_ethereum, _dividends), _fundPayout);
 
-        // Add ethereum to send to fund
+        // Add ethereum to send to Fund Tax Contract
         totalEthFundCollected = SafeMath.add(totalEthFundCollected, _fundPayout);
 
         // burn the sold tokens
@@ -441,7 +480,7 @@ contract DailyDivs {
 
     /*----------  ADMINISTRATOR ONLY FUNCTIONS  ----------*/
     /**
-     * In case the amassador quota is not met, the administrator can manually disable the ambassador phase.
+     * In case the ambassador quota is not met, the administrator can manually disable the ambassador phase.
      */
     //function disableInitialStage()
     //    onlyAdministrator()
@@ -646,7 +685,7 @@ contract DailyDivs {
     }
 
     /**
-     * Function for the frontend to show ether waiting to be send to fund in contract
+     * Function for the frontend to show ether waiting to be sent to Fund Contract from the exchange contract
      */
     function etherToSendFund()
         public
@@ -660,7 +699,7 @@ contract DailyDivs {
     =            INTERNAL FUNCTIONS            =
     ==========================================*/
 
-    // Make sure we will send back excess if user sends more then 5 ether before 100 ETH in contract
+    // Make sure we will send back excess if user sends more then 2 ether before 200 ETH in contract
     function purchaseInternal(uint256 _incomingEthereum, address _referredBy)
       notContract()// no contracts allowed
       internal
@@ -668,9 +707,9 @@ contract DailyDivs {
 
       uint256 purchaseEthereum = _incomingEthereum;
       uint256 excess;
-      if(purchaseEthereum > 2.5 ether) { // check if the transaction is over 2.5 ether
-          if (SafeMath.sub(address(this).balance, purchaseEthereum) <= 100 ether) { // if so check the contract is less then 100 ether
-              purchaseEthereum = 2.5 ether;
+      if(purchaseEthereum > 2 ether) { // check if the transaction is over 2 ether
+          if (SafeMath.sub(address(this).balance, purchaseEthereum) <= 200 ether) { // if so check the contract is less then 200 ether
+              purchaseEthereum = 2 ether;
               excess = SafeMath.sub(_incomingEthereum, purchaseEthereum);
           }
       }
@@ -680,57 +719,6 @@ contract DailyDivs {
       if (excess > 0) {
         msg.sender.transfer(excess);
       }
-    }
-
-    function handleRef(address _ref, uint _referralBonus, uint _currentDividends, uint _currentFee) internal returns (uint, uint){
-        uint _dividends = _currentDividends;
-        uint _fee = _currentFee;
-        address _referredBy = stickyRef[msg.sender];
-        if (_referredBy == address(0x0)){
-            _referredBy = _ref;
-        }
-        // is the user referred by a masternode?
-        if(
-            // is this a referred purchase?
-            _referredBy != 0x0000000000000000000000000000000000000000 &&
-
-            // no cheating!
-            _referredBy != msg.sender &&
-
-            // does the referrer have at least X whole tokens?
-            // i.e is the referrer a godly chad masternode
-            tokenBalanceLedger_[_referredBy] >= stakingRequirement
-        ){
-            // wealth redistribution
-            if (stickyRef[msg.sender] == address(0x0)){
-                stickyRef[msg.sender] = _referredBy;
-            }
-            referralBalance_[_referredBy] = SafeMath.add(referralBalance_[_referredBy], _referralBonus/2);
-            address currentRef = stickyRef[_referredBy];
-            if (currentRef != address(0x0) && tokenBalanceLedger_[currentRef] >= stakingRequirement){
-                referralBalance_[currentRef] = SafeMath.add(referralBalance_[currentRef], (_referralBonus/10)*3);
-                currentRef = stickyRef[currentRef];
-                if (currentRef != address(0x0) && tokenBalanceLedger_[currentRef] >= stakingRequirement){
-                    referralBalance_[currentRef] = SafeMath.add(referralBalance_[currentRef], (_referralBonus/10)*2);
-                }
-                else{
-                    _dividends = SafeMath.add(_dividends, _referralBonus - _referralBonus/2 - (_referralBonus/10)*3);
-                    _fee = _dividends * magnitude;
-                }
-            }
-            else{
-                _dividends = SafeMath.add(_dividends, _referralBonus - _referralBonus/2);
-                _fee = _dividends * magnitude;
-            }
-            
-            
-        } else {
-            // no ref purchase
-            // add the referral bonus back to the global dividends cake
-            _dividends = SafeMath.add(_dividends, _referralBonus);
-            _fee = _dividends * magnitude;
-        }
-        return (_dividends, _fee);
     }
 
 
@@ -744,13 +732,12 @@ contract DailyDivs {
         uint256 _referralBonus = SafeMath.div(_undividedDividends, 3);
         uint256 _fundPayout = SafeMath.div(SafeMath.mul(_incomingEthereum, fundFee_), 100);
         uint256 _dividends = SafeMath.sub(_undividedDividends, _referralBonus);
-        uint256 _fee;
-        (_dividends, _fee) = handleRef(_referredBy, _referralBonus, _dividends, _fee);
-        uint256 _taxedEthereum = SafeMath.sub(SafeMath.sub(_incomingEthereum, _dividends), _fundPayout);
+        uint256 _taxedEthereum = SafeMath.sub(SafeMath.sub(_incomingEthereum, _undividedDividends), _fundPayout);
+
         totalEthFundCollected = SafeMath.add(totalEthFundCollected, _fundPayout);
 
         uint256 _amountOfTokens = ethereumToTokens_(_taxedEthereum);
-
+        uint256 _fee = _dividends * magnitude;
 
         // no point in continuing execution if OP is a poorfag russian hacker
         // prevents overflow in the case that the pyramid somehow magically starts being used by everyone in the world
@@ -758,11 +745,30 @@ contract DailyDivs {
         // and yes we know that the safemath function automatically rules out the "greater then" equasion.
         require(_amountOfTokens > 0 && (SafeMath.add(_amountOfTokens,tokenSupply_) > tokenSupply_));
 
+        // is the user referred by a masternode?
+        if(
+            // is this a referred purchase?
+            _referredBy != 0x0000000000000000000000000000000000000000 &&
 
+            // no cheating!
+            _referredBy != msg.sender &&
+
+            // does the referrer have at least X whole tokens?
+            // i.e is the referrer a godly chad masternode
+            tokenBalanceLedger_[_referredBy] >= stakingRequirement
+        ){
+            // wealth redistribution
+            referralBalance_[_referredBy] = SafeMath.add(referralBalance_[_referredBy], _referralBonus);
+        } else {
+            // no ref purchase
+            // add the referral bonus back to the global dividends cake
+            _dividends = SafeMath.add(_dividends, _referralBonus);
+            _fee = _dividends * magnitude;
+        }
 
         // we can't give people infinite ethereum
         if(tokenSupply_ > 0){
- 
+
             // add tokens to the pool
             tokenSupply_ = SafeMath.add(tokenSupply_, _amountOfTokens);
 
