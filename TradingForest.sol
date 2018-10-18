@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TradingForest at 0x0a69fb423c668a0ba9884471e1af1e093cded6a0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TradingForest at 0x7e3e49cc64cf9f3ef0563b15f9d90d0edc8385ab
 */
 pragma solidity ^0.4.18;
 	
@@ -181,7 +181,7 @@ pragma solidity ^0.4.18;
 	    /**
 	     * Token count
 	     */
-	    uint totalTokens = 500000 * 10**18; // ICO Participants
+	    uint totalTokens = 500000000 * 10**18; // 
 	    uint team = 0; // 
 	    uint bounty = 0; // 
 	
@@ -189,8 +189,8 @@ pragma solidity ^0.4.18;
 	    /**
 	     * TGE and Pre-TGE cap
 	     */
-	    uint preTgeCap = 70000000120 * 10**18; // Max amount raised
-	    uint tgeCap = 70000000120 * 10**18; // Max amount raised
+	    uint preTgeCap = 500000120 * 10**18; // Max amount raised
+	    uint tgeCap = 500000120 * 10**18; // Max amount raised
 	
 
 	    /**
@@ -221,7 +221,7 @@ pragma solidity ^0.4.18;
 	        totalTokens = safeSub(totalTokens, team);
 	        // Sub from total tokens bounty pool
 	        totalTokens = safeSub(totalTokens, bounty);
-	        // Total supply is 500000
+	        // Total supply is 500000000
 	        totalSupply = totalTokens;
 	        balances[owner] = totalSupply;
 	    }
@@ -254,7 +254,7 @@ pragma solidity ^0.4.18;
 	        require(balances[owner]>tokens);
 	
 
-	        // It allows to change the amount of tokens by ETH.
+	        // It allows to change the amount of tokens / ETH.
 	        if (stageThree) {
 				preTge = false;
 				stageOne = false;
@@ -262,7 +262,7 @@ pragma solidity ^0.4.18;
 	            tokens = ((tokens / data1) * ethusd)+((tokens / data1) * (ethusd / 4));
 	        }
 
-	        // It allows to change the amount of tokens by ETH.
+	        // It allows to change the amount of tokens / ETH.
 	        if (stageTwo) {
 				preTge = false;
 				stageOne = false;
@@ -270,7 +270,7 @@ pragma solidity ^0.4.18;
 	            tokens = ((tokens / data1) * ethusd)+((tokens / data1) * (ethusd / 2));
 	        }
 			
-	        // It allows to change the amount of tokens by ETH.
+	        // It allows to change the amount of tokens / ETH.
 	        if (stageOne) {
 				preTge = false;
 				stageTwo = false;
@@ -278,7 +278,7 @@ pragma solidity ^0.4.18;
 	            tokens = ((tokens / data1) * ethusd)+((tokens / data1) * ethusd);
 	        }
 			
-	        // It allows to change the amount of tokens by ETH.
+	        // It allows to change the amount of tokens / ETH.
 	        if (preTge) {
 	            stageOne = false;
 	            stageTwo = false;
