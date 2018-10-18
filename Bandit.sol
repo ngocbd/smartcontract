@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bandit at 0x4ad0a7b4884adc2f5bf769253efe89549d10f7b4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bandit at 0x1b332629b45136a3614fafcd927c8ea31d7cd717
 */
 // <ORACLIZE_API>
 /*
@@ -2020,7 +2020,7 @@ contract Bandit is usingOraclize, DSSafeAddSub {
     mapping (bytes32 => bytes32) playerBetId;
     mapping (bytes32 => uint) playerBetValue;
     mapping (bytes32 => uint) playerTempBetValue;       
-    mapping (bytes32 => string) playerDieResult;
+    mapping (bytes32 => string) public playerDieResult;
     mapping (address => uint) playerPendingWithdrawals;      
     mapping (bytes32 => uint) playerTempReward;
 	
@@ -2051,7 +2051,7 @@ contract Bandit is usingOraclize, DSSafeAddSub {
         ownerSetMinBet(50000000000000000);
 		ownerSetMaxBet(1000000000000000000);
         /* init gas for oraclize */        
-        gasForOraclize = 250000;
+        gasForOraclize = 220000;
         /* init gas price for callback (default 20 gwei)*/
         oraclize_setCustomGasPrice(20000000000 wei);		
 
@@ -2075,7 +2075,7 @@ contract Bandit is usingOraclize, DSSafeAddSub {
         * integer query is in plain text
         */               
 		randomQueryID += 1;
-        string memory queryString1 = "[URL] ['json(https://api.random.org/json-rpc/1/invoke).result.random[\"serialNumber\",\"data\"]', '\\n{\"jsonrpc\":\"2.0\",\"method\":\"generateSignedIntegers\",\"params\":{\"apiKey\":${[decrypt] BGD/97q1t/T+kvazlXwudelwzebpvcx6bW5LckCuZDcCeJILY20m+eimHn32fvEDE9eF26eiPl5M15FYdY4MPcrqHdrTUOuYGL2KA2MJ++A4XjNfaCCzJGzxd5FpgTTOZ+eX4lL+X1TcQrkd85VmG6oTwZX8/MM=},\"n\":3,\"min\":1,\"max\":20,\"replacement\":true,\"base\":10${[identity] \"}\"},\"id\":";
+        string memory queryString1 = "[URL] ['json(https://api.random.org/json-rpc/1/invoke).result.random[\"serialNumber\",\"data\"]', '\\n{\"jsonrpc\":\"2.0\",\"method\":\"generateSignedIntegers\",\"params\":{\"apiKey\":${[decrypt] BMQPRXLz2Bxhv0qE0MZIob4wmCLWdSLuzN2uUn7KFIdAmCmnHt9OS30dR9x9BuSWkqrej3SOVxxICyePvRqiEZ6RHRrCON++Ene7jEA1ddNjS+YIg9FEu5iVIN+QXklmoL5ugZG0wpkKcA8L5MLgXDmajYuBSP4=},\"n\":3,\"min\":1,\"max\":20,\"replacement\":true,\"base\":10${[identity] \"}\"},\"id\":";
         string memory queryString2 = uint2str(randomQueryID);
         string memory queryString3 = "${[identity] \"}\"}']";
 		
@@ -2186,7 +2186,7 @@ contract Bandit is usingOraclize, DSSafeAddSub {
 		/*
 		Any Cherry
 		*/
-		if(first_barrel == 4 || first_barrel == 11 || first_barrel == 18 || second_barrel == 13 || second_barrel == 19 || third_barrel == 5 || third_barrel == 11 || third_barrel == 18)
+		if(first_barrel == 4 || first_barrel == 11 || first_barrel == 18 || second_barrel == 13 || second_barrel == 19 || third_barrel == 11 || third_barrel == 18)
 		{
 			miltiplier = 2;
 		}
@@ -2194,7 +2194,7 @@ contract Bandit is usingOraclize, DSSafeAddSub {
 		/*
 		3 Cherry
 		*/
-		if((first_barrel == 4 || first_barrel == 11 || first_barrel == 18) && (second_barrel == 13 || second_barrel == 19) && (third_barrel == 5 || third_barrel == 11 || third_barrel == 18))
+		if((first_barrel == 4 || first_barrel == 11 || first_barrel == 18) && (second_barrel == 13 || second_barrel == 19) && (third_barrel == 11 || third_barrel == 18))
 		{
 			miltiplier = 7;
 		}
@@ -2210,7 +2210,7 @@ contract Bandit is usingOraclize, DSSafeAddSub {
 		/*
 		3 Any bars
 		*/
-		if((first_barrel == 2 || first_barrel == 6 || first_barrel == 9 || first_barrel == 13) && (second_barrel == 1 || second_barrel == 3 || second_barrel == 9 || second_barrel == 11 || second_barrel == 17) && (third_barrel == 1 || third_barrel == 3 || third_barrel == 6 || third_barrel == 9 || third_barrel == 12 || third_barrel == 14 || third_barrel == 20))
+		if((first_barrel == 2 || first_barrel == 6 || first_barrel == 9 || first_barrel == 13) && (second_barrel == 1 || second_barrel == 3 || second_barrel == 9 || second_barrel == 11 || second_barrel == 17) && (third_barrel == 1 || third_barrel == 6 || third_barrel == 9 || third_barrel == 12 || third_barrel == 14 || third_barrel == 20))
 		{
 			miltiplier = 5;
 		}
@@ -2218,7 +2218,7 @@ contract Bandit is usingOraclize, DSSafeAddSub {
 		/*
 		3 One bars
 		*/
-		if((first_barrel == 2 || first_barrel == 9) && (second_barrel == 3 || second_barrel == 17) && (third_barrel == 3 || third_barrel == 12 || third_barrel == 14))
+		if((first_barrel == 2 || first_barrel == 9) && (second_barrel == 3 || second_barrel == 17) && (third_barrel == 12 || third_barrel == 14))
 		{
 			miltiplier = 10;
 		}
