@@ -1,168 +1,198 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xc5cd277c8851b3c305f2b5a333126cff07c36223
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x0e5f11af41c06f62cd176bfbc16704fc04c62a61
 */
-/*
-	Verified Crypto Company token
-
-	Copyright (C) Fusion Solutions KFT <contact@fusionsolutions.io> - All Rights Reserved
-
-	This file is part of Verified Crypto Company token project.
-	Unauthorized copying of this file or source, via any medium is strictly prohibited
-	Proprietary and confidential
-	This file can not be copied and/or distributed without the express permission of the Author.
-
-	Written by Andor Rajci, August 2018
-*/
-pragma solidity 0.4.24;
+pragma solidity ^0.4.18;
 
 library SafeMath {
-    /* Internals */
-    function add(uint256 a, uint256 b) internal pure returns(uint256 c) {
-        c = a + b;
-        assert( c >= a );
-        return c;
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
     }
-    function sub(uint256 a, uint256 b) internal pure returns(uint256 c) {
-        c = a - b;
-        assert( c <= a );
-        return c;
-    }
-    function mul(uint256 a, uint256 b) internal pure returns(uint256 c) {
-        c = a * b;
-        assert( c == 0 || c / a == b );
-        return c;
-    }
-    function div(uint256 a, uint256 b) internal pure returns(uint256) {
-        return a / b;
-    }
-    function pow(uint256 a, uint256 b) internal pure returns(uint256 c) {
-        c = a ** b;
-        assert( c % a == 0 );
-        return a ** b;
-    }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
-contract Token {
-	/* Declarations */
-	using SafeMath for uint256;
-	/* Structures */
-	struct action_s {
-		address origin;
-		uint256 voteCounter;
-		uint256 uid;
-		mapping(address => uint256) voters;
-	}
-	/* Variables */
-	string  public name = "Verified Crypto Company token";
-	string  public symbol = "VRFD";
-	uint8   public decimals = 0;
-	uint256 public totalSupply = 1e6;
-	uint256 public actionVotedRate;
-	uint256 public ownerCounter;
-	uint256 public voteUID;
-	address public admin;
-	mapping(address => uint256) public balanceOf;
-	mapping(address => string) public nameOf;
-	mapping(address => bool) public owners;
-	mapping(bytes32 => action_s) public actions;
-	/* Constructor */
-	constructor(address _admin, uint256 _actionVotedRate, address[] _owners) public {
-		uint256 i;
-		require( _actionVotedRate <= 100 );
-		actionVotedRate = _actionVotedRate;
-		for ( i=0 ; i<_owners.length ; i++ ) {
-			owners[_owners[i]] = true;
-		}
-		ownerCounter = _owners.length;
-		balanceOf[address(this)] = totalSupply;
-		emit Mint(address(this), totalSupply);
-		admin = _admin;
-	}
-	/* Fallback */
-	function () public { revert(); }
-	/* Externals */
-	function setStatus(address _target, uint256 _status, string _name) external forAdmin {
-		require( balanceOf[_target] == 0 );
-		balanceOf[address(this)] = balanceOf[address(this)].sub(_status);
-		balanceOf[_target] = _status;
-		nameOf[_target] = _name;
-		emit Transfer(address(this), _target, _status);
-	}
-	function delStatus(address _target) external forAdmin {
-		require( balanceOf[_target] > 0 );
-		balanceOf[address(this)] = balanceOf[address(this)].add(balanceOf[_target]);
-		emit Transfer(_target,  address(this), balanceOf[_target]);
-		delete balanceOf[_target];
-		delete nameOf[_target];
-	}
-	function changeAdmin(address _newAdmin) external forOwner {
-		bytes32 _hash;
-		_hash = keccak256('changeAdmin', _newAdmin);
-		if ( actions[_hash].origin == 0x00 ) {
-			emit newAdminAction(_hash, _newAdmin, msg.sender);
-		}
-		if ( doVote(_hash) ) {
-			admin = _newAdmin;
-		}
-	}
-	function newOwner(address _owner) external forOwner {
-		bytes32 _hash;
-		require( ! owners[_owner] );
-		_hash = keccak256('addNewOwner', _owner);
-		if ( actions[_hash].origin == 0x00 ) {
-			emit newAddNewOwnerAction(_hash, _owner, msg.sender);
-		}
-		if ( doVote(_hash) ) {
-			ownerCounter = ownerCounter.add(1);
-			owners[_owner] = true;
-		}
-	}
-	function delOwner(address _owner) external forOwner {
-		bytes32 _hash;
-		require( owners[_owner] );
-		_hash = keccak256('delOwner', _owner);
-		if ( actions[_hash].origin == 0x00 ) {
-			emit newDelOwnerAction(_hash, _owner, msg.sender);
-		}
-		if ( doVote(_hash) ) {
-			ownerCounter = ownerCounter.sub(1);
-			owners[_owner] = false;
-		}
-	}
-	/* Internals */
-	function doVote(bytes32 _hash) internal returns (bool _voted) {
-		require( owners[msg.sender] );
-		if ( actions[_hash].origin == 0x00 ) {
-			voteUID = voteUID.add(1);
-			actions[_hash].origin = msg.sender;
-			actions[_hash].voteCounter = 1;
-			actions[_hash].uid = voteUID;
-		} else if ( ( actions[_hash].voters[msg.sender] != actions[_hash].uid ) && actions[_hash].origin != msg.sender ) {
-			actions[_hash].voters[msg.sender] = actions[_hash].uid;
-			actions[_hash].voteCounter = actions[_hash].voteCounter.add(1);
-			emit vote(_hash, msg.sender);
-		}
-		if ( actions[_hash].voteCounter.mul(100).div(ownerCounter) >= actionVotedRate ) {
-			_voted = true;
-			emit votedAction(_hash);
-			delete actions[_hash];
-		}
-	}
-	/* Modifiers */
-	modifier forAdmin {
-		require( msg.sender == admin );
-		_;
-	}
-	modifier forOwner {
-		require( owners[msg.sender] );
-		_;
-	}
-	/* Events */
-	event Mint(address indexed _addr, uint256 indexed _value);
-	event Transfer(address indexed _from, address indexed _to, uint _value);
-	event newAddNewOwnerAction(bytes32 _hash, address _owner, address _origin);
-	event newDelOwnerAction(bytes32 _hash, address _owner, address _origin);
-	event newAdminAction(bytes32 _hash, address _newAdmin, address _origin);
-	event vote(bytes32 _hash, address _voter);
-	event votedAction(bytes32 _hash);
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+contract Token is ERC20, Ownable {
+  using SafeMath for uint;
+
+  // Token ??
+
+  string public constant name = "Truedeal Token";
+  string public constant symbol = "TDT";
+
+  uint8 public decimals = 18;
+
+  mapping (address => uint256) accounts; // User Accounts
+  mapping (address => mapping (address => uint256)) allowed; // User's allowances table
+
+  // Modifier
+  modifier nonZeroAddress(address _to) {                 // Ensures an address is provided
+      require(_to != 0x0);
+      _;
+  }
+
+  modifier nonZeroAmount(uint _amount) {                 // Ensures a non-zero amount
+      require(_amount > 0);
+      _;
+  }
+
+  modifier nonZeroValue() {                              // Ensures a non-zero value is passed
+      require(msg.value > 0);
+      _;
+  }
+
+  // ERC20 API
+
+  // -------------------------------------------------
+  // Transfers to another address
+  // -------------------------------------------------
+  function transfer(address _to, uint256 _amount) public returns (bool success) {
+      require(accounts[msg.sender] >= _amount);         // check amount of balance can be tranfetdt
+      addToBalance(_to, _amount);
+      decrementBalance(msg.sender, _amount);
+      Transfer(msg.sender, _to, _amount);
+      return true;
+  }
+
+  // -------------------------------------------------
+  // Transfers from one address to another (need allowance to be called first)
+  // -------------------------------------------------
+  function transferFrom(address _from, address _to, uint256 _amount) public returns (bool success) {
+      require(allowance(_from, msg.sender) >= _amount);
+      decrementBalance(_from, _amount);
+      addToBalance(_to, _amount);
+      allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_amount);
+      Transfer(_from, _to, _amount);
+      return true;
+  }
+
+  // -------------------------------------------------
+  // Approves another address a certain amount of TDT
+  // -------------------------------------------------
+  function approve(address _spender, uint256 _value) public returns (bool success) {
+      require((_value == 0) || (allowance(msg.sender, _spender) == 0));
+      allowed[msg.sender][_spender] = _value;
+      Approval(msg.sender, _spender, _value);
+      return true;
+  }
+
+  // -------------------------------------------------
+  // Gets an address's TDT allowance
+  // -------------------------------------------------
+  function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
+      return allowed[_owner][_spender];
+  }
+
+  // -------------------------------------------------
+  // Gets the TDT balance of any address
+  // -------------------------------------------------
+  function balanceOf(address _owner) public constant returns (uint256 balance) {
+      return accounts[_owner];
+  }
+
+  function Token(address _address) public {
+    totalSupply = 8000000000 * 1e18;
+    addToBalance(_address, totalSupply);
+    Transfer(0x0, _address, totalSupply);
+  }
+
+  // -------------------------------------------------
+  // Add balance
+  // -------------------------------------------------
+  function addToBalance(address _address, uint _amount) internal {
+    accounts[_address] = accounts[_address].add(_amount);
+  }
+
+  // -------------------------------------------------
+  // Sub balance
+  // -------------------------------------------------
+  function decrementBalance(address _address, uint _amount) internal {
+    accounts[_address] = accounts[_address].sub(_amount);
+  }
 }
