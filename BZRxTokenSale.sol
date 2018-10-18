@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BZRxTokenSale at 0xbbf3b5218c74deb0f31883bb2287014472efda21
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BZRxTokenSale at 0x0b12cf7964731f7190b74600fcdad9ba4cac870c
 */
 /**
  * Copyright 2017–2018, bZeroX, LLC. All Rights Reserved.
@@ -594,12 +594,10 @@ interface WETHInterface {
     function withdraw(uint wad) external;
 }
 
-interface PriceFeed {
-    function read() external view returns (bytes32);
-}
-
 contract BZRxTokenSale is Ownable {
     using SafeMath for uint256;
+
+    uint public constant tokenPrice = 73 * 10**12; // 0.000073 ETH
 
     struct TokenPurchases {
         uint totalETH;
@@ -608,7 +606,7 @@ contract BZRxTokenSale is Ownable {
     }
 
     event BonusChanged(uint oldBonus, uint newBonus);
-    event TokenPurchase(address indexed buyer, uint ethAmount, uint ethRate, uint tokensReceived);
+    event TokenPurchase(address indexed buyer, uint ethAmount, uint tokensReceived);
     
     event SaleOpened(uint bonusMultiplier);
     event SaleClosed(uint bonusMultiplier);
@@ -618,7 +616,6 @@ contract BZRxTokenSale is Ownable {
     address public bZRxTokenContractAddress;    // BZRX Token
     address public bZxVaultAddress;             // bZx Vault
     address public wethContractAddress;         // WETH Token
-    address public priceContractAddress;        // MakerDao Medianizer price feed
 
     // The current token bonus offered to purchasers (example: 110 == 10% bonus)
     uint public bonusMultiplier;
@@ -645,8 +642,8 @@ contract BZRxTokenSale is Ownable {
         address _bZRxTokenContractAddress,
         address _bZxVaultAddress,
         address _wethContractAddress,
-        address _priceContractAddress,
-        uint _bonusMultiplier)
+        uint _bonusMultiplier,
+        uint _previousAmountRaised)
         public
     {
         require(_bonusMultiplier > 100);
@@ -654,15 +651,15 @@ contract BZRxTokenSale is Ownable {
         bZRxTokenContractAddress = _bZRxTokenContractAddress;
         bZxVaultAddress = _bZxVaultAddress;
         wethContractAddress = _wethContractAddress;
-        priceContractAddress = _priceContractAddress;
         bonusMultiplier = _bonusMultiplier;
+        ethRaised = _previousAmountRaised;
     }
 
     function()  
         public
         payable 
     {
-        if (msg.sender != wethContractAddress)
+        if (msg.sender != wethContractAddress && msg.sender != owner)
             buyToken();
     }
 
@@ -675,16 +672,13 @@ contract BZRxTokenSale is Ownable {
     {
         require(msg.value > 0, "no ether sent");
         
-        uint ethRate = getEthRate();
-
         ethRaised += msg.value;
 
         uint tokenAmount = msg.value                        // amount of ETH sent
-                            .mul(ethRate).div(10**18)       // curent ETH/USD rate
-                            .mul(1000).div(73);             // fixed price per token $0.073
+                            .mul(10**18).div(tokenPrice);   // fixed ETH price per token (0.000073 ETH)
 
         uint tokenAmountAndBonus = tokenAmount
-                                            .mul(bonusMultiplier).div(100);
+                                        .mul(bonusMultiplier).div(100);
 
         TokenPurchases storage purchase = purchases[msg.sender];
         
@@ -696,7 +690,7 @@ contract BZRxTokenSale is Ownable {
         purchase.totalTokens += tokenAmountAndBonus;
         purchase.totalTokenBonus += tokenAmountAndBonus.sub(tokenAmount);
 
-        emit TokenPurchase(msg.sender, msg.value, ethRate, tokenAmountAndBonus);
+        emit TokenPurchase(msg.sender, msg.value, tokenAmountAndBonus);
 
         return BZRxToken(bZRxTokenContractAddress).mint(
             msg.sender,
@@ -723,11 +717,8 @@ contract BZRxTokenSale is Ownable {
                 _value
             );
         } else {
-            uint ethRate = getEthRate();
-            
             uint wethValue = _value                             // amount of BZRX
-                                .mul(73).div(1000)              // fixed price per token $0.073
-                                .mul(10**18).div(ethRate);      // curent ETH/USD rate
+                                .mul(tokenPrice).div(10**18);   // fixed ETH price per token (0.000073 ETH)
 
             require(canPurchaseAmount(_from, wethValue), "not whitelisted");
 
@@ -755,6 +746,10 @@ contract BZRxTokenSale is Ownable {
         }
     }
 
+    /**
+    * @dev Function to close the token sale for this contract.
+    * @return True if the operation was successful.
+    */
     function closeSale(
         bool _closed) 
         public 
@@ -798,16 +793,6 @@ contract BZRxTokenSale is Ownable {
         returns (bool)
     {
         wethContractAddress = _wethContractAddress;
-        return true;
-    }
-
-    function changePriceContract(
-        address _priceContractAddress) 
-        public 
-        onlyOwner 
-        returns (bool)
-    {
-        priceContractAddress = _priceContractAddress;
         return true;
     }
 
@@ -900,14 +885,6 @@ contract BZRxTokenSale is Ownable {
         return true;
     }
 
-
-    function getEthRate()
-        public
-        view
-        returns (uint)
-    {
-        return uint(PriceFeed(priceContractAddress).read());
-    }
 
     function canPurchaseAmount(
         address _user,
