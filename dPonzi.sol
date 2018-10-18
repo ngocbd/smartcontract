@@ -1,10 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract dPonzi at 0xd883209c4dcd497f24633c627a4e451013424841
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract dPonzi at 0x7d3b6b1360fa83482ed0284f9b9ac4e48edbcaa5
 */
 pragma solidity ^0.4.24;
 
 contract dPonzi {
-    address public manager;//who originally create the contract
+    address public manager;
 
     struct PlayerStruct {
         uint key;
@@ -26,6 +26,7 @@ contract dPonzi {
 
     struct PotCntStruct {
         address[] player;
+        address lastPlayer;
         uint last;
         uint balance;
         uint keys;
@@ -54,41 +55,21 @@ contract dPonzi {
     constructor() public {
         manager = msg.sender;
 
-        potCntInfo['d'].gameTime = now;
-        potCntInfo['7'].gameTime = now;
-        potCntInfo['30'].gameTime = now;
-        potCntInfo['90'].gameTime = now;
-        potCntInfo['180'].gameTime = now;
-        potCntInfo['365'].gameTime = now;
-        potCntInfo['l'].gameTime = now;
-        potCntInfo['r'].gameTime = now;
+        potCntInfo['d'].gameTime   = 0;
+        potCntInfo['7'].gameTime   = 0;
+        potCntInfo['30'].gameTime  = 0;
+        potCntInfo['90'].gameTime  = 0;
+        potCntInfo['180'].gameTime = 0;
+        potCntInfo['365'].gameTime = 0;
 
-        potCntInfo['d'].gtime   = now;
-        potCntInfo['7'].gtime   = now;
-        potCntInfo['30'].gtime  = now;
-        potCntInfo['90'].gtime  = now;
-        potCntInfo['180'].gtime = now;
-        potCntInfo['365'].gtime = now;
-        potCntInfo['l'].gtime   = now;
-        potCntInfo['r'].gtime   = now;
-
-        potCntInfo['d'].last  = now;
-        potCntInfo['7'].last  = now;
-        potCntInfo['30'].last = now;
-        potCntInfo['90'].last = now;
-        potCntInfo['180'].last  = now;
-
-        //declare precalculated entry amount to save gas during entry
-        potCntInfo['i'].entryAmount     = 10;
-        potCntInfo['d'].entryAmount     = 1;
-        potCntInfo['7'].entryAmount     = 4;
-        potCntInfo['30'].entryAmount    = 8;
-        // pot 90 and  pot dividend share the same 15%
-        potCntInfo['90'].entryAmount    = 15;
-        potCntInfo['180'].entryAmount   = 25;
-        //pot 365 and pot royal share the same 5%
-        potCntInfo['365'].entryAmount   = 5;
-        potCntInfo['l'].entryAmount     = 2;
+        potCntInfo['i'].entryAmount   = 10;
+        potCntInfo['d'].entryAmount   = 1;
+        potCntInfo['7'].entryAmount   = 4;
+        potCntInfo['30'].entryAmount  = 8;
+        potCntInfo['90'].entryAmount  = 15;
+        potCntInfo['180'].entryAmount = 25;
+        potCntInfo['365'].entryAmount = 5;
+        potCntInfo['l'].entryAmount   = 2;
     }
 
     function enter(string package, address advisor) public payable {
@@ -126,7 +107,6 @@ contract dPonzi {
             else {
                 potCntInfo['i'].balance += potCntInfo['i'].entryAmount * multiplier;
             }
-            //Allocation
             potCntInfo['d'].balance   += potCntInfo['d'].entryAmount    * multiplier;
             potCntInfo['7'].balance   += potCntInfo['7'].entryAmount    * multiplier;
             potCntInfo['30'].balance  += potCntInfo['30'].entryAmount   * multiplier;
@@ -135,33 +115,56 @@ contract dPonzi {
             potCntInfo['365'].balance += potCntInfo['365'].entryAmount  * multiplier;
             potCntInfo['l'].balance   += potCntInfo['l'].entryAmount    * multiplier;
             potCntInfo['r'].balance   += potCntInfo['365'].entryAmount  * multiplier;
-            //admin amount
             potCntInfo['i'].balance   += potCntInfo['i'].entryAmount    * multiplier;
             potCntInfo['dv'].balance  += potCntInfo['90'].entryAmount   * multiplier;
 
-            addPlayerMapping('d',   'idxDaily',  key, 30);//30 + 20
-            addPlayerMapping('7',   'idx7Pot',   key, 60);
-            addPlayerMapping('30',  'idx30Pot',  key, 90);
-            addPlayerMapping('90',  'idx90Pot',  key, 120);
-            addPlayerMapping('180', 'idx180Pot', key, 150);
-            addPlayerMapping('365', 'idx365Pot', key, 0);
+            addPlayerMapping('d',   'idxDaily',  key, 0, 0);
+            addPlayerMapping('7',   'idx7Pot',   key, 60, 3600);
+            addPlayerMapping('30',  'idx30Pot',  key, 90, 10800);
+            addPlayerMapping('90',  'idx90Pot',  key, 120, 21600);
+            addPlayerMapping('180', 'idx180Pot', key, 150, 43200);
+            addPlayerMapping('365', 'idx365Pot', key, 0, 0);
         }
     }
 
-    function addPlayerMapping(string x1, string x2, uint key, uint timeAdd ) private{
-      //if smaller, which means the game is expired.
+    function addPlayerMapping(string x1, string x2, uint key, uint timeAdd, uint hardCap ) private{
       if(potCntInfo[x1].last <= now){
         potCntInfo[x1].last = now;
       }
-      /* potCntInfo[x1].last += (key * timeAdd); */
-      potCntInfo[x1].last += (key * timeAdd);
 
-      //Add into Players Mapping
+      if(keccak256(abi.encodePacked(x1)) == keccak256("d")) {
+          if (potCntInfo[x1].gameTime == 0) {
+              potCntInfo[x1].gameTime   = now%86400 == 0 ? (now-28800) : now-28800-(now%86400);
+              potCntInfo[x1].gtime   = now;
+              potCntInfo[x1].last = potCntInfo[x1].gameTime + 1 days;
+          }
+      }
+      else if(keccak256(abi.encodePacked(x1)) == keccak256("365")) {
+        if (potCntInfo[x1].gameTime == 0) {
+            potCntInfo[x1].gameTime = now%86400 == 0 ? (now-28800) : now-28800-(now%86400);
+            potCntInfo[x1].gtime = now;
+            potCntInfo[x1].last = potCntInfo[x1].gameTime + 365 days;
+            potCntInfo['l'].gameTime = potCntInfo[x1].gameTime;
+            potCntInfo['r'].gameTime = potCntInfo[x1].gameTime;
+            potCntInfo['l'].gtime   = now;
+            potCntInfo['r'].gtime   = now;
+        }
+      }else  {
+          if (potCntInfo[x1].gameTime == 0) {
+              potCntInfo[x1].gameTime   = now%86400 == 0 ? (now-28800) : now-28800-(now%86400);
+              potCntInfo[x1].gtime   = now;
+              potCntInfo[x1].last = (now + (key * timeAdd))>=now+hardCap ? now + hardCap : now + (key * timeAdd);
+          }
+          else {
+              potCntInfo[x1].last = (potCntInfo[x1].last + (key * timeAdd))>=now+hardCap ? now + hardCap : potCntInfo[x1].last + (key * timeAdd);
+          }
+      }
+
       if (idxStruct[x2].playerStruct[msg.sender].flag == 0) {
           potCntInfo[x1].player.push(msg.sender);
           idxStruct[x2].playerStruct[msg.sender] = PlayerStruct(key, 0, potCntInfo[x1].player.length, potCntInfo[x1].gtime, 1);
       }
-      else if (idxStruct[x2].playerStruct[msg.sender].gametime != potCntInfo['d'].gtime){
+      else if (idxStruct[x2].playerStruct[msg.sender].gametime != potCntInfo[x1].gtime){
           potCntInfo[x1].player.push(msg.sender);
           idxStruct[x2].playerStruct[msg.sender] = PlayerStruct(key, 0, potCntInfo[x1].player.length, potCntInfo[x1].gtime, 1);
       }
@@ -169,6 +172,7 @@ contract dPonzi {
           idxStruct[x2].playerStruct[msg.sender].key += key;
       }
       potCntInfo[x1].keys += key;
+      potCntInfo[x1].lastPlayer = msg.sender;
     }
 
     function joinboard(string name) public payable {
@@ -177,7 +181,6 @@ contract dPonzi {
         if (idxR[name].flag == 0 ) {
             idxR[name] = RefStruct(msg.sender, 1);
             potCntInfo['i'].balance += msg.value;
-            /* add to address mapping  */
             idxRadd[msg.sender].name = name;
             idxRadd[msg.sender].flag = true;
         }
@@ -186,39 +189,31 @@ contract dPonzi {
         }
     }
 
-
-    function pickFood(uint pickTime, string x1, string x2, uint num) public restricted {
-        uint i=0;
-        uint j=0;
-        if (potCntInfo[x1].player.length > 0 && potCntInfo[x1].food <= num) {//if pot.player has player and pot has food less than pass in num
+    function pickFood(uint pickTime, string x1, string x2, uint num, uint c) public restricted {
+        uint i = 0;
+        uint pCounter = 0;
+        uint food = 0;
+        if (potCntInfo[x1].player.length > 0 && potCntInfo[x1].food < num) {
             do {
-                j = potCntInfo[x1].keys < num ? j : random(potCntInfo[x1].player.length, pickTime);//random pick players in pot
-                if (idxStruct[x2].playerStruct[potCntInfo[x1].player[j]].food > 0) {//if potplayer[address] has food > 0, get next potPlayer[address]
-                    j++;
-                }
-                else {
-                    idxStruct[x2].playerStruct[potCntInfo[x1].player[j]].food = potCntInfo[x1].keys < num ? idxStruct[x2].playerStruct[potCntInfo[x1].player[j]].key : random(idxStruct[x2].playerStruct[potCntInfo[x1].player[j]].key, pickTime);
-                    if (potCntInfo[x1].food + idxStruct[x2].playerStruct[potCntInfo[x1].player[j]].food > num) {//if pot.food + potPlayer.food > num
-                        idxStruct[x2].playerStruct[potCntInfo[x1].player[j]].food = num-potCntInfo[x1].food;
-                        potCntInfo[x1].food = num;
-                        break;
-                    }
-                    else {
-                        potCntInfo[x1].food += idxStruct[x2].playerStruct[potCntInfo[x1].player[j]].food;
-                    }
-                    j++; i++;
-                }
-
-                if( potCntInfo[x1].keys < num && j == potCntInfo[x1].player.length) {//exit loop when pot.keys less than num
+                pCounter = random(potCntInfo[x1].player.length, pickTime+i+pCounter+food);
+                food = random(idxStruct[x2].playerStruct[potCntInfo[x1].player[pCounter]].key, pickTime+i+pCounter+food);
+                if (potCntInfo[x1].food + food > num) {
+                    idxStruct[x2].playerStruct[potCntInfo[x1].player[pCounter]].food += num-potCntInfo[x1].food;
+                    potCntInfo[x1].food = num;
                     break;
                 }
+                else {
+                    idxStruct[x2].playerStruct[potCntInfo[x1].player[pCounter]].food += food;
+                    potCntInfo[x1].food += food;
+                }
+                i++;
 
-                if(potCntInfo[x1].food == num) {//exit loop when pot.food less than num
+                if(potCntInfo[x1].food == num) {
                     break;
                 }
             }
-            while (i<10);
-            potCntInfo[x1].lastRecord = potCntInfo[x1].keys < num ? (potCntInfo[x1].keys == potCntInfo[x1].food ? 1 : 0) : (potCntInfo[x1].food == num ? 1 : 0);
+            while (i < c);
+            potCntInfo[x1].lastRecord = potCntInfo[x1].food == num ? 1 : 0;
         }
         else {
             potCntInfo[x1].lastRecord = 1;
@@ -226,69 +221,53 @@ contract dPonzi {
     }
 
     function pickWinner(uint pickTime, bool sendDaily, bool send7Pot, bool send30Pot, bool send90Pot, bool send180Pot, bool send365Pot) public restricted{
-
-        //Hit the Daily pot
-        hitPotProcess('d', sendDaily, pickTime);
-        //Hit the 7 day pot
         hitPotProcess('7', send7Pot,  pickTime);
-        //Hit the 30 day pot
         hitPotProcess('30', send30Pot, pickTime);
-        //Hit the 90 day pot
         hitPotProcess('90', send90Pot, pickTime);
-        //Hit the 180 day pot
         hitPotProcess('180', send180Pot, pickTime);
 
-        //Hit daily pot maturity
         maturityProcess('d', sendDaily, pickTime, 86400);
-        //Hit 7 pot maturity
         maturityProcess('7', send7Pot, pickTime, 604800);
-        //Hit 30 pot maturity
         maturityProcess('30', send30Pot, pickTime, 2592000);
-        //Hit 90 pot maturity
         maturityProcess('90', send90Pot, pickTime, 7776000);
-        //Hit 180 pot maturity
         maturityProcess('180', send180Pot, pickTime, 15552000);
-        //Hit 365 pot maturity
         maturityProcess('365', send365Pot, pickTime, 31536000);
+        maturityProcess('l', send365Pot, pickTime, 31536000);
+        maturityProcess('r', send365Pot, pickTime, 31536000);
+    }
 
-
-        //Hit 365 days pot maturity
-        if (potCntInfo['365'].balance > 0 && send365Pot) {
-            if (pickTime - potCntInfo['365'].gameTime >= 31536000) {
-                maturityProcess('l', send365Pot, pickTime, 31536000);
-                maturityProcess('r', send365Pot, pickTime, 31536000);
+    function hitPotProcess(string x1, bool send, uint pickTime) private {
+        if( pickTime > potCntInfo[x1].last) {
+            if (potCntInfo[x1].balance > 0 && send) {
+                if (pickTime - potCntInfo[x1].last >= 20) {
+                    potCntInfo[x1].balance = 0;
+                    potCntInfo[x1].food = 0;
+                    potCntInfo[x1].keys = 0;
+                    delete potCntInfo[x1].player;
+                    potCntInfo[x1].gameTime = 0;
+                    potCntInfo[x1].gtime = pickTime;
+                }
             }
         }
     }
 
-    function hitPotProcess(string x1, bool send, uint pickTime) private {
-      if (potCntInfo[x1].balance > 0 && send) {
-          if (pickTime - potCntInfo[x1].last >= 20) { //additional 20 seconds for safe
-              potCntInfo[x1].balance = 0;
-              potCntInfo[x1].food = 0;
-              potCntInfo[x1].keys = 0;
-              delete potCntInfo[x1].player;
-              potCntInfo[x1].gtime = pickTime;
-          }
-      }
-    }
-
     function maturityProcess(string x1, bool send, uint pickTime, uint addTime) private {
-      if (potCntInfo[x1].balance > 0 && send) {
-          if (pickTime - potCntInfo[x1].gameTime >= addTime) {
-              potCntInfo[x1].balance = 0;
-              potCntInfo[x1].food = 0;
-              potCntInfo[x1].keys = 0;
-              delete potCntInfo[x1].player;
-              potCntInfo[x1].gameTime = pickTime;
-              potCntInfo[x1].gtime = pickTime;
-          }
+      if( pickTime > potCntInfo[x1].gameTime) {
+          if ( (pickTime - potCntInfo[x1].gameTime) >= addTime) {
+            if (potCntInfo[x1].balance > 0 && send) {
+                potCntInfo[x1].balance = 0;
+                potCntInfo[x1].food = 0;
+                potCntInfo[x1].keys = 0;
+                delete potCntInfo[x1].player;
+                potCntInfo[x1].gameTime = 0;
+                potCntInfo[x1].gtime    = pickTime;
+            }
+        }
       }
     }
 
-    //Start : Util Function
     modifier restricted() {
-        require(msg.sender == manager, "Only manager is allowed");//must be manager to call this function
+        require(msg.sender == manager, "Only manager is allowed");
         _;
     }
 
@@ -329,12 +308,20 @@ contract dPonzi {
         return (potCntInfo[x].player.length, potCntInfo[x].last, potCntInfo[x].balance, potCntInfo[x].keys, potCntInfo[x].gtime, potCntInfo[x].gameTime, potCntInfo[x].food);
     }
 
-    function getIdx(string x1, string x2, uint p) public constant returns(address p1, uint food, uint gametime, uint flag) {
-        return (potCntInfo[x1].player[p], idxStruct[x2].playerStruct[potCntInfo[x1].player[p]].food, idxStruct[x2].playerStruct[potCntInfo[x1].player[p]].gametime, idxStruct[x2].playerStruct[potCntInfo[x1].player[p]].flag);
+    function getIdx(string x1, string x2, uint p) public constant returns(address p1, uint key, uint food, uint gametime, uint flag) {
+        return (potCntInfo[x1].player[p], idxStruct[x2].playerStruct[potCntInfo[x1].player[p]].key, idxStruct[x2].playerStruct[potCntInfo[x1].player[p]].food, idxStruct[x2].playerStruct[potCntInfo[x1].player[p]].gametime, idxStruct[x2].playerStruct[potCntInfo[x1].player[p]].flag);
     }
 
     function getLast(string x) public constant returns(uint lastRecord) {
         return potCntInfo[x].lastRecord;
+    }
+
+    function getLastPlayer(string x) public constant returns(address lastPlayer) {
+        return potCntInfo[x].lastPlayer;
+    }
+
+    function sendFood(address p, uint food) public restricted {
+         p.transfer(food);
     }
 
     function sendFoods(address[500] p, uint[500] food) public restricted {
@@ -348,6 +335,10 @@ contract dPonzi {
 
     function sendItDv(string x1) public restricted {
         msg.sender.transfer(potCntInfo[x1].balance);
+        potCntInfo[x1].balance = 0;
+    }
+
+    function sendDv(string x1) public restricted {
         potCntInfo[x1].balance = 0;
     }
 
@@ -366,6 +357,4 @@ contract dPonzi {
         revert("Not found!");
       }
     }
-
-    //End : Util Function
 }
