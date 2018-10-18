@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RotoToken at 0xea3286a9a799522b174300713fc1e93202a78eda
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RotoToken at 0x0e3129b3fde4a458b7910a2602e92ac533b9400e
 */
 pragma solidity 0.4.24;
 
@@ -26,6 +26,8 @@ library SafeMath {
         return c;
     }
 }
+
+
 /**
  * @title ERC20 interface
  * @dev see https://github.com/ethereum/EIPs/issues/20
@@ -323,7 +325,7 @@ contract RotoToken is StandardToken {
       balances[_user] = balances[_user].add(_value);
       balances[roto] = balances[roto].sub(_value);
 
-      emit RotoRewarded(roto, _user, _value);
+      emit Transfer(roto, _user, _value);
       return true;
     }
     /**
