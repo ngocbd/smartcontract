@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract QueryMokenData at 0xe9f2679770742997489fcf1acad7b4354434cbbe
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract QueryMokenData at 0x8402fa42e89b0477ee4222222beecfde98145a32
 */
 pragma solidity 0.4.24;
 pragma experimental "v0.5.0";
@@ -220,18 +220,19 @@ contract QueryMokenData is Storage8 {
         data = bytes32(mokens[_tokenId].data);
         require(data != 0, "The tokenId does not exist.");
         bytes memory mokenNameBytes = bytes(mokens[_tokenId].name);
-        require(mokenNameBytes.length != 0, "The tokenId does not exist.");
+        uint256 mokenNameLength = mokenNameBytes.length;
+        require(mokenNameLength != 0, "The tokenId does not exist.");
         assembly {
             mokenNameBytes32 := mload(add(mokenNameBytes, 32))
         }
+        uint256 shift = ((32-mokenNameLength)*8);
         return (
-        mokenNameBytes32,
+        (mokenNameBytes32 >> shift) << shift,
         eraFromMokenData(data),
         data,
         address(data)
         );
     }
-
 
     function mokenNoName(uint256 _tokenId) external view
     returns (bytes32 era, bytes32 data, address tokenOwner) {
@@ -252,10 +253,12 @@ contract QueryMokenData is Storage8 {
 
     function mokenNameBytes32(uint256 _tokenId) external view returns (bytes32 mokenNameBytes32_) {
         bytes memory mokenNameBytes = bytes(mokens[_tokenId].name);
-        require(mokenNameBytes.length != 0, "The tokenId does not exist.");
+        uint256 mokenNameLength = mokenNameBytes.length;
+        require(mokenNameLength != 0, "The tokenId does not exist.");
         assembly {
             mokenNameBytes32_ := mload(add(mokenNameBytes, 32))
         }
-        return mokenNameBytes32_;
+        uint256 shift = ((32-mokenNameLength)*8);
+        return (mokenNameBytes32_ >> shift) << shift;
     }
 }
