@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BondingManager at 0x05c03ea0039f2e828a725a82939fc1e90de38b44
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BondingManager at 0xcbaa6ea4886b535fc7abace3f3985ed03b3b80a0
 */
 pragma solidity 0.4.18;
 
@@ -803,7 +803,15 @@ library EarningsPool {
      * @param _stake Stake of claimant
      * @param _isTranscoder Flag indicating whether the claimant is a transcoder
      */
-    function feePoolShareWithTranscoderRewardFeePool(EarningsPool.Data storage earningsPool, uint256 _stake, bool _isTranscoder) internal view returns (uint256, uint256) {
+    function feePoolShareWithTranscoderRewardFeePool(
+        EarningsPool.Data storage earningsPool,
+        uint256 _stake,
+        bool _isTranscoder
+    ) 
+        internal
+        view
+        returns (uint256, uint256)
+    {
         // If there is no claimable stake, the fee pool share is 0
         // If there is claimable stake, calculate fee pool share based on remaining amount in fee pool, remaining claimable stake and claimant's stake
         uint256 delegatorFees = earningsPool.claimableStake > 0 ? MathUtils.percOf(earningsPool.feePool, _stake, earningsPool.claimableStake) : 0;
@@ -818,7 +826,15 @@ library EarningsPool {
      * @param _stake Stake of claimant
      * @param _isTranscoder Flag indicating whether the claimant is a transcoder
      */
-    function rewardPoolShareWithTranscoderRewardFeePool(EarningsPool.Data storage earningsPool, uint256 _stake, bool _isTranscoder) internal view returns (uint256, uint256) {
+    function rewardPoolShareWithTranscoderRewardFeePool(
+        EarningsPool.Data storage earningsPool,
+        uint256 _stake,
+        bool _isTranscoder
+    )
+        internal
+        view
+        returns (uint256, uint256)
+    {
         // If there is no claimable stake, the reward pool share is 0
         // If there is claimable stake, calculate reward pool share based on remaining amount in reward pool, remaining claimable stake and claimant's stake
         uint256 delegatorRewards = earningsPool.claimableStake > 0 ? MathUtils.percOf(earningsPool.rewardPool, _stake, earningsPool.claimableStake) : 0;
@@ -834,7 +850,15 @@ library EarningsPool {
      * @param _stake Stake of claimant
      * @param _isTranscoder Flag indicating whether the claimant is a transcoder
      */
-    function feePoolShareNoTranscoderRewardFeePool(EarningsPool.Data storage earningsPool, uint256 _stake, bool _isTranscoder) internal view returns (uint256, uint256) {
+    function feePoolShareNoTranscoderRewardFeePool(
+        EarningsPool.Data storage earningsPool,
+        uint256 _stake,
+        bool _isTranscoder
+    ) 
+        internal
+        view
+        returns (uint256, uint256)
+    {
         uint256 transcoderFees = 0;
         uint256 delegatorFees = 0;
 
@@ -858,7 +882,15 @@ library EarningsPool {
      * @param _stake Stake of claimant
      * @param _isTranscoder Flag indicating whether the claimant is a transcoder
      */
-    function rewardPoolShareNoTranscoderRewardFeePool(EarningsPool.Data storage earningsPool, uint256 _stake, bool _isTranscoder) internal view returns (uint256, uint256) {
+    function rewardPoolShareNoTranscoderRewardFeePool(
+        EarningsPool.Data storage earningsPool,
+        uint256 _stake,
+        bool _isTranscoder
+    )
+        internal
+        view
+        returns (uint256, uint256)
+    {
         uint256 transcoderRewards = 0;
         uint256 delegatorRewards = 0;
 
@@ -1004,8 +1036,10 @@ contract BondingManager is ManagerProxyTarget, IBondingManager {
     mapping (address => Delegator) private delegators;
     mapping (address => Transcoder) private transcoders;
 
-    // Keep track of total bonded tokens
-    uint256 private totalBonded;
+    // DEPRECATED - DO NOT USE
+    // The function getTotalBonded() no longer uses this variable
+    // and instead calculates the total bonded value separately
+    uint256 private totalBondedDEPRECATED;
 
     // Candidate and reserve transcoders
     SortedDoublyLL.Data private transcoderPool;
@@ -1178,7 +1212,7 @@ contract BondingManager is ManagerProxyTarget, IBondingManager {
                 } else {
                     address lastTranscoder = transcoderPool.getLast();
 
-                    if (delegatedAmount > transcoderPool.getKey(lastTranscoder)) {
+                    if (delegatedAmount > transcoderTotalStake(lastTranscoder)) {
                         // If pool is full and caller has more delegated stake than the transcoder in the pool with the least delegated stake:
                         // - Evict transcoder in pool with least delegated stake
                         // - Add caller to pool
@@ -1241,7 +1275,7 @@ contract BondingManager is ManagerProxyTarget, IBondingManager {
             if (transcoderStatus(currentDelegate) == TranscoderStatus.Registered) {
                 // Previously delegated to a transcoder
                 // Decrease old transcoder's total stake
-                transcoderPool.updateKey(currentDelegate, transcoderPool.getKey(currentDelegate).sub(del.bondedAmount), address(0), address(0));
+                transcoderPool.updateKey(currentDelegate, transcoderTotalStake(currentDelegate).sub(del.bondedAmount), address(0), address(0));
             }
         }
 
@@ -1255,14 +1289,12 @@ contract BondingManager is ManagerProxyTarget, IBondingManager {
         if (transcoderStatus(_to) == TranscoderStatus.Registered) {
             // Delegated to a transcoder
             // Increase transcoder's total stake
-            transcoderPool.updateKey(_to, transcoderPool.getKey(del.delegateAddress).add(delegationAmount), address(0), address(0));
+            transcoderPool.updateKey(_to, transcoderTotalStake(del.delegateAddress).add(delegationAmount), address(0), address(0));
         }
 
         if (_amount > 0) {
             // Update bonded amount
             del.bondedAmount = del.bondedAmount.add(_amount);
-            // Update total bonded tokens
-            totalBonded = totalBonded.add(_amount);
             // Transfer the LPT to the Minter
             livepeerToken().transferFrom(msg.sender, minter(), _amount);
         }
@@ -1290,6 +1322,7 @@ contract BondingManager is ManagerProxyTarget, IBondingManager {
         // Amount to unbond must be less than or equal to current bonded amount 
         require(_amount <= del.bondedAmount);
 
+        address currentDelegate = del.delegateAddress;
         uint256 currentRound = roundsManager().currentRound();
         uint256 withdrawRound = currentRound.add(unbondingPeriod);
         uint256 unbondingLockId = del.nextUnbondingLockId;
@@ -1305,8 +1338,6 @@ contract BondingManager is ManagerProxyTarget, IBondingManager {
         del.bondedAmount = del.bondedAmount.sub(_amount);
         // Decrease delegate's delegated amount
         delegators[del.delegateAddress].delegatedAmount = delegators[del.delegateAddress].delegatedAmount.sub(_amount);
-        // Update total bonded tokens
-        totalBonded = totalBonded.sub(_amount);
 
         if (transcoderStatus(del.delegateAddress) == TranscoderStatus.Registered && (del.delegateAddress != msg.sender || del.bondedAmount > 0)) {
             // A transcoder's delegated stake within the registered pool needs to be decreased if:
@@ -1314,7 +1345,7 @@ contract BondingManager is ManagerProxyTarget, IBondingManager {
             // - Caller is not delegated to self OR caller is delegated to self and has a non-zero bonded amount
             // If the caller is delegated to self and has a zero bonded amount, it will be removed from the 
             // transcoder pool so its delegated stake within the pool does not need to be decreased
-            transcoderPool.updateKey(del.delegateAddress, transcoderPool.getKey(del.delegateAddress).sub(_amount), address(0), address(0));
+            transcoderPool.updateKey(del.delegateAddress, transcoderTotalStake(del.delegateAddress).sub(_amount), address(0), address(0));
         }
 
         // Check if delegator has a zero bonded amount
@@ -1331,7 +1362,7 @@ contract BondingManager is ManagerProxyTarget, IBondingManager {
             }
         } 
 
-        Unbond(del.delegateAddress, msg.sender, unbondingLockId, _amount, withdrawRound);
+        Unbond(currentDelegate, msg.sender, unbondingLockId, _amount, withdrawRound);
     }
 
     /**
@@ -1443,7 +1474,7 @@ contract BondingManager is ManagerProxyTarget, IBondingManager {
             activeTranscoderSet[currentRound].transcoders.push(currentTranscoder);
             activeTranscoderSet[currentRound].isActive[currentTranscoder] = true;
 
-            uint256 stake = transcoderPool.getKey(currentTranscoder);
+            uint256 stake = transcoderTotalStake(currentTranscoder);
             uint256 rewardCut = transcoders[currentTranscoder].pendingRewardCut;
             uint256 feeShare = transcoders[currentTranscoder].pendingFeeShare;
             uint256 pricePerSegment = transcoders[currentTranscoder].pendingPricePerSegment;
@@ -1544,7 +1575,6 @@ contract BondingManager is ManagerProxyTarget, IBondingManager {
             // - Decrease total bonded tokens
             if (delegatorStatus(_transcoder) == DelegatorStatus.Bonded) {
                 delegators[del.delegateAddress].delegatedAmount = delegators[del.delegateAddress].delegatedAmount.sub(penalty);
-                totalBonded = totalBonded.sub(penalty);
             }
 
             // If registered transcoder, resign it
@@ -1862,6 +1892,17 @@ contract BondingManager is ManagerProxyTarget, IBondingManager {
      * @dev Return total bonded tokens
      */
     function getTotalBonded() public view returns (uint256) {
+        uint256 totalBonded = 0;
+        uint256 totalTranscoders = transcoderPool.getSize();
+        address currentTranscoder = transcoderPool.getFirst();
+
+        for (uint256 i = 0; i < totalTranscoders; i++) {
+            // Add current transcoder's total delegated stake to total bonded counter
+            totalBonded = totalBonded.add(transcoderTotalStake(currentTranscoder));
+            // Get next transcoder in the pool
+            currentTranscoder = transcoderPool.getNext(currentTranscoder);
+        }
+
         return totalBonded;
     }
 
@@ -1934,10 +1975,8 @@ contract BondingManager is ManagerProxyTarget, IBondingManager {
         // Update transcoder's delegated amount with rewards
         del.delegatedAmount = del.delegatedAmount.add(_rewards);
         // Update transcoder's total stake with rewards
-        uint256 newStake = transcoderPool.getKey(_transcoder).add(_rewards);
+        uint256 newStake = transcoderTotalStake(_transcoder).add(_rewards);
         transcoderPool.updateKey(_transcoder, newStake, address(0), address(0));
-        // Update total bonded tokens with claimable rewards
-        totalBonded = totalBonded.add(_rewards);
     }
 
     /**
@@ -1999,12 +2038,10 @@ contract BondingManager is ManagerProxyTarget, IBondingManager {
         del.bondedAmount = del.bondedAmount.add(amount);
         // Increase delegate's delegated amount
         delegators[del.delegateAddress].delegatedAmount = delegators[del.delegateAddress].delegatedAmount.add(amount);
-        // Update total bonded tokens
-        totalBonded = totalBonded.add(amount);
 
         if (transcoderStatus(del.delegateAddress) == TranscoderStatus.Registered) {
             // If delegate is a registered transcoder increase its delegated stake in registered pool
-            transcoderPool.updateKey(del.delegateAddress, transcoderPool.getKey(del.delegateAddress).add(amount), address(0), address(0));
+            transcoderPool.updateKey(del.delegateAddress, transcoderTotalStake(del.delegateAddress).add(amount), address(0), address(0));
         }
 
         // Delete lock
