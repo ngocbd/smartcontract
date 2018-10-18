@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GamerTokenSale at 0x18555052a491d3590bb77a06a6e95124d6ad8837
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GamerTokenSale at 0x77c106b081808c7b58c526210bac4b84755d4c64
 */
 pragma solidity 0.4.24;
 
@@ -1397,7 +1397,7 @@ contract GamerTokenSale is Sale {
 
     constructor() 
         Sale(
-            25000000, // Total sale cap (usd)
+            18000000, // Total sale cap (usd)
             5, // Min contribution (usd)
             2000000, // Min threshold (usd)
             1000000000 * (10 ** 18), // Max tokens
