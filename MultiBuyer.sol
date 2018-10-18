@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiBuyer at 0xcc58e76a00a268e17b92c557a00f9f9216137244
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiBuyer at 0xe98318bceb661013991cf2c862207964194cc25c
 */
 pragma solidity ^0.4.24;
 
@@ -329,6 +329,7 @@ contract MultiBuyer is CanReclaimToken {
         uint256[] memory amounts = new uint256[](tokensCount);
         for (i = 0; i < tokensCount; i++) {
             ERC20 token = _mtkn.tokens(i);
+            amounts[i] = token.balanceOf(this);
             if (token.allowance(this, _mtkn) == 0) {
                 token.approve(_mtkn, uint256(-1));
             }
