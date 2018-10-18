@@ -1,42 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vault at 0x1d4e96e7eb3f0ba2215abfb9625cf170ece9e939
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vault at 0xd24eb2953aa69f8e3ed85fd743bd19957fa8af11
 */
 pragma solidity 0.4.24;
-
-// File: node_modules/@tokenfoundry/sale-contracts/contracts/interfaces/VaultI.sol
-
-interface VaultI {
-    function deposit(address contributor) external payable;
-    function saleSuccessful() external;
-    function enableRefunds() external;
-    function refund(address contributor) external;
-    function close() external;
-    function sendFundsToWallet() external;
-}
-
-// File: openzeppelin-solidity/contracts/math/Math.sol
-
-/**
- * @title Math
- * @dev Assorted math operations
- */
-library Math {
-  function max64(uint64 a, uint64 b) internal pure returns (uint64) {
-    return a >= b ? a : b;
-  }
-
-  function min64(uint64 a, uint64 b) internal pure returns (uint64) {
-    return a < b ? a : b;
-  }
-
-  function max256(uint256 a, uint256 b) internal pure returns (uint256) {
-    return a >= b ? a : b;
-  }
-
-  function min256(uint256 a, uint256 b) internal pure returns (uint256) {
-    return a < b ? a : b;
-  }
-}
 
 // File: openzeppelin-solidity/contracts/math/SafeMath.sol
 
@@ -151,7 +116,42 @@ contract Ownable {
   }
 }
 
-// File: node_modules/@tokenfoundry/sale-contracts/contracts/Vault.sol
+// File: @tokenfoundry/sale-contracts/contracts/interfaces/VaultI.sol
+
+interface VaultI {
+    function deposit(address contributor) external payable;
+    function saleSuccessful() external;
+    function enableRefunds() external;
+    function refund(address contributor) external;
+    function close() external;
+    function sendFundsToWallet() external;
+}
+
+// File: openzeppelin-solidity/contracts/math/Math.sol
+
+/**
+ * @title Math
+ * @dev Assorted math operations
+ */
+library Math {
+  function max64(uint64 a, uint64 b) internal pure returns (uint64) {
+    return a >= b ? a : b;
+  }
+
+  function min64(uint64 a, uint64 b) internal pure returns (uint64) {
+    return a < b ? a : b;
+  }
+
+  function max256(uint256 a, uint256 b) internal pure returns (uint256) {
+    return a >= b ? a : b;
+  }
+
+  function min256(uint256 a, uint256 b) internal pure returns (uint256) {
+    return a < b ? a : b;
+  }
+}
+
+// File: @tokenfoundry/sale-contracts/contracts/Vault.sol
 
 // Adapted from Open Zeppelin's RefundVault
 
@@ -197,7 +197,7 @@ contract Vault is VaultI, Ownable {
     event Refunded(address indexed contributor, uint256 amount);
 
     modifier atState(State _state) {
-        require(state == _state);
+        require(state == _state, "This function cannot be called in the current vault state.");
         _;
     }
 
@@ -209,8 +209,8 @@ contract Vault is VaultI, Ownable {
     ) 
         public 
     {
-        require(_wallet != address(0));
-        require(_disbursementWei != 0);
+        require(_wallet != address(0), "Wallet address should not be 0.");
+        require(_disbursementWei != 0, "Disbursement Wei should be greater than 0.");
         trustedWallet = _wallet;
         initialWei = _initialWei;
         disbursementWei = _disbursementWei;
@@ -220,7 +220,7 @@ contract Vault is VaultI, Ownable {
 
     /// @dev Called by the sale contract to deposit ether for a contributor.
     function deposit(address _contributor) onlyOwner external payable {
-        require(state == State.Active || state == State.Success);
+        require(state == State.Active || state == State.Success , "Vault state must be Active or Success.");
         if (firstDepositTimestamp == 0) {
             firstDepositTimestamp = now;
         }
@@ -240,7 +240,7 @@ contract Vault is VaultI, Ownable {
 
     /// @dev Called by the owner if the project didn't deliver the testnet contracts or if we need to stop disbursements for any reasone.
     function enableRefunds() onlyOwner external {
-        require(state != State.Refunding);
+        require(state != State.Refunding, "Vault state is not Refunding");
         state = State.Refunding;
         uint256 currentBalance = address(this).balance;
         refundable = currentBalance <= totalDeposited ? currentBalance : totalDeposited;
@@ -249,7 +249,7 @@ contract Vault is VaultI, Ownable {
 
     /// @dev Refunds ether to the contributors if in the Refunding state.
     function refund(address _contributor) external atState(State.Refunding) {
-        require(deposited[_contributor] > 0);
+        require(deposited[_contributor] > 0, "Refund not allowed if contributor deposit is 0.");
         uint256 refundAmount = deposited[_contributor].mul(refundable).div(totalDeposited);
         deposited[_contributor] = 0;
         _contributor.transfer(refundAmount);
@@ -265,7 +265,8 @@ contract Vault is VaultI, Ownable {
 
     /// @dev Sends the disbursement amount to the wallet after the disbursement period has passed. Can be called by anyone.
     function sendFundsToWallet() external atState(State.Closed) {
-        require(nextDisbursement <= now);
+        require(firstDepositTimestamp.add(4 weeks) <= now, "First contributor\?0027s deposit was less than 28 days ago");
+        require(nextDisbursement <= now, "Next disbursement period timestamp has not yet passed, too early to withdraw.");
 
         if (disbursementDuration == 0) {
             trustedWallet.transfer(address(this).balance);
