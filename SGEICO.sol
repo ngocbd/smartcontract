@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SGEICO at 0x835ce9c555d4c4dcb977248a6f979c98799722f1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SGEICO at 0x2ada0cddb716033e52c3d591ad12a59103230e52
 */
 pragma solidity ^0.4.16;
 
@@ -24,12 +24,12 @@ contract SGEICO {
 
     event FundTransfer(address backer, uint amount, bool isContribution);
 
-    function SGEICO() public {
+    constructor () public {
         creator = msg.sender;
-        startDate = 1531612800;
+        startDate = 1536969600;
         endDate = 1544832000;
         price = 1100;
-        tokenReward = Token(0x40489719e489782959486a04b765e1e93e5b221a);
+        tokenReward = Token(0x40489719E489782959486A04B765E1E93E5B221a);
     }
 
     function setOwner(address _owner) isCreator public {
@@ -65,9 +65,10 @@ contract SGEICO {
         require(now > startDate);
         require(now < endDate);
 	    uint amount = msg.value * price;
-        amount += amount / 4;
+        uint _amount = amount / 4;
+        amount += _amount;
         tokenReward.transferFrom(owner, msg.sender, amount);
-        FundTransfer(msg.sender, amount, true);
+        emit FundTransfer(msg.sender, amount, true);
         owner.transfer(msg.value);
     }
 }
