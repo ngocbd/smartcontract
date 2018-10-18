@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract R1Exchange at 0x42a3095222e13e0891b89381e1b8cc84709b35bc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract R1Exchange at 0xE18898c76a39ba4Cd46a544b87ebe1166fbe7052
 */
 ///auto-generated single file for verifying contract on etherscan
 pragma solidity ^0.4.20;
@@ -89,6 +89,7 @@ contract R1Exchange is SafeMath, Ownable {
     bool public withdrawEnabled = false;
     bool public stop = false;
     event Deposit(address indexed token, address indexed user, uint256 amount, uint256 balance);
+    event DepositTo(address indexed token, address indexed from, address indexed user, uint256 amount, uint256 balance);
     event Withdraw(address indexed token, address indexed user, uint256 amount, uint256 balance);
     event ApplyWithdraw(address indexed token, address indexed user, uint256 amount, uint256 time);
     event Trade(address indexed maker, address indexed taker, uint256 amount, uint256 makerFee, uint256 takerFee, uint256 makerNonce, uint256 takerNonce);
@@ -153,6 +154,18 @@ contract R1Exchange is SafeMath, Ownable {
         tokenList[token][msg.sender] = safeAdd(tokenList[token][msg.sender], amount);
         require(Token(token).transferFrom(msg.sender, this, amount));
         Deposit(token, msg.sender, amount, tokenList[token][msg.sender]);
+    }
+    function depositTo(address token, address to, uint256 amount) public {
+        require(token != 0 && to != 0);
+        tokenList[token][to] = safeAdd(tokenList[token][to], amount);
+        require(Token(token).transferFrom(msg.sender, this, amount));
+        DepositTo(token, msg.sender, to, amount, tokenList[token][to]);
+    }
+    function batchDepositTo(address token, address[] to, uint256[] amount) public {
+        require(to.length == amount.length && to.length <= 200);
+        for (uint i = 0; i < to.length; i++) {
+            depositTo(token, to[i], amount[i]);
+        }
     }
     function applyWithdraw(address token, uint256 amount) public {
         uint256 apply = safeAdd(applyList[token][msg.sender], amount);
@@ -231,7 +244,7 @@ contract R1Exchange is SafeMath, Ownable {
         uint256 fee = values[2];
         require(amount <= tokenList[token][user]);
         fee = checkFee(amount, fee);
-        bytes32 hash = keccak256(this,user, token, amount, nonce);
+        bytes32 hash = keccak256(this, user, token, amount, nonce);
         require(!withdrawn[hash]);
         withdrawn[hash] = true;
         require(ecrecover(keccak256("\x19Ethereum Signed Message:\n32", hash), v, r, s) == user);
@@ -253,7 +266,7 @@ contract R1Exchange is SafeMath, Ownable {
         return maxFee;
     }
     function getOrderHash(address tokenBuy, uint256 amountBuy, address tokenSell, uint256 amountSell, address base, uint256 expires, uint256 nonce, address feeToken) public view returns (bytes32) {
-        return keccak256(this,tokenBuy, amountBuy, tokenSell, amountSell, base, expires, nonce, feeToken);
+        return keccak256(this, tokenBuy, amountBuy, tokenSell, amountSell, base, expires, nonce, feeToken);
     }
     function balanceOf(address token, address user) public constant returns (uint256) {
         return tokenList[token][user];
