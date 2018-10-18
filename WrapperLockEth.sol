@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WrapperLockEth at 0x768c42ff6f5805bd2631ac7cc9eabe3af17b4b41
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WrapperLockEth at 0x42b9aa7a244b38ef56dff4d2df7e7a7013a59cbf
 */
 pragma solidity 0.4.24;
 
@@ -185,12 +185,15 @@ contract Ownable {
   Licensed under the Apache License, Version 2.0
   http://www.apache.org/licenses/LICENSE-2.0
 
+  will@ethfinex.com
+
 */
 
 contract WrapperLockEth is BasicToken, Ownable {
     using SafeMath for uint256;
 
-    address public TRANSFER_PROXY;
+    address public TRANSFER_PROXY_VEFX = 0xdcDb42C9a256690bd153A7B409751ADFC8Dd5851;
+    address public TRANSFER_PROXY_V2 = 0x2240Dab907db71e64d3E0dbA4800c83B5C502d4E;
     mapping (address => bool) public isSigner;
 
     string public name;
@@ -201,8 +204,7 @@ contract WrapperLockEth is BasicToken, Ownable {
     mapping (address => uint) public depositLock;
     mapping (address => uint256) public balances;
 
-    function WrapperLockEth(string _name, string _symbol, uint _decimals, address _transferProxy) Ownable() {
-        TRANSFER_PROXY = _transferProxy;
+    function WrapperLockEth(string _name, string _symbol, uint _decimals ) Ownable() {
         name = _name;
         symbol = _symbol;
         decimals = _decimals;
@@ -261,7 +263,7 @@ contract WrapperLockEth is BasicToken, Ownable {
 
     function transferFrom(address _from, address _to, uint _value) public {
         require(isSigner[_to] || isSigner[_from]);
-        assert(msg.sender == TRANSFER_PROXY);
+        assert(msg.sender == TRANSFER_PROXY_VEFX || msg.sender == TRANSFER_PROXY_V2);
         balances[_to] = balances[_to].add(_value);
         depositLock[_to] = depositLock[_to] > now ? depositLock[_to] : now + 1 hours;
         balances[_from] = balances[_from].sub(_value);
@@ -269,7 +271,7 @@ contract WrapperLockEth is BasicToken, Ownable {
     }
 
     function allowance(address _owner, address _spender) public constant returns (uint) {
-        if (_spender == TRANSFER_PROXY) {
+        if (_spender == TRANSFER_PROXY_VEFX || _spender == TRANSFER_PROXY_V2) {
             return 2**256 - 1;
         }
     }
