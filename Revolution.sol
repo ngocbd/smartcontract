@@ -1,15 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Revolution at 0x59be7a1937c3b7bc5e9103aefd4ab5c97af6d179
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Revolution at 0x2e60cddf69ff99bee7e01e51b8b529dcd15c219a
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.25;
 
 /**
-*
-* ETH CRYPTOCURRENCY DISTRIBUTION PROJECT
-* Web              - https://444eth.com
 
-* 
-*  - GAIN 4,44% PER 24 HOURS (every 5900 blocks)
+*  - GAIN 3,33% PER 24 HOURS (every 5900 blocks)
 *  - Life-long payments
 *  - The revolutionary reliability
 *  - Minimal contribution 0.01 eth
@@ -27,7 +23,7 @@ pragma solidity ^0.4.23;
 *  system's permanent autonomous functioning.
 * 
 * ---How to use:
-*  1. Send from ETH wallet to the smart contract address
+*  1. Send from ETH wallet to the smart contract address 
 *     any amount from 0.01 ETH.
 *  2. Verify your transaction in the history of your application or etherscan.io, specifying the address 
 *     of your wallet.
@@ -334,12 +330,12 @@ contract Revolution is Accessibility, PaymentSystem {
   address public payerAddr;
   uint public waveStartup;
   uint public investmentsNum;
-  uint public constant minInvesment = 50 finney; // 0.01 eth
+  uint public constant minInvesment = 10 finney; // 0.01 eth
   uint public constant maxBalance = 333e5 ether; // 33,300,000 eth
   uint public constant pauseOnNextWave = 168 hours; 
 
   // percents 
-  Percent.percent private m_dividendsPercent = Percent.percent(444, 10000); // 444/10000*100% = 4.44%
+  Percent.percent private m_dividendsPercent = Percent.percent(333, 10000); // 333/10000*100% = 3.33%
   Percent.percent private m_adminPercent = Percent.percent(1, 10); // 1/10*100% = 10%
   Percent.percent private m_payerPercent = Percent.percent(7, 100); // 7/100*100% = 7%
   Percent.percent private m_refPercent = Percent.percent(3, 100); // 3/100*100% = 3%
@@ -365,11 +361,11 @@ contract Revolution is Accessibility, PaymentSystem {
     _;
   }
 
-  constructor(address admin) public {
-    adminAddr = admin;
+  constructor() public {
+    adminAddr = msg.sender;
     emit LogAdminAddrChanged(msg.sender, now);
 
-    payerAddr = admin;
+    payerAddr = msg.sender;
     emit LogPayerAddrChanged(msg.sender, now);
 
     nextWave();
