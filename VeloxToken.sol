@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VeloxToken at 0xc52217c326237c63cb56892bd081e2d1dc826f37
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VeloxToken at 0xdcd77408e9b16252025637020228f3965938dda5
 */
 pragma solidity ^0.4.24;
 
@@ -163,8 +163,7 @@ contract VeloxToken is ERC20, Ownable {
     string public constant symbol = "VLX";
     uint8 public constant decimals = 2;
 
-    uint256 public constant STAKE_START_TIME = 1535241600;
-    uint256 public constant STAKE_MIN_AGE = 64 seconds * 20;
+    uint256 public constant STAKE_MIN_AGE = 64 seconds * 20; // 64 second block time * 20 blocks
     uint256 public constant STAKE_APR = 13; // 13% annual interest
     uint256 public constant MAX_TOTAL_SUPPLY = 100 * (10 ** (6 + uint256(decimals))); // 100 million tokens
     
@@ -188,12 +187,15 @@ contract VeloxToken is ERC20, Ownable {
     }
 
     /**
-    * @dev Constructor to set totalSupply_
-    */
+     * @dev Constructor to set totalSupply_
+     */
     constructor() public {
         totalSupply_ = 0;
     }
 
+    /**
+     * @dev POS-style staking reward mint function
+     */
     function mint() public canMint returns (bool) {
         if (balances[msg.sender] <= 0) return false;
         if (transferIns[msg.sender].length <= 0) return false;
@@ -206,17 +208,27 @@ contract VeloxToken is ERC20, Ownable {
         return true;
     }
 
-    function getCoinAge() public view returns (uint256) {
+    /**
+     * @dev External coin age computation function
+     */
+    function getCoinAge() external view returns (uint256) {
         return _getCoinAge(msg.sender, block.timestamp);
     }
 
+    /**
+     * @dev Internal staking reward computation function
+     * @return An uint256 representing the sum of coin ages times interest rate
+     */
     function _getStakingReward(address _address) internal view returns (uint256) {
-        require(block.timestamp >= STAKE_START_TIME);
         uint256 coinAge = _getCoinAge(_address, block.timestamp); // Sum (value * days since tx arrived)
         if (coinAge <= 0) return 0;
         return (coinAge * STAKE_APR).div(365 * 100); // Amount to deliver in this interval to user
     }
 
+    /**
+     * @dev Internal coin age computation function
+     * @return An uint256 representing the sum of all coin ages (value * days since tx arrived for each utxo)
+     */
     function _getCoinAge(address _address, uint256 _now) internal view returns (uint256 _coinAge) {
         if (transferIns[_address].length <= 0) return 0;
 
@@ -228,8 +240,8 @@ contract VeloxToken is ERC20, Ownable {
     }
 
     /**
-    * @dev Function to init balances mapping on token launch
-    */
+     * @dev Function to init balances mapping on token launch
+     */
     function initBalances(address[] _accounts, uint64[] _amounts) external onlyOwner {
         require(!balancesInitialized);
         require(_accounts.length > 0 && _accounts.length == _amounts.length);
@@ -242,35 +254,35 @@ contract VeloxToken is ERC20, Ownable {
     }
 
     /**
-    * @dev Function to complete initialization of token balances after launch
-    */
+     * @dev Function to complete initialization of token balances after launch
+     */
     function completeInitialization() external onlyOwner {
         require(!balancesInitialized);
         balancesInitialized = true;
     }
 
     /**
-    * @dev Total number of tokens in existence
-    */
+     * @dev Total number of tokens in existence
+     */
     function totalSupply() public view returns (uint256) {
         return totalSupply_;
     }
 
     /**
-    * @dev Gets the balance of the specified address.
-    * @param _owner The address to query the the balance of.
-    * @return An uint256 representing the amount owned by the passed address.
-    */
+     * @dev Gets the balance of the specified address.
+     * @param _owner The address to query the the balance of.
+     * @return An uint256 representing the amount owned by the passed address.
+     */
     function balanceOf(address _owner) public view returns (uint256) {
         return balances[_owner];
     }
 
     /**
-    * @dev Function to check the amount of tokens that an owner allowed to a spender.
-    * @param _owner address The address which owns the funds.
-    * @param _spender address The address which will spend the funds.
-    * @return A uint256 specifying the amount of tokens still available for the spender.
-    */
+     * @dev Function to check the amount of tokens that an owner allowed to a spender.
+     * @param _owner address The address which owns the funds.
+     * @param _spender address The address which will spend the funds.
+     * @return A uint256 specifying the amount of tokens still available for the spender.
+     */
     function allowance(
         address _owner,
         address _spender
@@ -283,10 +295,10 @@ contract VeloxToken is ERC20, Ownable {
     }
 
     /**
-    * @dev Transfer token for a specified address
-    * @param _to The address to transfer to.
-    * @param _value The amount to be transferred.
-    */
+     * @dev Transfer token for a specified address
+     * @param _to The address to transfer to.
+     * @param _value The amount to be transferred.
+     */
     function transfer(address _to, uint256 _value) public returns (bool) {
         if (msg.sender == _to) return mint();
         require(_value <= balances[msg.sender]);
@@ -303,14 +315,25 @@ contract VeloxToken is ERC20, Ownable {
     }
 
     /**
-    * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-    * Beware that changing an allowance with this method brings the risk that someone may use both the old
-    * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
-    * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
-    * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    * @param _spender The address which will spend the funds.
-    * @param _value The amount of tokens to be spent.
-    */
+     * @dev Transfer tokens to multiple addresses
+     * @param _to The addresses to transfer to.
+     * @param _values The amounts to be transferred.
+     */
+    function batchTransfer(address[] _to, uint256[] _values) public returns (bool) {
+        require(_to.length == _values.length);
+        for (uint256 i = 0; i < _to.length; i++) require(transfer(_to[i], _values[i]));
+        return true;
+    }
+
+    /**
+     * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+     * Beware that changing an allowance with this method brings the risk that someone may use both the old
+     * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+     * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+     * @param _spender The address which will spend the funds.
+     * @param _value The amount of tokens to be spent.
+     */
     function approve(address _spender, uint256 _value) public returns (bool) {
         allowed[msg.sender][_spender] = _value;
         emit Approval(msg.sender, _spender, _value);
@@ -318,11 +341,11 @@ contract VeloxToken is ERC20, Ownable {
     }
 
     /**
-    * @dev Transfer tokens from one address to another
-    * @param _from address The address which you want to send tokens from
-    * @param _to address The address which you want to transfer to
-    * @param _value uint256 the amount of tokens to be transferred
-    */
+     * @dev Transfer tokens from one address to another
+     * @param _from address The address which you want to send tokens from
+     * @param _to address The address which you want to transfer to
+     * @param _value uint256 the amount of tokens to be transferred
+     */
     function transferFrom(
         address _from,
         address _to,
@@ -347,14 +370,14 @@ contract VeloxToken is ERC20, Ownable {
     }
 
     /**
-    * @dev Increase the amount of tokens that an owner allowed to a spender.
-    * approve should be called when allowed[_spender] == 0. To increment
-    * allowed value is better to use this function to avoid 2 calls (and wait until
-    * the first transaction is mined)
-    * From MonolithDAO Token.sol
-    * @param _spender The address which will spend the funds.
-    * @param _addedValue The amount of tokens to increase the allowance by.
-    */
+     * @dev Increase the amount of tokens that an owner allowed to a spender.
+     * approve should be called when allowed[_spender] == 0. To increment
+     * allowed value is better to use this function to avoid 2 calls (and wait until
+     * the first transaction is mined)
+     * From MonolithDAO Token.sol
+     * @param _spender The address which will spend the funds.
+     * @param _addedValue The amount of tokens to increase the allowance by.
+     */
     function increaseApproval(
         address _spender,
         uint256 _addedValue
@@ -369,14 +392,14 @@ contract VeloxToken is ERC20, Ownable {
     }
 
     /**
-    * @dev Decrease the amount of tokens that an owner allowed to a spender.
-    * approve should be called when allowed[_spender] == 0. To decrement
-    * allowed value is better to use this function to avoid 2 calls (and wait until
-    * the first transaction is mined)
-    * From MonolithDAO Token.sol
-    * @param _spender The address which will spend the funds.
-    * @param _subtractedValue The amount of tokens to decrease the allowance by.
-    */
+     * @dev Decrease the amount of tokens that an owner allowed to a spender.
+     * approve should be called when allowed[_spender] == 0. To decrement
+     * allowed value is better to use this function to avoid 2 calls (and wait until
+     * the first transaction is mined)
+     * From MonolithDAO Token.sol
+     * @param _spender The address which will spend the funds.
+     * @param _subtractedValue The amount of tokens to decrease the allowance by.
+     */
     function decreaseApproval(
         address _spender,
         uint256 _subtractedValue
@@ -395,12 +418,12 @@ contract VeloxToken is ERC20, Ownable {
     }
 
     /**
-    * @dev Internal function that mints an amount of the token and assigns it to
-    * an account. This encapsulates the modification of balances such that the
-    * proper events are emitted.
-    * @param _account The account that will receive the created tokens.
-    * @param _amount The amount that will be created.
-    */
+     * @dev Internal function that mints an amount of the token and assigns it to
+     * an account. This encapsulates the modification of balances such that the
+     * proper events are emitted.
+     * @param _account The account that will receive the created tokens.
+     * @param _amount The amount that will be created.
+     */
     function _mint(address _account, uint256 _amount) internal {
         require(_account != 0);
         totalSupply_ = totalSupply_.add(_amount);
