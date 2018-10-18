@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WaltonTokenLocker at 0xe906c4596974f6a1341b5f378112a8542024565b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WaltonTokenLocker at 0xc5b77141ded2fa62c05997635631d66b9067e0bc
 */
 pragma solidity ^0.4.11;
 
@@ -20,46 +20,38 @@ contract Token {
 
 contract WaltonTokenLocker {
 
-    address public beneficiary;
-    uint256 public releaseTime;
+    address public smnAddress;
+    uint256 public releaseTimestamp;
+    string public name;
+    address public wtcFundation;
 
-    Token public token = Token('0xb7cB1C96dB6B22b0D3d9536E0108d062BD488F74');
+    Token public token = Token('0x554622209Ee05E8871dbE1Ac94d21d30B61013c2');
 
-    function WaltonTokenLocker() public {
-        // team
-        // beneficiary = address('0x732f589BA0b134DC35454716c4C87A06C890445b');
-        // test
-        beneficiary = address('0xa43e4646ee8ebd9AD01BFe87995802D984902e25');
-        releaseTime = 1563379200;     // 2019-07-18 00:00
+    function WaltonTokenLocker(string _name, address _token, address _beneficiary, uint256 _releaseTime) public {
+        // smn account
+        wtcFundation = msg.sender;
+        name = _name;
+        token = Token(_token);
+        smnAddress = _beneficiary;
+        releaseTimestamp = _releaseTime;
     }
 
-    // when releaseTime reached, and release() has been called
-    // WaltonTokenLocker release all eth and wtc to beneficiary
+    // when releaseTimestamp reached, and release() has been called
+    // WaltonTokenLocker release all wtc to smnAddress
     function release() public {
-        if (block.timestamp < releaseTime)
+        if (block.timestamp < releaseTimestamp)
             throw;
 
         uint256 totalTokenBalance = token.balanceOf(this);
         if (totalTokenBalance > 0)
-            if (!token.transfer(beneficiary, totalTokenBalance))
-                throw;
-    }
-    // release token by token contract address
-    function releaseToken(address _tokenContractAddress) public {
-        if (block.timestamp < releaseTime)
-            throw;
-
-        Token _token = Token(_tokenContractAddress);
-        uint256 totalTokenBalance = _token.balanceOf(this);
-        if (totalTokenBalance > 0)
-            if (!_token.transfer(beneficiary, totalTokenBalance))
+            if (!token.transfer(smnAddress, totalTokenBalance))
                 throw;
     }
 
 
     // help functions
     function releaseTimestamp() public constant returns (uint timestamp) {
-        return releaseTime;
+        return releaseTimestamp;
     }
 
     function currentTimestamp() public constant returns (uint timestamp) {
@@ -67,8 +59,8 @@ contract WaltonTokenLocker {
     }
 
     function secondsRemaining() public constant returns (uint timestamp) {
-        if (block.timestamp < releaseTime)
-            return releaseTime - block.timestamp;
+        if (block.timestamp < releaseTimestamp)
+            return releaseTimestamp - block.timestamp;
         else
             return 0;
     }
@@ -77,9 +69,19 @@ contract WaltonTokenLocker {
         return token.balanceOf(this);
     }
 
-    // functions for debug
-    function setReleaseTime(uint256 _releaseTime) public {
-        releaseTime = _releaseTime;
+    // release for safe, will never be called in normal condition
+    function safeRelease() public {
+        if (msg.sender != wtcFundation)
+            throw;
+
+        uint256 totalTokenBalance = token.balanceOf(this);
+        if (totalTokenBalance > 0)
+            if (!token.transfer(wtcFundation, totalTokenBalance))
+                throw;
     }
 
+    // functions for debug
+    //function setReleaseTime(uint256 _releaseTime) public {
+    //    releaseTimestamp = _releaseTime;
+    //}
 }
