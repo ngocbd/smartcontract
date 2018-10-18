@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Tge at 0x6ed0e1c20bF3ff8384570DE742cf98cd08F2A012
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Tge at 0xC3416bB7bF4494778D9f1A7898bf132d78D8B8B1
 */
 pragma solidity ^0.4.24;
 
@@ -567,7 +567,6 @@ contract Tge is Minter {
         uint _saleEtherCap
     ) public Minter(_token, _saleEtherCap) {
         require(keccak256(_token.symbol()) == keccak256("ALL"));
-        require(_token.totalSupply() == 0);
     }
 
     // initialize states start times and caps
