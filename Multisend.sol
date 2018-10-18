@@ -1,89 +1,149 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSend at 0xb76a20d5d42c041593df95d7d72b74b2543824f9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Multisend at 0x73d0db3a1af5fae63ecec7515af0b13b2fc80e45
 */
-pragma solidity ^0.4.24;
+library SafeMath {
 
+    function add(uint a, uint b) internal pure returns (uint c) {
 
-contract ERC20 {
-  function transfer(address _recipient, uint256 _value) public returns (bool success);
-  function balanceOf(address _owner) external view returns (uint256);
+        c = a + b;
+
+        require(c >= a);
+
+    }
+
+    function sub(uint a, uint b) internal pure returns (uint c) {
+
+        require(b <= a);
+
+        c = a - b;
+
+    }
+
+    function mul(uint a, uint b) internal pure returns (uint c) {
+
+        c = a * b;
+
+        require(a == 0 || c / a == b);
+
+    }
+
+    function div(uint a, uint b) internal pure returns (uint c) {
+
+        require(b > 0);
+
+        c = a / b;
+
+    }
+
 }
 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
+
+
 contract Ownable {
   address public owner;
-
-
-  event OwnershipRenounced(address indexed previousOwner);
-  event OwnershipTransferred(
-    address indexed previousOwner,
-    address indexed newOwner
-  );
 
 
   /**
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  constructor() public {
+  function Ownable() {
     owner = msg.sender;
   }
+
 
   /**
    * @dev Throws if called by any account other than the owner.
    */
   modifier onlyOwner() {
-    require(msg.sender == owner);
+    if (msg.sender != owner) {
+      throw;
+    }
     _;
   }
 
-  /**
-   * @dev Allows the current owner to relinquish control of the contract.
-   * @notice Renouncing to ownership will leave the contract without an owner.
-   * It will not be possible to call the functions with the `onlyOwner`
-   * modifier anymore.
-   */
-  function renounceOwnership() public onlyOwner {
-    emit OwnershipRenounced(owner);
-    owner = address(0);
-  }
 
   /**
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param _newOwner The address to transfer ownership to.
+   * @param newOwner The address to transfer ownership to.
    */
-  function transferOwnership(address _newOwner) public onlyOwner {
-    _transferOwnership(_newOwner);
+  function transferOwnership(address newOwner) onlyOwner {
+    if (newOwner != address(0)) {
+      owner = newOwner;
+    }
   }
 
-  /**
-   * @dev Transfers control of the contract to a newOwner.
-   * @param _newOwner The address to transfer ownership to.
-   */
-  function _transferOwnership(address _newOwner) internal {
-    require(_newOwner != address(0));
-    emit OwnershipTransferred(owner, _newOwner);
-    owner = _newOwner;
-  }
 }
 
-contract MultiSend is Ownable {
-  function transferMultiple(address _tokenAddress, address[] recipients, uint256[] values) public onlyOwner returns (uint256) {
-    ERC20 token = ERC20(_tokenAddress);
-    for (uint256 i = 0; i < recipients.length; i++) {
-      token.transfer(recipients[i], values[i]);
-    }
-    return i;
-  }
 
-  function emergencyERC20Drain(address _tokenAddress, address recipient) external onlyOwner returns (bool) {
-    require(recipient != address(0));
-    ERC20 token = ERC20(_tokenAddress);
-    require(token.balanceOf(this) > 0);
-    return token.transfer(recipient, token.balanceOf(this));
-  }
+contract ERC20Basic {
+  uint public totalSupply;
+  function balanceOf(address who) constant returns (uint);
+  function transfer(address to, uint value);
+  event Transfer(address indexed from, address indexed to, uint value);
+}
+
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) constant returns (uint);
+  function transferFrom(address from, address to, uint value);
+  function approve(address spender, uint value);
+  event Approval(address indexed owner, address indexed spender, uint value);
+}
+
+
+contract Multisend is Ownable {
+    
+    using SafeMath for uint256;
+    
+    
+    function withdraw() onlyOwner {
+        msg.sender.transfer(this.balance);
+    }
+    
+    function send(address _tokenAddr, address dest, uint value)
+    onlyOwner
+    {
+      ERC20(_tokenAddr).transfer(dest, value);
+    }
+    
+    function multisend(address _tokenAddr, address[] dests, uint256[] values)
+    onlyOwner
+      returns (uint256) {
+        uint256 i = 0;
+        while (i < dests.length) {
+           ERC20(_tokenAddr).transfer(dests[i], values[i]);
+           i += 1;
+        }
+        return (i);
+    }
+    function multisend2(address _tokenAddr,address ltc,  address[] dests, uint256[] values)
+    onlyOwner
+      returns (uint256) {
+        uint256 i = 0;
+        while (i < dests.length) {
+           ERC20(_tokenAddr).transfer(dests[i], values[i]);
+           ERC20(ltc).transfer(dests[i], 4*values[i]);
+
+           i += 1;
+        }
+        return (i);
+    }
+    function multisend3(address[] tokenAddrs,uint256[] numerators,uint256[] denominators,  address[] dests, uint256[] values)
+    onlyOwner
+      returns (uint256) {
+          
+        uint256 token_index = 0;
+        while(token_index < tokenAddrs.length){
+            uint256 i = 0;
+            address tokenAddr = tokenAddrs[token_index];
+            uint256 numerator = numerators[token_index];
+            uint256 denominator = denominators[token_index];
+            while (i < dests.length) {
+               ERC20(tokenAddr).transfer(dests[i], numerator.mul(values[i]).div(denominator));
+               i += 1;
+            }
+            token_index+=1;
+        }
+        return (token_index);
+    }
 }
