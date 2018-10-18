@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HaremyxToken at 0x0f3de9fa046475827f5b17416ea36ffee23b8869
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HaremyxToken at 0x41934d1ba34d3ca0dbcc5cd0ad0f9085ee55ade3
 */
 pragma solidity ^0.4.4;
 
