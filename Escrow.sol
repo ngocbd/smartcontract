@@ -1,425 +1,410 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Escrow at 0xfa1909f6fe2120e3aa4a63883776250ba5042b60
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Escrow at 0x4be45969e8f72ce085424913ac4fb916932d58d7
 */
-pragma solidity 0.4.23;
+pragma solidity ^0.4.24;
 
 
-library SafeMath {
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+    address public owner;
 
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        if (a == 0) {
-            return 0;
-        }
-        uint256 c = a * b;
-        assert(c / a == b);
-        return c;
-    }
 
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return c;
-    }
+    event OwnershipRenounced(address indexed previousOwner);
+    event OwnershipTransferred(
+        address indexed previousOwner,
+        address indexed newOwner
+    );
 
-  /**
-  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
+
+    /**
+     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+     * account.
+     */
+    constructor() public {
+        owner = msg.sender;
     }
 
     /**
-    * @dev Adds two numbers, throws on overflow.
-    */
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
-    }
-}
-
-
-contract ERC20Basic {
-    function totalSupply() public view returns (uint256);
-    function balanceOf(address who) public view returns (uint256);
-    function transfer(address to, uint256 value) public returns (bool);
-    event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-
-contract ERC20 is ERC20Basic {
-    function allowance(address owner, address spender) public view returns (uint256);
-    function transferFrom(address from, address to, uint256 value) public returns (bool);
-    function approve(address spender, uint256 value) public returns (bool);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-
-/// @title Escrow contract
-/// @author Farah
-/// @notice It's a contract for escrow based creating, claiming and rewarding jobs.
-
-contract Escrow{
-
-    using SafeMath for uint;
-    enum JobStatus { Open, inProgress, Completed, Cancelled }
-
-    struct Job{
-        string description;               // description of job
-        // uint JobID;                       // Id of the job
-        address manager;                  // address of manager
-        uint salaryDeposited;             // salary deposited by manager
-        address worker;                   // address of worker
-        JobStatus status;                 // current status of the job
-        uint noOfTotalPayments;           // total number of Payments set by the manager
-        uint noOfPaymentsMade;            // number of payments that have already been made
-        uint paymentAvailableForWorker;   // amount of DAI tokens available for the worker as claimable
-        uint totalPaidToWorker;           // total amount of DAI tokens paid to worker so far for this job
-        address evaluator;                // address of evaluator for this job
-        bool proofOfLastWorkVerified;     // status of the proof of work for the last milestone
-        uint sponsoredTokens;             // amount of DAI tokens sponsored to the job
-        mapping(address => uint) sponsors; // mapping of all the sponsors with their contributions for a job
-        address[] sponsorList;             // List of addresses for all sponsors for iterations
-        uint sponsorsCount;                // total number of contributors for this job
-    }
-
-    Job[] public Jobs;                    // List of all the jobs
-
-
-    mapping(address => uint[]) public JobsByManager;        // all the jobs held by a manager
-    mapping(address => uint[]) public JobsByWorker;         // all the jobs held by a worker
-
-
-    ERC20 public DAI;
-
-    uint public jobCount = 0;     // current count of the total Jobs
-
-    address public arbitrator;     // address of arbitrator
-
-    constructor(address _DAI, address _arbitrator) public{
-        DAI = ERC20(_DAI);
-        arbitrator = _arbitrator;
-    }
-
-    
-    modifier onlyArbitrator{
-        require(msg.sender == arbitrator);
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        require(msg.sender == owner);
         _;
     }
 
-    event JobCreated(address manager, uint salary, uint noOfTotalPayments, uint JobID, string description);
+    /**
+     * @dev Allows the current owner to relinquish control of the contract.
+     * @notice Renouncing to ownership will leave the contract without an owner.
+     * It will not be possible to call the functions with the `onlyOwner`
+     * modifier anymore.
+     */
+    function renounceOwnership() public onlyOwner {
+        emit OwnershipRenounced(owner);
+        owner = address(0);
+    }
 
-    /// @notice this function creates a job
-    /// @dev Uses transferFrom on the DAI token contract
-    /// @param _salary is the amount of salary deposited by the manager
-    /// @param _noOfTotalPayments is the number of total payments iterations set by the manager
-    function createJob(string _description, uint _salary, uint _noOfTotalPayments) public {
-        require(_salary > 0);
-        require(_noOfTotalPayments > 0);
+    /**
+     * @dev Allows the current owner to transfer control of the contract to a newOwner.
+     * @param _newOwner The address to transfer ownership to.
+     */
+    function transferOwnership(address _newOwner) public onlyOwner {
+        _transferOwnership(_newOwner);
+    }
 
-        address[] memory empty;
-        uint finalSalary = _salary.sub(_salary.mul(1).div(50));
+    /**
+     * @dev Transfers control of the contract to a newOwner.
+     * @param _newOwner The address to transfer ownership to.
+     */
+    function _transferOwnership(address _newOwner) internal {
+        require(_newOwner != address(0));
+        emit OwnershipTransferred(owner, _newOwner);
+        owner = _newOwner;
+    }
+}
 
-        Job memory newJob = Job(_description, msg.sender, finalSalary, 0x0, JobStatus.Open, _noOfTotalPayments, 0, 0, 0, 0x0, false, 0, empty, 0);
-        Jobs.push(newJob);
-        JobsByManager[msg.sender].push(jobCount);
 
-        require(DAI.allowance(msg.sender, address(this)) >= _salary);
+contract EternalStorage is Ownable {
 
-        emit JobCreated(msg.sender, finalSalary, _noOfTotalPayments, jobCount, _description);
-        jobCount++;
+    struct Storage {
+        mapping(uint256 => uint256) _uint;
+        mapping(uint256 => address) _address;
+    }
 
-        DAI.transferFrom(msg.sender, address(this), _salary);  
+    Storage internal s;
+    address allowed;
+
+    constructor(uint _rF, address _r, address _f, address _a, address _t)
+
+    public {
+        setAddress(0, _a);
+        setAddress(1, _r);
+        setUint(1, _rF);
+        setAddress(2, _f);
+        setAddress(3, _t);
+    }
+
+    modifier onlyAllowed() {
+        require(msg.sender == owner || msg.sender == allowed);
+        _;
+    }
+
+    function identify(address _address) external onlyOwner {
+        allowed = _address;
+    }
+
+    /**
+     * @dev Allows the current owner to transfer control of the contract to a
+     * newOwner.
+     * @param newOwner The address to transfer ownership to.
+     */
+    function transferOwnership(address newOwner) public onlyOwner {
+        Ownable.transferOwnership(newOwner);
+    }
+
+    /**
+     * @dev Allows the owner to set a value for an unsigned integer variable.
+     * @param i Unsigned integer variable key
+     * @param v The value to be stored
+     */
+    function setUint(uint256 i, uint256 v) public onlyOwner {
+        s._uint[i] = v;
+    }
+
+    /**
+     * @dev Allows the owner to set a value for a address variable.
+     * @param i Unsigned integer variable key
+     * @param v The value to be stored
+     */
+    function setAddress(uint256 i, address v) public onlyOwner {
+        s._address[i] = v;
+    }
+
+    /**
+     * @dev Get the value stored of a uint variable by the hash name
+     * @param i Unsigned integer variable key
+     */
+    function getUint(uint256 i) external view onlyAllowed returns (uint256) {
+        return s._uint[i];
+    }
+
+    /**
+     * @dev Get the value stored of a address variable by the hash name
+     * @param i Unsigned integer variable key
+     */
+    function getAddress(uint256 i) external view onlyAllowed returns (address) {
+        return s._address[i];
+    }
+
+    function selfDestruct () external onlyOwner {
+        selfdestruct(owner);
+    }
+}
+
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 {
+    function totalSupply() public view returns (uint256);
+
+    function balanceOf(address _who) public view returns (uint256);
+
+    function allowance(address _owner, address _spender)
+    public view returns (uint256);
+
+    function transfer(address _to, uint256 _value) public returns (bool);
+
+    function approve(address _spender, uint256 _value)
+    public returns (bool);
+
+    function transferFrom(address _from, address _to, uint256 _value)
+    public returns (bool);
+
+    event Transfer(
+        address indexed from,
+        address indexed to,
+        uint256 value
+    );
+
+    event Approval(
+        address indexed owner,
+        address indexed spender,
+        uint256 value
+    );
+}
+
+
+contract Escrow is Ownable {
+
+    enum transactionStatus {
+        Default,
+        Pending,
+        PendingR1,
+        PendingR2,
+        Completed,
+        Canceled}
+
+    struct Transaction {
+        transactionStatus status;
+        uint baseAmt;
+        uint txnAmt;
+        uint sellerFee;
+        uint buyerFee;
+        uint buyerBalance;
+        address buyer;
+        uint token;
+    }
+
+    mapping(address => Transaction) transactions;
+    mapping(address => uint) balance;
+    ERC20 base;
+    ERC20 token;
+    EternalStorage eternal;
+    uint rF;
+    address r;
+    address reserve;
+
+    constructor(ERC20 _base, address _s) public {
+
+        base = _base;
+        eternal = EternalStorage(_s);
 
     }
 
-
-    event JobClaimed(address worker, uint JobID);
-
-    /// @notice this function lets the worker claim the job
-    /// @dev Uses transferFrom on the DAI token contract
-    /// @param _JobID is the ID of the job to be claimed by the worker
-    function claimJob(uint _JobID) public {
-        require(_JobID >= 0);
-
-        Job storage job = Jobs[_JobID];
-
-        require(msg.sender != job.manager);
-        require(msg.sender != job.evaluator);
-
-        require(job.status == JobStatus.Open);
-
-        job.worker = msg.sender;
-        job.status = JobStatus.inProgress;
-
-        JobsByWorker[msg.sender].push(_JobID);
-        emit JobClaimed(msg.sender, _JobID);
-
-        
+    modifier onlyAllowed() {
+        require(msg.sender == owner || msg.sender == eternal.getAddress(0));
+        _;
     }
 
+    function createTransaction (
 
-    event EvaluatorSet(uint JobID, address evaluator);
+        address _tag,
+        uint _baseAmt,
+        uint _txnAmt,
+        uint _sellerFee,
+        uint _buyerFee) external payable {
 
-    /// @notice this function lets a registered address become an evaluator for a job
-    /// @param _JobID is the ID of the job for which the sender wants to become an evaluator
-    function setEvaluator(uint _JobID) public {
-        require(_JobID >= 0);
+        Transaction storage transaction = transactions[_tag];
+        require(transaction.buyer == 0x0);
+        transactions[_tag] =
+        Transaction(
+            transactionStatus.Pending,
+            _baseAmt,
+            _txnAmt,
+            _sellerFee,
+            _buyerFee,
+            0,
+            msg.sender,
+            0);
 
-        Job storage job = Jobs[_JobID];
-
-        require(msg.sender != job.manager);
-        require(msg.sender != job.worker);
-
-        job.evaluator = msg.sender;
-        emit EvaluatorSet(_JobID, msg.sender);
-
+        uint buyerTotal = _txnAmt + _buyerFee;
+        require(transaction.buyerBalance + msg.value == buyerTotal);
+        transaction.buyerBalance += msg.value;
+        balance[msg.sender] += msg.value;
     }
 
+    function createTokenTransaction (
 
-    event JobCancelled(uint JobID);
+        address _tag,
+        uint _baseAmt,
+        uint _txnAmt,
+        uint _sellerFee,
+        uint _buyerFee,
+        address _buyer,
+        uint _token) external onlyAllowed {
 
-    /// @notice this function lets the manager or arbitrator cancel the job
-    /// @dev Uses transfer on the DAI token contract to return DAI from escrow to manager
-    /// @param _JobID is the ID of the job to be cancelled
-    function cancelJob(uint _JobID) public {
-        require(_JobID >= 0);
+        require(_token != 0);
+        require(eternal.getAddress(_token) != 0x0);
+        Transaction storage transaction = transactions[_tag];
+        require(transaction.buyer == 0x0);
+        transactions[_tag] =
+        Transaction(
+            transactionStatus.Pending,
+            _baseAmt,
+            _txnAmt,
+            _sellerFee,
+            _buyerFee,
+            0,
+            _buyer,
+            _token);
 
-        Job storage job = Jobs[_JobID];
+        uint buyerTotal = _txnAmt + _buyerFee;
+        token = ERC20(eternal.getAddress(_token));
+        token.transferFrom(_buyer, address(this), buyerTotal);
+        transaction.buyerBalance += buyerTotal;
+    }
 
-        if(msg.sender != arbitrator){
-            require(job.manager == msg.sender);
-            require(job.worker == 0x0);
-            require(job.status == JobStatus.Open);
+    function release(address _tag) external onlyAllowed {
+        releaseFunds(_tag);
+    }
+
+    function releaseFunds (address _tag) private {
+        Transaction storage transaction = transactions[_tag];
+        require(transaction.status == transactionStatus.Pending);
+        uint buyerTotal = transaction.txnAmt + transaction.buyerFee;
+        uint buyerBalance = transaction.buyerBalance;
+        transaction.buyerBalance = 0;
+        require(buyerTotal == buyerBalance);
+        base.transferFrom(_tag, transaction.buyer, transaction.baseAmt);
+        uint totalFees = transaction.buyerFee + transaction.sellerFee;
+        uint sellerTotal = transaction.txnAmt - transaction.sellerFee;
+        transaction.txnAmt = 0;
+        transaction.sellerFee = 0;
+        if (transaction.token == 0) {
+            _tag.transfer(sellerTotal);
+            owner.transfer(totalFees);
+        } else {
+            token = ERC20(eternal.getAddress(transaction.token));
+            token.transfer(_tag, sellerTotal);
+            token.transfer(owner, totalFees);
         }
 
-        job.status = JobStatus.Cancelled;
-        uint returnAmount = job.salaryDeposited; 
-
-        emit JobCancelled(_JobID);
-        DAI.transfer(job.manager, returnAmount);
+        transaction.status = transactionStatus.PendingR1;
+        recovery(_tag);
     }
 
-
-    event PaymentClaimed(address worker, uint amount, uint JobID);
-
-    /// @notice this function lets the worker claim the approved payment
-    /// @dev Uses transfer on the DAI token contract to send DAI from escrow to worker
-    /// @param _JobID is the ID of the job from which the worker intends to claim the DAI tokens
-    function claimPayment(uint _JobID) public {
-        require(_JobID >= 0);
-
-        Job storage job = Jobs[_JobID];
-
-        require(job.worker == msg.sender);
-
-        uint payment = job.paymentAvailableForWorker;
-        require(payment > 0);
-
-        job.paymentAvailableForWorker = 0;
-
-        emit PaymentClaimed(msg.sender, payment, _JobID);
-        DAI.transfer(msg.sender, payment);
-        
+    function recovery(address _tag) private {
+        r1(_tag);
+        r2(_tag);
     }
 
+    function r1 (address _tag) private {
+        Transaction storage transaction = transactions[_tag];
+        require(transaction.status == transactionStatus.PendingR1);
+        transaction.status = transactionStatus.PendingR2;
+        base.transferFrom(reserve, _tag, rF);
+    }
 
-    event PaymentApproved(address manager, uint JobID, uint amount);
+    function r2 (address _tag) private {
+        Transaction storage transaction = transactions[_tag];
+        require(transaction.status == transactionStatus.PendingR2);
+        transaction.buyer = 0x0;
+        transaction.status = transactionStatus.Completed;
+        base.transferFrom(_tag, r, rF);
+    }
 
-    /// @notice this function lets the manager to approve payment
-    /// @param _JobID is the ID of the job for which the payment is approved
-    function approvePayment(uint _JobID) public {
-        require(_JobID >= 0);
-
-        Job storage job = Jobs[_JobID];
-
-        if(msg.sender != arbitrator){
-            require(job.manager == msg.sender);
-            require(job.proofOfLastWorkVerified == true);
+    function cancel (address _tag) external onlyAllowed {
+        Transaction storage transaction = transactions[_tag];
+        if (transaction.token == 0) {
+            cancelTransaction(_tag);
+        } else {
+            cancelTokenTransaction(_tag);
         }
-        require(job.noOfTotalPayments > job.noOfPaymentsMade);
-
-        uint currentPayment = job.salaryDeposited.div(job.noOfTotalPayments);
-
-        job.paymentAvailableForWorker = job.paymentAvailableForWorker + currentPayment;
-        job.totalPaidToWorker = job.totalPaidToWorker + currentPayment;
-        job.noOfPaymentsMade++;
-
-        if(job.noOfTotalPayments == job.noOfPaymentsMade){
-            job.status = JobStatus.Completed;
-        }
-
-        emit PaymentApproved(msg.sender, _JobID, currentPayment);
-
     }
 
-
-    event EvaluatorPaid(address manager, address evaluator, uint JobID, uint payment);
-
-    /// @notice this function lets the manager pay DAI to arbitrator
-    /// @dev Uses transferFrom on the DAI token contract to send DAI from manager to evaluator
-    /// @param _JobID is the ID of the job for which the evaluator is to be paid
-    /// @param _payment is the amount of DAI tokens to be paid to evaluator
-    function payToEvaluator(uint _JobID, uint _payment) public {
-        require(_JobID >= 0);
-        require(_payment > 0);
-
-        Job storage job = Jobs[_JobID];
-        require(msg.sender == job.manager);
-
-        address evaluator = job.evaluator;
-
-        require(DAI.allowance(job.manager, address(this)) >= _payment);
-
-        emit EvaluatorPaid(msg.sender, evaluator, _JobID, _payment);
-        DAI.transferFrom(job.manager, evaluator, _payment);
-
-
+    function cancelTransaction (address _tag) private {
+        Transaction storage transaction = transactions[_tag];
+        require(transaction.status == transactionStatus.Pending);
+        uint refund = transaction.buyerBalance;
+        transaction.buyerBalance = 0;
+        address buyer = transaction.buyer;
+        transaction.buyer = 0x0;
+        buyer.transfer(refund);
+        transaction.status = transactionStatus.Canceled;
     }
 
-
-    event ProofOfWorkConfirmed(uint JobID, address evaluator, bool proofVerified);
-
-    /// @notice this function lets the evaluator confirm the proof of work provided by worker 
-    /// @param _JobID is the ID of the job for which the evaluator confirms proof of work
-    function confirmProofOfWork(uint _JobID) public {
-        require(_JobID >= 0);
-
-        Job storage job = Jobs[_JobID];
-        require(msg.sender == job.evaluator);
-
-        job.proofOfLastWorkVerified = true;
-
-        emit ProofOfWorkConfirmed(_JobID, job.evaluator, true);
-
+    function cancelTokenTransaction (address _tag) private {
+        Transaction storage transaction = transactions[_tag];
+        require(transaction.status == transactionStatus.Pending);
+        token = ERC20(eternal.getAddress(transaction.token));
+        uint refund = transaction.buyerBalance;
+        transaction.buyerBalance = 0;
+        address buyer = transaction.buyer;
+        transaction.buyer = 0x0;
+        token.transfer(buyer, refund);
+        transaction.status = transactionStatus.Canceled;
     }
 
-    event ProofOfWorkProvided(uint JobID, address worker, bool proofProvided);
-
-    /// @notice this function lets the worker provide proof of work
-    /// @param _JobID is the ID of the job for which worker provides proof
-    function provideProofOfWork(uint _JobID) public {
-        require(_JobID >= 0);
-
-        Job storage job = Jobs[_JobID];
-        require(msg.sender == job.worker);
-
-        job.proofOfLastWorkVerified = false;
-        emit ProofOfWorkProvided(_JobID, msg.sender, true);
-
+    function resync () external onlyOwner {
+        rF = eternal.getUint(1);
+        r = eternal.getAddress(1);
+        reserve = eternal.getAddress(2);
     }
 
-
-    event TipMade(address from, address to, uint amount);
-
-    /// @notice this function lets any registered address send DAI tokens to any other address
-    /// @dev Uses transferFrom on the DAI token contract to send DAI from sender's address to receiver's address
-    /// @param _to is the address of the receiver receiving the DAI tokens
-    /// @param _amount is the amount of DAI tokens to be paid to receiving address
-    function tip(address _to, uint _amount) public {
-        require(_to != 0x0);
-        require(_amount > 0);
-        require(DAI.allowance(msg.sender, address(this)) >= _amount);
-
-        emit TipMade(msg.sender, _to, _amount);
-        DAI.transferFrom(msg.sender, _to, _amount);
+    function selfDestruct () external onlyOwner {
+        selfdestruct(owner);
     }
 
+    function status (address _tag) external view onlyOwner returns (
+        transactionStatus _status,
+        uint _baseAmt,
+        uint _txnAmt,
+        uint _sellerFee,
+        uint _buyerFee,
+        uint _buyerBalance,
+        address _buyer,
+        uint _token) {
 
-    event DAISponsored(uint JobID, uint amount, address sponsor);
-    
-    /// @notice this function lets any registered address send DAI tokens to any Job as sponsored tokens
-    /// @dev Uses transferFrom on the DAI token contract to send DAI from sender's address to Escrow
-    /// @param _JobID is the ID of the job for which the sponsor contributes DAI
-    /// @param _amount is the amount of DAI tokens to be sponsored to the Job
-    function sponsorDAI(uint _JobID, uint _amount) public {
-        require(_JobID >= 0);
-        require(_amount > 0);
-
-        Job storage job = Jobs[_JobID];
-
-        if(job.sponsors[msg.sender] == 0){
-            job.sponsorList.push(msg.sender);
-        }
-
-        job.sponsors[msg.sender] = job.sponsors[msg.sender] + _amount;
-        job.sponsoredTokens = job.sponsoredTokens + _amount;
-
-        emit DAISponsored(_JobID, _amount, msg.sender);
-        
-        require(DAI.allowance(msg.sender, address(this)) >= _amount);
-        DAI.transferFrom(msg.sender, address(this), _amount);
+        Transaction storage transaction = transactions[_tag];
+        return (
+        transaction.status,
+        transaction.baseAmt,
+        transaction.txnAmt,
+        transaction.sellerFee,
+        transaction.buyerFee,
+        transaction.buyerBalance,
+        transaction.buyer,
+        transaction.token
+        );
     }
 
-
-    event DAIWithdrawn(address receiver, uint amount);
-
-    /// @notice this function lets arbitrator withdraw DAI to the provided address 
-    /// @dev Uses transfer on the DAI token contract to send DAI from Escrow to the provided address
-    /// @param _receiver is the receiving the withdrawn DAI tokens
-    /// @param _amount is the amount of DAI tokens to be withdrawn
-    function withdrawDAI(address _receiver, uint _amount) public onlyArbitrator {
-        require(_receiver != 0x0);
-        require(_amount > 0);
-        
-        require(DAI.balanceOf(address(this)) >= _amount);
-
-        DAI.transfer(_receiver, _amount);
-        emit DAIWithdrawn(_receiver, _amount);
+    function getAddress (uint i) external view onlyAllowed returns (address) {
+        return eternal.getAddress(i);
     }
 
+    function variables () external view onlyAllowed returns (
+        address,
+        address,
+        address,
+        uint) {
 
-    /// @notice this function lets get an amount of sponsored DAI by an address in a given job
-    /// @param _JobID is the Job for the job
-    /// @param _sponsor is the address of sponsor for which we are retreiving the sponsored tokens amount
-    function get_Sponsored_Amount_in_Job_By_Address(uint _JobID, address _sponsor) public view returns (uint) {
-        require(_JobID >= 0);
-        require(_sponsor != 0x0);
-
-        Job storage job = Jobs[_JobID];
-
-        return job.sponsors[_sponsor];
-    }
-
-
-    /// @notice this function lets retreive the list of all sponsors in a given job
-    /// @param _JobID is the Job for the job for which we are retrieving the list of sponsors
-    function get_Sponsors_list_by_Job(uint _JobID) public view returns (address[] list) {
-        require(_JobID >= 0);
-
-        Job storage job = Jobs[_JobID];
-
-        list = new address[](job.sponsorsCount);
-
-        list = job.sponsorList;
-    }
-
-
-    function getJob(uint _JobID) public view returns ( string _description, address _manager, uint _salaryDeposited, address _worker, uint _status, uint _noOfTotalPayments, uint _noOfPaymentsMade, uint _paymentAvailableForWorker, uint _totalPaidToWorker, address _evaluator, bool _proofOfLastWorkVerified, uint _sponsoredTokens, uint _sponsorsCount) {
-        require(_JobID >= 0);
-
-        Job storage job = Jobs[_JobID];
-        _description = job.description;
-        _manager = job.manager;
-        _salaryDeposited = job.salaryDeposited;             
-        _worker = job.worker;                   
-        _status = uint(job.status);                 
-        _noOfTotalPayments = job.noOfTotalPayments;           
-        _noOfPaymentsMade = job.noOfPaymentsMade;           
-        _paymentAvailableForWorker = job.paymentAvailableForWorker;   
-        _totalPaidToWorker = job.totalPaidToWorker;           
-        _evaluator = job.evaluator;               
-        _proofOfLastWorkVerified = job.proofOfLastWorkVerified;     
-        _sponsoredTokens = job.sponsoredTokens;             
-        _sponsorsCount = job.sponsorsCount;
+        address p = eternal.getAddress(0);
+        return (p, r, reserve, rF);
     }
 
 }
