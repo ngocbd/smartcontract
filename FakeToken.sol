@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FakeToken at 0x8eec28689b0cae39db5e6a0caf1288b49006ab8f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FakeToken at 0x1b6f5b9906e287767e8be7b65e843161857a2a07
 */
 pragma solidity ^0.4.24;
 
@@ -10,7 +10,7 @@ contract FakeToken {
     
     mapping (address => uint256) public balanceOf;
     
-    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Transfer(address from, address to, uint256 value);
     
     constructor() public {
         balanceOf[msg.sender] = 1000;
