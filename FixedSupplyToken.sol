@@ -1,43 +1,87 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FixedSupplyToken at 0x13ca82a039fb510c4110c75a833160dbc8f203e1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FixedSupplyToken at 0x60d5e18CD69f0CD2860Fb2543a44df026875B83F
 */
 pragma solidity ^0.4.24;
 
 // ----------------------------------------------------------------------------
-// 'vevcoin' 'vevcoin' token contract
+// 'FIXED' 'Example Fixed Supply Token' token contract
 //
-// Symbol      : vev
-// Name        : vevcoin
-// Total supply: 100,000,000.000000000000000000
+// Symbol      : VXCR2
+// Name        : Vixcore 2
+// Total supply: 10,000,000,000.000000000000000000
 // Decimals    : 18
 //
 // Enjoy.
 //
 // (c) BokkyPooBah / Bok Consulting Pty Ltd 2018. The MIT Licence.
 // ----------------------------------------------------------------------------
+//https://remix.ethereum.org/#optimize=true&version=soljson-v0.4.24+commit.e67f0147.js
+//
 
 
 // ----------------------------------------------------------------------------
 // Safe maths
 // ----------------------------------------------------------------------------
 library SafeMath {
-    function add(uint a, uint b) internal pure returns (uint c) {
-        c = a + b;
-        require(c >= a);
+
+    /**
+    * @dev Multiplies two numbers, reverts on overflow.
+    */
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        // Gas optimization: this is cheaper than requiring 'a' not being zero, but the
+        // benefit is lost if 'b' is also tested.
+        // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+        if (a == 0) {
+            return 0;
+        }
+
+        uint256 c = a * b;
+        require(c / a == b);
+
+        return c;
     }
-    function sub(uint a, uint b) internal pure returns (uint c) {
+
+    /**
+    * @dev Integer division of two numbers truncating the quotient, reverts on division by zero.
+    */
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        require(b > 0); // Solidity only automatically asserts when dividing by 0
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+
+        return c;
+    }
+
+    /**
+    * @dev Subtracts two numbers, reverts on overflow (i.e. if subtrahend is greater than minuend).
+    */
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
         require(b <= a);
-        c = a - b;
+        uint256 c = a - b;
+
+        return c;
     }
-    function mul(uint a, uint b) internal pure returns (uint c) {
-        c = a * b;
-        require(a == 0 || c / a == b);
+
+    /**
+    * @dev Adds two numbers, reverts on overflow.
+    */
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        require(c >= a);
+
+        return c;
     }
-    function div(uint a, uint b) internal pure returns (uint c) {
-        require(b > 0);
-        c = a / b;
+
+    /**
+    * @dev Divides two numbers and returns the remainder (unsigned integer modulo),
+    * reverts when dividing by zero.
+    */
+    function mod(uint256 a, uint256 b) internal pure returns (uint256) {
+        require(b != 0);
+        return a % b;
     }
 }
+
 
 
 // ----------------------------------------------------------------------------
@@ -94,8 +138,7 @@ contract Owned {
         owner = newOwner;
         newOwner = address(0);
     }
-}
-
+} 
 
 // ----------------------------------------------------------------------------
 // ERC20 Token, with the addition of symbol, name and decimals and a
@@ -107,29 +150,40 @@ contract FixedSupplyToken is ERC20Interface, Owned {
     string public symbol;
     string public  name;
     uint8 public decimals;
-    uint public amount_eth; 
-    uint8 public token_price;
-    uint _totalSupply;
+    uint _totalSupply; 
+    
+    bool public allowCrowdsale;
+    uint public weiPerUToken;
+    uint public bonusMinWei;
+    uint public bonusPct; 
 
     mapping(address => uint) balances;
     mapping(address => mapping(address => uint)) allowed;
+    
+    // ------------------------------------------------------------------------
+    // Custom Events
+    // ------------------------------------------------------------------------
+    event Burn(address indexed from, uint256 value);
+    event Bonus(address indexed from, uint256 value); 
 
 
     // ------------------------------------------------------------------------
     // Constructor
     // ------------------------------------------------------------------------
     constructor() public {
-        symbol = "vev";
-        name = "vevcoin";
+        symbol = "XLR";
+        name = "Xunilair";
         decimals = 18;
-        amount_eth = 0;
-        token_price = 10;
+        _totalSupply = 88000000000000000000000000000; //88000000000 * 1000000000000000000;
 
-        _totalSupply = 100000000 * 10**uint(decimals);
-        balances[owner] = _totalSupply * 30 / 100;
-        balances[address(this)] = _totalSupply * 70 / 100;
 
-        emit Transfer(address(0), address(this), _totalSupply * 70 / 100);
+        allowCrowdsale = false;
+        weiPerUToken = 5500000;
+        bonusMinWei = 0;
+        bonusPct = 0; 
+
+        balances[owner] = _totalSupply;
+        emit Transfer(address(0), owner, _totalSupply);
     }
 
 
@@ -218,25 +272,119 @@ contract FixedSupplyToken is ERC20Interface, Owned {
 
 
     // ------------------------------------------------------------------------
-    // função para conversão da token fallBack
-    // ------------------------------------------------------------------------
-    function () public payable {
-        require(msg.value >0);
-        require(balances[address(this)] > msg.value * token_price);
-        
-        uint tokens = msg.value * token_price;
-        amount_eth += msg.value;
-        balances[address(this)] -= tokens;
-        balances[msg.sender] += tokens;
-        
-        emit Transfer(address(this), msg.sender, tokens);
-    }
-
-
-    // ------------------------------------------------------------------------
     // Owner can transfer out any accidentally sent ERC20 tokens
     // ------------------------------------------------------------------------
     function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
         return ERC20Interface(tokenAddress).transfer(owner, tokens);
     }
+
+
+    // ------------------------------------------------------------------------
+    // Crowdsale 
+    // ------------------------------------------------------------------------
+    function () public payable {
+        //crowd sale is open/allowed
+        require(allowCrowdsale); 
+        
+        uint ethValue = msg.value;
+        
+        //get token equivalent
+        uint tokens = ethValue.mul(weiPerUToken);
+
+        
+        //append bonus if we have active bonus promo
+        //and if ETH sent is more than then minimum required to avail bonus
+        if(bonusPct > 0 && ethValue >= bonusMinWei){
+            //compute bonus value based on percentage
+            uint bonus = tokens.div(100).mul(bonusPct);
+            
+            //emit bonus event
+            emit Bonus(msg.sender, bonus);
+            
+            //add bonus to final amount of token to be 
+            //transferred to sender/purchaser
+            tokens = tokens.add(bonus);
+        }
+        
+        
+        //validate token amount 
+        //assert(tokens > 0);
+        //assert(tokens <= balances[owner]);  
+        
+
+        //transfer from owner to sender/purchaser
+        balances[owner] = balances[owner].sub(tokens);
+        balances[msg.sender] = balances[msg.sender].add(tokens);
+        
+        //emit transfer event
+        emit Transfer(owner, msg.sender, tokens);
+    } 
+
+
+    // ------------------------------------------------------------------------
+    // Open the token for Crowdsale 
+    // ------------------------------------------------------------------------
+    function openPurchase() public onlyOwner{
+        allowCrowdsale = true; 
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Close the token for Crowdsale 
+    // ------------------------------------------------------------------------
+    function closePurchase() public onlyOwner{
+        allowCrowdsale = false; 
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Set the ICO price. 
+    // E.g. : _weiPerUToken = 550,0000 to get 55,000 Token per 0.01 ETH
+    // ------------------------------------------------------------------------
+    function setIcoPrice(uint _weiPerUToken) public onlyOwner{ 
+        weiPerUToken = _weiPerUToken;
+    } 
+
+
+    // ------------------------------------------------------------------------
+    // Set crowdsale bonus percentage and its minimum
+    // ------------------------------------------------------------------------
+    function setBonus(uint _bonusPct, uint _minWei) public onlyOwner {
+        bonusMinWei = _minWei;
+        bonusPct = _bonusPct;
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Burn token
+    // ------------------------------------------------------------------------
+    function burn(uint256 _value) public onlyOwner {
+        require(_value > 0);
+        require(_value <= balances[msg.sender]); 
+
+        address burner = msg.sender;
+        
+        //deduct from initiator's balance
+        balances[burner] = balances[burner].sub(_value);
+        
+        //deduct from total supply
+        _totalSupply = _totalSupply.sub(_value);
+        
+        emit Burn(burner, _value); 
+    } 
+
+
+    // ------------------------------------------------------------------------
+    // Withdraw
+    // ------------------------------------------------------------------------ 
+    function withdraw(uint _amount) onlyOwner public {
+        require(_amount > 0);
+        
+        // Amount withdraw should be less or equal to balance
+        require(_amount <= address(this).balance);     
+        
+        owner.transfer(_amount);
+    }
+
+
 }
