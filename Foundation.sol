@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Foundation at 0xC00C9ed7f35Ca2373462FD46d672084a6a128E2B
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Foundation at 0xc91ca445acdae9eebaf003a64088ca29a694c3ae
 */
 pragma solidity ^0.4.24;
 
@@ -55,25 +55,23 @@ contract Ownable {
 contract Foundation is Ownable {
     using SafeMath for uint256;
 
-    string public name = "Fomo3D Foundation (Asia)";
-
     mapping(address => uint256) public depositOf;
 
-    struct Member {
-        address who;
-        uint256 shares;
+    struct Share {
+        address member;
+        uint256 amount;
     }
-    Member[] private members;
+    Share[] private shares;
 
-    event Deposited(address indexed who, uint256 amount);
-    event Withdrawn(address indexed who, uint256 amount);
+    event Deposited(address indexed member, uint256 amount);
+    event Withdrawn(address indexed member, uint256 amount);
 
     constructor() public {
-        members.push(Member(address(0), 0));
+        shares.push(Share(address(0), 0));
 
-        members.push(Member(0x05dEbE8428CAe653eBA92a8A887CCC73C7147bB8, 60));
-        members.push(Member(0xF53e5f0Af634490D33faf1133DE452cd9fF987e1, 20));
-        members.push(Member(0x34d26e1325352d7b3f91df22ae97894b0c5343b7, 20));
+        shares.push(Share(0x05dEbE8428CAe653eBA92a8A887CCC73C7147bB8, 60));
+        shares.push(Share(0xF53e5f0Af634490D33faf1133DE452cd9fF987e1, 20));
+        shares.push(Share(0x34D26e1325352d7B3F91DF22ae97894B0C5343b7, 20));
     }
 
     function() public payable {
@@ -84,9 +82,9 @@ contract Foundation is Ownable {
         uint256 amount = msg.value;
         require(amount > 0, "Deposit failed - zero deposits not allowed");
 
-        for (uint256 i = 1; i < members.length; i++) {
-            if (members[i].shares > 0) {
-                depositOf[members[i].who] = depositOf[members[i].who].add(amount.mul(members[i].shares).div(100));
+        for (uint256 i = 1; i < shares.length; i++) {
+            if (shares[i].amount > 0) {
+                depositOf[shares[i].member] = depositOf[shares[i].member].add(amount.mul(shares[i].amount).div(100));
             }
         }
 
@@ -104,22 +102,32 @@ contract Foundation is Ownable {
         emit Withdrawn(_who, amount);
     }
 
-    function setMember(address _who, uint256 _shares) public onlyOwner {
-        uint256 memberIndex = 0;
-        uint256 sharesSupply = 100;
-        for (uint256 i = 1; i < members.length; i++) {
-            if (members[i].who == _who) {
-                memberIndex = i;
-            } else if (members[i].shares > 0) {
-                sharesSupply = sharesSupply.sub(members[i].shares);
+    function getShares(address _who) public view returns(uint256 amount) {
+        for (uint256 i = 1; i < shares.length; i++) {
+            if (shares[i].member == _who) {
+                amount = shares[i].amount;
+                break;
             }
         }
-        require(_shares <= sharesSupply, "Insufficient shares.");
+        return amount;
+    }
 
-        if (memberIndex > 0) {
-            members[memberIndex].shares = _shares;
+    function setShares(address _who, uint256 _amount) public onlyOwner {
+        uint256 index = 0;
+        uint256 total = 100;
+        for (uint256 i = 1; i < shares.length; i++) {
+            if (shares[i].member == _who) {
+                index = i;
+            } else if (shares[i].amount > 0) {
+                total = total.sub(shares[i].amount);
+            }
+        }
+        require(_amount <= total, "Insufficient shares.");
+
+        if (index > 0) {
+            shares[index].amount = _amount;
         } else {
-            members.push(Member(_who, _shares));
+            shares.push(Share(_who, _amount));
         }
     }
 }
