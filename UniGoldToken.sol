@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UniGoldToken at 0xe0b5a364f86dfc046a2a5387450dbe46a48027c1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UniGoldToken at 0x5f6d175cdaed5b58aa5c27fc30d49d9f3f9cdeb2
 */
 pragma solidity ^0.4.25;
 
@@ -248,7 +248,7 @@ contract UniGoldToken is ERC223Burnable {
   address public minter;
   string public name = "UniGoldCoin";
   string public symbol = "UGC?";
-  uint8 public decimals = 0;
+  uint8 public decimals = 4;
 
   event Mint(address indexed to, uint256 amount);
 
