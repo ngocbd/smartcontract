@@ -1,264 +1,166 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MRC at 0xca6f6e8be2fc32946d38a92f7452578a8170ca97
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MRC at 0x81079EEa4ED48d445C25C01F49E531D9aB4D36Fa
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.20;
+contract ERC20ext
+{
+  function totalSupply() public constant returns (uint supply);
+  function balanceOf( address who ) public constant returns (uint value);
+  function allowance( address owner, address spender ) public constant returns (uint _allowance);
 
-library SafeMath {
+  function transfer( address to, uint value) public returns (bool ok);
+  function transferFrom( address from, address to, uint value) public returns (bool ok);
+  function approve( address spender, uint value ) public returns (bool ok);
 
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
+  event Transfer( address indexed from, address indexed to, uint value);
+  event Approval( address indexed owner, address indexed spender, uint value);
+
+  // extand
+  function postMessage(address dst, uint wad,string data) public returns (bool ok);
+  function appointNewCFO(address newCFO) public returns (bool ok);
+
+  function melt(address dst, uint256 wad) public returns (bool ok);
+  function mint(address dst, uint256 wad) public returns (bool ok);
+  function freeze(address dst, bool flag) public returns (bool ok);
+
+  event MeltEvent(address indexed dst, uint256 wad);
+  event MintEvent(address indexed dst, uint256 wad);
+  event FreezeEvent(address indexed dst, bool flag);
+}
+contract SafeMath 
+{
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) 
+  {
+    if (a == 0) {
+      return 0;
+    }
+    c = a * b;
+    assert(c / a == b);
     return c;
   }
-
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a / b;
-    return c;
+  function div(uint256 a, uint256 b) internal pure returns (uint256) 
+  {
+    return a / b;
   }
-
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) 
+  {
     assert(b <= a);
     return a - b;
   }
-
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) 
+  {
+    c = a + b;
     assert(c >= a);
     return c;
   }
 }
-
-contract ForeignToken {
-    function balanceOf(address _owner) constant public returns (uint256);
-    function transfer(address _to, uint256 _value) public returns (bool);
-}
-
-contract ERC20Basic {
-    uint256 public totalSupply;
-    function balanceOf(address who) public constant returns (uint256);
-    function transfer(address to, uint256 value) public returns (bool);
-    event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-contract ERC20 is ERC20Basic {
-    function allowance(address owner, address spender) public constant returns (uint256);
-    function transferFrom(address from, address to, uint256 value) public returns (bool);
-    function approve(address spender, uint256 value) public returns (bool);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-interface Token {
-    function distr(address _to, uint256 _value) public returns (bool);
-    function totalSupply() constant public returns (uint256 supply);
-    function balanceOf(address _owner) constant public returns (uint256 balance);
-}
-
- 
-
-contract MRC is ERC20 {
-    using SafeMath for uint256;
-    address owner = msg.sender;
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
-    mapping (address => bool) public blacklist;
-    string public constant name = "MobileRechargez";
-    string public constant symbol = "MRC";
-    uint public constant decimals = 18;
-    uint256 public totalSupply = 900000000e18;
-    uint256 public totalDistributed = 0;
-    uint256 public totalRemaining = totalSupply.sub(totalDistributed);
-    uint256 public value;
-
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-    event Distr(address indexed to, uint256 amount);
-    event DistrFinished();
-    event Burn(address indexed burner, uint256 value);
-
-    bool public distributionFinished = false;
-
-    modifier canDistr() {
-        require(!distributionFinished);
-        _;
-    }
-
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-
-    modifier onlyWhitelist() {
-        require(blacklist[msg.sender] == false);
-        _;
-    }
-
-    //May 01, 2018 00:00:00 UTC
-    modifier notPaused {
-    require(now > 1525132800  || msg.sender == owner);
+contract MRC is ERC20ext,SafeMath
+{
+  string public name;
+  string public symbol;
+  uint8  public decimals = 18;
+  address _cfo;
+  uint256 _supply;
+  mapping (address => uint256) _balances;
+  mapping (address => mapping (address => uint256)) _allowance;
+  mapping (address => bool) public _frozen;
+  function MRC(uint256 initialSupply,string tokenName,string tokenSymbol) public
+  {
+    _cfo    = msg.sender;
+    _supply = initialSupply * 10 ** uint256(decimals);
+    _balances[_cfo] = _supply;
+    name   = tokenName;
+    symbol = tokenSymbol;
+  }
+  modifier onlyCFO()
+  {
+    require(msg.sender == _cfo);
     _;
+  }
+  function totalSupply() public constant returns (uint256)
+  {
+    return _supply;
+  }
+  function balanceOf(address src) public constant returns (uint256)
+  {
+    return _balances[src];
+  }
+  function allowance(address src, address dst) public constant returns (uint256)
+  {
+    return _allowance[src][dst];
+  }
+  function transfer(address dst, uint wad) public returns (bool)
+  {
+    require(!_frozen[msg.sender]);
+    require(!_frozen[dst]);
+    require(_balances[msg.sender] >= wad);
+    _balances[msg.sender] = sub(_balances[msg.sender],wad);
+    _balances[dst]        = add(_balances[dst], wad);
+    Transfer(msg.sender, dst, wad);
+    return true;
+  }
+  function transferFrom(address src, address dst, uint wad) public returns (bool)
+  {
+    require(!_frozen[msg.sender]);
+    require(!_frozen[dst]);
+    require(_balances[src] >= wad);
+    require(_allowance[src][msg.sender] >= wad);
+
+    _allowance[src][msg.sender] = sub(_allowance[src][msg.sender],wad);
+
+    _balances[src] = sub(_balances[src],wad);
+    _balances[dst] = add(_balances[dst],wad);
+
+    Transfer(src, dst, wad);
+
+    return true;
+  }
+  function approve(address dst, uint256 wad) public returns (bool)
+  {
+    _allowance[msg.sender][dst] = wad;
+
+    Approval(msg.sender, dst, wad);
+    return true;
+  }
+  function postMessage(address dst, uint wad,string data) public returns (bool)
+  {
+    return transfer(dst,wad);
+  }
+  function appointNewCFO(address newCFO) onlyCFO public returns (bool)
+  {
+    if (newCFO != _cfo)
+    {
+      _cfo = newCFO;
+      return true;
     }
-    function MRC () public {
-        owner = msg.sender;
-        distr(owner, 300000000e18);
+    else
+    {
+      return false;
     }
+  }
+  function freeze(address dst, bool flag) onlyCFO public returns (bool)
+  {
+    _frozen[dst] = flag;
 
-    function transferOwnership(address newOwner) onlyOwner public {
-        if (newOwner != address(0)) {
-            owner = newOwner;
-        }
-    }
+    FreezeEvent(dst, flag);
+    return true;
+  }
+  function mint(address dst, uint256 wad) onlyCFO public returns (bool)
+  {
+    _balances[dst] = add(_balances[dst],wad);
+    _supply        = add(_supply,wad);
 
-    function enableWhitelist(address[] addresses) onlyOwner public {
-        for (uint i = 0; i < addresses.length; i++) {
-            blacklist[addresses[i]] = false;
-        }
-    }
+    MintEvent(dst, wad);
+    return true;
+  }
+  function melt(address dst, uint256 wad) onlyCFO public returns (bool)
+  {
+    require(_balances[dst] >= wad);
 
-    function disableWhitelist(address[] addresses) onlyOwner public {
-        for (uint i = 0; i < addresses.length; i++) {
-            blacklist[addresses[i]] = true;
-        }
-    }
+    _balances[dst] = sub(_balances[dst],wad);
+    _supply        = sub(_supply,wad);
 
-    function finishDistribution() onlyOwner canDistr public returns (bool) {
-        distributionFinished = true;
-        DistrFinished();
-        return true;
-    }
-
-    function distr(address _to, uint256 _amount) canDistr private returns (bool) {
-        totalDistributed = totalDistributed.add(_amount);
-        totalRemaining = totalRemaining.sub(_amount);
-        balances[_to] = balances[_to].add(_amount);
-        Distr(_to, _amount);
-        Transfer(address(0), _to, _amount);
-        return true;
-
-        if (totalDistributed >= totalSupply) {
-            distributionFinished = true;
-        }
-    }
-
-    function airdrop(address[] addresses) onlyOwner canDistr public {
-        require(addresses.length <= 255);
-        require(value <= totalRemaining);
-
-        for (uint i = 0; i < addresses.length; i++) {
-            require(value <= totalRemaining);
-            distr(addresses[i], value);
-        }
-        if (totalDistributed >= totalSupply) {
-            distributionFinished = true;
-        }
-    }
-
-    function distribution(address[] addresses, uint256 amount) onlyOwner canDistr public {
-        require(addresses.length <= 255);
-        require(amount <= totalRemaining);
-
-        for (uint i = 0; i < addresses.length; i++) {
-            require(amount <= totalRemaining);
-            distr(addresses[i], amount);
-        }
-
-        if (totalDistributed >= totalSupply) {
-            distributionFinished = true;
-        }
-    }
-
-    function distributeAmounts(address[] addresses, uint256[] amounts) onlyOwner canDistr public {
-
-        require(addresses.length <= 255);
-        require(addresses.length == amounts.length);
-        for (uint8 i = 0; i < addresses.length; i++) {
-            require(amounts[i] <= totalRemaining);
-            distr(addresses[i], amounts[i]);
-            if (totalDistributed >= totalSupply) {
-                distributionFinished = true;
-            }
-        }
-    }
-
-    function () external payable {
-            getTokens();
-     }
-
-    function getTokens() payable canDistr onlyWhitelist public {
-        require(msg.value >= 0.0001 ether);
-        require(msg.value*1000000 <= totalRemaining);
-        distr(msg.sender,  msg.value*1000000);
-        if (totalDistributed >= totalSupply) {
-            distributionFinished = true;
-        }
-    }
-
-    function balanceOf(address _owner) constant public returns (uint256) {
-                return balances[_owner];
-    }
-
-    // mitigates the ERC20 short address attack
-    modifier onlyPayloadSize(uint size) {
-        assert(msg.data.length >= size + 4);
-        _;
-    }
-
-    function transfer(address _to, uint256 _amount) onlyPayloadSize(2 * 32) public notPaused  returns (bool success) {
-        require(_to != address(0));
-        require(_amount <= balances[msg.sender]);
-        balances[msg.sender] = balances[msg.sender].sub(_amount);
-        balances[_to] = balances[_to].add(_amount);
-        Transfer(msg.sender, _to, _amount);
-        return true;
-    }
-
-    function transferFrom(address _from, address _to, uint256 _amount) onlyPayloadSize(3 * 32) public returns (bool success) {
-        require(_to != address(0));
-        require(_amount <= balances[_from]);
-        require(_amount <= allowed[_from][msg.sender]);
-        balances[_from] = balances[_from].sub(_amount);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_amount);
-        balances[_to] = balances[_to].add(_amount);
-        Transfer(_from, _to, _amount);
-        return true;
-    }
-
-    function approve(address _spender, uint256 _value) public returns (bool success) {
-        // mitigates the ERC20 spend/approval race condition
-        if (_value != 0 && allowed[msg.sender][_spender] != 0) { return false; }
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    function allowance(address _owner, address _spender) constant public returns (uint256) {
-        return allowed[_owner][_spender];
-    }
-    
-    function getTokenBalance(address tokenAddress, address who) constant public returns (uint){
-        ForeignToken t = ForeignToken(tokenAddress);
-        uint bal = t.balanceOf(who);
-        return bal;
-    }
-
-    function withdraw() onlyOwner public {
-        uint256 etherBalance = this.balance;
-        owner.transfer(etherBalance);
-    }
-
-    function burn(uint256 _value) onlyOwner public {
-        require(_value <= balances[msg.sender]);
-        // no need to require value <= totalSupply, since that would imply the
-        // sender's balance is greater than the totalSupply, which *should* be an assertion failure
-        address burner = msg.sender;
-        balances[burner] = balances[burner].sub(_value);
-        totalSupply = totalSupply.sub(_value);
-        totalDistributed = totalDistributed.sub(_value);
-        Burn(burner, _value);
-    }
-
-    function withdrawForeignTokens(address _tokenContract) onlyOwner public returns (bool) {
-        ForeignToken token = ForeignToken(_tokenContract);
-        uint256 amount = token.balanceOf(address(this));
-        return token.transfer(owner, amount);
-    }
+    MeltEvent(dst, wad);
+    return true;
+  }
 }
