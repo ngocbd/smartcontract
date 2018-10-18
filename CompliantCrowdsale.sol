@@ -1,8 +1,29 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CompliantCrowdsale at 0x7799ffb5704d2782f6f190a460784b32e24319bd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CompliantCrowdsale at 0x31bc759f583e0d8dbf8e7649483dcd85fbc18029
 */
 pragma solidity 0.4.24;
 
+//
+//
+///
+//
+//
+//
+//
+//
+//
+//company_2
+//
+//
+//
+//demo
+//wallet2
+//new ICO Sep28
+//company_2
+//DefaultOffer
+//DefaultOffer
+//new for company_2
+//FOR PRODUCTION
 
 /**
  * @title SafeMath
@@ -166,6 +187,11 @@ contract Whitelist is Ownable {
 contract Validator {
     address public validator;
 
+    /**
+    * event for validator address update logging
+    * @param previousOwner address of the old validator
+    * @param newValidator address of the new validator
+    */
     event NewValidatorSet(address indexed previousOwner, address indexed newValidator);
 
     /**
@@ -385,6 +411,7 @@ contract MintableToken is StandardToken, Ownable {
         public 
         Ownable(_owner) 
     {
+
     }
 
     /**
@@ -804,12 +831,6 @@ contract Crowdsale {
     // amount of raised money in wei
     uint256 public weiRaised;
 
-    // amount of tokens sold
-    uint256 public totalSupply;
-
-    // maximum amount of tokens that can be sold
-    uint256 public tokenCap;
-
     /**
     * event for token purchase logging
     * @param purchaser who paid for the tokens
@@ -820,7 +841,7 @@ contract Crowdsale {
     event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
 
 
-    constructor(uint256 _startTime, uint256 _endTime, uint256 _tokenCap, uint256 _rate, address _wallet, MintableToken _token) public {
+    constructor(uint256 _startTime, uint256 _endTime, uint256 _rate, address _wallet, MintableToken _token) public {
         require(_startTime >= now);
         require(_endTime >= _startTime);
         require(_rate > 0);
@@ -829,18 +850,19 @@ contract Crowdsale {
 
         startTime = _startTime;
         endTime = _endTime;
-        tokenCap = _tokenCap;
         rate = _rate;
         wallet = _wallet;
         token = _token;
     }
 
-    // fallback function can be used to buy tokens
+    /** @dev fallback function redirects to buy tokens */
     function () external payable {
         buyTokens(msg.sender);
     }
 
-    // low level token purchase function
+    /** @dev buy tokens
+      * @param beneficiary the address to which the tokens have to be minted
+      */
     function buyTokens(address beneficiary) public payable {
         require(beneficiary != address(0));
         require(validPurchase());
@@ -852,7 +874,6 @@ contract Crowdsale {
 
         // update state
         weiRaised = weiRaised.add(weiAmount);
-        totalSupply = totalSupply.add(tokens);
 
         token.mint(beneficiary, tokens);
         emit TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
@@ -860,7 +881,7 @@ contract Crowdsale {
         forwardFunds();
     }
 
-    // @return true if crowdsale event has ended
+    /** @return true if crowdsale event has ended */
     function hasEnded() public view returns (bool) {
         return now > endTime;
     }
@@ -878,8 +899,6 @@ contract Crowdsale {
 
     // @return true if the transaction can buy tokens
     function validPurchase() internal view returns (bool) {
-        uint256 tokens = msg.value.mul(rate);
-        require(totalSupply.add(tokens) <= tokenCap);
         bool withinPeriod = now >= startTime && now <= endTime;
         bool nonZeroPurchase = msg.value != 0;
         return withinPeriod && nonZeroPurchase;
@@ -996,7 +1015,6 @@ contract CompliantCrowdsale is Validator, FinalizableCrowdsale {
       * @param whitelistAddress Ethereum address of the whitelist contract
       * @param _startTime crowdsale start time
       * @param _endTime crowdsale end time
-      * @param _tokenCap maximum number of tokens to be sold in the crowdsale
       * @param _rate number of tokens to be sold per ether
       * @param _wallet Ethereum address of the wallet
       * @param _token Ethereum address of the token contract
@@ -1006,7 +1024,6 @@ contract CompliantCrowdsale is Validator, FinalizableCrowdsale {
         address whitelistAddress,
         uint256 _startTime,
         uint256 _endTime,
-        uint256 _tokenCap,
         uint256 _rate,
         address _wallet,
         MintableToken _token,
@@ -1014,7 +1031,7 @@ contract CompliantCrowdsale is Validator, FinalizableCrowdsale {
     )
         public
         FinalizableCrowdsale(_owner)
-        Crowdsale(_startTime, _endTime, _tokenCap, _rate, _wallet, _token)
+        Crowdsale(_startTime, _endTime, _rate, _wallet, _token)
     {
         setWhitelistContract(whitelistAddress);
     }
@@ -1063,7 +1080,6 @@ contract CompliantCrowdsale is Validator, FinalizableCrowdsale {
     {
         // update state
         weiRaised = weiRaised.add(pendingMints[nonce].weiAmount);
-        totalSupply = totalSupply.add(pendingMints[nonce].tokens);
 
         //No need to use mint-approval on token side, since the minting is already approved in the crowdsale side
         token.mint(pendingMints[nonce].to, pendingMints[nonce].tokens);
@@ -1101,64 +1117,6 @@ contract CompliantCrowdsale is Validator, FinalizableCrowdsale {
         );
         
         delete pendingMints[nonce];
-    }
-
-        /** @dev approve buy tokens requests in bulk
-      * @param nonces request recorded at these nonces
-      */
-    function bulkApproveMints(uint256[] nonces)
-        external 
-        onlyValidator 
-        returns (bool) 
-    {
-        for (uint i = 0; i < nonces.length; i++) {
-            require(whiteListingContract.isInvestorApproved(pendingMints[nonces[i]].to));
-
-            // update state
-            weiRaised = weiRaised.add(pendingMints[nonces[i]].weiAmount);
-            totalSupply = totalSupply.add(pendingMints[nonces[i]].tokens);
-
-            //No need to use mint-approval on token side, since the minting is already approved in the crowdsale side
-            token.mint(pendingMints[nonces[i]].to, pendingMints[nonces[i]].tokens);
-            
-            emit TokenPurchase(
-                msg.sender,
-                pendingMints[nonces[i]].to,
-                pendingMints[nonces[i]].weiAmount,
-                pendingMints[nonces[i]].tokens
-            );
-
-            forwardFunds(pendingMints[nonces[i]].weiAmount);
-            delete pendingMints[nonces[i]];
-        }
-
-        return true;
-        
-    }
-    
-    /** @dev reject buy tokens requests
-      * @param nonces request recorded at these nonces
-      * @param reasons reasons for rejection
-      */
-    function bulkRejectMints(uint256[] nonces, uint256[] reasons)
-        external 
-        onlyValidator
-    {
-        for (uint i = 0; i < nonces.length; i++) {
-            require(whiteListingContract.isInvestorApproved(pendingMints[nonces[i]].to));
-
-            rejectedMintBalance[pendingMints[nonces[i]].to] = rejectedMintBalance[pendingMints[nonces[i]].to].add(pendingMints[nonces[i]].weiAmount);
-            
-            emit MintRejected(
-                pendingMints[nonces[i]].to,
-                pendingMints[nonces[i]].tokens,
-                pendingMints[nonces[i]].weiAmount,
-                nonces[i],
-                reasons[i]
-            );
-            
-            delete pendingMints[nonces[i]];
-        }
     }
 
     /** @dev claim back ether if buy tokens request is rejected */
