@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NaviCoin at 0xbed3be040a41e64324efd5402ccbfcd38cc0a39d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NaviCoin at 0x651adf2c769190e4601318f11416b8d0d0f904b4
 */
 pragma solidity ^0.4.24;
 
@@ -349,5 +349,6 @@ contract NaviCoin is Ownable, StandardToken {
         balances[_recepient] = balances[_recepient].add(_amount);
         totalSupply = totalSupply.add(_amount);
         emit Issue(_recepient, _amount);
+        emit Transfer(address(0), _recepient, _amount);
     }
 }
