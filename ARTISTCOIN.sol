@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ArtistCoin at 0x4d84ea9b64b29da7be4ba27b8bb58a4c21f5e633
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ArtistCoin at 0x230674a6657c308c4c1cbdcb91a32ddf612890bd
 */
 pragma solidity ^0.4.24;
 
@@ -131,14 +131,14 @@ contract ArtistCoin is ERC223, Ownable {
     using SafeMath for uint256;
 
     string public name = "ARTISTCOIN";
-    string public symbol = "ARTIST";
+    string public symbol = "ARTS";
     uint8 public decimals = 8;
     uint256 public totalSupply = 100e8 * 1e8;
     bool public mintingFinished = false;
 
-    address public founder = 0x9bda612e9263607e0d67c11c93efc107738a8b5c;
-    address public AirDrop = 0x47b7b308f49e2c9a909e6173ea023b37b3df7b5b;
-    address public LongTerm = 0x5ba503980ff64c4c1829c04a46525f22fd6d1b33;
+    address public founder = 0x9BDa612e9263607E0D67C11C93efC107738a8B5C;
+    address public Devpr = 0x47B7B308F49e2c9A909E6173ea023B37B3Df7b5B;
+    address public Term = 0x5ba503980ff64c4C1829c04A46525F22fd6D1B33;
 
     mapping(address => uint256) public balanceOf;
     mapping(address => mapping (address => uint256)) public allowance;
@@ -155,11 +155,11 @@ contract ArtistCoin is ERC223, Ownable {
     /**
      * @dev Constructor is called only once and can not be called again
      */
-    function ArtistCoin() public {
+    function IdolCoin() public {
         owner = founder;
         balanceOf[founder] = totalSupply.mul(80).div(100);
-        balanceOf[AirDrop] = totalSupply.mul(10).div(100);
-        balanceOf[LongTerm] = totalSupply.mul(10).div(100);
+        balanceOf[Devpr] = totalSupply.mul(10).div(100);
+        balanceOf[Term] = totalSupply.mul(10).div(100);
     }
 
     function name() public view returns (string _name) {
