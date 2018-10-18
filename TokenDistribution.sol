@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenDistribution at 0x9dbf4430f5ff5f0653c371d55fa2f92ab5196031
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenDistribution at 0x04d0811c922db2ce98ab7ac2599dac2d0353a394
 */
 pragma solidity ^0.4.11;
 
@@ -41,16 +41,18 @@ contract ERC20 {
 contract TokenDistribution is Owned {
 
     ERC20 public tokenContract;
-    
-    function TokenSale ( address _tokenAddress ) public {
+    address public wallet;
+
+    function TokenDistribution ( address _tokenAddress, address _walletAddress ) public {
         tokenContract = ERC20(_tokenAddress); // The Deployed Token Contract
+        wallet = _walletAddress;
      }
-          
+
     function distributeTokens(address[] _owners, uint256[] _tokens) onlyOwner public {
 
         require( _owners.length == _tokens.length );
         for(uint i=0;i<_owners.length;i++){
-            require (tokenContract.transferFrom(this, _owners[i], _tokens[i]));
+            require (tokenContract.transferFrom(wallet, _owners[i], _tokens[i]));
         }
 
     }
