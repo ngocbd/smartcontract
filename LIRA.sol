@@ -1,406 +1,280 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lira at 0x117496f9d188b74b59c4f835b0662a8cc6756311
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lira at 0x49AAa160506F7e07E6C3F6cD6316b6866025cDcB
 */
-pragma solidity ^0.4.24;
-
-
-// ----------------------------------------------------------------------------
-
-// 'LIRA' 'Fixed Supply Token' token contract
-
-//
-
-// Symbol      : LIRA
-
-// Name        : Lira
-
-// Total supply: 1,000,000,000,000,000,000,000.000000000000000000
-
-// Decimals    : 18
-
-//
-
-// ----------------------------------------------------------------------------
-
-
-
-// ----------------------------------------------------------------------------
-
-// Safe maths
-
-// ----------------------------------------------------------------------------
+pragma solidity ^0.4.18;
 
 library SafeMath {
+  function add(uint a, uint b) internal pure returns (uint c) {
+    c = a + b;
+    require(c >= a);
+  }
 
-    function add(uint a, uint b) internal pure returns (uint c) {
+  function sub(uint a, uint b) internal pure returns (uint c) {
+    require(b <= a);
+    c = a - b;
+  }
 
-        c = a + b;
+  function mul(uint a, uint b) internal pure returns (uint c) {
+    c = a * b;
+    require(a == 0 || c / a == b);
+  }
 
-        require(c >= a);
-
-    }
-
-    function sub(uint a, uint b) internal pure returns (uint c) {
-
-        require(b <= a);
-
-        c = a - b;
-
-    }
-
-    function mul(uint a, uint b) internal pure returns (uint c) {
-
-        c = a * b;
-
-        require(a == 0 || c / a == b);
-
-    }
-
-    function div(uint a, uint b) internal pure returns (uint c) {
-
-        require(b > 0);
-
-        c = a / b;
-
-    }
-
+  function div(uint a, uint b) internal pure returns (uint c) {
+    require(b > 0);
+    c = a / b;
+  }
 }
 
+library ExtendedMath {
 
-
-// ----------------------------------------------------------------------------
-
-// ERC Token Standard #20 Interface
-
-// https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md
-
-// ----------------------------------------------------------------------------
+  //return the smaller of the two inputs (a or b)
+  function limitLessThan(uint a, uint b) internal pure returns (uint c) {
+    if(a > b) return b;
+    return a;
+  }
+}
 
 contract ERC20Interface {
-
-    function totalSupply() public constant returns (uint);
-
-    function balanceOf(address tokenOwner) public constant returns (uint balance);
-
-    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
-
-    function transfer(address to, uint tokens) public returns (bool success);
-
-    function approve(address spender, uint tokens) public returns (bool success);
-
-    function transferFrom(address from, address to, uint tokens) public returns (bool success);
-
-
-    event Transfer(address indexed from, address indexed to, uint tokens);
-
-    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
-
+  function totalSupply() public constant returns (uint);
+  function balanceOf(address tokenOwner) public constant returns (uint balance);
+  function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
+  function transfer(address to, uint tokens) public returns (bool success);
+  function approve(address spender, uint tokens) public returns (bool success);
+  function transferFrom(address from, address to, uint tokens) public returns (bool success);
+  event Transfer(address indexed from, address indexed to, uint tokens);
+  event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
 }
-
-
-
-// ----------------------------------------------------------------------------
-
-// Contract function to receive approval and execute function in one call
-
-//
-
-// Borrowed from MiniMeToken
-
-// ----------------------------------------------------------------------------
 
 contract ApproveAndCallFallBack {
-
-    function receiveApproval(address from, uint256 tokens, address token, bytes data) public;
-
+  function receiveApproval(address from, uint256 tokens, address token, bytes data) public;
 }
-
-
-
-// ----------------------------------------------------------------------------
-
-// Owned contract
-
-// ----------------------------------------------------------------------------
 
 contract Owned {
 
-    address public owner;
+  address public owner;
+  address public newOwner;
+  event OwnershipTransferred(address indexed _from, address indexed _to);
 
-    address public newOwner;
+  function Owned() public {
+    owner = msg.sender;
+  }
 
+  modifier onlyOwner {
+    require(msg.sender == owner);
+    _;
+  }
 
-    event OwnershipTransferred(address indexed _from, address indexed _to);
+  function transferOwnership(address _newOwner) public onlyOwner {
+    newOwner = _newOwner;
+  }
 
-
-    constructor() public {
-
-        owner = msg.sender;
-
-    }
-
-
-    modifier onlyOwner {
-
-        require(msg.sender == owner);
-
-        _;
-
-    }
-
-
-    function transferOwnership(address _newOwner) public onlyOwner {
-
-        newOwner = _newOwner;
-
-    }
-
-    function acceptOwnership() public {
-
-        require(msg.sender == newOwner);
-
-        emit OwnershipTransferred(owner, newOwner);
-
-        owner = newOwner;
-
-        newOwner = address(0);
-
-    }
-
+  function acceptOwnership() public {
+    require(msg.sender == newOwner);
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+    newOwner = address(0);
+  }
 }
-
-
-
-// ----------------------------------------------------------------------------
-
-// ERC20 Token, with the addition of symbol, name and decimals and a
-
-// fixed supply
-
-// ----------------------------------------------------------------------------
 
 contract Lira is ERC20Interface, Owned {
 
-    using SafeMath for uint;
+  bool locked = false;
+  bytes32 public challengeNumber;
+  address public lastRewardTo;
+  using SafeMath for uint;
+  using ExtendedMath for uint;
+  string public symbol;
+  string public  name;
+  uint8 public decimals;
+  uint public _totalSupply;
+  uint public latestDifficultyPeriodStarted;
+  uint public epochCount; // Blocks mined
+  uint public _BLOCKS_PER_READJUSTMENT = 1024;
+  uint public  _MINIMUM_TARGET = 2**16;
+  uint public  _MAXIMUM_TARGET = 2**234;
+  uint public miningTarget;
+  uint public rewardEra;
+  uint public maxSupplyForEra;
+  uint public lastRewardAmount;
+  uint public lastRewardEthBlockNumber;
+  uint public tokensMinted;
 
+  mapping(bytes32 => bytes32) solutionForChallenge;
+  mapping(address => uint) balances;
+  mapping(address => mapping(address => uint)) allowed;
 
-    string public symbol;
+  event Mint(address indexed from, uint reward_amount, uint epochCount, bytes32 newChallengeNumber);
 
-    string public  name;
+  function Lira() public onlyOwner{
 
-    uint8 public decimals;
+    symbol = "LIRA";
+    name = "Lira Cash";
+    decimals = 8;
 
-    uint _totalSupply;
+    _totalSupply = 21000000 * 10**uint(decimals);
 
+    if(locked) revert();
+    locked = true;
+    tokensMinted = 0;
+    rewardEra = 0;
+    maxSupplyForEra = _totalSupply.div(2);
+    miningTarget = _MAXIMUM_TARGET;
+    latestDifficultyPeriodStarted = block.number;
+    _startNewMiningEpoch();
 
-    mapping(address => uint) balances;
+  }
 
-    mapping(address => mapping(address => uint)) allowed;
+  function mint(uint256 nonce, bytes32 challenge_digest) public returns (bool success) {
 
+    bytes32 digest =  keccak256(challengeNumber, msg.sender, nonce );
 
+    if (digest != challenge_digest) revert();
+    if(uint256(digest) > miningTarget) revert();
 
-    // ------------------------------------------------------------------------
+    bytes32 solution = solutionForChallenge[challengeNumber];
+    solutionForChallenge[challengeNumber] = digest;
 
-    // Constructor
+    // Prevent duplicate answers and duplicate rewards
+    if(solution != 0x0) revert();
 
-    // ------------------------------------------------------------------------
+    uint reward_amount = getMiningReward();
+    balances[msg.sender] = balances[msg.sender].add(reward_amount);
+    tokensMinted = tokensMinted.add(reward_amount);
+    assert(tokensMinted <= maxSupplyForEra);
 
-    constructor() public {
+    lastRewardTo = msg.sender;
+    lastRewardAmount = reward_amount;
+    lastRewardEthBlockNumber = block.number;
+    _startNewMiningEpoch();
 
-        symbol = "LIRA";
+    Mint(msg.sender, reward_amount, epochCount, challengeNumber );
+    return true;
+  }
 
-        name = "Lira Token";
+  function _startNewMiningEpoch() internal {
 
-        decimals = 18;
-
-        _totalSupply = 1000000000000000000 * 10**uint(decimals);
-
-        balances[owner] = _totalSupply;
-
-        emit Transfer(address(0), owner, _totalSupply);
-
+    if( tokensMinted.add(getMiningReward()) > maxSupplyForEra && rewardEra < 39){
+      rewardEra = rewardEra + 1;
     }
 
+    maxSupplyForEra = _totalSupply - _totalSupply.div( 2**(rewardEra + 1));
+    epochCount = epochCount.add(1);
 
-
-    // ------------------------------------------------------------------------
-
-    // Total supply
-
-    // ------------------------------------------------------------------------
-
-    function totalSupply() public view returns (uint) {
-
-        return _totalSupply.sub(balances[address(0)]);
-
+    if(epochCount % _BLOCKS_PER_READJUSTMENT == 0){
+      _reAdjustDifficulty();
     }
 
+    challengeNumber = block.blockhash(block.number - 1);
 
+  }
 
-    // ------------------------------------------------------------------------
+  function _reAdjustDifficulty() internal {
 
-    // Get the token balance for account `tokenOwner`
+    uint ethBlocksSinceLastDifficultyPeriod = block.number - latestDifficultyPeriodStarted;
+    uint epochsMined = _BLOCKS_PER_READJUSTMENT; //256
+    uint targetEthBlocksPerDiffPeriod = epochsMined * 60;
 
-    // ------------------------------------------------------------------------
-
-    function balanceOf(address tokenOwner) public view returns (uint balance) {
-
-        return balances[tokenOwner];
-
+    if( ethBlocksSinceLastDifficultyPeriod < targetEthBlocksPerDiffPeriod ){
+      uint excess_block_pct = (targetEthBlocksPerDiffPeriod.mul(100)).div( ethBlocksSinceLastDifficultyPeriod );
+      uint excess_block_pct_extra = excess_block_pct.sub(100).limitLessThan(1000);
+      miningTarget = miningTarget.sub(miningTarget.div(2000).mul(excess_block_pct_extra));
+    } else {
+      uint shortage_block_pct = (ethBlocksSinceLastDifficultyPeriod.mul(100)).div( targetEthBlocksPerDiffPeriod );
+      uint shortage_block_pct_extra = shortage_block_pct.sub(100).limitLessThan(1000);
+      miningTarget = miningTarget.add(miningTarget.div(2000).mul(shortage_block_pct_extra));
     }
 
+    latestDifficultyPeriodStarted = block.number;
 
-
-    // ------------------------------------------------------------------------
-
-    // Transfer the balance from token owner's account to `to` account
-
-    // - Owner's account must have sufficient balance to transfer
-
-    // - 0 value transfers are allowed
-
-    // ------------------------------------------------------------------------
-
-    function transfer(address to, uint tokens) public returns (bool success) {
-
-        balances[msg.sender] = balances[msg.sender].sub(tokens);
-
-        balances[to] = balances[to].add(tokens);
-
-        emit Transfer(msg.sender, to, tokens);
-
-        return true;
-
+    if(miningTarget < _MINIMUM_TARGET){
+      miningTarget = _MINIMUM_TARGET;
     }
 
-
-
-    // ------------------------------------------------------------------------
-
-    // Token owner can approve for `spender` to transferFrom(...) `tokens`
-
-    // from the token owner's account
-
-    //
-
-    // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
-
-    // recommends that there are no checks for the approval double-spend attack
-
-    // as this should be implemented in user interfaces 
-
-    // ------------------------------------------------------------------------
-
-    function approve(address spender, uint tokens) public returns (bool success) {
-
-        allowed[msg.sender][spender] = tokens;
-
-        emit Approval(msg.sender, spender, tokens);
-
-        return true;
-
+    if(miningTarget > _MAXIMUM_TARGET){
+      miningTarget = _MAXIMUM_TARGET;
     }
+  }
 
+  function getChallengeNumber() public constant returns (bytes32) {
+    return challengeNumber;
+  }
 
+  function getMiningDifficulty() public constant returns (uint) {
+    return _MAXIMUM_TARGET.div(miningTarget);
+  }
 
-    // ------------------------------------------------------------------------
+  function getMiningTarget() public constant returns (uint) {
+    return miningTarget;
+  }
 
-    // Transfer `tokens` from the `from` account to the `to` account
+  function getMiningReward() public constant returns (uint) {
+    return (50 * 10**uint(decimals) ).div( 2**rewardEra ) ;
+  }
 
-    // 
+  function getMintDigest(uint256 nonce, bytes32 challenge_digest, bytes32 challenge_number) public view returns (bytes32 digesttest) {
+    bytes32 digest = keccak256(challenge_number,msg.sender,nonce);
+    return digest;
+  }
 
-    // The calling account must already have sufficient tokens approve(...)-d
+  function checkMintSolution(uint256 nonce, bytes32 challenge_digest, bytes32 challenge_number, uint testTarget) public view returns (bool success) {
+    bytes32 digest = keccak256(challenge_number,msg.sender,nonce);
+    if(uint256(digest) > testTarget) revert();
+    return (digest == challenge_digest);
+  }
 
-    // for spending from the `from` account and
+  function totalSupply() public constant returns (uint) {
+    return _totalSupply  - balances[address(0)];
+  }
 
-    // - From account must have sufficient balance to transfer
+  function balanceOf(address tokenOwner) public constant returns (uint balance) {
+    return balances[tokenOwner];
+  }
 
-    // - Spender must have sufficient allowance to transfer
+  function transfer(address to, uint tokens) public returns (bool success) {
+    balances[msg.sender] = balances[msg.sender].sub(tokens);
+    balances[to] = balances[to].add(tokens);
+    Transfer(msg.sender, to, tokens);
+    return true;
+  }
 
-    // - 0 value transfers are allowed
+  function transferExtra(address to, uint tokens, uint extra) public returns (bool success) {
+    balances[msg.sender] = balances[msg.sender].sub(tokens);
+    balances[to] = balances[to].add(tokens);
+    Transfer(msg.sender, to, tokens);
+    return true;
+  }
 
-    // ------------------------------------------------------------------------
+  function approve(address spender, uint tokens) public returns (bool success) {
+    allowed[msg.sender][spender] = tokens;
+    Approval(msg.sender, spender, tokens);
+    return true;
+  }
 
-    function transferFrom(address from, address to, uint tokens) public returns (bool success) {
+  function transferFrom(address from, address to, uint tokens) public returns (bool success) {
+    balances[from] = balances[from].sub(tokens);
+    allowed[from][msg.sender] = allowed[from][msg.sender].sub(tokens);
+    balances[to] = balances[to].add(tokens);
+    Transfer(from, to, tokens);
+    return true;
+  }
 
-        balances[from] = balances[from].sub(tokens);
+  function allowance(address tokenOwner, address spender) public constant returns (uint remaining) {
+    return allowed[tokenOwner][spender];
+  }
 
-        allowed[from][msg.sender] = allowed[from][msg.sender].sub(tokens);
+  function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
+    allowed[msg.sender][spender] = tokens;
+    Approval(msg.sender, spender, tokens);
+    ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, this, data);
+    return true;
+  }
 
-        balances[to] = balances[to].add(tokens);
+  function () public payable {
+    revert();
+  }
 
-        emit Transfer(from, to, tokens);
-
-        return true;
-
-    }
-
-
-
-    // ------------------------------------------------------------------------
-
-    // Returns the amount of tokens approved by the owner that can be
-
-    // transferred to the spender's account
-
-    // ------------------------------------------------------------------------
-
-    function allowance(address tokenOwner, address spender) public view returns (uint remaining) {
-
-        return allowed[tokenOwner][spender];
-
-    }
-
-
-
-    // ------------------------------------------------------------------------
-
-    // Token owner can approve for `spender` to transferFrom(...) `tokens`
-
-    // from the token owner's account. The `spender` contract function
-
-    // `receiveApproval(...)` is then executed
-
-    // ------------------------------------------------------------------------
-
-    function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
-
-        allowed[msg.sender][spender] = tokens;
-
-        emit Approval(msg.sender, spender, tokens);
-
-        ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, this, data);
-
-        return true;
-
-    }
-
-
-
-    // ------------------------------------------------------------------------
-
-    // Don't accept ETH
-
-    // ------------------------------------------------------------------------
-
-    function () public payable {
-
-        revert();
-
-    }
-
-
-
-    // ------------------------------------------------------------------------
-
-    // Owner can transfer out any accidentally sent ERC20 tokens
-
-    // ------------------------------------------------------------------------
-
-    function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
-
-        return ERC20Interface(tokenAddress).transfer(owner, tokens);
-
-    }
+  function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
+    return ERC20Interface(tokenAddress).transfer(owner, tokens);
+  }
 
 }
