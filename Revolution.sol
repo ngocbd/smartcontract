@@ -1,12 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Revolution at 0xd85380aca00e6115b046b4edb488b53c531cb852
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Revolution at 0x59be7a1937c3b7bc5e9103aefd4ab5c97af6d179
 */
 pragma solidity ^0.4.23;
 
 /**
-*  - Full clone V2, restart
-* -  Call it greed.. Or not
-*  - GAIN 3,33% PER 24 HOURS (every 5900 blocks)
+*
+* ETH CRYPTOCURRENCY DISTRIBUTION PROJECT
+* Web              - https://444eth.com
+
+* 
+*  - GAIN 4,44% PER 24 HOURS (every 5900 blocks)
 *  - Life-long payments
 *  - The revolutionary reliability
 *  - Minimal contribution 0.01 eth
@@ -14,10 +17,36 @@ pragma solidity ^0.4.23;
 *  - Contribution allocation schemes:
 *    -- 83% payments
 *    -- 17% Marketing + Operating Expenses
-
+*
+*   ---About the Project
+*  Blockchain-enabled smart contracts have opened a new era of trustless relationships without 
+*  intermediaries. This technology opens incredible financial possibilities. Our automated investment 
+*  distribution model is written into a smart contract, uploaded to the Ethereum blockchain and can be 
+*  freely accessed online. In order to insure our investors' complete security, full control over the 
+*  project has been transferred from the organizers to the smart contract: nobody can influence the 
+*  system's permanent autonomous functioning.
+* 
+* ---How to use:
+*  1. Send from ETH wallet to the smart contract address
+*     any amount from 0.01 ETH.
+*  2. Verify your transaction in the history of your application or etherscan.io, specifying the address 
+*     of your wallet.
+*  3a. Claim your profit by sending 0 ether transaction (every day, every week, i don't care unless you're 
+*      spending too much on GAS)
+*  OR
+*  3b. For reinvest, you need to first remove the accumulated percentage of charges (by sending 0 ether 
+*      transaction), and only after that, deposit the amount that you want to reinvest.
+*  
 * RECOMMENDED GAS LIMIT: 200000
 * RECOMMENDED GAS PRICE: https://ethgasstation.info/
-
+* You can check the payments on the etherscan.io site, in the "Internal Txns" tab of your wallet.
+*
+* ---It is not allowed to transfer from exchanges, only from your personal ETH wallet, for which you 
+* have private keys.
+* 
+* Contracts reviewed and approved by pros!
+* 
+* Main contract - Revolution. Scroll down to find it.
 */
 
 
@@ -305,12 +334,12 @@ contract Revolution is Accessibility, PaymentSystem {
   address public payerAddr;
   uint public waveStartup;
   uint public investmentsNum;
-  uint public constant minInvesment = 50 finney; // 0.05 eth
+  uint public constant minInvesment = 50 finney; // 0.01 eth
   uint public constant maxBalance = 333e5 ether; // 33,300,000 eth
   uint public constant pauseOnNextWave = 168 hours; 
 
   // percents 
-  Percent.percent private m_dividendsPercent = Percent.percent(333, 10000); // 333/10000*100% = 3.33%
+  Percent.percent private m_dividendsPercent = Percent.percent(444, 10000); // 444/10000*100% = 4.44%
   Percent.percent private m_adminPercent = Percent.percent(1, 10); // 1/10*100% = 10%
   Percent.percent private m_payerPercent = Percent.percent(7, 100); // 7/100*100% = 7%
   Percent.percent private m_refPercent = Percent.percent(3, 100); // 3/100*100% = 3%
@@ -336,11 +365,11 @@ contract Revolution is Accessibility, PaymentSystem {
     _;
   }
 
-  constructor() public {
-    adminAddr = msg.sender;
+  constructor(address admin) public {
+    adminAddr = admin;
     emit LogAdminAddrChanged(msg.sender, now);
 
-    payerAddr = msg.sender;
+    payerAddr = admin;
     emit LogPayerAddrChanged(msg.sender, now);
 
     nextWave();
