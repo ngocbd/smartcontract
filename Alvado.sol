@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Alvado at 0xb184ffe6d178f4fd5b627fd193af12dec3df9841
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Alvado at 0xfc17986eec07b49348d24238755ff3ba7f7fd282
 */
 pragma solidity ^0.4.18;
 
@@ -9,8 +9,8 @@ pragma solidity ^0.4.18;
 // Deployed to : 0x184A99cD2a530A66270ee974602712E1f4D66fEa
 // Symbol      : ALV
 // Name        : Alvado
-// Total supply: 10000000000000000000000000000
-// Decimals    : 18
+// Total supply: 10000000000
+// Decimals    : 8
 //
 // Enjoy.
 //
@@ -121,8 +121,8 @@ contract Alvado is ERC20Interface, Owned, SafeMath {
     function Alvado() public {
         symbol = "ALV";
         name = "Alvado";
-        decimals = 18;
-        _totalSupply = 10000000000000000000000000000;
+        decimals = 8;
+        _totalSupply = 1000000000000000000;
         bonusEnds = now + 2 weeks;
         endDate = now + 10 weeks;
 
