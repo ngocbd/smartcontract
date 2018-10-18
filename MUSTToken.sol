@@ -1,15 +1,137 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MustToken at 0xea96e2b3d17fbb7f36d90a3bccd6705c98af5f0b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MustToken at 0x2928fd99b11a412a6b6724ed391943bae3fe1b2b
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.25;
 
-// File: contracts/mixins/ERC223ReceiverMixin.sol
+/// @title Role based access control mixin for MUST Platform
+/// @author Aler Denisov <aler.zampillo@gmail.com>
+/// @dev Ignore DRY approach to achieve readability
+contract RBACMixin {
+  /// @notice Constant string message to throw on lack of access
+  string constant FORBIDDEN = "Haven't enough right to access";
+  /// @notice Public map of owners
+  mapping (address => bool) public owners;
+  /// @notice Public map of minters
+  mapping (address => bool) public minters;
 
-contract ERC223ReceiverMixin {
-  function tokenFallback(address _from, uint256 _value, bytes _data) public;
+  /// @notice The event indicates the addition of a new owner
+  /// @param who is address of added owner
+  event AddOwner(address indexed who);
+  /// @notice The event indicates the deletion of an owner
+  /// @param who is address of deleted owner
+  event DeleteOwner(address indexed who);
+
+  /// @notice The event indicates the addition of a new minter
+  /// @param who is address of added minter
+  event AddMinter(address indexed who);
+  /// @notice The event indicates the deletion of a minter
+  /// @param who is address of deleted minter
+  event DeleteMinter(address indexed who);
+
+  constructor () public {
+    _setOwner(msg.sender, true);
+  }
+
+  /// @notice The functional modifier rejects the interaction of senders who are not owners
+  modifier onlyOwner() {
+    require(isOwner(msg.sender), FORBIDDEN);
+    _;
+  }
+
+  /// @notice Functional modifier for rejecting the interaction of senders that are not minters
+  modifier onlyMinter() {
+    require(isMinter(msg.sender), FORBIDDEN);
+    _;
+  }
+
+  /// @notice Look up for the owner role on providen address
+  /// @param _who is address to look up
+  /// @return A boolean of owner role
+  function isOwner(address _who) public view returns (bool) {
+    return owners[_who];
+  }
+
+  /// @notice Look up for the minter role on providen address
+  /// @param _who is address to look up
+  /// @return A boolean of minter role
+  function isMinter(address _who) public view returns (bool) {
+    return minters[_who];
+  }
+
+  /// @notice Adds the owner role to provided address
+  /// @dev Requires owner role to interact
+  /// @param _who is address to add role
+  /// @return A boolean that indicates if the operation was successful.
+  function addOwner(address _who) public onlyOwner returns (bool) {
+    _setOwner(_who, true);
+  }
+
+  /// @notice Deletes the owner role to provided address
+  /// @dev Requires owner role to interact
+  /// @param _who is address to delete role
+  /// @return A boolean that indicates if the operation was successful.
+  function deleteOwner(address _who) public onlyOwner returns (bool) {
+    _setOwner(_who, false);
+  }
+
+  /// @notice Adds the minter role to provided address
+  /// @dev Requires owner role to interact
+  /// @param _who is address to add role
+  /// @return A boolean that indicates if the operation was successful.
+  function addMinter(address _who) public onlyOwner returns (bool) {
+    _setMinter(_who, true);
+  }
+
+  /// @notice Deletes the minter role to provided address
+  /// @dev Requires owner role to interact
+  /// @param _who is address to delete role
+  /// @return A boolean that indicates if the operation was successful.
+  function deleteMinter(address _who) public onlyOwner returns (bool) {
+    _setMinter(_who, false);
+  }
+
+  /// @notice Changes the owner role to provided address
+  /// @param _who is address to change role
+  /// @param _flag is next role status after success
+  /// @return A boolean that indicates if the operation was successful.
+  function _setOwner(address _who, bool _flag) private returns (bool) {
+    require(owners[_who] != _flag);
+    owners[_who] = _flag;
+    if (_flag) {
+      emit AddOwner(_who);
+    } else {
+      emit DeleteOwner(_who);
+    }
+    return true;
+  }
+
+  /// @notice Changes the minter role to provided address
+  /// @param _who is address to change role
+  /// @param _flag is next role status after success
+  /// @return A boolean that indicates if the operation was successful.
+  function _setMinter(address _who, bool _flag) private returns (bool) {
+    require(minters[_who] != _flag);
+    minters[_who] = _flag;
+    if (_flag) {
+      emit AddMinter(_who);
+    } else {
+      emit DeleteMinter(_who);
+    }
+    return true;
+  }
 }
 
-// File: zeppelin-solidity/contracts/math/SafeMath.sol
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
 
 /**
  * @title SafeMath
@@ -61,22 +183,6 @@ library SafeMath {
   }
 }
 
-// File: zeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol
-
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-// File: zeppelin-solidity/contracts/token/ERC20/BasicToken.sol
-
 /**
  * @title Basic token
  * @dev Basic version of StandardToken, with no allowances.
@@ -121,8 +227,6 @@ contract BasicToken is ERC20Basic {
 
 }
 
-// File: zeppelin-solidity/contracts/token/ERC20/ERC20.sol
-
 /**
  * @title ERC20 interface
  * @dev see https://github.com/ethereum/EIPs/issues/20
@@ -141,8 +245,6 @@ contract ERC20 is ERC20Basic {
     uint256 value
   );
 }
-
-// File: zeppelin-solidity/contracts/token/ERC20/StandardToken.sol
 
 /**
  * @title Standard ERC20 token
@@ -266,7 +368,53 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-// File: contracts/mixins/ERC223Mixin.sol
+contract RBACMintableTokenMixin is StandardToken, RBACMixin {
+  event Mint(address indexed to, uint256 amount);
+  event MintFinished();
+
+  bool public mintingFinished = false;
+
+  modifier canMint() {
+    require(!mintingFinished);
+    _;
+  }
+
+  /**
+   * @dev Function to mint tokens
+   * @param _to The address that will receive the minted tokens.
+   * @param _amount The amount of tokens to mint.
+   * @return A boolean that indicates if the operation was successful.
+   */
+  function mint(
+    address _to,
+    uint256 _amount
+  )
+    onlyMinter
+    canMint
+    public
+    returns (bool)
+  {
+    totalSupply_ = totalSupply_.add(_amount);
+    balances[_to] = balances[_to].add(_amount);
+    emit Mint(_to, _amount);
+    emit Transfer(address(0), _to, _amount);
+    return true;
+  }
+
+  /**
+   * @dev Function to stop minting new tokens.
+   * @return True if the operation was successful.
+   */
+  function finishMinting() onlyOwner canMint internal returns (bool) {
+    mintingFinished = true;
+    emit MintFinished();
+    return true;
+  }
+}
+
+contract ERC223ReceiverMixin {
+  function tokenFallback(address _from, uint256 _value, bytes _data) public;
+}
 
 /// @title Custom implementation of ERC223 
 /// @author Aler Denisov <aler.zampillo@gmail.com>
@@ -381,128 +529,6 @@ contract ERC223Mixin is StandardToken {
   }
 }
 
-// File: contracts/mixins/RBACMixin.sol
-
-/// @title Role based access control mixin for MUST Platform
-/// @author Aler Denisov <aler.zampillo@gmail.com>
-/// @dev Ignore DRY approach to achieve readability
-contract RBACMixin {
-  /// @notice Constant string message to throw on lack of access
-  string constant FORBIDDEN = "Haven't enough right to access";
-  /// @notice Public map of owners
-  mapping (address => bool) public owners;
-  /// @notice Public map of minters
-  mapping (address => bool) public minters;
-
-  /// @notice The event indicates the addition of a new owner
-  /// @param who is address of added owner
-  event AddOwner(address indexed who);
-  /// @notice The event indicates the deletion of an owner
-  /// @param who is address of deleted owner
-  event DeleteOwner(address indexed who);
-
-  /// @notice The event indicates the addition of a new minter
-  /// @param who is address of added minter
-  event AddMinter(address indexed who);
-  /// @notice The event indicates the deletion of a minter
-  /// @param who is address of deleted minter
-  event DeleteMinter(address indexed who);
-
-  constructor () public {
-    _setOwner(msg.sender, true);
-  }
-
-  /// @notice The functional modifier rejects the interaction of senders who are not owners
-  modifier onlyOwner() {
-    require(isOwner(msg.sender), FORBIDDEN);
-    _;
-  }
-
-  /// @notice Functional modifier for rejecting the interaction of senders that are not minters
-  modifier onlyMinter() {
-    require(isMinter(msg.sender), FORBIDDEN);
-    _;
-  }
-
-  /// @notice Look up for the owner role on providen address
-  /// @param _who is address to look up
-  /// @return A boolean of owner role
-  function isOwner(address _who) public view returns (bool) {
-    return owners[_who];
-  }
-
-  /// @notice Look up for the minter role on providen address
-  /// @param _who is address to look up
-  /// @return A boolean of minter role
-  function isMinter(address _who) public view returns (bool) {
-    return minters[_who];
-  }
-
-  /// @notice Adds the owner role to provided address
-  /// @dev Requires owner role to interact
-  /// @param _who is address to add role
-  /// @return A boolean that indicates if the operation was successful.
-  function addOwner(address _who) public onlyOwner returns (bool) {
-    _setOwner(_who, true);
-  }
-
-  /// @notice Deletes the owner role to provided address
-  /// @dev Requires owner role to interact
-  /// @param _who is address to delete role
-  /// @return A boolean that indicates if the operation was successful.
-  function deleteOwner(address _who) public onlyOwner returns (bool) {
-    _setOwner(_who, false);
-  }
-
-  /// @notice Adds the minter role to provided address
-  /// @dev Requires owner role to interact
-  /// @param _who is address to add role
-  /// @return A boolean that indicates if the operation was successful.
-  function addMinter(address _who) public onlyOwner returns (bool) {
-    _setMinter(_who, true);
-  }
-
-  /// @notice Deletes the minter role to provided address
-  /// @dev Requires owner role to interact
-  /// @param _who is address to delete role
-  /// @return A boolean that indicates if the operation was successful.
-  function deleteMinter(address _who) public onlyOwner returns (bool) {
-    _setMinter(_who, false);
-  }
-
-  /// @notice Changes the owner role to provided address
-  /// @param _who is address to change role
-  /// @param _flag is next role status after success
-  /// @return A boolean that indicates if the operation was successful.
-  function _setOwner(address _who, bool _flag) private returns (bool) {
-    require(owners[_who] != _flag);
-    owners[_who] = _flag;
-    if (_flag) {
-      emit AddOwner(_who);
-    } else {
-      emit DeleteOwner(_who);
-    }
-    return true;
-  }
-
-  /// @notice Changes the minter role to provided address
-  /// @param _who is address to change role
-  /// @param _flag is next role status after success
-  /// @return A boolean that indicates if the operation was successful.
-  function _setMinter(address _who, bool _flag) private returns (bool) {
-    require(minters[_who] != _flag);
-    minters[_who] = _flag;
-    if (_flag) {
-      emit AddMinter(_who);
-    } else {
-      emit DeleteMinter(_who);
-    }
-    return true;
-  }
-}
-
-// File: contracts/mixins/RBACERC223TokenFinalization.sol
-
 /// @title Role based token finalization mixin
 /// @author Aler Denisov <aler.zampillo@gmail.com>
 contract RBACERC223TokenFinalization is ERC223Mixin, RBACMixin {
@@ -568,54 +594,6 @@ contract RBACERC223TokenFinalization is ERC223Mixin, RBACMixin {
   }
 }
 
-// File: contracts/mixins/RBACMintableTokenMixin.sol
-
-contract RBACMintableTokenMixin is StandardToken, RBACMixin {
-  event Mint(address indexed to, uint256 amount);
-  event MintFinished();
-
-  bool public mintingFinished = false;
-
-  modifier canMint() {
-    require(!mintingFinished);
-    _;
-  }
-
-  /**
-   * @dev Function to mint tokens
-   * @param _to The address that will receive the minted tokens.
-   * @param _amount The amount of tokens to mint.
-   * @return A boolean that indicates if the operation was successful.
-   */
-  function mint(
-    address _to,
-    uint256 _amount
-  )
-    onlyMinter
-    canMint
-    public
-    returns (bool)
-  {
-    totalSupply_ = totalSupply_.add(_amount);
-    balances[_to] = balances[_to].add(_amount);
-    emit Mint(_to, _amount);
-    emit Transfer(address(0), _to, _amount);
-    return true;
-  }
-
-  /**
-   * @dev Function to stop minting new tokens.
-   * @return True if the operation was successful.
-   */
-  function finishMinting() onlyOwner canMint internal returns (bool) {
-    mintingFinished = true;
-    emit MintFinished();
-    return true;
-  }
-}
-
-// File: zeppelin-solidity/contracts/token/ERC20/BurnableToken.sol
-
 /**
  * @title Burnable Token
  * @dev Token that can be irreversibly burned (destroyed).
@@ -644,8 +622,6 @@ contract BurnableToken is BasicToken {
   }
 }
 
-// File: zeppelin-solidity/contracts/token/ERC20/StandardBurnableToken.sol
-
 /**
  * @title Standard Burnable Token
  * @dev Adds burnFrom method to ERC20 implementations
@@ -666,8 +642,6 @@ contract StandardBurnableToken is BurnableToken, StandardToken {
   }
 }
 
-// File: contracts/MustToken.sol
-
 /// @title MUST Platform token implementation
 /// @author Aler Denisov <aler.zampillo@gmail.com>
 /// @dev Implements ERC20, ERC223 and MintableToken interfaces as well as capped and finalization logic
@@ -680,7 +654,7 @@ contract MustToken is StandardBurnableToken, RBACERC223TokenFinalization, RBACMi
   /// @notice Constant field with token precision depth
   uint256 constant public decimals = 8; // solium-disable-line uppercase
   /// @notice Constant field with token cap (total supply limit)
-  uint256 constant public cap = 5 * (10 ** 6) * (10 ** decimals); // solium-disable-line uppercase
+  uint256 constant public cap = 500 * (10 ** 6) * (10 ** decimals); // solium-disable-line uppercase
 
   /// @notice Overrides original mint function from MintableToken to limit minting over cap
   /// @param _to The address that will receive the minted tokens.
