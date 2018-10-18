@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ABCToken at 0x4dcd68fbaa08976950a3b447194604c6288510eb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ABCToken at 0xcb2bb3c0d571dc463f354301406c36449cd8016b
 */
 pragma solidity ^0.4.13;
 
@@ -236,11 +236,8 @@ contract ABCToken is StandardToken {
   mapping (address => bool) administrators;
 
   // previous BDA token values
-  //address napoleonXAdministrator = 0x86123cb3AD5D2Fd033243e8aE3C360de66eEA114;
-  //address vault= 0x7551f7A0Ea66c8936c14dA547746C5DaF7dd0908;
-
-  address public napoleonXAdministrator = 0x8d7359C06b18429098c4CD985c9FBa4dbA4A76A6;
-  address public vault= 0xD2A734D981A7daAb488F5F1e7f6F178208c4E2ff;
+  address public tokenAdministrator = 0xd31736788Fd9358372dDA7b2957e1FD6F4f57BDB;
+  address public vault= 0x809d55801590f83B999550F2ad3e6a3d149e1eE2;
 
   // MODIFIERS
   modifier onlyAdministrators {
@@ -257,7 +254,7 @@ contract ABCToken is StandardToken {
   constructor() public {
     totalSupply_ = INITIAL_SUPPLY;
     balances[this] = INITIAL_SUPPLY;
-    administrators[napoleonXAdministrator]=true;
+    administrators[tokenAdministrator]=true;
   }
 
   function()
@@ -278,7 +275,6 @@ contract ABCToken is StandardToken {
         administrators[newAdministrator]=true;
   }
 
-  // we here repopulate the greenlist using the historic commitments from www.napoleonx.ai website
   function overrideTokenHolders(address[] toOverride, uint[] decimalTokenAmount)
   public
   onlyAdministrators
@@ -292,7 +288,6 @@ contract ABCToken is StandardToken {
       }
   }
 
-  // we here repopulate the greenlist using the historic commitments from www.napoleonx.ai website
   function overrideTokenHolder(address toOverride, uint decimalTokenAmount)
   public
   onlyAdministrators
