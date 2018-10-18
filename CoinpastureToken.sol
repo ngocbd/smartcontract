@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoinpastureToken at 0x76a71ba080ab6effbfa5f73857e23e7e44d88d15
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoinPastureToken at 0x7d420b5bebc78846bf2298c299579ccae6e9e6de
 */
 pragma solidity ^0.4.17;
 
@@ -311,7 +311,7 @@ contract UpgradedStandardToken is StandardToken{
     function approveByLegacy(address from, address spender, uint value) public;
 }
 
-contract CoinpastureToken is Pausable, StandardToken, BlackList {
+contract CoinPastureToken is Pausable, StandardToken, BlackList {
 
     string public name;
     string public symbol;
@@ -326,7 +326,7 @@ contract CoinpastureToken is Pausable, StandardToken, BlackList {
     // @param _name Token Name
     // @param _symbol Token symbol
     // @param _decimals Token decimals
-    function CoinpastureToken(uint _initialSupply, string _name, string _symbol, uint _decimals) public {
+    function CoinPastureToken(uint _initialSupply, string _name, string _symbol, uint _decimals) public {
         _totalSupply = _initialSupply;
         name = _name;
         symbol = _symbol;
