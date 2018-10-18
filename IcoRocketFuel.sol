@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IcoRocketFuel at 0x64d11a4cf5d1450c120f19396f23c8862f373a9b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IcoRocketFuel at 0x4d3f5d4b4d6668d27c7e147d8b78cf03f73a802d
 */
 pragma solidity ^0.4.25;
 
@@ -361,15 +361,15 @@ contract IcoRocketFuel is Ownable {
 
     // Token for crowdsale (Token contract).
     // Replace 0x0 by deployed ERC20 token address.
-    ERC20 public token = ERC20(0x0e27b0ca1f890d37737dd5cde9de22431255f524);
+    ERC20 public token = ERC20(0x5515c767d03c33251187bb04de3419cc7e4c0e0a);
 
     // Crowdsale owner (ICO team).
     // Replace 0x0 by wallet address of ICO team.
-    address public crowdsaleOwner = 0xf75589cac3b23f24de65fe5a3cd07966728071a3;
+    address public crowdsaleOwner = 0x2591a9983b198926fedfce6f333ef71066d186d8;
 
     // When crowdsale is closed, commissions will transfer to this wallet.
     // Replace 0x0 by commission wallet address of platform.
-    address public commissionWallet = 0xf75589cac3b23f24de65fe5a3cd07966728071a3;
+    address public commissionWallet = 0x0b3cf7bb8bfd684a1455c7f3f460481fe457e162;
 
     // Base exchange rate (1 invested currency = N tokens) and its decimals.
     // Ex. to present base exchange rate = 0.01 (= 1 / (10^2))
@@ -382,7 +382,7 @@ contract IcoRocketFuel is Ownable {
     // Use exRate.currencies(currency) to get tuple.
     // tuple = (Exchange rate to Ether, Exchange rate decimal)
     // Replace 0x0 by address of deployed CurrencyExchangeRate contract.
-    CurrencyExchangeRate public exRate = CurrencyExchangeRate(0x44802e3d6fb67bd8ee7b24033ee04b1290692fd9);
+    CurrencyExchangeRate public exRate = CurrencyExchangeRate(0x2a6544a3e8e841f0b2d3337349f6b43b8f10930d);
     // Supported currency
     // 0: Ether
     // 1: USD
@@ -409,7 +409,7 @@ contract IcoRocketFuel is Ownable {
     // The value is initiated by constructor.
     // The value is not allowed to change after contract deployment.
     // Replace 0x0 by address of deployed KYC contract.
-    KYC public kyc = KYC(0x8df3064451f840285993e2a4cfc0ec56b267d288);
+    KYC public kyc = KYC(0x7d99d5195de8a4e9bbba4eb1f8450c40d5ab2776);
 
     // Get encoded country blacklist.
     // The uint256 is represented by 256 bits (0 or 1).
@@ -420,7 +420,7 @@ contract IcoRocketFuel is Ownable {
     // it is able to use bitwise AND to check whether the investor can invest
     // the ICO by the crowdsale.
     // Keypasco: Natural persons from Singapore and United States cannot invest.
-    uint256 public countryBlacklist = 27606985387965724171868518586879082855975017189942647717541493312847872;
+    uint256 public countryBlacklist = 113106681849497133277361196730254127680318966593377107839870043694292795392;
 
     // Get required KYC level of the crowdsale.
     // KYC level = 0 (default): Crowdsale does not require KYC.
@@ -542,6 +542,8 @@ contract IcoRocketFuel is Ownable {
                 bonus: 20
             })
         );
+        vault = new EtherVault(crowdsaleOwner);
+        state = States.Active;
     }
 
     function setAddress(
