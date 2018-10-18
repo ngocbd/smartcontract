@@ -1,138 +1,433 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ABToken at 0x106cd7b39c6fd03d1d104e50661828840561f627
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AbToken at 0x32dba556c82f6106bbb9982812d0255cf1959109
 */
-pragma solidity ^0.4.8;
+pragma solidity ^0.4.23;
 
-contract ABTokenBase {
-    /* This is a slight change to the ERC20 base standard.
-    function totalSupply() constant returns (uint256 supply);
-    is replaced with:
-    uint256 public totalSupply;
-    This automatically creates a getter function for the totalSupply.
-    This is moved to the base contract since public getter functions are not
-    currently recognised as an implementation of the matching abstract
-    function by the compiler.
-    */
-    /// total amount of tokens
-    uint256 public totalSupply;
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
 
-    /// @param _owner The address from which the balance will be retrieved
-    /// @return The balance
-    function balanceOf(address _owner) public constant returns (uint256 balance);
 
-    /// @notice send `_value` token to `_to` from `msg.sender`
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transfer(address _to, uint256 _value) public returns (bool success);
+  event OwnershipRenounced(address indexed previousOwner);
+  event OwnershipTransferred(
+    address indexed previousOwner,
+    address indexed newOwner
+  );
 
-    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
-    /// @param _from The address of the sender
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
 
-    /// @notice `msg.sender` approves `_spender` to spend `_value` tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @param _value The amount of tokens to be approved for transfer
-    /// @return Whether the approval was successful or not
-    function approve(address _spender, uint256 _value) public returns (bool success);
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  constructor() public {
+    owner = msg.sender;
+  }
 
-    /// @param _owner The address of the account owning tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @return Amount of remaining tokens allowed to spent
-    function allowance(address _owner, address _spender) public constant returns (uint256 remaining);
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
 
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    emit OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+  /**
+   * @dev Allows the current owner to relinquish control of the contract.
+   */
+  function renounceOwnership() public onlyOwner {
+    emit OwnershipRenounced(owner);
+    owner = address(0);
+  }
 }
 
-contract ABStandardToken is ABTokenBase {
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
 
-    uint256 constant MAX_UINT256 = 2**256 - 1;
-
-    function transfer(address _to, uint256 _value) public returns (bool success) {
-        //Default assumes totalSupply can't be over max (2^256 - 1).
-        //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
-        //Replace the if with this one instead.
-        //require(balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]);
-        require(balances[msg.sender] >= _value);
-        balances[msg.sender] -= _value;
-        balances[_to] += _value;
-        Transfer(msg.sender, _to, _value);
-        return true;
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    if (a == 0) {
+      return 0;
     }
+    c = a * b;
+    assert(c / a == b);
+    return c;
+  }
 
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        //same as above. Replace this line with the following if you want to protect against wrapping uints.
-        //require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]);
-        uint256 allowance = allowed[_from][msg.sender];
-        require(balances[_from] >= _value && allowance >= _value);
-        balances[_to] += _value;
-        balances[_from] -= _value;
-        if (allowance < MAX_UINT256) {
-            allowed[_from][msg.sender] -= _value;
-        }
-        Transfer(_from, _to, _value);
-        return true;
-    }
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return a / b;
+  }
 
-    function balanceOf(address _owner) constant public returns (uint256 balance) {
-        return balances[_owner];
-    }
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
 
-    function approve(address _spender, uint256 _value) public returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
-      return allowed[_owner][_spender];
-    }
-
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
-contract ABToken is ABStandardToken {
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
 
-    /* Public variables of the token */
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
 
-    /*
-    NOTE:
-    The following variables are OPTIONAL vanities. One does not have to include them.
-    They allow one to customise the token contract & in no way influences the core functionality.
-    Some wallets/interfaces might not even bother to look at this information.
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint256;
+
+  mapping(address => uint256) balances;
+
+  uint256 totalSupply_;
+
+  /**
+  * @dev total number of tokens in existence
+  */
+  function totalSupply() public view returns (uint256) {
+    return totalSupply_;
+  }
+
+  /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[msg.sender]);
+
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    emit Transfer(msg.sender, _to, _value);
+    return true;
+  }
+
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) public view returns (uint256) {
+    return balances[_owner];
+  }
+
+}
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
+contract StandardToken is ERC20, BasicToken {
+
+  mapping (address => mapping (address => uint256)) internal allowed;
+
+
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amount of tokens to be transferred
+   */
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
+
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    emit Transfer(_from, _to, _value);
+    return true;
+  }
+
+  /**
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   *
+   * Beware that changing an allowance with this method brings the risk that someone may use both the old
+   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) public returns (bool) {
+    allowed[msg.sender][_spender] = _value;
+    emit Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
+   */
+  function allowance(address _owner, address _spender) public view returns (uint256) {
+    return allowed[_owner][_spender];
+  }
+
+  /**
+   * @dev Increase the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _addedValue The amount of tokens to increase the allowance by.
+   */
+  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  /**
+   * @dev Decrease the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To decrement
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _subtractedValue The amount of tokens to decrease the allowance by.
+   */
+  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    }
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+}
+
+contract MintableToken is StandardToken, Ownable {
+  event Mint(address indexed to, uint256 amount);
+  event MintFinished();
+
+  bool public mintingFinished = false;
+
+
+  modifier canMint() {
+    require(!mintingFinished);
+    _;
+  }
+
+  /**
+   * @dev Function to mint tokens
+   * @param _to The address that will receive the minted tokens.
+   * @param _amount The amount of tokens to mint.
+   * @return A boolean that indicates if the operation was successful.
+   */
+  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
+    totalSupply_ = totalSupply_.add(_amount);
+    balances[_to] = balances[_to].add(_amount);
+    emit Mint(_to, _amount);
+    emit Transfer(address(0), _to, _amount);
+    return true;
+  }
+
+  /**
+   * @dev Function to stop minting new tokens.
+   * @return True if the operation was successful.
+   */
+  function finishMinting() onlyOwner canMint public returns (bool) {
+    mintingFinished = true;
+    emit MintFinished();
+    return true;
+  }
+}
+
+
+contract CappedToken is MintableToken {
+
+  uint256 public cap;
+
+  constructor(uint256 _cap) public {
+    require(_cap > 0);
+    cap = _cap;
+  }
+
+  /**
+   * @dev Function to mint tokens
+   * @param _to The address that will receive the minted tokens.
+   * @param _amount The amount of tokens to mint.
+   * @return A boolean that indicates if the operation was successful.
+   */
+  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
+    require(totalSupply_.add(_amount) <= cap);
+
+    return super.mint(_to, _amount);
+  }
+
+}
+
+contract Pausable is Ownable {
+  event Pause();
+  event Unpause();
+
+  bool public paused = false;
+
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is not paused.
+   */
+  modifier whenNotPaused() {
+    require(!paused);
+    _;
+  }
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is paused.
+   */
+  modifier whenPaused() {
+    require(paused);
+    _;
+  }
+
+  /**
+   * @dev called by the owner to pause, triggers stopped state
+   */
+  function pause() onlyOwner whenNotPaused public {
+    paused = true;
+    emit Pause();
+  }
+
+  /**
+   * @dev called by the owner to unpause, returns to normal state
+   */
+  function unpause() onlyOwner whenPaused public {
+    paused = false;
+    emit Unpause();
+  }
+}
+
+contract PausableToken is StandardToken, Pausable {
+
+  function transfer(address _to, uint256 _value) public whenNotPaused returns (bool) {
+    return super.transfer(_to, _value);
+  }
+
+  function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool) {
+    return super.transferFrom(_from, _to, _value);
+  }
+
+  function approve(address _spender, uint256 _value) public whenNotPaused returns (bool) {
+    return super.approve(_spender, _value);
+  }
+
+  function increaseApproval(address _spender, uint _addedValue) public whenNotPaused returns (bool success) {
+    return super.increaseApproval(_spender, _addedValue);
+  }
+
+  function decreaseApproval(address _spender, uint _subtractedValue) public whenNotPaused returns (bool success) {
+    return super.decreaseApproval(_spender, _subtractedValue);
+  }
+}
+
+contract AbToken is CappedToken, PausableToken {
+    string public constant name = "Absolon Token (Released)"; // solium-disable-line uppercase
+    string public constant symbol = "Absolon"; // solium-disable-line uppercase
+    uint8 public constant decimals = 18; // solium-disable-line uppercase
+
+    uint256 public constant INITIAL_SUPPLY = 0;
+    uint256 public constant MAX_SUPPLY = 100 * 10000 * 10000 * (10 ** uint256(decimals));
+
+    /**
+    * @dev Constructor that gives msg.sender all of existing tokens.
     */
-    string public name;                   //fancy name: eg Simon Bucks
-    uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
-    string public symbol;                 //An identifier: eg SBX
-    string public version = 'H0.1.1';       //human 0.1 standard + applied blockchain first patch (H0.1.1)
-
-     function ABToken() public {
-        totalSupply = 990000000;
-        balances[msg.sender] = totalSupply; // Give the creator all initial tokens
-        decimals = 4;
-
-        // test
-        /*name = "Test Token #1";
-        symbol = "TT1";*/
-        // livenet (main net)
-        name = "Pablo Token";
-        symbol = "PAB";
+    constructor() CappedToken(MAX_SUPPLY) public {
+        totalSupply_ = INITIAL_SUPPLY;
+        balances[msg.sender] = INITIAL_SUPPLY;
+        emit Transfer(0x0, msg.sender, INITIAL_SUPPLY);
     }
 
-    /* Approves and then calls the receiving contract */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) public returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+    /**
+    * @dev Function to mint tokens
+    * @param _to The address that will receive the minted tokens.
+    * @param _amount The amount of tokens to mint.
+    * @return A boolean that indicates if the operation was successful.
+    */
+    function mint(address _to, uint256 _amount) onlyOwner canMint whenNotPaused public returns (bool) {
+        return super.mint(_to, _amount);
+    }
 
-        //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
-        //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
-        //it is assumed when one does this that the call *should* succeed, otherwise one would use vanilla approve instead.
-        require(_spender.call(bytes4(bytes32(keccak256("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData));
-        return true;
+    /**
+    * @dev Function to stop minting new tokens.
+    * @return True if the operation was successful.
+    */
+    function finishMinting() onlyOwner canMint whenNotPaused public returns (bool) {
+        return super.finishMinting();
+    }
+
+    /**
+    * @dev Allows the current owner to transfer control of the contract to a newOwner.
+    * @param newOwner The address to transfer ownership to.
+    */
+    function transferOwnership(address newOwner) onlyOwner whenNotPaused public {
+        super.transferOwnership(newOwner);
+    }
+
+    /**
+    * The fallback function.
+    */
+    function() payable public {
+        revert();
     }
 }
