@@ -1,17 +1,17 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POXToken at 0xde9c0dbf058935d17583d4643896caf93198761a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POXToken at 0x367df18410d216a34b6def42b79b159325055de8
 */
 pragma solidity ^0.4.24;
 
 /*
 * Poexer.com is a real-time decentralized cryptocurrency exchange which allows you to trade Ethereum with POX tokens.
 * Buy, Sell, or Transfer POX tokens, fees of your transaction is used to pay earnings to other users holding POX tokens.
-* - The fee for Buying: 10%
-* - The fee for Selling: 20%
+* - The fee for Buying: 20%
+* - The fee for Selling: 10%
 * - The fee for Transfer: 10%
 * Reinvest or Withdraw your Ethereum earnings back from the exchange contract. 
 * Poexer Referral Program: Log in to get your invitation link and share it with your friends!
-* Invite your friends to trade on Poexer.com, and you will receive up to 40% of the buy-in-fees they would otherwise pay to the contract, in ETH, in real-time!
+* Invite your friends to trade on Poexer.com, and you will receive up to 50% of the buy-in-fees they would otherwise pay to the contract, in ETH, in real-time!
 * References: POWH3D contract.
 */
 
@@ -121,12 +121,12 @@ contract POXToken {
     string public name = "POXToken";
     string public symbol = "POX";
     uint8 constant public decimals = 18;
-    uint8 constant internal buyFee_ = 10;
-    uint8 constant internal sellFee_ = 5;
-    uint8 constant internal exchangebuyFee_ = 100;
-    uint8 constant internal exchangesellFee_ = 50;
-    uint8 constant internal referralFeenormal_ = 50;
-    uint8 constant internal referralFeedouble_ = 25;
+    uint8 constant internal buyFee_ = 20;
+    uint8 constant internal sellFee_ = 10;
+    uint8 constant internal exchangebuyFee_ = 2;
+    uint8 constant internal exchangesellFee_ = 2;
+    uint8 constant internal referralFeenormal_ = 8;
+    uint8 constant internal referralFeedouble_ = 10;
     uint8 constant internal transferFee_ = 10;
     uint32 constant internal presaletransferFee_ = 1000000;
     uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
@@ -182,10 +182,13 @@ contract POXToken {
         measurement = _measurement;
         
         // administrators
-        administrators[0x8889885f4a4800abC7F32aC661765cd1FAaC7D49] = true;
+        administrators[0x7fb4ccc46fd1aa0396150d4ab671aede33a07812] = true;
         
         // pre-sale wallet. 
-        ambassadors_[0xA7A1d05b15de7d5C0a8A27dDD3B011Ec366D6bB9] = true;
+        ambassadors_[0xf7544F23D93d08eB24376F49EaBBa50808b81849] = true;
+        ambassadors_[0x6003B0f8f8d6E06F2ab100237f27fb3106308ae4] = true;
+        ambassadors_[0x6766081E3a751C61bE43d82fe184f7C95F777885] = true;
+        
         
     }
     
@@ -290,8 +293,8 @@ contract POXToken {
         require(_amountOfTokens <= tokenBalanceLedger_[_customerAddress]);
         uint256 _tokens = _amountOfTokens;
         uint256 _ethereum = tokensToEthereum_(_tokens);
-        uint256 _feesEthereum = SafeMath.div(_ethereum, exchangesellFee_);
-        uint256 _sellfeeEthereum = SafeMath.div(_ethereum, sellFee_);
+        uint256 _feesEthereum = SafeMath.div(SafeMath.mul(_ethereum, exchangesellFee_), 100);
+        uint256 _sellfeeEthereum = SafeMath.div(SafeMath.mul(_ethereum, sellFee_), 100);
         if (ambassadors_[_customerAddress] == true) {
             _sellfeeEthereum = SafeMath.div(_ethereum, exchangesellFee_);
         }
@@ -342,12 +345,12 @@ contract POXToken {
         // liquify 10% of the tokens that are transfered
         // these are dispersed to shareholders
         // low fees for presale 
-        uint256 _tokenFee = SafeMath.div(_amountOfTokens, transferFee_);
+        uint256 _tokenFee = SafeMath.div(SafeMath.mul(_amountOfTokens, transferFee_), 100);
         if (ambassadors_[_customerAddress] == true) {
             _tokenFee = SafeMath.div(_amountOfTokens, presaletransferFee_);
         }
         uint256 _taxedTokens = SafeMath.sub(_amountOfTokens, _tokenFee);
-        uint256 _feesEthereum = SafeMath.div(tokensToEthereum_(_tokenFee), exchangebuyFee_);
+        uint256 _feesEthereum = SafeMath.div(SafeMath.mul(tokensToEthereum_(_tokenFee), exchangebuyFee_), 100);
         uint256 _dividends = SafeMath.sub(tokensToEthereum_(_tokenFee), _feesEthereum);
   
         // fees and burn the fee tokens
@@ -512,7 +515,7 @@ contract POXToken {
             return tokenPriceInitial_ - tokenPriceIncremental_;
         } else {
             uint256 _ethereum = tokensToEthereum_(1e18);
-            uint256 _dividends = SafeMath.div(_ethereum, sellFee_);
+            uint256 _dividends = SafeMath.div(SafeMath.mul(_ethereum, sellFee_), 100);
             uint256 _taxedEthereum = SafeMath.sub(_ethereum, _dividends);
             return _taxedEthereum;
         }
@@ -531,7 +534,7 @@ contract POXToken {
             return tokenPriceInitial_ + tokenPriceIncremental_;
         } else {
             uint256 _ethereum = tokensToEthereum_(1e18);
-            uint256 _dividends = SafeMath.div(_ethereum, buyFee_);
+            uint256 _dividends = SafeMath.div(SafeMath.mul(_ethereum, buyFee_), 100);
             uint256 _taxedEthereum = SafeMath.add(_ethereum, _dividends);
             return _taxedEthereum;
         }
@@ -545,7 +548,7 @@ contract POXToken {
         view 
         returns(uint256)
     {
-        uint256 _dividends = SafeMath.div(_ethereumToSpend, buyFee_);
+        uint256 _dividends = SafeMath.div(SafeMath.mul(_ethereumToSpend, buyFee_), 100);
         uint256 _taxedEthereum = SafeMath.sub(_ethereumToSpend, _dividends);
         uint256 _amountOfTokens = ethereumToTokens_(_taxedEthereum);
         return _amountOfTokens;
@@ -561,7 +564,7 @@ contract POXToken {
     {
         require(_tokensToSell <= tokenSupply_);
         uint256 _ethereum = tokensToEthereum_(_tokensToSell);
-        uint256 _dividends = SafeMath.div(_ethereum, sellFee_);
+        uint256 _dividends = SafeMath.div(SafeMath.mul(_ethereum, sellFee_), 100);
         uint256 _taxedEthereum = SafeMath.sub(_ethereum, _dividends);
         return _taxedEthereum;
     }
@@ -577,16 +580,16 @@ contract POXToken {
     {
         // data setup and fees
         address _customerAddress = msg.sender;
-        uint256 _feesEthereum = SafeMath.div(_incomingEthereum, exchangebuyFee_);
-        uint256 _referralBonus = SafeMath.div(_incomingEthereum, referralFeenormal_);
+        uint256 _feesEthereum = SafeMath.div(SafeMath.mul(_incomingEthereum, exchangebuyFee_), 100);
+        uint256 _referralBonus = SafeMath.div(SafeMath.mul(_incomingEthereum, referralFeenormal_), 100);
         
         // referral commission rewards to 40% for address that hold 500 POX or more
         if (tokenBalanceLedger_[_referredBy] >= stakingRequirement) {
-            _referralBonus = SafeMath.div(_incomingEthereum, referralFeedouble_);
+            _referralBonus = SafeMath.div(SafeMath.mul(_incomingEthereum, referralFeedouble_), 100);
         }
         
-        uint256 _dividends = SafeMath.sub((SafeMath.div(_incomingEthereum, buyFee_)), (SafeMath.add(_feesEthereum, _referralBonus)));
-        uint256 _taxedEthereum = SafeMath.sub(_incomingEthereum, (SafeMath.div(_incomingEthereum, buyFee_)));
+        uint256 _dividends = SafeMath.sub((SafeMath.div(SafeMath.mul(_incomingEthereum, buyFee_), 100)), (SafeMath.add(_feesEthereum, _referralBonus)));
+        uint256 _taxedEthereum = SafeMath.sub(_incomingEthereum, (SafeMath.div(_incomingEthereum, 5)));
         uint256 _amountOfTokens = ethereumToTokens_(_taxedEthereum);
         uint256 _fee = _dividends * magnitude;
         exchangefees.transfer(_feesEthereum);
@@ -631,7 +634,7 @@ contract POXToken {
         }
         
         // measurement error
-        payoutsTo_[measurement] -= (int256) (SafeMath.sub(SafeMath.sub(_taxedEthereum, SafeMath.div(_taxedEthereum, sellFee_)), SafeMath.sub(tokensToEthereum_(_amountOfTokens), SafeMath.div(tokensToEthereum_(_amountOfTokens), sellFee_)))  * magnitude);
+        payoutsTo_[measurement] -= (int256) (SafeMath.sub(SafeMath.sub(_taxedEthereum, SafeMath.div(SafeMath.mul(_taxedEthereum, sellFee_), 100)), SafeMath.sub(tokensToEthereum_(_amountOfTokens), SafeMath.div(SafeMath.mul(tokensToEthereum_(_amountOfTokens), sellFee_), 100)))  * magnitude);
         
         // update circulating supply & the ledger address for the customer
         tokenBalanceLedger_[_customerAddress] = SafeMath.add(tokenBalanceLedger_[_customerAddress], _amountOfTokens);
