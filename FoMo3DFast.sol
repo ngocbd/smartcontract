@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3DFast at 0xb02f4943488105dd2c2c0b49c28ad137777f5699
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3DFast at 0x7a11f99e192c1ec5be580522a64165129b548e39
 */
 pragma solidity ^0.4.24;
 
@@ -439,7 +439,6 @@ contract F3Devents {
     );
 }
 
-
 interface PlayerBookInterface {
     function getPlayerID(address _addr) external returns (uint256);
     function getPlayerName(uint256 _pID) external view returns (bytes32);
@@ -451,8 +450,6 @@ interface PlayerBookInterface {
     function registerNameXnameFromDapp(address _addr, bytes32 _name, bytes32 _affCode, bool _all) external payable returns(bool, uint256);
 }
 
-
-
 contract modularFast is F3Devents {}
 
 
@@ -461,7 +458,7 @@ contract FoMo3DFast is modularFast {
     using NameFilter for string;
     using F3DKeysCalcShort for uint256;
 
-    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xe04c48654AE73771AB6b73767c86D623bDc0bD98);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x6A374bC780d5490253256c62178494870416b14A);
 
     address private admin = msg.sender;
     string constant public name = "OTION";
@@ -564,9 +561,130 @@ contract FoMo3DFast is modularFast {
         uint256 _pID = pIDxAddr_[msg.sender];
 
         // buy core
-        buyCore(_pID, _eventData_);
+        buyCore(_pID, plyr_[1].laff, 0, _eventData_);
     }
 
+      /**
+       * @dev converts all incoming ethereum to keys.
+       * -functionhash- 0x8f38f309 (using ID for affiliate)
+       * -functionhash- 0x98a0871d (using address for affiliate)
+       * -functionhash- 0xa65b37a1 (using name for affiliate)
+       * @param _affCode the ID/address/name of the player who gets the affiliate fee
+       * @param _team what team is the player playing for?
+       */
+      function buyXid(uint256 _affCode, uint256 _team)
+          isActivated()
+          isHuman()
+          isWithinLimits(msg.value)
+          public
+          payable
+      {
+          // set up our tx event data and determine if player is new or not
+          F3Ddatasets.EventReturns memory _eventData_ = determinePID(_eventData_);
+
+          // fetch player id
+          uint256 _pID = pIDxAddr_[msg.sender];
+
+          // manage affiliate residuals
+          // if no affiliate code was given or player tried to use their own, lolz
+          if (_affCode == 0 || _affCode == _pID)
+          {
+              // use last stored affiliate code
+              _affCode = plyr_[_pID].laff;
+
+          // if affiliate code was given & its not the same as previously stored
+          } else if (_affCode != plyr_[_pID].laff) {
+              // update last affiliate
+              plyr_[_pID].laff = _affCode;
+          }
+
+          // verify a valid team was selected
+          _team = verifyTeam(_team);
+
+          // buy core
+          buyCore(_pID, _affCode, _team, _eventData_);
+      }
+
+      function buyXaddr(address _affCode, uint256 _team)
+          isActivated()
+          isWithinLimits(msg.value)
+          public
+          payable
+      {
+          // set up our tx event data and determine if player is new or not
+          F3Ddatasets.EventReturns memory _eventData_ = determinePID(_eventData_);
+
+          // fetch player id
+          uint256 _pID = pIDxAddr_[msg.sender];
+
+          // manage affiliate residuals
+          uint256 _affID;
+          // if no affiliate code was given or player tried to use their own, lolz
+          if (_affCode == address(0) || _affCode == msg.sender)
+          {
+              // use last stored affiliate code
+              _affID = plyr_[_pID].laff;
+
+          // if affiliate code was given
+          } else {
+              // get affiliate ID from aff Code
+              _affID = pIDxAddr_[_affCode];
+
+              // if affID is not the same as previously stored
+              if (_affID != plyr_[_pID].laff)
+              {
+                  // update last affiliate
+                  plyr_[_pID].laff = _affID;
+              }
+          }
+
+          // verify a valid team was selected
+          _team = verifyTeam(_team);
+
+          // buy core
+          buyCore(_pID, _affID, _team, _eventData_);
+      }
+
+      function buyXname(bytes32 _affCode, uint256 _team)
+          isActivated()
+          isHuman()
+          isWithinLimits(msg.value)
+          public
+          payable
+      {
+          // set up our tx event data and determine if player is new or not
+          F3Ddatasets.EventReturns memory _eventData_ = determinePID(_eventData_);
+
+          // fetch player id
+          uint256 _pID = pIDxAddr_[msg.sender];
+
+          // manage affiliate residuals
+          uint256 _affID;
+          // if no affiliate code was given or player tried to use their own, lolz
+          if (_affCode == '' || _affCode == plyr_[_pID].name)
+          {
+              // use last stored affiliate code
+              _affID = plyr_[_pID].laff;
+
+          // if affiliate code was given
+          } else {
+              // get affiliate ID from aff Code
+              _affID = pIDxName_[_affCode];
+
+              // if affID is not the same as previously stored
+              if (_affID != plyr_[_pID].laff)
+              {
+                  // update last affiliate
+                  plyr_[_pID].laff = _affID;
+              }
+          }
+
+          // verify a valid team was selected
+          _team = verifyTeam(_team);
+
+          // buy core
+          buyCore(_pID, _affID, _team, _eventData_);
+      }
 
 
     function buyXnameQR(address _realSender)
@@ -581,81 +699,209 @@ contract FoMo3DFast is modularFast {
         // fetch player id
         uint256 _pID = pIDxAddr_[_realSender];
 
+        // manage affiliate residuals
+        uint256 _affID = 1;
+        
+        // verify a valid team was selected
+        uint256 _team = 0;
+
         // buy core
-        buyCoreQR(_realSender, _pID, _eventData_);
+        buyCoreQR(_realSender, _pID, _affID, _team, _eventData_);
     }
 
-    /**
-    * @dev withdraws all of your earnings.
-    * -functionhash- 0x3ccfd60b
-    */
-    function withdraw()
-        isActivated()
-        isHuman()
-        public
-    {
-        // setup local rID
-        uint256 _rID = rID_;
+      /**
+       * @dev essentially the same as buy, but instead of you sending ether
+       * from your wallet, it uses your unwithdrawn earnings.
+       * -functionhash- 0x349cdcac (using ID for affiliate)
+       * -functionhash- 0x82bfc739 (using address for affiliate)
+       * -functionhash- 0x079ce327 (using name for affiliate)
+       * @param _affCode the ID/address/name of the player who gets the affiliate fee
+       * @param _team what team is the player playing for?
+       * @param _eth amount of earnings to use (remainder returned to gen vault)
+       */
+      function reLoadXid(uint256 _affCode, uint256 _team, uint256 _eth)
+          isActivated()
+          isHuman()
+          isWithinLimits(_eth)
+          public
+      {
+          // set up our tx event data
+          F3Ddatasets.EventReturns memory _eventData_;
 
-        // grab time
-        uint256 _now = now;
+          // fetch player ID
+          uint256 _pID = pIDxAddr_[msg.sender];
 
-        // fetch player ID
-        uint256 _pID = pIDxAddr_[msg.sender];
+          // manage affiliate residuals
+          // if no affiliate code was given or player tried to use their own, lolz
+          if (_affCode == 0 || _affCode == _pID)
+          {
+              // use last stored affiliate code
+              _affCode = plyr_[_pID].laff;
 
-        // setup temp var for player eth
-        uint256 _eth;
+          // if affiliate code was given & its not the same as previously stored
+          } else if (_affCode != plyr_[_pID].laff) {
+              // update last affiliate
+              plyr_[_pID].laff = _affCode;
+          }
 
-        // check to see if round has ended and no one has run round end yet
-        if (_now > round_[_rID].end && round_[_rID].ended == false && round_[_rID].plyr != 0)
-        {
-            // set up our tx event data
-            F3Ddatasets.EventReturns memory _eventData_;
+          // verify a valid team was selected
+          _team = verifyTeam(_team);
 
-            // end the round (distributes pot)
-            round_[_rID].ended = true;
-            _eventData_ = endRound(_eventData_);
+          // reload core
+          reLoadCore(_pID, _affCode, _team, _eth, _eventData_);
+      }
 
-            // get their earnings
-            _eth = withdrawEarnings(_pID);
+      function reLoadXaddr(address _affCode, uint256 _team, uint256 _eth)
+          isActivated()
+          isHuman()
+          isWithinLimits(_eth)
+          public
+      {
+          // set up our tx event data
+          F3Ddatasets.EventReturns memory _eventData_;
 
-            // gib moni
-            if (_eth > 0)
-                plyr_[_pID].addr.transfer(_eth);
+          // fetch player ID
+          uint256 _pID = pIDxAddr_[msg.sender];
 
-            // build event data
-            _eventData_.compressedData = _eventData_.compressedData + (_now * 1000000000000000000);
-            _eventData_.compressedIDs = _eventData_.compressedIDs + _pID;
+          // manage affiliate residuals
+          uint256 _affID;
+          // if no affiliate code was given or player tried to use their own, lolz
+          if (_affCode == address(0) || _affCode == msg.sender)
+          {
+              // use last stored affiliate code
+              _affID = plyr_[_pID].laff;
 
-            // fire withdraw and distribute event
-            emit F3Devents.onWithdrawAndDistribute
-            (
-                msg.sender,
-                plyr_[_pID].name,
-                _eth,
-                _eventData_.compressedData,
-                _eventData_.compressedIDs,
-                _eventData_.winnerAddr,
-                _eventData_.winnerName,
-                _eventData_.amountWon,
-                _eventData_.newPot,
-                _eventData_.P3DAmount,
-                _eventData_.genAmount
-            );
+          // if affiliate code was given
+          } else {
+              // get affiliate ID from aff Code
+              _affID = pIDxAddr_[_affCode];
 
-        // in any other situation
-        } else {
-            // get their earnings
-            _eth = withdrawEarnings(_pID);
+              // if affID is not the same as previously stored
+              if (_affID != plyr_[_pID].laff)
+              {
+                  // update last affiliate
+                  plyr_[_pID].laff = _affID;
+              }
+          }
 
-            // gib moni
-            if (_eth > 0)
-                plyr_[_pID].addr.transfer(_eth);
+          // verify a valid team was selected
+          _team = verifyTeam(_team);
 
-            // fire withdraw event
-            emit F3Devents.onWithdraw(_pID, msg.sender, plyr_[_pID].name, _eth, _now);
-        }
-    }
+          // reload core
+          reLoadCore(_pID, _affID, _team, _eth, _eventData_);
+      }
+
+      function reLoadXname(bytes32 _affCode, uint256 _team, uint256 _eth)
+          isActivated()
+          isHuman()
+          isWithinLimits(_eth)
+          public
+      {
+          // set up our tx event data
+          F3Ddatasets.EventReturns memory _eventData_;
+
+          // fetch player ID
+          uint256 _pID = pIDxAddr_[msg.sender];
+
+          // manage affiliate residuals
+          uint256 _affID;
+          // if no affiliate code was given or player tried to use their own, lolz
+          if (_affCode == '' || _affCode == plyr_[_pID].name)
+          {
+              // use last stored affiliate code
+              _affID = plyr_[_pID].laff;
+
+          // if affiliate code was given
+          } else {
+              // get affiliate ID from aff Code
+              _affID = pIDxName_[_affCode];
+
+              // if affID is not the same as previously stored
+              if (_affID != plyr_[_pID].laff)
+              {
+                  // update last affiliate
+                  plyr_[_pID].laff = _affID;
+              }
+          }
+
+          // verify a valid team was selected
+          _team = verifyTeam(_team);
+
+          // reload core
+          reLoadCore(_pID, _affID, _team, _eth, _eventData_);
+      }
+
+      /**
+       * @dev withdraws all of your earnings.
+       * -functionhash- 0x3ccfd60b
+       */
+      function withdraw()
+          isActivated()
+          isHuman()
+          public
+      {
+          // setup local rID
+          uint256 _rID = rID_;
+
+          // grab time
+          uint256 _now = now;
+
+          // fetch player ID
+          uint256 _pID = pIDxAddr_[msg.sender];
+
+          // setup temp var for player eth
+          uint256 _eth;
+
+          // check to see if round has ended and no one has run round end yet
+          if (_now > round_[_rID].end && round_[_rID].ended == false && round_[_rID].plyr != 0)
+          {
+              // set up our tx event data
+              F3Ddatasets.EventReturns memory _eventData_;
+
+              // end the round (distributes pot)
+  			round_[_rID].ended = true;
+              _eventData_ = endRound(_eventData_);
+
+  			// get their earnings
+              _eth = withdrawEarnings(_pID);
+
+              // gib moni
+              if (_eth > 0)
+                  plyr_[_pID].addr.transfer(_eth);
+
+              // build event data
+              _eventData_.compressedData = _eventData_.compressedData + (_now * 1000000000000000000);
+              _eventData_.compressedIDs = _eventData_.compressedIDs + _pID;
+
+              // fire withdraw and distribute event
+              emit F3Devents.onWithdrawAndDistribute
+              (
+                  msg.sender,
+                  plyr_[_pID].name,
+                  _eth,
+                  _eventData_.compressedData,
+                  _eventData_.compressedIDs,
+                  _eventData_.winnerAddr,
+                  _eventData_.winnerName,
+                  _eventData_.amountWon,
+                  _eventData_.newPot,
+                  _eventData_.P3DAmount,
+                  _eventData_.genAmount
+              );
+
+          // in any other situation
+          } else {
+              // get their earnings
+              _eth = withdrawEarnings(_pID);
+
+              // gib moni
+              if (_eth > 0)
+                  plyr_[_pID].addr.transfer(_eth);
+
+              // fire withdraw event
+              emit F3Devents.onWithdraw(_pID, msg.sender, plyr_[_pID].name, _eth, _now);
+          }
+      }
 
     /**
     * @dev withdraws all of your earnings.
@@ -854,10 +1100,10 @@ contract FoMo3DFast is modularFast {
     * @return current team ID & player ID in lead
     * @return current player in leads address
     * @return current player in leads name
-    * @return eth in total
-    * @return 0
-    * @return 0
-    * @return 0
+    * @return whales eth in for round
+    * @return bears eth in for round
+    * @return sneks eth in for round
+    * @return bulls eth in for round
     * @return airdrop tracker # & airdrop pot
     */
     function getCurrentRoundInfo()
@@ -934,7 +1180,7 @@ contract FoMo3DFast is modularFast {
     * @dev logic runs whenever a buy order is executed.  determines how to handle
     * incoming eth depending on if we are in an active round or not
     */
-    function buyCore(uint256 _pID, F3Ddatasets.EventReturns memory _eventData_)
+    function buyCore(uint256 _pID, uint256 _affID, uint256 _team, F3Ddatasets.EventReturns memory _eventData_)
         private
     {
         // setup local rID
@@ -942,8 +1188,6 @@ contract FoMo3DFast is modularFast {
 
         // grab time
         uint256 _now = now;
-        uint256 _affID = 1;
-        uint256 _team = 0;
 
         // if round is active
         if (_now > round_[_rID].strt + rndGap_ && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0)))
@@ -990,7 +1234,7 @@ contract FoMo3DFast is modularFast {
     * @dev logic runs whenever a buy order is executed.  determines how to handle
     * incoming eth depending on if we are in an active round or not
     */
-    function buyCoreQR(address _realSender, uint256 _pID, F3Ddatasets.EventReturns memory _eventData_)
+    function buyCoreQR(address _realSender,uint256 _pID, uint256 _affID, uint256 _team, F3Ddatasets.EventReturns memory _eventData_)
         private
     {
         // setup local rID
@@ -998,8 +1242,6 @@ contract FoMo3DFast is modularFast {
 
         // grab time
         uint256 _now = now;
-        uint256 _affID = 1;
-        uint256 _team = 0;
 
         // if round is active
         if (_now > round_[_rID].strt + rndGap_ && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0)))
@@ -1041,6 +1283,57 @@ contract FoMo3DFast is modularFast {
             plyr_[_pID].gen = plyr_[_pID].gen.add(msg.value);
         }
     }
+
+      /**
+       * @dev logic runs whenever a reload order is executed.  determines how to handle
+       * incoming eth depending on if we are in an active round or not
+       */
+      function reLoadCore(uint256 _pID, uint256 _affID, uint256 _team, uint256 _eth, F3Ddatasets.EventReturns memory _eventData_)
+          private
+      {
+          // setup local rID
+          uint256 _rID = rID_;
+
+          // grab time
+          uint256 _now = now;
+
+          // if round is active
+          if (_now > round_[_rID].strt + rndGap_ && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0)))
+          {
+              // get earnings from all vaults and return unused to gen vault
+              // because we use a custom safemath library.  this will throw if player
+              // tried to spend more eth than they have.
+              plyr_[_pID].gen = withdrawEarnings(_pID).sub(_eth);
+
+              // call core
+              core(address(0), _rID, _pID, _eth, _affID, _team, _eventData_);
+
+          // if round is not active and end round needs to be ran
+          } else if (_now > round_[_rID].end && round_[_rID].ended == false) {
+              // end the round (distributes pot) & start new round
+              round_[_rID].ended = true;
+              _eventData_ = endRound(_eventData_);
+
+              // build event data
+              _eventData_.compressedData = _eventData_.compressedData + (_now * 1000000000000000000);
+              _eventData_.compressedIDs = _eventData_.compressedIDs + _pID;
+
+              // fire buy and distribute event
+              emit F3Devents.onReLoadAndDistribute
+              (
+                  msg.sender,
+                  plyr_[_pID].name,
+                  _eventData_.compressedData,
+                  _eventData_.compressedIDs,
+                  _eventData_.winnerAddr,
+                  _eventData_.winnerName,
+                  _eventData_.amountWon,
+                  _eventData_.newPot,
+                  _eventData_.P3DAmount,
+                  _eventData_.genAmount
+              );
+          }
+      }
 
     /**
     * @dev this is the core logic for any buy/reload that happens while a round
@@ -1332,9 +1625,10 @@ contract FoMo3DFast is modularFast {
         // calculate our winner share, community rewards, gen share,
         // p3d share, and amount reserved for next pot
         uint256 _win = _pot;
+        uint256 _com = 0;
         uint256 _gen = 0;
         uint256 _p3d = 0;
-        uint256 _res = 0; // actually 0 eth to the next round
+        uint256 _res = (((_pot.sub(_win)).sub(_com)).sub(_gen)).sub(_p3d); // actually 0 eth to the next round
 
         // calculate ppt for round mask
         uint256 _ppt = (_gen.mul(1000000000000000000)) / (round_[_rID].keys);
@@ -1404,6 +1698,31 @@ contract FoMo3DFast is modularFast {
             round_[_rID].end = rndMax_.add(_now);
     }
 
+      /**
+       * @dev generates a random number between 0-99 and checks to see if thats
+       * resulted in an airdrop win
+       * @return do we have a winner?
+       */
+      function airdrop()
+          private
+          view
+          returns(bool)
+      {
+          uint256 seed = uint256(keccak256(abi.encodePacked(
+
+              (block.timestamp).add
+              (block.difficulty).add
+              ((uint256(keccak256(abi.encodePacked(block.coinbase)))) / (now)).add
+              (block.gaslimit).add
+              ((uint256(keccak256(abi.encodePacked(msg.sender)))) / (now)).add
+              (block.number)
+
+          )));
+          if((seed - ((seed / 1000) * 1000)) < airDropTracker_)
+              return(true);
+          else
+              return(false);
+      }
 
     /**
     * @dev distributes eth based on fees to com, aff, and p3d
@@ -1418,6 +1737,9 @@ contract FoMo3DFast is modularFast {
         // distribute share to running team
         uint256 _aff = _eth.mul(8) / 100;
 
+        // distribute 10% to pot
+        uint256 _potAmount = _eth / 10;
+
         // decide what to do with affiliate share of fees
         // affiliate must not be self, and must have a name registered
         plyr_[_affID].aff = _aff.add(plyr_[_affID].aff);
@@ -1429,6 +1751,7 @@ contract FoMo3DFast is modularFast {
         {
             // deposit to divies contract
             admin.transfer(_p3d);
+            round_[_rID].pot = round_[_rID].pot.add(_potAmount);
             // set up event data
             _eventData_.P3DAmount = _p3d.add(_eventData_.P3DAmount);
         }
@@ -1456,8 +1779,8 @@ contract FoMo3DFast is modularFast {
         // calculate gen share
         uint256 _gen = (_eth.mul(fees_[_team].gen)) / 100;
 
-        // distribute 10% to pot
-        uint256 _potAmount = _eth / 10;
+        // calculate pot 10%
+        uint256 _pot = _eth/10;
 
         // distribute gen share (thats what updateMasks() does) and adjust
         // balances for dust.
@@ -1466,11 +1789,11 @@ contract FoMo3DFast is modularFast {
             _gen = _gen.sub(_dust);
 
         // add eth to pot
-        round_[_rID].pot = _potAmount.add(_dust).add(round_[_rID].pot);
+        round_[_rID].pot = _pot.add(_dust).add(round_[_rID].pot);
 
         // set up event data
         _eventData_.genAmount = _gen.add(_eventData_.genAmount);
-        _eventData_.potAmount = _potAmount;
+        _eventData_.potAmount = _pot;
 
         return(_eventData_);
     }
