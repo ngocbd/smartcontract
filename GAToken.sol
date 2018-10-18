@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GAToken at 0xb07efbe81051e11f4a4d0f2a43802d3f970ac770
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GAToken at 0x33262f34eb8bd760706ede30c908cb1beb5aaf6c
 */
 pragma solidity ^0.4.23;
 
@@ -235,10 +235,26 @@ contract FreezableToken is BasicToken, Ownable {
  * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
  */
 contract StandardToken is ERC20, BasicToken {
-
+    
     mapping (address => mapping (address => uint256)) internal allowed;
-
-
+    
+    
+    /**
+     * @dev Transfer tokens to array of address
+     * @param _value uint256 the amount of tokens to be transferred for each address
+     * @param _to array of address transfer to (max 100 address)
+     */
+    function multiTransfer(uint256 _value, address[] _to) public returns (bool) {
+        require(_to.length <= 100);
+        require(_value.mul(_to.length) <= balances[msg.sender]);
+        
+        for(uint i = 0; i < _to.length; i++)
+        {
+            require(transfer(_to[i], _value));
+        }
+        return true;
+    }
+    
     /**
      * @dev Transfer tokens from one address to another
      * @param _from address The address which you want to send tokens from
@@ -400,7 +416,7 @@ contract PausableToken is StandardToken, Pausable {
 
 
 /**
- * @title GetAchieve Token
+ * @title Get Achieve token
  * @dev GAT Smart Contract
  */
 contract GAToken is DetailedERC20, StandardToken, BurnableToken, FreezableToken, PausableToken {
@@ -412,7 +428,7 @@ contract GAToken is DetailedERC20, StandardToken, BurnableToken, FreezableToken,
     constructor(
         uint256 totalSupply
     ) DetailedERC20(
-        "GetAchieve Token",
+        "Get Achieve token v2 official",
         "GAT",
         18
     ) public {
