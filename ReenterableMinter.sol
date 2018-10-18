@@ -1,7 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReenterableMinter at 0xe31edf6ab43ca9a07f2b1cff370c57799afd3d6b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReenterableMinter at 0x06f1fb4940df46a9dcc5e74bdea2986dca607f52
 */
 pragma solidity ^0.4.15;
+
+// File: contracts/minter-service/IMintableToken.sol
+
+contract IMintableToken {
+    function mint(address _to, uint256 _amount);
+}
 
 // File: contracts/minter-service/IICOInfo.sol
 
@@ -9,12 +15,6 @@ contract IICOInfo {
   function estimate(uint256 _wei) public constant returns (uint tokens);
   function purchasedTokenBalanceOf(address addr) public constant returns (uint256 tokens);
   function isSaleActive() public constant returns (bool active);
-}
-
-// File: contracts/minter-service/IMintableToken.sol
-
-contract IMintableToken {
-    function mint(address _to, uint256 _amount);
 }
 
 // File: zeppelin-solidity/contracts/ownership/Ownable.sol
