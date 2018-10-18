@@ -1,14 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract apexTWO at 0x4BEa1b5De7e3F09f6131408BC306b1de411A3957
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract apexTWO at 0xd6c6018fb3c25c214ab938d3b574cf7b6954af62
 */
 pragma solidity ^0.4.24;
 
 /***
  * http://apexTWO.online
- * https://discord.gg/vbWkKPv
- * this contract has administrators and developers. So did the other one. I don't know why it said it didnt.
- * If you would like Premine tokens in exchange for helping out, PM Revenge of the Synth in the discord
  * 
+ * No administrators or developers, this contract is fully autonomous
+ *
  * 12 % entry fee
  * 12 % of entry fee to masternode referrals
  * 0 % transfer fee
@@ -176,10 +175,7 @@ contract apexTWO {
      ambassadors_[0x7b705c83c8c270745955cc3ca5f80fb3acf75d83]=true;
      //4
      ambassadors_[0xe25903c5078d01bbea64c01dc1107f40f44141a3]=true;
-     //5
-     ambassadors_[0xe6f43c670cc8a366bbcf6677f43b02754bfb5855]=true;
-     //6
-     ambassadors_[0xe467e0d26344fcc2d64883958ffe27372c84beaa]=true;
+
      apex = msg.sender;
    }
 
