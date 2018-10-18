@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UTEMIS at 0xd21daa01e682f849c8e21bd945bc040103091640
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UTEMIS at 0x979ebc09e55ea0ab563cf7175e4c4b1a03afc19a
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.24;
 contract ERC20 {
     function totalSupply() public view returns (uint supply);
     function balanceOf( address _owner ) public view returns (uint balance);
@@ -21,13 +21,13 @@ contract UTEMIS is ERC20{
         uint8 public constant TOKEN_DECIMAL     = 18;        
         uint256 public constant TOKEN_ESCALE    = 1 * 10 ** uint256(TOKEN_DECIMAL); 
                                               
-        uint256 public constant TOTAL_SUPPLY    = 1000000000000 * TOKEN_ESCALE; // 1000000000000000000000000 Smart contract UNITS | 1.000.000.000.000,000000000000 Ethereum representation
-        uint256 public constant ICO_SUPPLY      = 250000000000 * TOKEN_ESCALE;  // 250000000000000000000000 Smart contract UNITS  | 200.000.000.000,000000000000 Ethereum representation
+        uint256 public constant INITIAL_SUPPLY  = 1000000000 * TOKEN_ESCALE; // 1000000000000000000000 Smart contract UNITS | 1.000.000.000,000000000000 Ethereum representation
+        uint256 public constant TGE_SUPPLY      = 1000000000 * TOKEN_ESCALE;  // 1000000000000000000000 Smart contract UNITS  |  1.000.000.000,000000000000 Ethereum representation
 
-        uint public constant MIN_ACCEPTED_VALUE = 50000000000000000 wei;
-        uint public constant VALUE_OF_UTS       = 666666599999 wei;
+        uint public constant MIN_ACCEPTED_VALUE = 250000000000000000 wei;
+        uint public constant VALUE_OF_UTS       = 25000000000000 wei;        // 0.000025 ETH = 1 UTS
 
-        uint public constant START_ICO          = 1518714000; // 15 Feb 2018 17:00:00 GMT | 15 Feb 2018 18:00:00 GMT+1
+        uint public constant START_TGE          = 1537110000; // 16 SEPT 2018 15:00:00 GMT | 16 SEPT 2018 17:00:00 GMT+2
 
         string public constant TOKEN_NAME       = "UTEMIS";
         string public constant TOKEN_SYMBOL     = "UTS";
@@ -37,10 +37,10 @@ contract UTEMIS is ERC20{
 
     /******************** Start private NO-Constants variables ********************/
     
-        uint[4]  private bonusTime             = [14 days , 45 days , 74 days];        
-        uint8[4] private bonusBenefit          = [uint8(50)  , uint8(30)   , uint8(10)];
-        uint8[4] private bonusPerInvestion_10  = [uint8(25)  , uint8(15)   , uint8(5)];
-        uint8[4] private bonusPerInvestion_50  = [uint8(50)  , uint8(30)   , uint8(20)];
+        uint[4]  private bonusTime             = [7 days     , 14 days     , 21 days   , 28 days];        
+        uint8[4] private bonusBenefit          = [uint8(25)  , uint8(15)   , uint8(10) , uint8(5)];
+        uint8[4] private bonusPerInvestion_10  = [uint8(2)   , uint8(2)    , uint8(2)  , uint8(2)];
+        uint8[4] private bonusPerInvestion_20  = [uint8(4)   , uint8(4)    , uint8(4)  , uint8(4)];
     
     /*------------------- Finish private NO-Constants variables -------------------*/
 
@@ -51,8 +51,8 @@ contract UTEMIS is ERC20{
         address public beneficiary;            
         uint public ethersCollecteds;
         uint public tokensSold;
-        uint256 public totalSupply = TOTAL_SUPPLY;
-        bool public icoStarted;            
+        uint256 public totalSupply = INITIAL_SUPPLY;
+        bool public tgeStarted;            
         mapping(address => uint256) public balances;    
         mapping(address => Investors) public investorsList;
         mapping(address => mapping (address => uint256)) public allowed;
@@ -82,14 +82,14 @@ contract UTEMIS is ERC20{
         _;
     }
     
-    modifier icoIsStarted(){
-        require(icoStarted == true);        
-        require(now >= START_ICO);      
+    modifier tgeIsStarted(){
+        require(tgeStarted == true);        
+        require(now >= START_TGE);      
         _;
     }
 
-    modifier icoIsStopped(){
-        require(icoStarted == false); 
+    modifier tgeIsStopped(){
+        require(tgeStarted == false); 
         _;
     }
 
@@ -98,9 +98,11 @@ contract UTEMIS is ERC20{
         _;
     }
 
-    function UTEMIS() public{
+    constructor() public{
         balances[msg.sender] = totalSupply;
-        owner               = msg.sender;        
+        owner                = msg.sender;        
+        tgeStarted           = true;
+        beneficiary          = 0x1F3fd98152f978f74349Fe2a25730Fe73e431BD8;
     }
 
 
@@ -134,7 +136,7 @@ contract UTEMIS is ERC20{
         balances[_from]         = safeSub(balances[_from] , _value);                  //Subtract from the source ( sender )        
         balances[_to]           = safeAdd(balances[_to]   , _value);                  //Add tokens to destination        
         uint previousBalance    = balances[_from] + balances[_to];                    //To make assert        
-        Transfer(_from , _to , _value);                                               //Fire event for clients        
+        emit Transfer(_from , _to , _value);                                               //Fire event for clients        
         assert(balances[_from] + balances[_to] == previousBalance);                   //Check the assert
     }
 
@@ -176,7 +178,7 @@ contract UTEMIS is ERC20{
      */   
     function approve(address _spender , uint256 _value) public returns (bool success){
         allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender , _spender , _value);
+        emit Approval(msg.sender , _spender , _value);
         return true;
     }
 
@@ -220,14 +222,14 @@ contract UTEMIS is ERC20{
     function getBonus(uint _ethers) public view returns(uint8){        
         uint8 _bonus  = 0;                                                          //Assign bonus to 
         uint8 _bonusPerInvestion = 0;
-        uint  starter = now - START_ICO;                                            //To control end time of bonus
+        uint  starter = now - START_TGE;                                            //To control end time of bonus
         for(uint i = 0; i < bonusTime.length; i++){                                 //For loop
             if(starter <= bonusTime[i]){                                            //If the starter are greater than bonusTime, the bonus will be 0                
-                if(_ethers > 10 ether && _ethers <= 50 ether){
+                if(_ethers > 10 ether && _ethers <= 20 ether){
                     _bonusPerInvestion = bonusPerInvestion_10[i];
                 }
-                if(_ethers > 50 ether){
-                    _bonusPerInvestion = bonusPerInvestion_50[i];
+                if(_ethers > 20 ether){
+                    _bonusPerInvestion = bonusPerInvestion_20[i];
                 }
                 _bonus = bonusBenefit[i];                                           //Asign amount of bonus to bonus_ variable                                
                 break;                                                              //Break the loop
@@ -251,12 +253,39 @@ contract UTEMIS is ERC20{
              tokensToSend  = ethToTokens + amountBonus;
         return tokensToSend;
     }
+    
+    /**
+     * Increase the total supply of tokens
+     *
+     * @param amount                Amount of tokens to add
+     */
+    function inflateSupply(uint amount) public onlyOwner returns (bool success){
+        require(amount > 0);        
+        totalSupply+= amount;        
+        balances[owner] = safeAdd(balances[owner]   , amount);                  //Add tokens to destination               
+        emit Transfer(0x0 , owner , amount);                                    //Fire event for clients        
+        return true;
+    }
+
+    /**
+     * Destroy amount of tokens
+     *
+     * @param amount                Amount of tokens to destroy
+     */
+    function burn(uint amount) public onlyOwner returns (bool success){
+        require(balances[owner] >= amount);
+        totalSupply-= amount;
+        balances[owner] = safeSub(balances[owner] , amount);
+        emit Burn(owner , amount);
+        emit Transfer(owner , 0x0 , amount);
+        return true;
+    }
 
     /**
      * Fallback when the contract receives ethers
      *
      */
-    function () payable public icoIsStarted minValue{                              
+    function () payable public tgeIsStarted minValue{                              
         uint amount_actually_invested = investorsList[msg.sender].amount;           //Get the actually amount invested
         
         if(amount_actually_invested == 0){                                          //If amount invested are equal to 0, will add like new investor
@@ -269,37 +298,35 @@ contract UTEMIS is ERC20{
             investorsList[msg.sender].amount += msg.value;                          //Increase the amount invested
             investorsList[msg.sender].when    = now;                                //Change the last time invested
         }
-
         
         uint tokensToSend = getTokensToSend(msg.value);                             //Calc the tokens to send depending on ethers received
-        tokensSold += tokensToSend;        
-        require(balances[owner] >= tokensToSend);
-        
-        _transfer(owner , msg.sender , tokensToSend);                               //Transfer tokens to investor                                
-        ethersCollecteds   += msg.value;
+        tokensSold += tokensToSend;             
 
+        require(balances[owner] >= tokensToSend);
+        _transfer(owner , msg.sender , tokensToSend);        
+        ethersCollecteds   += msg.value;
         if(beneficiary == address(0)){
             beneficiary = owner;
         }
-        beneficiary.transfer(msg.value);
-        FundTransfer(owner , msg.value , msg.sender);                               //Fire events for clients
+        beneficiary.transfer(msg.value);            
+        emit FundTransfer(owner , msg.value , msg.sender);                          //Fire events for clients
     }
 
 
     /**
-     * Start the ico manually
+     * Start the TGE manually
      *     
      */
-    function startIco() public onlyOwner{
-        icoStarted = true;                                                         //Set the ico started
+    function startTge() public onlyOwner{
+        tgeStarted = true;                                                         //Set the TGE started
     }
 
     /**
-     * Stop the ico manually
+     * Stop the TGE manually
      *
      */
-    function stopIco() public onlyOwner{
-        icoStarted = false;                                                        //Set the ico stopped
+    function stopTge() public onlyOwner{
+        tgeStarted = false;                                                        //Set the TGE stopped
     }
 
 
