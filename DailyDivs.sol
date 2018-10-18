@@ -1,38 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DailyDivs at 0x41cd7bbab5758b3b675281f3ead24e666f2b1f0e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DailyDivs at 0x72b32b45cd1f59d3d6d2fbe9241055525497004a
 */
 pragma solidity ^0.4.21;
 
-/*
-******************** DailyDivs.com *********************
-*
-*  ____        _ _       ____  _                                
-* |  _ \  __ _(_) |_   _|  _ \(_)_   _____   ___ ___  _ __ ___  
-* | | | |/ _` | | | | | | | | | \ \ / / __| / __/ _ \| '_ ` _ \ 
-* | |_| | (_| | | | |_| | |_| | |\ V /\__ \| (_| (_) | | | | | |
-* |____/ \__,_|_|_|\__, |____/|_| \_/ |___(_)___\___/|_| |_| |_|
-*                  |___/                                        
-*
-******************** DailyDivs.com *********************
-*
-*
-* [x] 0% TRANSFER FEES
-* [x] 20% DIVIDENDS AND MASTERNODES
-* [x] Multi-tier Masternode system 50% 1st ref 30% 2nd ref 20% 3rd ref
-* [x] 5% FEE ON EACH BUY AND SELL GO TO Smart Contract Fund 0xF34340Ba65f37320B25F9f6F3978D02DDc13283b
-*     5% Split -> 70% to Earn Game / 30% to Dev Fund For Future Development Costs
-* [x] DailyDivs Token can be used for future games
-*
-* Official Website: https://dailydivs.com/ 
-* Official Discord: https://discord.gg/J4Bvu32
-* Official Telegram: https://t.me/dailydivs
-*/
 
-
-/**
- * Definition of contract accepting DailyDivs tokens
- * Games, casinos, anything can reuse this contract to support DailyDivs tokens
- */
 contract AcceptsDailyDivs {
     DailyDivs public tokenContract;
 
@@ -92,7 +63,7 @@ contract DailyDivs {
         _;
     }
     
-    uint ACTIVATION_TIME = 1535835600;
+    uint ACTIVATION_TIME = 1536174000;
 
 
     // ensures that the first tokens in the contract will be equally distributed
@@ -168,13 +139,13 @@ contract DailyDivs {
     /*=====================================
     =            CONFIGURABLES            =
     =====================================*/
-    string public name = "DailyDivs";
-    string public symbol = "DDT";
+    string public name = "DivsVIP";
+    string public symbol = "DVIP";
     uint8 constant public decimals = 18;
     uint8 constant internal dividendFee_ = 20; // 20% dividend fee on each buy and sell
     uint8 constant internal fundFee_ = 5; // 5% investment fund fee on each buy and sell
-    uint256 constant internal tokenPriceInitial_ = 0.00000001 ether;
-    uint256 constant internal tokenPriceIncremental_ = 0.000000001 ether;
+    uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
+    uint256 constant internal tokenPriceIncremental_ = 0.00000001 ether;
     uint256 constant internal magnitude = 2**64;
 
     // Address to send the 5% Fee
@@ -189,8 +160,8 @@ contract DailyDivs {
 
     // ambassador program
     mapping(address => bool) internal ambassadors_;
-    uint256 constant internal ambassadorMaxPurchase_ = 2.5 ether;
-    uint256 constant internal ambassadorQuota_ = 2.5 ether;
+    uint256 constant internal ambassadorMaxPurchase_ = 1 ether;
+    uint256 constant internal ambassadorQuota_ = 6 ether;
 
 
 
@@ -226,23 +197,20 @@ contract DailyDivs {
         public
     {
         // add administrators here
-        administrators[0x5e4edd4b711eCe01400067dc3Ec564aed42Ed5b5] = true;
+        administrators[0x2f59321274Df6D4d84c05Fd61148a842d1cD9E9d] = true;
 
+      // add the ambassadors here - Tokens will be distributed to these addresses from main premine
+        ambassadors_[0xD5FA3017A6af76b31eB093DFA527eE1D939f05ea] = true;
         // add the ambassadors here - Tokens will be distributed to these addresses from main premine
-        ambassadors_[0x5e4edd4b711eCe01400067dc3Ec564aed42Ed5b5] = true;
-        // add the ambassadors here - Tokens will be distributed to these addresses from main premine
-        ambassadors_[0x12b353d1a2842d2272ab5a18c6814d69f4296873] = true;
+        ambassadors_[0x008ca4f1ba79d1a265617c6206d7884ee8108a78] = true;
        // add the ambassadors here - Tokens will be distributed to these addresses from main premine
-        ambassadors_[0x87A7e71D145187eE9aAdc86954d39cf0e9446751] = true;
+        ambassadors_[0xB5a28B0752ce06C41d8965Cf431C759D888a162A] = true;
         // add the ambassadors here - Tokens will be distributed to these addresses from main premine
-        ambassadors_[0x41FE3738B503cBaFD01C1Fd8DD66b7fE6Ec11b01] = true;
+        ambassadors_[0x0C0dF6e58e5F7865b8137a7Fb663E7DCD5672995] = true;
         // add the ambassadors here - Tokens will be distributed to these addresses from main premine
-        ambassadors_[0x5632ca98e5788eddb2397757aa82d1ed6171e5ad] = true;
+        ambassadors_[0x797452296a37C2A8419F45A95b435093917f8f8B] = true;
         // add the ambassadors here - Tokens will be distributed to these addresses from main premine
-        ambassadors_[0x0A49857F69919AEcddbA77136364Bb19108B4891] = true;
-        // add the ambassadors here - Tokens will be distributed to these addresses from main premine
-            ambassadors_[0xdb59f29f7242989a3eda271483b89e1f74353ffa] = true;
-        
+        ambassadors_[0xf458168E49D9BA62Ae780A1d8286296A9A4D9D3B] = true;
     }
 
 
