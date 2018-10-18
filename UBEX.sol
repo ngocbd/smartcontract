@@ -1,15 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UBEX at 0xa840ca8eb4e296d27b1bd470b52ef127e68fe983
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UBEX at 0xe7a232cd72ec8cb1ce74a24cf1b2c3fb4b614072
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
 // 'UBEX' CROWDSALE token contract
 //
-// Deployed to : 0x58f49a2b2e7d12bd3d7c458bff0cadac6e1bdd4a
+// Deployed to : 0xe7a232cd72ec8cb1ce74a24cf1b2c3fb4b614072
 // Symbol      : UBEX
-// Name        : UBEX Token
-// Total supply: 4,000,000,000
+// Name        : UBEX Tokens
+// Total supply: 9,000,000,000.000000000000000000
 // Decimals    : 18
 //
 // Enjoy.
@@ -120,7 +120,7 @@ contract UBEX is ERC20Interface, Owned, SafeMath {
     // ------------------------------------------------------------------------
     function UBEX() public {
         symbol = "UBEX";
-        name = "UBEX Token";
+        name = "UBEX Tokens";
         decimals = 18;
         bonusEnds = now + 1 weeks;
         endDate = now + 7 weeks;
@@ -212,7 +212,7 @@ contract UBEX is ERC20Interface, Owned, SafeMath {
     }
 
     // ------------------------------------------------------------------------
-    // 1,000 Eos Tokens per 1 ETH
+    // 10,000 UBEX Tokens per 1 ETH
     // ------------------------------------------------------------------------
     function () public payable {
         require(now >= startDate && now <= endDate);
