@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Star3Dlong at 0x99b34122d26e9693070e0cc43accdcfa77339dca
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Star3Dlong at 0x4d32df060c8cb4aa1851830110a0a4dc96692371
 */
 pragma solidity ^0.4.24;
 /**
@@ -1842,12 +1842,7 @@ library Star3DKeysCalcLong {
         returns(uint256)
     {
         uint256 _timePrice = getBuyPriceTimesByTime(_timeLeft);
-        uint256 _keys = ((((((_eth).mul(1000000000000000000)).mul(312500000000000000000000000)).add(5624988281256103515625000000000000000000000000000000000000000000)).sqrt()).sub(74999921875000000000000000000000)) / (156250000) / (_timePrice.mul(10));
-        if(_keys >= 990000000000000000 && _keys < 1000000000000000000)
-        {
-            return 1000000000000000000;
-        }
-        return _keys;
+        return ((((((_eth).mul(1000000000000000000)).mul(312500000000000000000000000)).add(5624988281256103515625000000000000000000000000000000000000000000)).sqrt()).sub(74999921875000000000000000000000)) / (156250000) / 10 /_timePrice;
     }
 
     /**
