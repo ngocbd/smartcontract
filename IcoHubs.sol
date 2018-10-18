@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IcoHubs at 0x4cc507dc2562426ccfe9bb0d3495b35fe4e24ca2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IcoHubs at 0xb431a8acc1ab3319925eca4ebd2a23e671ced44d
 */
 pragma solidity ^0.4.4;
 
@@ -106,7 +106,7 @@ contract IcoHubs is StandardToken {
         name = "Ico Hubs";
         decimals = 18;
         symbol = "HUBS";
-        unitsOneEthCanBuy = 300000;
+        unitsOneEthCanBuy = 10000000;
         fundsWallet = msg.sender;
     }
 
