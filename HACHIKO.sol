@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HACHIKO at 0xC5E48929ccC44E66072E3fde38FdfdD637Eb28f6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HACHIKO at 0x255A789315018fc59b3064655189D07049eb05f3
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.24;
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; }
 
@@ -9,8 +9,7 @@ interface tokenRecipient { function receiveApproval(address _from, uint256 _valu
 contract Ownable {
 
     address public owner;
-
-    function Ownable() public {
+    constructor() public {
         owner = msg.sender;
     }
 
@@ -48,9 +47,9 @@ contract HACHIKO is Ownable {
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    function HACHIKO(
-    ) public {
-        totalSupply = 9411110 * 10 ** uint256(decimals);  // Update total supply with the decimal amount
+    
+    constructor() public {
+        totalSupply = 21000000 * 10 ** uint256(decimals);  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
         name = "HACHIKO";                                   // Set the name for display purposes
         symbol = "HACHI";                               // Set the symbol for display purposes
@@ -149,7 +148,7 @@ contract HACHIKO is Ownable {
         require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
         balanceOf[msg.sender] -= _value;            // Subtract from the sender
         totalSupply -= _value;                      // Updates totalSupply
-        emit Burn(msg.sender, _value);
+        emit Burn (msg.sender , _value);
         return true;
     }
 
