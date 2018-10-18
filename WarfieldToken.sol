@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WarfieldToken at 0x228af37c06d7bf086d2d73809c728f9d8a1e7916
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WarfieldToken at 0x0ce036bfbb5e2306eb4c22bcf5c763be591f61d9
 */
 pragma solidity 0.4.25;
 
@@ -404,7 +404,7 @@ contract TokenRecoverable is Ownable {
 contract WarfieldToken is CappedToken, TokenRecoverable {
     uint256 internal constant TOTAL_TOKENS = 2500000000e18; // 2 500 000 000 tokens
 
-    string public constant name = "GLDR Token";
+    string public constant name = "GOLDER COIN";
     string public constant symbol = "GLDR";
     uint8 public constant decimals = 18;
 
