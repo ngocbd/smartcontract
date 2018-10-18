@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EmptyLib at 0xda7ed3dea6f0a0dbe5d1cb6c997f5b6732840724
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EmptyLib at 0x1c02d72657648265d4212448e3ceb27e2022530a
 */
 pragma solidity ^0.4.25;
 
