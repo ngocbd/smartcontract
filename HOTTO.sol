@@ -1,6 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hotto at 0xd39f7984ff1c60861776bcb42185eb5333127187
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract hotto at 0xc6c50c840d7f894b854f93a61fea7f139beb9dda
 */
+//  https://hotto.co/
+
 pragma solidity ^0.4.18;
 
 /**
@@ -67,7 +69,7 @@ contract ERC20 is ERC20Basic {
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-contract Hotto is ERC20 {
+contract hotto is ERC20 {
     
     using SafeMath for uint256;
     address owner = msg.sender;
@@ -75,14 +77,14 @@ contract Hotto is ERC20 {
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;    
 
-    string public constant name = "Hotto";
+    string public constant name = "hotto";
     string public constant symbol = "HT";
     uint public constant decimals = 8;
     
     uint256 public totalSupply = 10000000000e8;
     uint256 public totalDistributed = 0;        
-    uint256 public tokensPerEth = 30000000e8;
-    uint256 public constant minContribution = 1 ether / 100; // 0.01 Ether
+    uint256 public tokensPerEth = 22500000e8;
+    uint256 public constant minContribution = 1 ether / 100; // 0.01 Eth
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
@@ -109,11 +111,7 @@ contract Hotto is ERC20 {
     }
     
     
-       function HT () public {
-        owner = msg.sender;
-        uint256 devTokens = 1000000000e8;
-        distr(owner, devTokens);
-    }
+    
     
     function transferOwnership(address newOwner) onlyOwner public {
         if (newOwner != address(0)) {
