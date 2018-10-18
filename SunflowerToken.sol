@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SunflowerToken at 0xf79b72b7ed8672077894e3a06a9f48121c1bb2c2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SunflowerToken at 0x6428ba7100d775c19a63569f9a8c9afc97adf20a
 */
 pragma solidity ^0.4.4;
 
@@ -108,12 +108,12 @@ contract SunflowerToken is StandardToken { // CHANGE THIS. Update the contract n
     // This is a constructor function 
     // which means the following function name has to match the contract name declared above
     function SunflowerToken() {
-        balances[msg.sender] = 2000000000000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
-        totalSupply = 2000000000000000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
+        balances[msg.sender] = 9000000000000000000000000000;              // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
+        totalSupply = 9000000000000000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
         name = "SunflowerToken";                                   // Set the name for display purposes (CHANGE THIS)
         decimals = 18;                                               // Amount of decimals for display purposes (CHANGE THIS)
-        symbol = "SUT";                                             // Set the symbol for display purposes (CHANGE THIS)
-        unitsOneEthCanBuy = 18000000;                                      // Set the price of your token for the ICO (CHANGE THIS)
+        symbol = "SUTO";                                             // Set the symbol for display purposes (CHANGE THIS)
+        unitsOneEthCanBuy = 30000000;                                      // Set the price of your token for the ICO (CHANGE THIS)
         fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
    }
 
