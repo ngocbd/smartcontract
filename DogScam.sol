@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DogScam at 0x872098e7e008079040a03efcdf313ff1911769dc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DogScam at 0x47e4712d8654225d2a9c9ba60cdc0f4f11499aba
 */
 pragma solidity ^0.4.24;
 
@@ -113,8 +113,8 @@ contract DogScam is modularDogScam {
     using LDKeysCalc for uint256;
     
     // TODO: check address
-    DogInterfaceForForwarder constant private DogKingCorp = DogInterfaceForForwarder(0xf6c49851adfacdb738c3066842267efc9ed16080);
-    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xEEbfe3EE72Fbb9aAB6e8149Fa56680E2EBcea3C8);
+    DogInterfaceForForwarder constant private DogKingCorp = DogInterfaceForForwarder(0xe0f25a0b1e012d2e648aab89066ce22ff279318a);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x42517897953a990c87f1f911dc448532e026a5ae);
 
     string constant public name = "DogScam Round #1";
     string constant public symbol = "LDOG";
