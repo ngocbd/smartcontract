@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HoardPresale at 0x09372b808bf8533c0409baef23d527a3a8c7580a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HoardPresale at 0xc336e10dee4cab01248cf3b1747b52d78394c77a
 */
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
@@ -49,37 +49,6 @@ contract Ownable {
   }
 
 }
-
-contract Haltable is Ownable {
-  bool public halted;
-
-  modifier stopInEmergency {
-    require(!halted);
-    _;
-  }
-
-  modifier stopNonOwnersInEmergency {
-    require(!halted && msg.sender == owner);
-    _;
-  }
-
-  modifier onlyInEmergency {
-    require(halted);
-    _;
-  }
-
-  // called by the owner on emergency, triggers stopped state
-  function halt() external onlyOwner {
-    halted = true;
-  }
-
-  // called by the owner on end of emergency, returns to normal state
-  function unhalt() external onlyOwner onlyInEmergency {
-    halted = false;
-  }
-
-}
-
 
 contract HoardCrowdsale {
     function invest(address addr,uint tokenAmount) public payable {
@@ -159,7 +128,7 @@ contract HoardPresale is Ownable {
   uint public weiRaised = 0;
 
   /** Maximum pre-sale ETH fund limit in Wei  */
-  uint public maxFundLimit = 16000000000000000000000; //16000 ETH
+  uint public maxFundLimit = 5333000000000000000000; //5333 ETH
   
   /** Our ICO contract where we will move the funds */
   HoardCrowdsale public crowdsale;
