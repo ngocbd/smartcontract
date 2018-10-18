@@ -1,11 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleDistributor at 0xde08a96e974bad18f64013d5b59b3c8e3f4621f8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleDistributor at 0xeec21b8f0db6994983b609fd768d10d235b918ed
 */
-pragma solidity ^0.4.20;
+pragma solidity ^0.4.19;
 
-contract Mintable {
+contract ERC20Cutted {
     
-  function mint(address _to, uint256 _amount) public returns (bool);
+  function balanceOf(address who) public constant returns (uint256);
   
   function transfer(address to, uint256 value) public returns (bool);
   
@@ -16,18 +16,27 @@ contract SimpleDistributor {
     
   address public owner;
     
-  Mintable public token = Mintable(0x552Ed8253f341fb770E8BAdff5A0E0Ee2fd57B43);
+  ERC20Cutted public token = ERC20Cutted(0x2D3E7D4870a51b918919E7B851FE19983E4c38d5);
     
-  function SimpleDistributor() public {
+  constructor() public {
     owner = msg.sender;
   }
    
   function addReceivers(address[] receivers, uint[] balances) public {
     require(msg.sender == owner);
     for(uint i = 0; i < receivers.length; i++) {
-      token.mint(this, balances[i]);  
       token.transfer(receivers[i], balances[i]);
     }
   } 
   
+  function retrieveCurrentTokensToOwner() public {
+    retrieveTokens(owner, address(token));
+  }
+
+  function retrieveTokens(address to, address anotherToken) public {
+    require(msg.sender == owner);
+    ERC20Cutted alienToken = ERC20Cutted(anotherToken);
+    alienToken.transfer(to, alienToken.balanceOf(this));
+  }
+
 }
