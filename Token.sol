@@ -1,11 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x3b370ff850d402932a570f2f8de3b39426787e85
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xb23eaaae476fc65ec54346bf8040b8d6cd5d6407
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
-// Symbol      : GAMC
-// Name        : Gambling capital
+// Symbol      : PT
+// Name        : Spinach Coin
 // Total supply: 5000000000.000000
 // Decimals    : 6
 // ----------------------------------------------------------------------------
@@ -94,8 +94,8 @@ contract Token is ERC20Interface, Owned {
 
 
     function Token() public {
-        symbol = "GAMC";
-        name = "Gambling capital";
+        symbol = "PT";
+        name = "Spinach Coin";
         decimals = 6;
         _totalSupply = 5000000000 * 10**uint(decimals);
         balances[owner] = _totalSupply;
