@@ -1,8 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DivideDrainDestroy at 0x774ba492cbdd14992da56212de1335e00039906c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DivideDrainDestroy at 0xbc9a38b812ccf3f4a0adc4e3bb73c197c53b70af
 */
 pragma solidity ^0.4.24;
-//Spielleys Divide Drain and Destroy minigame v 1.0
+//Spielleys Divide Drain and Destroy minigame v 1.01
 
 //99% of eth payed is returned directly to players according to their stack of shares vs totalSupply
 // players need to fetch divs themselves or perform transactions to get the divs
@@ -309,7 +309,7 @@ function Divide(address masternode) public  payable{
 function Drain(address drainfrom, address masternode) public  payable{
     uint256 amount = msg.value.mul(2);
     address sender = msg.sender;
-    uint256 sup = _totalSupply;//totalSupply
+    
     require(amount >= 1);
     require(amount <= balances[drainfrom]);
     
@@ -319,7 +319,7 @@ function Drain(address drainfrom, address masternode) public  payable{
     balances[msg.sender] = balances[sender].add(amount);
     balances[drainfrom] = balances[drainfrom].sub(amount);
     emit Transfer(drainfrom,sender, amount);
-     _totalSupply =  sup.add(amount);
+    
     
 }
 function Destroy(address destroyfrom, address masternode) public  payable{
