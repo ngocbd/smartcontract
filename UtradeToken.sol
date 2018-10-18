@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UtradeToken at 0x0fca70a8c68d71b3fdadddf670002f7cc605a287
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UtradeToken at 0x3d4039bf409af774348aecd37da1bb649726f14a
 */
-pragma solidity ^0.4.20;
+pragma solidity 0.4.24;
 
 //*************** SafeMath ***************
 
@@ -34,9 +34,8 @@ library SafeMath {
 
 contract Ownable {
   address public owner;
-  address public admin;
 
-  function Ownable() public {
+  constructor() public {
       owner = msg.sender;
   }
 
@@ -45,18 +44,10 @@ contract Ownable {
       _;
   }
 
-  modifier onlyOwnerAdmin() {
-      require(msg.sender == owner || msg.sender == admin);
-      _;
-  }
-
   function transferOwnership(address newOwner)public onlyOwner {
       if (newOwner != address(0)) {
         owner = newOwner;
       }
-  }
-  function setAdmin(address _admin)public onlyOwner {
-      admin = _admin;
   }
 
 }
@@ -75,105 +66,80 @@ contract ERC20 {
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
+//************* Utrade Token *************
+
 contract UtradeToken is ERC20,Ownable {
-	using SafeMath for uint256;
+  using SafeMath for uint256;
 
-	// Token Info.
-	string public name;
-	string public symbol;
-	uint256 public totalSupply;
-	uint256 public constant decimals = 8;
+  // Token Info.
+  string public name;
+  string public symbol;
+  uint256 public totalSupply;
+  uint256 public constant decimals = 18;
+  mapping (address => uint256) public balanceOf;
+  mapping (address => mapping (address => uint256)) allowed;
 
+  
+  constructor() public  {   
+    name="uTrade Trading Platform";
+    symbol="UTP";
+    totalSupply = 1000000000*(10**decimals);
+    balanceOf[msg.sender] = totalSupply; 
+ }
 
-	mapping (address => uint256) public balanceOf;
-	mapping (address => mapping (address => uint256)) allowed;
+  function balanceOf(address _who)public constant returns (uint256 balance) {
+      require(_who != 0x0);
+      return balanceOf[_who];
+  }
 
-	event FundTransfer(address fundWallet, uint256 amount);
-	event Logs(string);
+  function _transferFrom(address _from, address _to, uint256 _value)  internal returns (bool)  {
+      require(_from != 0x0);
+      require(_to != 0x0);
+      require(balanceOf[_from] >= _value);
+      require(balanceOf[_to].add(_value) >= balanceOf[_to]);
+      uint256 previousBalances = balanceOf[_from].add(balanceOf[_to]);
+      balanceOf[_from] = balanceOf[_from].sub(_value);
+      balanceOf[_to] = balanceOf[_to].add(_value);
+      assert(balanceOf[_from].add(balanceOf[_to]) == previousBalances);
+      emit Transfer(_from, _to, _value);
+      return true;
+       
+  }
+  
+  function transfer(address _to, uint256 _value) public returns (bool){     
+      return _transferFrom(msg.sender,_to,_value);
+  }
+  
+  function ()public {
+  }
 
-	constructor( ) public {  		
-		name="UTP FOUNDATION";
-		symbol="UTP";
-		totalSupply = 1000000000*(10**decimals);
-		balanceOf[msg.sender] = totalSupply;	
-	}
+  function allowance(address _owner, address _spender)public constant returns (uint256 remaining) {
+      require(_owner != 0x0);
+      require(_spender != 0x0);
+      return allowed[_owner][_spender];
+  }
 
-	function balanceOf(address _who)public constant returns (uint256 balance) {
-	    return balanceOf[_who];
-	}
-
-	function _transferFrom(address _from, address _to, uint256 _value)  internal {
-		require(_from != 0x0);
-	    require(_to != 0x0);
-	    require(balanceOf[_from] >= _value);
-	    require(balanceOf[_to] + _value >= balanceOf[_to]);
-
-	    uint256 previousBalances = balanceOf[_from] + balanceOf[_to];
-
-	    balanceOf[_from] = balanceOf[_from].sub(_value);
-	    balanceOf[_to] = balanceOf[_to].add(_value);
-
-	    emit Transfer(_from, _to, _value);
-
-	    assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
-	}
-	
-	function transfer(address _to, uint256 _value) public returns (bool){	    
-	    _transferFrom(msg.sender,_to,_value);
-	    return true;
-	}
-	function transferLog(address _to, uint256 _value,string logs) public returns (bool){
-		_transferFrom(msg.sender,_to,_value);
-		emit Logs(logs);
-	    return true;
-	}
-	
-	function ()public {
-	}
-
-
-	function allowance(address _owner, address _spender)public constant returns (uint256 remaining) {
-	    return allowed[_owner][_spender];
-	}
-
-	function approve(address _spender, uint256 _value)public returns (bool) {
-	    allowed[msg.sender][_spender] = _value;
-	    emit Approval(msg.sender, _spender, _value);
-	    return true;
-	}
-	
-	function transferFrom(address _from, address _to, uint256 _value)public returns (bool) {
-	    require(_from != 0x0);
-	    require(_to != 0x0);
-	    require(_value > 0);
-	    require (allowed[_from][msg.sender] >= _value);
-	    require(balanceOf[_from] >= _value);
-	    require(balanceOf[_to] + _value >= balanceOf[_to]);
-
-        balanceOf[_from] = balanceOf[_from].sub(_value);
-        balanceOf[_to] = balanceOf[_to].add(_value);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value); 
-	     
-        emit Transfer(_from, _to, _value);
-        return true;
+  function approve(address _spender, uint256 _value)public returns (bool) {
+      require(_spender != 0x0);
+      require(balanceOf[msg.sender] >= _value);
+      allowed[msg.sender][_spender] = _value;
+      emit Approval(msg.sender, _spender, _value);
+      return true;
+  }
+  
+  function transferFrom(address _from, address _to, uint256 _value)public returns (bool) {
+      require(_from != 0x0);
+      require(_to != 0x0);
+      require(_value > 0);
+      require(allowed[_from][msg.sender] >= _value);
+      require(balanceOf[_from] >= _value);
+      require(balanceOf[_to].add(_value) >= balanceOf[_to]);
+      
+      allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value); 
+      balanceOf[_from] = balanceOf[_from].sub(_value);
+      balanceOf[_to] = balanceOf[_to].add(_value);
+            
+      emit Transfer(_from, _to, _value);
+      return true;
     }
-
-    function mintToken(address _target, uint256 _mintedAmount) onlyOwner public {
-        require(_target != 0x0);
-        require(_mintedAmount > 0);
-        require(totalSupply + _mintedAmount > totalSupply);
-        require(balanceOf[_target] + _mintedAmount > balanceOf[_target]);
-        balanceOf[_target] = balanceOf[_target].add(_mintedAmount);
-        totalSupply = totalSupply.add(_mintedAmount);
-        emit Transfer(0, this, _mintedAmount);
-        emit Transfer(this, _target, _mintedAmount);
-    }
-
-    function transferA2B(address _from ,address _to) onlyOwnerAdmin public {	 
-    	require(_from != 0x0);
-	    require(_to != 0x0);  	  
-    	require(balanceOf[_from] > 0); 
-    	//require(balanceOf[_to] == 0); 
-	    _transferFrom(_from,_to,balanceOf[_from]);	   
-	}
 }
