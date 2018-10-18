@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptualProjectToken at 0x9b3579b22f1bd4ffe9f3c8f2c58da696fd9d45ab
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptualProjectToken at 0xff473ee66f43c5dc749c6d0108d430480ad317a0
 */
 pragma solidity ^0.4.23;
 
@@ -334,17 +334,18 @@ contract CryptualProjectToken is StandardToken, Ownable {
   address public wallet;
 
   // Private presale constants
-  uint256 public constant PRESALE_OPENING_TIME = 1535382000; // Mon, 27 Aug 2018 15:00:00 +0000
-  uint256 public constant PRESALE_CLOSING_TIME = 1536289200; // Fri, 07 Sep 2018 03:00:00 +0000
+  uint256 public constant PRESALE_OPENING_TIME = 1535760000; // Sat, 01 Sep 2018 00:00:00 +0000
+  uint256 public constant PRESALE_CLOSING_TIME = 1536969600; // Sat, 15 Sep 2018 00:00:00 +0000
   uint256 public constant PRESALE_RATE = 500000;
   uint256 public constant PRESALE_WEI_CAP = 2500 ether;
   uint256 public constant PRESALE_WEI_GOAL = 100 ether;
 
   // Public crowdsale constants
-  uint256 public constant CROWDSALE_OPENING_TIME = 1537542000; // Fri, 21 Sep 2018 15:00:00 +0000
-  uint256 public constant CROWDSALE_CLOSING_TIME = 1545361200; // Fri, 21 Dec 2018 03:00:00 +0000
+  uint256 public constant CROWDSALE_OPENING_TIME = 1537628400; // Sat, 22 Sep 2018 15:00:00 +0000
+  uint256 public constant CROWDSALE_CLOSING_TIME = 1545447600; // Sat, 22 Dec 2018 03:00:00 +0000
   uint256 public constant CROWDSALE_WEI_CAP = 20000 ether;
   uint256 public constant CROWDSALE_WEI_GOAL = 800 ether;
+  uint256 public constant CROWDSALE_UNVERIFIED_USER_CAP = 25 ether;
 
   // Public crowdsale parameters
   uint256[] public crowdsaleWeiAvailableLevels = [2500 ether, 5000 ether, 12500 ether];
@@ -402,6 +403,7 @@ contract CryptualProjectToken is StandardToken, Ownable {
 
     if (isCrowdsale) {
       require(crowdsaleContributions[_beneficiary].add(weiAmount) <= getCrowdsaleUserCap());
+      if (weiAmount > CROWDSALE_UNVERIFIED_USER_CAP) require(verifiedList[_beneficiary]);
       
       // calculate token amount to be created
       tokens = _getCrowdsaleTokenAmount(weiAmount);
@@ -410,7 +412,7 @@ contract CryptualProjectToken is StandardToken, Ownable {
       // update state
       crowdsaleWeiRaised = crowdsaleWeiRaised.add(weiAmount);
     } else if (isPresale) {
-      require(whitelist[_beneficiary]);
+      require(presaleWhitelist[_beneficiary]);
       
       // calculate token amount to be created
       tokens = weiAmount.mul(PRESALE_RATE).div(1 ether);
@@ -506,32 +508,61 @@ contract CryptualProjectToken is StandardToken, Ownable {
   }
   
   // Private presale buyer whitelist
-  mapping(address => bool) public whitelist;
+  mapping(address => bool) public presaleWhitelist;
 
   /**
-   * @dev Adds single address to whitelist.
+   * @dev Adds single address to presale whitelist.
    * @param _beneficiary Address to be added to the whitelist
    */
   function addToPresaleWhitelist(address _beneficiary) external onlyOwner {
-    whitelist[_beneficiary] = true;
+    presaleWhitelist[_beneficiary] = true;
   }
 
   /**
-   * @dev Adds list of addresses to whitelist. Not overloaded due to limitations with truffle testing.
+   * @dev Adds list of addresses to presale whitelist. Not overloaded due to limitations with truffle testing.
    * @param _beneficiaries Addresses to be added to the whitelist
    */
   function addManyToPresaleWhitelist(address[] _beneficiaries) external onlyOwner {
     for (uint256 i = 0; i < _beneficiaries.length; i++) {
-      whitelist[_beneficiaries[i]] = true;
+      presaleWhitelist[_beneficiaries[i]] = true;
     }
   }
 
   /**
-   * @dev Removes single address from whitelist.
+   * @dev Removes single address from presale whitelist.
    * @param _beneficiary Address to be removed to the whitelist
    */
   function removeFromPresaleWhitelist(address _beneficiary) external onlyOwner {
-    whitelist[_beneficiary] = false;
+    presaleWhitelist[_beneficiary] = false;
+  }
+  
+  // Public crowdsale verified buyer list
+  mapping(address => bool) public verifiedList;
+
+  /**
+   * @dev Adds single address to verified list.
+   * @param _beneficiary Address to be added to the verified list
+   */
+  function addToVerifiedList(address _beneficiary) external onlyOwner {
+    verifiedList[_beneficiary] = true;
+  }
+
+  /**
+   * @dev Adds list of addresses to verified list. Not overloaded due to limitations with truffle testing.
+   * @param _beneficiaries Addresses to be added to the verified list
+   */
+  function addManyToVerifiedList(address[] _beneficiaries) external onlyOwner {
+    for (uint256 i = 0; i < _beneficiaries.length; i++) {
+      verifiedList[_beneficiaries[i]] = true;
+    }
+  }
+
+  /**
+   * @dev Removes single address from verified list.
+   * @param _beneficiary Address to be removed to the verified list
+   */
+  function removeFromVerifiedList(address _beneficiary) external onlyOwner {
+    verifiedList[_beneficiary] = false;
   }
 
   // Crowdsale finalization/refunding variables
