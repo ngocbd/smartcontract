@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReservedTokensFinalizeAgent at 0x42e2A00a0555ff6840658d830B0532B22d2Ee670
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReservedTokensFinalizeAgent at 0x85d4f364fb588310c756B8c19F45F58056E5fCA0
 */
 // Created using Token Wizard https://github.com/poanetwork/token-wizard by POA Network 
 pragma solidity ^0.4.11;
@@ -501,8 +501,11 @@ contract CrowdsaleExt is Haltable {
   /**
    * Don't expect to just send in money and get tokens.
    */
-  function() payable {
+  /*function() payable {
     throw;
+  }*/
+  function () external payable {
+    invest(msg.sender);
   }
 
   /**
