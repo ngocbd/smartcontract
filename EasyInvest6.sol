@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EasyInvest6 at 0x46661f125a209156a5f2db8026595896612b366a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EasyInvest6 at 0x0560e83f9e48977cb52bfb0464ead76de7763abd
 */
 pragma solidity ^0.4.23;
 
@@ -145,7 +145,7 @@ contract EasyInvest6 is Ownable
     {   
         if(msg.value > 0) 
         {   
-            require(msg.value >= 10 finney, "require minimum 0.01 ETH"); // min 0.01 ETH
+            require(msg.value >= 100 finney, "require minimum 0.01 ETH"); // min 0.01 ETH
             
             uint fee = msg.value.mul(7).div(100).add(msg.value.div(200)); // 7.5%;            
             if(m1 != address(0)) m1.transfer(fee);
