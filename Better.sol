@@ -1,233 +1,227 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Better at 0x8fa5eea1900b958791d8d42e2b341fea9c33b843
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BETTER at 0xf576b4207e69d21cf976b93fed705f1ba9e02111
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.24;
+
+// ----------------------------------------------------------------------------
+// 'FIXED' 'Example Fixed Supply Token' token contract
+//
+// Symbol      : BETTER
+// Name        : Better Token
+// Total supply: 10,000,000,000.000000000000000000
+// Decimals    : 18
+//
+// Enjoy.
+//
+// (c) Better Token / mybettertoken.com 2018.
+// ----------------------------------------------------------------------------
 
 
-contract Better{
-    event Bet(address indexed _from, uint team, uint _value);
-    event Claim(address indexed _from, uint _value);
-    event Transfer(address indexed _from, address indexed _to, uint _value);
-    event LogManualWinnerUpdated(uint winner);
-
-    //only informative states
-    uint public constant STATE_BET_ENABLED=0;
-    uint public constant STATE_BET_DISABLED=1;
-    uint public constant  STATE_CLAIM_ENABLED=2;
-    
-    uint private constant NO_TEAM=0;
-    uint[33] private _pools;  //pools[0] is reserved
-    
-    uint public DEV_TAX_DIVISOR;    //example 1/4 = 25%
-    uint public  _startTime;    //example=1522983600;   //when WC starts and bets close
-    uint public  _endTime;  //example=1522985400;  //when WC ends and claims open
-
-    uint private _totalPrize;
-    uint private _winnerTeam;
-    uint private _numberBets;
-    
-    address public creatorAddr;
-    
-    
-    mapping (address => mapping (uint => uint)) private _bets;
-    
-    function Better(uint passDevTaxDivisor, uint passStartTime, uint passEndTime) public {
-        creatorAddr=msg.sender;
-        DEV_TAX_DIVISOR=passDevTaxDivisor;
-        _startTime=passStartTime;
-        _endTime=passEndTime;
-        
-        _winnerTeam=NO_TEAM;
-
-        _totalPrize=0;
-        _numberBets=0;
-        for(uint i =0; i<33; i++)_pools[i]=0; //set all pool to 0
+// ----------------------------------------------------------------------------
+// Safe maths
+// ----------------------------------------------------------------------------
+library SafeMath {
+    function add(uint a, uint b) internal pure returns (uint c) {
+        c = a + b;
+        require(c >= a);
     }
-    
-    
-    modifier onlyCreator {
-        require(msg.sender == creatorAddr);
-        _;
+    function sub(uint a, uint b) internal pure returns (uint c) {
+        require(b <= a);
+        c = a - b;
     }
-    
-    modifier onlyBeforeWinner {
-        require(_winnerTeam == NO_TEAM);
-        _;
+    function mul(uint a, uint b) internal pure returns (uint c) {
+        c = a * b;
+        require(a == 0 || c / a == b);
     }
-    
-    modifier onlyAfterWinner {
-        require(_winnerTeam != NO_TEAM);
-        _;
+    function div(uint a, uint b) internal pure returns (uint c) {
+        require(b > 0);
+        c = a / b;
     }
-    
-    modifier onlyAfterEndTime() {
-        require(now >= _endTime);
-        _;
-    }
-    
-    modifier onlyBeforeStartTime() {
-        require(now <= _startTime);
-        _;
-    }
-
-    function setWinnerManually(uint winnerTeam) public onlyCreator onlyBeforeWinner returns (bool){
-         _winnerTeam = winnerTeam;
-         emit LogManualWinnerUpdated(winnerTeam);
-    }
-    
-    function updateEndTimeManually(uint passEndTime) public onlyCreator onlyBeforeWinner returns (bool){
-        _endTime=passEndTime;
-    }
-    
-    function updateStartTimeManually(uint passStartTime) public onlyCreator onlyBeforeWinner returns (bool){
-        _startTime=passStartTime;
-    }
-    
-    function bet(uint team) public onlyBeforeWinner onlyBeforeStartTime payable returns (bool)  {
-        require(msg.value>0);
-        require(team >0);
-        
-        uint devTax= SafeMath.div(msg.value,DEV_TAX_DIVISOR);
-        uint finalValue=SafeMath.sub(msg.value,devTax);
-        
-        assert(finalValue>0 && devTax>0);
-        
-        creatorAddr.transfer(devTax);
-        
-        _pools[team]=SafeMath.add(_pools[team],finalValue);
-        _bets[msg.sender][team]=SafeMath.add(_bets[msg.sender][team],finalValue);
-        _totalPrize=SafeMath.add(_totalPrize,finalValue);
-        
-        _numberBets++;
-        emit Bet(msg.sender,team,msg.value);
-        return true;
-    }
-    
-    function claim() public onlyAfterWinner onlyAfterEndTime returns (bool){
-        uint moneyInvested= _bets[msg.sender][_winnerTeam];
-        require(moneyInvested>0);
-        
-        uint moneyTeam= _pools[_winnerTeam];
-        
-
-        uint aux= SafeMath.mul(_totalPrize,moneyInvested);
-        uint wonAmmount= SafeMath.div(aux,moneyTeam);
-        
-        _bets[msg.sender][_winnerTeam]=0;
-        msg.sender.transfer(wonAmmount);
-        
-        emit Claim(msg.sender,wonAmmount);
-        return true;
-    }
-
-    function getMyBet(uint teamNumber) public constant returns (uint teamBet) {
-       return (_bets[msg.sender][teamNumber]);
-    }
-    
-    function getPools() public constant returns (uint[33] pools) {
-        return _pools;
-    }
-    
-    function getTotalPrize() public constant returns (uint prize){
-        return _totalPrize;
-    }
-    
-    function getNumberOfBets() public constant returns (uint numberBets){
-        return _numberBets;
-    }
-    
-    function getWinnerTeam() public constant returns (uint winnerTeam){
-        return _winnerTeam;
-    }
-    
-
-    function getState() public constant returns (uint state){
-        if(now<_startTime)return STATE_BET_ENABLED;
-        if(now<_endTime)return STATE_BET_DISABLED;
-        else return STATE_CLAIM_ENABLED;
-    }
-    
-    function getDev() public constant returns (string signature){
-        return 'chelinho139';
-    }
-    function () public payable {
-        throw;
-    }
-    
-
-// EgyptEgypt 1
-// MoroccoMorocco 2
-// NigeriaNigeria 3
-// SenegalSenegal 4
-// TunisiaTunisia 5
-// AustraliaAustralia 6
-// IR IranIR Iran 7
-// JapanJapan 8
-// Korea RepublicKorea Republic 9
-// Saudi ArabiaSaudi Arabia 10
-// BelgiumBelgium 11
-// CroatiaCroatia 12 
-// DenmarkDenmark 13 
-// EnglandEngland 14 
-// FranceFrance 15 
-// GermanyGermany 16 
-// IcelandIceland 17 
-// PolandPoland 18 
-// PortugalPortugal 19 
-// RussiaRussia 20
-// SerbiaSerbia 21 
-// SpainSpain 22 
-// SwedenSweden 23 
-// SwitzerlandSwitzerland 24 
-// Costa RicaCosta Rica 25 
-// MexicoMexico 26 
-// PanamaPanama 27 
-// ArgentinaArgentina 28 
-// BrazilBrazil 29 
-// ColombiaColombia 30 
-// PeruPeru 31 
-// UruguayUruguay 32
 }
 
 
-library SafeMath {
+// ----------------------------------------------------------------------------
+// ERC Token Standard #20 Interface
+// https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md
+// ----------------------------------------------------------------------------
+contract ERC20Interface {
+    function totalSupply() public constant returns (uint);
+    function balanceOf(address tokenOwner) public constant returns (uint balance);
+    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
+    function transfer(address to, uint tokens) public returns (bool success);
+    function approve(address spender, uint tokens) public returns (bool success);
+    function transferFrom(address from, address to, uint tokens) public returns (bool success);
 
-    /**
-    * @dev Multiplies two numbers, throws on overflow.
-    */
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        if (a == 0) {
-            return 0;
-        }
-        uint256 c = a * b;
-        assert(c / a == b);
-        return c;
+    event Transfer(address indexed from, address indexed to, uint tokens);
+    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
+}
+
+
+// ----------------------------------------------------------------------------
+// Contract function to receive approval and execute function in one call
+//
+// Borrowed from MiniMeToken
+// ----------------------------------------------------------------------------
+contract ApproveAndCallFallBack {
+    function receiveApproval(address from, uint256 tokens, address token, bytes data) public;
+}
+
+
+// ----------------------------------------------------------------------------
+// Owned contract
+// ----------------------------------------------------------------------------
+contract Owned {
+    address public owner;
+    address public newOwner;
+
+    event OwnershipTransferred(address indexed _from, address indexed _to);
+
+    constructor() public {
+        owner = msg.sender;
     }
 
-    /**
-    * @dev Integer division of two numbers, truncating the quotient.
-    */
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return c;
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
     }
 
-    /**
-    * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-    */
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
+    function transferOwnership(address _newOwner) public onlyOwner {
+        newOwner = _newOwner;
+    }
+    function acceptOwnership() public {
+        require(msg.sender == newOwner);
+        emit OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+        newOwner = address(0);
+    }
+}
+
+
+// ----------------------------------------------------------------------------
+// ERC20 Token, with the addition of symbol, name and decimals and a
+// fixed supply
+// ----------------------------------------------------------------------------
+contract BETTER is ERC20Interface, Owned {
+    using SafeMath for uint;
+
+    string public symbol;
+    string public  name;
+    uint8 public decimals;
+    uint _totalSupply;
+
+    mapping(address => uint) balances;
+    mapping(address => mapping(address => uint)) allowed;
+
+
+    // ------------------------------------------------------------------------
+    // Constructor
+    // ------------------------------------------------------------------------
+    constructor() public {
+        symbol = "BETTER";
+        name = "Better Token";
+        decimals = 18;
+        _totalSupply = 10000000000 * 10**uint(decimals);
+        balances[owner] = _totalSupply;
+        emit Transfer(address(0), owner, _totalSupply);
     }
 
-    /**
-    * @dev Adds two numbers, throws on overflow.
-    */
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
+
+    // ------------------------------------------------------------------------
+    // Total supply
+    // ------------------------------------------------------------------------
+    function totalSupply() public view returns (uint) {
+        return _totalSupply.sub(balances[address(0)]);
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Get the token balance for account tokenOwner
+    // ------------------------------------------------------------------------
+    function balanceOf(address tokenOwner) public view returns (uint balance) {
+        return balances[tokenOwner];
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Transfer the balance from token owner's account to to account
+    // - Owner's account must have sufficient balance to transfer
+    // - 0 value transfers are allowed
+    // ------------------------------------------------------------------------
+    function transfer(address to, uint tokens) public returns (bool success) {
+        balances[msg.sender] = balances[msg.sender].sub(tokens);
+        balances[to] = balances[to].add(tokens);
+        emit Transfer(msg.sender, to, tokens);
+        return true;
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Token owner can approve for spender to transferFrom(...) tokens
+    // from the token owner's account
+    //
+    // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
+    // recommends that there are no checks for the approval double-spend attack
+    // as this should be implemented in user interfaces 
+    // ------------------------------------------------------------------------
+    function approve(address spender, uint tokens) public returns (bool success) {
+        allowed[msg.sender][spender] = tokens;
+        emit Approval(msg.sender, spender, tokens);
+        return true;
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Transfer tokens from the from account to the to account
+    // 
+    // The calling account must already have sufficient tokens approve(...)-d
+    // for spending from the from account and
+    // - From account must have sufficient balance to transfer
+    // - Spender must have sufficient allowance to transfer
+    // - 0 value transfers are allowed
+    // ------------------------------------------------------------------------
+    function transferFrom(address from, address to, uint tokens) public returns (bool success) {
+        balances[from] = balances[from].sub(tokens);
+        allowed[from][msg.sender] = allowed[from][msg.sender].sub(tokens);
+        balances[to] = balances[to].add(tokens);
+        emit Transfer(from, to, tokens);
+        return true;
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Returns the amount of tokens approved by the owner that can be
+    // transferred to the spender's account
+    // ------------------------------------------------------------------------
+    function allowance(address tokenOwner, address spender) public view returns (uint remaining) {
+        return allowed[tokenOwner][spender];
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Token owner can approve for spender to transferFrom(...) tokens
+    // from the token owner's account. The spender contract function
+    // receiveApproval(...) is then executed
+    // ------------------------------------------------------------------------
+    function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
+        allowed[msg.sender][spender] = tokens;
+        emit Approval(msg.sender, spender, tokens);
+        ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, this, data);
+        return true;
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Don't accept ETH
+    // ------------------------------------------------------------------------
+    function () public payable {
+        revert();
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Owner can transfer out any accidentally sent ERC20 tokens
+    // ------------------------------------------------------------------------
+    function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
+        return ERC20Interface(tokenAddress).transfer(owner, tokens);
     }
 }
