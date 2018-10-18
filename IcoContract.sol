@@ -1,54 +1,59 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IcoContract at 0x64fe37b099a015034307a2f9dcbaadc317f89d02
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IcoContract at 0x078F8E69082e2dfa1237dED03694a069c4Bf69a8
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.15;
 
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
+// ================= Ownable Contract start =============================
+/*
+ * Ownable
+ *
+ * Base contract with an owner.
+ * Provides onlyOwner modifier, which prevents function from running if it is called by anyone other than the owner.
  */
-library SafeMath {
+contract Ownable {
+  address public owner;
 
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    if (a == 0) {
-      return 0;
+  function Ownable() {
+    owner = msg.sender;
+  }
+
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  function transferOwnership(address newOwner) onlyOwner {
+    if (newOwner != address(0)) {
+      owner = newOwner;
     }
-    c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    // uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return a / b;
-  }
-
-  /**
-  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    c = a + b;
-    assert(c >= a);
-    return c;
   }
 }
+// ================= Ownable Contract end ===============================
+
+// ================= Safemath Contract start ============================
+/* taking ideas from FirstBlood token */
+contract SafeMath {
+
+  function safeAdd(uint256 x, uint256 y) internal returns(uint256) {
+    uint256 z = x + y;
+    assert((z >= x) && (z >= y));
+    return z;
+  }
+
+  function safeSubtract(uint256 x, uint256 y) internal returns(uint256) {
+    assert(x >= y);
+    uint256 z = x - y;
+    return z;
+  }
+
+  function safeMult(uint256 x, uint256 y) internal returns(uint256) {
+    uint256 z = x * y;
+    assert((x == 0)||(z/x == y));
+    return z;
+  }
+}
+// ================= Safemath Contract end ==============================
+
 // ================= ERC20 Token Contract start =========================
 /*
  * ERC20 interface
@@ -56,72 +61,65 @@ library SafeMath {
  */
 contract ERC20 {
   uint public totalSupply;
-  function balanceOf(address who) public constant returns (uint);
-  function allowance(address owner, address spender) public constant returns (uint);
+  function balanceOf(address who) constant returns (uint);
+  function allowance(address owner, address spender) constant returns (uint);
 
-  function transfer(address to, uint value) public returns (bool status);
-  function transferFrom(address from, address to, uint value) public returns (bool status);
-  function approve(address spender, uint value) public returns (bool status);
+  function transfer(address to, uint value) returns (bool ok);
+  function transferFrom(address from, address to, uint value) returns (bool ok);
+  function approve(address spender, uint value) returns (bool ok);
   event Transfer(address indexed from, address indexed to, uint value);
   event Approval(address indexed owner, address indexed spender, uint value);
 }
+// ================= ERC20 Token Contract end ===========================
 
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipRenounced(address indexed previousOwner);
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
+// ================= Standard Token Contract start ======================
+contract StandardToken is ERC20, SafeMath {
 
   /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
+  * @dev Fix for the ERC20 short address attack.
    */
-  constructor() public {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
+  modifier onlyPayloadSize(uint size) {
+    require(msg.data.length >= size + 4) ;
     _;
   }
 
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
+  mapping(address => uint) balances;
+  mapping (address => mapping (address => uint)) allowed;
+
+  function transfer(address _to, uint _value) onlyPayloadSize(2 * 32)  returns (bool success){
+    balances[msg.sender] = safeSubtract(balances[msg.sender], _value);
+    balances[_to] = safeAdd(balances[_to], _value);
+    Transfer(msg.sender, _to, _value);
+    return true;
   }
 
-  /**
-   * @dev Allows the current owner to relinquish control of the contract.
-   */
-  function renounceOwnership() public onlyOwner {
-    emit OwnershipRenounced(owner);
-    owner = address(0);
+  function transferFrom(address _from, address _to, uint _value) onlyPayloadSize(3 * 32) returns (bool success) {
+    var _allowance = allowed[_from][msg.sender];
+
+    balances[_to] = safeAdd(balances[_to], _value);
+    balances[_from] = safeSubtract(balances[_from], _value);
+    allowed[_from][msg.sender] = safeSubtract(_allowance, _value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
+
+  function balanceOf(address _owner) constant returns (uint balance) {
+    return balances[_owner];
+  }
+
+  function approve(address _spender, uint _value) returns (bool success) {
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  function allowance(address _owner, address _spender) constant returns (uint remaining) {
+    return allowed[_owner][_spender];
   }
 }
+// ================= Standard Token Contract end ========================
 
-
-
-
-
-
-
-
+// ================= Pausable Token Contract start ======================
 /**
  * @title Pausable
  * @dev Base contract which allows children to implement an emergency stop mechanism.
@@ -134,222 +132,179 @@ contract Pausable is Ownable {
 
 
   /**
-   * @dev Modifier to make a function callable only when the contract is not paused.
-   */
+  * @dev modifier to allow actions only when the contract IS paused
+  */
   modifier whenNotPaused() {
-    require(!paused);
+    require (!paused);
     _;
   }
 
   /**
-   * @dev Modifier to make a function callable only when the contract is paused.
-   */
-  modifier whenPaused() {
-    require(paused);
+  * @dev modifier to allow actions only when the contract IS NOT paused
+  */
+  modifier whenPaused {
+    require (paused) ;
     _;
   }
 
   /**
-   * @dev called by the owner to pause, triggers stopped state
-   */
-  function pause() onlyOwner whenNotPaused public {
+  * @dev called by the owner to pause, triggers stopped state
+  */
+  function pause() onlyOwner whenNotPaused returns (bool) {
     paused = true;
-    emit Pause();
+    Pause();
+    return true;
   }
 
   /**
-   * @dev called by the owner to unpause, returns to normal state
-   */
-  function unpause() onlyOwner whenPaused public {
+  * @dev called by the owner to unpause, returns to normal state
+  */
+  function unpause() onlyOwner whenPaused returns (bool) {
     paused = false;
-    emit Unpause();
+    Unpause();
+    return true;
   }
 }
+// ================= Pausable Token Contract end ========================
 
+// ================= IcoToken  start =======================
+contract IcoToken is SafeMath, StandardToken, Pausable {
+  string public name;
+  string public symbol;
+  uint256 public decimals;
+  string public version;
+  address public icoContract;
 
-
-
-
-
-
-
-contract StandardToken is ERC20{
-  
-   /*Define SafeMath library here for uint256*/
-   
-   using SafeMath for uint256; 
-       
-  /**
-  * @dev Fix for the ERC20 short address attack.
-   */
-  modifier onlyPayloadSize(uint size) {
-    require(msg.data.length >= size + 4) ;
-    _;
+  function IcoToken(
+    string _name,
+    string _symbol,
+    uint256 _decimals,
+    string _version
+  )
+  {
+    name = _name;
+    symbol = _symbol;
+    decimals = _decimals;
+    version = _version;
   }
 
-  mapping(address => uint) accountBalances;
-  mapping (address => mapping (address => uint)) allowed;
-
-  function transfer(address _to, uint _value) public onlyPayloadSize(2 * 32)  returns (bool success){
-    accountBalances[msg.sender] = accountBalances[msg.sender].sub(_value);
-    accountBalances[_to] = accountBalances[_to].add(_value);
-    emit Transfer(msg.sender, _to, _value);
-    return true;
+  function transfer(address _to, uint _value) whenNotPaused returns (bool success) {
+    return super.transfer(_to,_value);
   }
 
-  function transferFrom(address _from, address _to, uint _value) public onlyPayloadSize(3 * 32) returns (bool success) {
-    uint _allowance = allowed[_from][msg.sender];
-
-    accountBalances[_to] = accountBalances[_to].add(_value);
-    accountBalances[_from] = accountBalances[_from].sub(_value);
-    allowed[_from][msg.sender] = _allowance.sub(_value);
-    emit Transfer(_from, _to, _value);
-    return true;
+  function approve(address _spender, uint _value) whenNotPaused returns (bool success) {
+    return super.approve(_spender,_value);
   }
 
-  function balanceOf(address _owner) public constant returns (uint balance) {
-    return accountBalances[_owner];
+  function balanceOf(address _owner) constant returns (uint balance) {
+    return super.balanceOf(_owner);
   }
 
-  function approve(address _spender, uint _value) public returns (bool success) {
-    allowed[msg.sender][_spender] = _value;
-    emit Approval(msg.sender, _spender, _value);
-    return true;
+  function setIcoContract(address _icoContract) onlyOwner {
+    if (_icoContract != address(0)) {
+      icoContract = _icoContract;
+    }
   }
 
-  function allowance(address _owner, address _spender) public constant returns (uint remaining) {
-    return allowed[_owner][_spender];
+  function sell(address _recipient, uint256 _value) whenNotPaused returns (bool success) {
+      assert(_value > 0);
+      require(msg.sender == icoContract);
+
+      balances[_recipient] += _value;
+      totalSupply += _value;
+
+      Transfer(0x0, owner, _value);
+      Transfer(owner, _recipient, _value);
+      return true;
   }
+
 }
 
+// ================= Ico Token Contract end =======================
 
+// ================= Actual Sale Contract Start ====================
+contract IcoContract is SafeMath, Pausable {
+  IcoToken public ico;
 
-contract IcoToken is StandardToken, Pausable{
-    /*define SafeMath library for uint256*/
-    using SafeMath for uint256;
-    
-    string public name;
-    string public symbol;
-    string public version;
-    uint public decimals;
-    address public icoSaleDeposit;
-    address public icoContract;
-    
-    constructor(string _name, string _symbol, uint256 _decimals, string _version) public {
-        name = _name;
-        symbol = _symbol;
-        decimals = _decimals;
-        version = _version;
-    }
-    
-    function transfer(address _to, uint _value) public whenNotPaused returns (bool success) {
-        return super.transfer(_to,_value);
-    }
-    
-    function approve(address _spender, uint _value) public whenNotPaused returns (bool success) {
-        return super.approve(_spender,_value);
-    }
-    
-    function balanceOf(address _owner) public view returns (uint balance){
-        return super.balanceOf(_owner);
-    }
-    
-    function setIcoContract(address _icoContract) public onlyOwner {
-        if(_icoContract != address(0)){
-            icoContract = _icoContract;           
-        }
-    }
-    
-    function sell(address _recipient, uint256 _value) public whenNotPaused returns (bool success){
-        assert(_value > 0);
-        require(msg.sender == icoContract);
-        
-        accountBalances[_recipient] = accountBalances[_recipient].add(_value);
-        totalSupply = totalSupply.add(_value);
-        
-        emit Transfer(0x0,owner,_value);
-        emit Transfer(owner,_recipient,_value);
-        return true;
-    }
-    
-}    
+  uint256 public tokenCreationCap;
+  uint256 public totalSupply;
 
-contract IcoContract is Pausable{
-    /*define SafeMath library for uint256*/
-    using SafeMath for uint256;
-    IcoToken public ico ;
-    uint256 public tokenCreationCap;
-    uint256 public totalSupply;
-    uint256 public fundingStartTime;
-    uint256 public fundingEndTime;
-    uint256 public minContribution;
-    uint256 public tokenExchangeRate;
-    
-    address public ethFundDeposit;
-    address public icoAddress;
-    
-    bool public isFinalized;
-    
-    event LogCreateICO(address from, address to, uint256 val);
-    
-    function CreateIco(address to, uint256 val) internal returns (bool success) {
-        emit LogCreateICO(0x0,to,val);
-        return ico.sell(to,val);/*call to IcoToken sell() method*/
+  address public ethFundDeposit;
+  address public icoAddress;
+
+  uint256 public fundingStartTime;
+  uint256 public fundingEndTime;
+  uint256 public minContribution;
+
+  bool public isFinalized;
+  uint256 public tokenExchangeRate;
+
+  event LogCreateICO(address from, address to, uint256 val);
+
+  function CreateICO(address to, uint256 val) internal returns (bool success) {
+    LogCreateICO(0x0, to, val);
+    return ico.sell(to, val);
+  }
+
+  function IcoContract(
+    address _ethFundDeposit,
+    address _icoAddress,
+    uint256 _tokenCreationCap,
+    uint256 _tokenExchangeRate,
+    uint256 _fundingStartTime,
+    uint256 _fundingEndTime,
+    uint256 _minContribution
+  )
+  {
+    ethFundDeposit = _ethFundDeposit;
+    icoAddress = _icoAddress;
+    tokenCreationCap = _tokenCreationCap;
+    tokenExchangeRate = _tokenExchangeRate;
+    fundingStartTime = _fundingStartTime;
+    minContribution = _minContribution;
+    fundingEndTime = _fundingEndTime;
+    ico = IcoToken(icoAddress);
+    isFinalized = false;
+  }
+
+  function () payable {    
+    createTokens(msg.sender, msg.value);
+  }
+
+  /// @dev Accepts ether and creates new ICO tokens.
+  function createTokens(address _beneficiary, uint256 _value) internal whenNotPaused {
+    require (tokenCreationCap > totalSupply);
+    require (now >= fundingStartTime);
+    require (now <= fundingEndTime);
+    require (_value >= minContribution);
+    require (!isFinalized);
+
+    uint256 tokens = safeMult(_value, tokenExchangeRate);
+    uint256 checkedSupply = safeAdd(totalSupply, tokens);
+
+    if (tokenCreationCap < checkedSupply) {        
+      uint256 tokensToAllocate = safeSubtract(tokenCreationCap, totalSupply);
+      uint256 tokensToRefund   = safeSubtract(tokens, tokensToAllocate);
+      totalSupply = tokenCreationCap;
+      uint256 etherToRefund = tokensToRefund / tokenExchangeRate;
+
+      require(CreateICO(_beneficiary, tokensToAllocate));
+      msg.sender.transfer(etherToRefund);
+      ethFundDeposit.transfer(this.balance);
+      return;
     }
-    
-    constructor(address _ethFundDeposit,
-                address _icoAddress,
-                uint256 _tokenCreationCap,
-                uint256 _tokenExchangeRate,
-                uint256 _fundingStartTime,
-                uint256 _fundingEndTime,
-                uint256 _minContribution) public {
-        ethFundDeposit = _ethFundDeposit;
-        icoAddress = _icoAddress;
-        tokenCreationCap = _tokenCreationCap;
-        tokenExchangeRate = _tokenExchangeRate;
-        fundingStartTime = _fundingStartTime;
-        minContribution = _minContribution;
-        fundingEndTime = _fundingEndTime;
-        ico = IcoToken(icoAddress);
-        isFinalized = false;
-    }
-    
-    /*call fallback method*/
-    function () public payable{
-        createTokens(msg.sender,msg.value);
-    }
-    
-    function createTokens(address _beneficiary,uint256 _value) internal whenNotPaused {
-        require(tokenCreationCap > totalSupply);
-        require(now >= fundingStartTime);
-        require(now <= fundingEndTime);
-        require(_value >= minContribution);
-        require(!isFinalized);
-        
-        uint256 tokens = _value.mul(tokenExchangeRate);
-        uint256 checkSupply = totalSupply.add(tokens);
-        
-        if(tokenCreationCap < checkSupply){
-            uint256 tokenToAllocate = tokenCreationCap.sub(totalSupply);
-            uint256 tokenToRefund = tokens.sub(tokenToAllocate);
-            uint256 etherToRefund = tokenToRefund / tokenExchangeRate;
-            totalSupply = tokenCreationCap;
-            
-            require(CreateIco(_beneficiary,tokenToAllocate));
-            msg.sender.transfer(etherToRefund);
-            ethFundDeposit.transfer(address(this).balance);
-            return;
-        }
-        
-        totalSupply = checkSupply;
-        require(CreateIco(_beneficiary,tokens));
-        ethFundDeposit.transfer(address(this).balance);
-    }
-    
-    function finalize() external onlyOwner{
-        require(!isFinalized);
-        isFinalized = true;
-        ethFundDeposit.transfer(address(this).balance);
-    }
+
+    totalSupply = checkedSupply;
+
+    require(CreateICO(_beneficiary, tokens)); 
+    ethFundDeposit.transfer(this.balance);
+  }
+
+  /// @dev Ends the funding period and sends the ETH home
+  function finalize() external onlyOwner {
+    require (!isFinalized);
+    // move to operational
+    isFinalized = true;
+    ethFundDeposit.transfer(this.balance);
+  }
 }
