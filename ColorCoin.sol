@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ColorCoin at 0x831703f60fa6c0c8d67b59ddd7bd3429b36f55ec
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ColorCoin at 0xcd495611b89c79085a3229bb50a0995806a77724
 */
 pragma solidity ^0.4.24;
 
@@ -97,7 +97,7 @@ contract ColorCoin is ERC20 {
     constructor(address _founder, address _admin) public {
         name = "Color Coin";
         symbol = "COL";
-        totalSupply = 400000000000000000000000000;
+        totalSupply = 500000000000000000000000000;
         decimals = 18;
         admin = _admin;
         founder = _founder;
