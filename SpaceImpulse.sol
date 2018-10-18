@@ -1,7 +1,27 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SpaceImpulse at 0x61e6aE7EF87253999889934dCD3D8caC791aF950
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SpaceImpulse at 0xf02d2b39db9f47f68208f55e571fb01c14a35355
 */
 pragma solidity 0.4.24;
+
+/*
+
+    Copyright 2018, Vicent Nos & Mireia Puig
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*/
+
 
 
 library SafeMath {
@@ -81,7 +101,7 @@ contract SpaceImpulse is Ownable {
 
     using SafeMath for uint256;
 
-    string public name = "SpaceImpulse Public Engagement";      // Extended name of this contract
+    string public name = "Space Impulse Public Engagement";      // Extended name of this contract
     uint256 public tokenPrice;            // Set the fixed SpaceImpulse token price
     uint256 public maxCap = 0;            // Set the target maximum cap in ETH
     address public FWDaddrETH;            // Set the address to forward the received ETH to
@@ -122,7 +142,7 @@ contract SpaceImpulse is Ownable {
         (
         address SpaceImpulse_ERC20
         ) public {
-        FWDaddrETH = 0x69587ed6f526f8B3FD9eB01d4F1FCC86f0394c8f;
+        FWDaddrETH = 0xD9614b3FaC2B523504AbC18104e4B32EE0605855;
         SpaceImpulseERC20 = SpaceImpulse_ERC20;
         tokenPrice = 150000000000000;
         minPersonalCap = 150000000000000000;
