@@ -1,130 +1,101 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BasicToken at 0x1aabeb29f89fb61888ff8c0f163113f275774c99
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BasicToken at 0x23ad7f215cbfb6dfe0e3efad5dd21be72b287b9e
 */
-pragma solidity ^0.4.13;
-
-contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipRenounced(address indexed previousOwner);
-  event OwnershipTransferred(
-    address indexed previousOwner,
-    address indexed newOwner
-  );
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  constructor() public {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-  /**
-   * @dev Allows the current owner to relinquish control of the contract.
-   */
-  function renounceOwnership() public onlyOwner {
-    emit OwnershipRenounced(owner);
-    owner = address(0);
-  }
-}
-
+pragma solidity ^0.4.8;
+// ----------------------------------------------------------------------------
+// 'The Bazeries Cylinder' token contract
+//
+// Symbol      : BAZ
+// Name        : The Bazeries Cylinder
+// Decimals    : 18
+//
+// Never forget: 
+// The Times 03/Jan/2009 Chancellor on brink of second bailout for banks
+// BTC must always thrive
+// 
+// ----------------------------------------------------------------------------
+/**
+ * Math operations with safety checks
+ */
 library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    if (a == 0) {
-      return 0;
-    }
-    c = a * b;
-    assert(c / a == b);
+  function mul(uint a, uint b) internal returns (uint) {
+    uint c = a * b;
+    assert(a == 0 || c / a == b);
     return c;
   }
 
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+  function div(uint a, uint b) internal returns (uint) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
-    // uint256 c = a / b;
+    uint c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return a / b;
+    return c;
   }
 
-  /**
-  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+  function sub(uint a, uint b) internal returns (uint) {
     assert(b <= a);
     return a - b;
   }
 
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    c = a + b;
+  function add(uint a, uint b) internal returns (uint) {
+    uint c = a + b;
     assert(c >= a);
     return c;
   }
+
+  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
+    return a >= b ? a : b;
+  }
+
+  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
+    return a < b ? a : b;
+  }
+
+  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
+    return a >= b ? a : b;
+  }
+
+  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
+    return a < b ? a : b;
+  }
+
+  function assert(bool assertion) internal {
+    if (!assertion) {
+      throw;
+    }
+  }
 }
 
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender)
-    public view returns (uint256);
 
-  function transferFrom(address from, address to, uint256 value)
-    public returns (bool);
-
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(
-    address indexed owner,
-    address indexed spender,
-    uint256 value
-  );
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20Basic {
+  uint public totalSupply;
+  function balanceOf(address who) constant returns (uint);
+  function transfer(address to, uint value);
+  event Transfer(address indexed from, address indexed to, uint value);
 }
 
+
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
+ */
 contract BasicToken is ERC20Basic {
-  using SafeMath for uint256;
+  using SafeMath for uint;
 
-  mapping(address => uint256) balances;
-
-  uint256 totalSupply_;
+  mapping(address => uint) balances;
 
   /**
-  * @dev total number of tokens in existence
-  */
-  function totalSupply() public view returns (uint256) {
-    return totalSupply_;
+   * @dev Fix for the ERC20 short address attack.
+   */
+  modifier onlyPayloadSize(uint size) {
+     if(msg.data.length < size + 4) {
+       throw;
+     }
+     _;
   }
 
   /**
@@ -132,483 +103,307 @@ contract BasicToken is ERC20Basic {
   * @param _to The address to transfer to.
   * @param _value The amount to be transferred.
   */
-  function transfer(address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[msg.sender]);
-
+  function transfer(address _to, uint _value) onlyPayloadSize(2 * 32) {
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
-    emit Transfer(msg.sender, _to, _value);
-    return true;
+    Transfer(msg.sender, _to, _value);
   }
 
   /**
   * @dev Gets the balance of the specified address.
   * @param _owner The address to query the the balance of.
-  * @return An uint256 representing the amount owned by the passed address.
+  * @return An uint representing the amount owned by the passed address.
   */
-  function balanceOf(address _owner) public view returns (uint256) {
+  function balanceOf(address _owner) constant returns (uint balance) {
     return balances[_owner];
   }
 
 }
 
-contract StandardToken is ERC20, BasicToken {
 
-  mapping (address => mapping (address => uint256)) internal allowed;
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) constant returns (uint);
+  function transferFrom(address from, address to, uint value);
+  function approve(address spender, uint value);
+  event Approval(address indexed owner, address indexed spender, uint value);
+}
+
+
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implemantation of the basic standart token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
+contract StandardToken is BasicToken, ERC20 {
+
+  mapping (address => mapping (address => uint)) allowed;
 
 
   /**
    * @dev Transfer tokens from one address to another
    * @param _from address The address which you want to send tokens from
    * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amount of tokens to be transferred
+   * @param _value uint the amout of tokens to be transfered
    */
-  function transferFrom(
-    address _from,
-    address _to,
-    uint256 _value
-  )
-    public
-    returns (bool)
-  {
-    require(_to != address(0));
-    require(_value <= balances[_from]);
-    require(_value <= allowed[_from][msg.sender]);
+  function transferFrom(address _from, address _to, uint _value) onlyPayloadSize(3 * 32) {
+    var _allowance = allowed[_from][msg.sender];
 
-    balances[_from] = balances[_from].sub(_value);
+    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
+    // if (_value > _allowance) throw;
+
     balances[_to] = balances[_to].add(_value);
-    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    emit Transfer(_from, _to, _value);
-    return true;
+    balances[_from] = balances[_from].sub(_value);
+    allowed[_from][msg.sender] = _allowance.sub(_value);
+    Transfer(_from, _to, _value);
   }
 
   /**
-   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   *
-   * Beware that changing an allowance with this method brings the risk that someone may use both the old
-   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
-   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
-   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   * @dev Aprove the passed address to spend the specified amount of tokens on beahlf of msg.sender.
    * @param _spender The address which will spend the funds.
    * @param _value The amount of tokens to be spent.
    */
-  function approve(address _spender, uint256 _value) public returns (bool) {
+  function approve(address _spender, uint _value) {
+
+    // To change the approve amount you first have to reduce the addresses`
+    //  allowance to zero by calling `approve(_spender, 0)` if it is not
+    //  already 0 to mitigate the race condition described here:
+    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+    if ((_value != 0) && (allowed[msg.sender][_spender] != 0)) throw;
+
     allowed[msg.sender][_spender] = _value;
-    emit Approval(msg.sender, _spender, _value);
-    return true;
+    Approval(msg.sender, _spender, _value);
   }
 
   /**
-   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @dev Function to check the amount of tokens than an owner allowed to a spender.
    * @param _owner address The address which owns the funds.
    * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifying the amount of tokens still available for the spender.
+   * @return A uint specifing the amount of tokens still avaible for the spender.
    */
-  function allowance(
-    address _owner,
-    address _spender
-   )
-    public
-    view
-    returns (uint256)
-  {
+  function allowance(address _owner, address _spender) constant returns (uint remaining) {
     return allowed[_owner][_spender];
   }
 
-  /**
-   * @dev Increase the amount of tokens that an owner allowed to a spender.
-   *
-   * approve should be called when allowed[_spender] == 0. To increment
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   * @param _spender The address which will spend the funds.
-   * @param _addedValue The amount of tokens to increase the allowance by.
-   */
-  function increaseApproval(
-    address _spender,
-    uint _addedValue
-  )
-    public
-    returns (bool)
-  {
-    allowed[msg.sender][_spender] = (
-      allowed[msg.sender][_spender].add(_addedValue));
-    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
+}
+
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
 
   /**
-   * @dev Decrease the amount of tokens that an owner allowed to a spender.
-   *
-   * approve should be called when allowed[_spender] == 0. To decrement
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   * @param _spender The address which will spend the funds.
-   * @param _subtractedValue The amount of tokens to decrease the allowance by.
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
    */
-  function decreaseApproval(
-    address _spender,
-    uint _subtractedValue
-  )
-    public
-    returns (bool)
-  {
-    uint oldValue = allowed[msg.sender][_spender];
-    if (_subtractedValue > oldValue) {
-      allowed[msg.sender][_spender] = 0;
-    } else {
-      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+  function Ownable() {
+    owner = msg.sender;
+  }
+
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    if (msg.sender != owner) {
+      throw;
     }
-    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
+    _;
+  }
+
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner {
+    if (newOwner != address(0)) {
+      owner = newOwner;
+    }
   }
 
 }
 
-contract ERC827 is ERC20 {
-  function approveAndCall(
-    address _spender,
-    uint256 _value,
-    bytes _data
-  )
-    public
-    payable
-    returns (bool);
 
-  function transferAndCall(
-    address _to,
-    uint256 _value,
-    bytes _data
-  )
-    public
-    payable
-    returns (bool);
+/**
+ * @title Mintable token
+ * @dev Simple ERC20 Token example, with mintable token creation
+ * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
+ * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
+ */
 
-  function transferFromAndCall(
-    address _from,
-    address _to,
-    uint256 _value,
-    bytes _data
-  )
-    public
-    payable
-    returns (bool);
-}
+contract MintableToken is StandardToken, Ownable {
+  event Mint(address indexed to, uint value);
+  event MintFinished();
 
-contract ERC827Token is ERC827, StandardToken {
+  bool public mintingFinished = false;
+  uint public totalSupply = 0;
+
+
+  modifier canMint() {
+    if(mintingFinished) throw;
+    _;
+  }
 
   /**
-   * @dev Addition to ERC20 token methods. It allows to
-   * @dev approve the transfer of value and execute a call with the sent data.
-   *
-   * @dev Beware that changing an allowance with this method brings the risk that
-   * @dev someone may use both the old and the new allowance by unfortunate
-   * @dev transaction ordering. One possible solution to mitigate this race condition
-   * @dev is to first reduce the spender's allowance to 0 and set the desired value
-   * @dev afterwards:
-   * @dev https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-   *
-   * @param _spender The address that will spend the funds.
-   * @param _value The amount of tokens to be spent.
-   * @param _data ABI-encoded contract call to call `_to` address.
-   *
-   * @return true if the call function was executed successfully
+   * @dev Function to mint tokens
+   * @param _to The address that will recieve the minted tokens.
+   * @param _amount The amount of tokens to mint.
+   * @return A boolean that indicates if the operation was successful.
    */
-  function approveAndCall(
-    address _spender,
-    uint256 _value,
-    bytes _data
-  )
-    public
-    payable
-    returns (bool)
-  {
-    require(_spender != address(this));
-
-    super.approve(_spender, _value);
-
-    // solium-disable-next-line security/no-call-value
-    require(_spender.call.value(msg.value)(_data));
-
+  function mint(address _to, uint _amount) onlyOwner canMint returns (bool) {
+    totalSupply = totalSupply.add(_amount);
+    balances[_to] = balances[_to].add(_amount);
+    Mint(_to, _amount);
     return true;
   }
 
   /**
-   * @dev Addition to ERC20 token methods. Transfer tokens to a specified
-   * @dev address and execute a call with the sent data on the same transaction
-   *
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amout of tokens to be transfered
-   * @param _data ABI-encoded contract call to call `_to` address.
-   *
-   * @return true if the call function was executed successfully
+   * @dev Function to stop minting new tokens.
+   * @return True if the operation was successful.
    */
-  function transferAndCall(
-    address _to,
-    uint256 _value,
-    bytes _data
-  )
-    public
-    payable
-    returns (bool)
-  {
-    require(_to != address(this));
+  function finishMinting() onlyOwner returns (bool) {
+    mintingFinished = true;
+    MintFinished();
+    return true;
+  }
+}
 
+
+/**
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
+ */
+contract Pausable is Ownable {
+  event Pause();
+  event Unpause();
+
+  bool public paused = false;
+
+
+  /**
+   * @dev modifier to allow actions only when the contract IS paused
+   */
+  modifier whenNotPaused() {
+    if (paused) throw;
+    _;
+  }
+
+  /**
+   * @dev modifier to allow actions only when the contract IS NOT paused
+   */
+  modifier whenPaused {
+    if (!paused) throw;
+    _;
+  }
+
+  /**
+   * @dev called by the owner to pause, triggers stopped state
+   */
+  function pause() onlyOwner whenNotPaused returns (bool) {
+    paused = true;
+    Pause();
+    return true;
+  }
+
+  /**
+   * @dev called by the owner to unpause, returns to normal state
+   */
+  function unpause() onlyOwner whenPaused returns (bool) {
+    paused = false;
+    Unpause();
+    return true;
+  }
+}
+
+
+/**
+ * Pausable token
+ *
+ * Simple ERC20 Token example, with pausable token creation
+ **/
+
+contract PausableToken is StandardToken, Pausable {
+
+  function transfer(address _to, uint _value) whenNotPaused {
     super.transfer(_to, _value);
-
-    // solium-disable-next-line security/no-call-value
-    require(_to.call.value(msg.value)(_data));
-    return true;
   }
 
-  /**
-   * @dev Addition to ERC20 token methods. Transfer tokens from one address to
-   * @dev another and make a contract call on the same transaction
-   *
-   * @param _from The address which you want to send tokens from
-   * @param _to The address which you want to transfer to
-   * @param _value The amout of tokens to be transferred
-   * @param _data ABI-encoded contract call to call `_to` address.
-   *
-   * @return true if the call function was executed successfully
-   */
-  function transferFromAndCall(
-    address _from,
-    address _to,
-    uint256 _value,
-    bytes _data
-  )
-    public payable returns (bool)
-  {
-    require(_to != address(this));
-
+  function transferFrom(address _from, address _to, uint _value) whenNotPaused {
     super.transferFrom(_from, _to, _value);
-
-    // solium-disable-next-line security/no-call-value
-    require(_to.call.value(msg.value)(_data));
-    return true;
   }
-
-  /**
-   * @dev Addition to StandardToken methods. Increase the amount of tokens that
-   * @dev an owner allowed to a spender and execute a call with the sent data.
-   *
-   * @dev approve should be called when allowed[_spender] == 0. To increment
-   * @dev allowed value is better to use this function to avoid 2 calls (and wait until
-   * @dev the first transaction is mined)
-   * @dev From MonolithDAO Token.sol
-   *
-   * @param _spender The address which will spend the funds.
-   * @param _addedValue The amount of tokens to increase the allowance by.
-   * @param _data ABI-encoded contract call to call `_spender` address.
-   */
-  function increaseApprovalAndCall(
-    address _spender,
-    uint _addedValue,
-    bytes _data
-  )
-    public
-    payable
-    returns (bool)
-  {
-    require(_spender != address(this));
-
-    super.increaseApproval(_spender, _addedValue);
-
-    // solium-disable-next-line security/no-call-value
-    require(_spender.call.value(msg.value)(_data));
-
-    return true;
-  }
-
-  /**
-   * @dev Addition to StandardToken methods. Decrease the amount of tokens that
-   * @dev an owner allowed to a spender and execute a call with the sent data.
-   *
-   * @dev approve should be called when allowed[_spender] == 0. To decrement
-   * @dev allowed value is better to use this function to avoid 2 calls (and wait until
-   * @dev the first transaction is mined)
-   * @dev From MonolithDAO Token.sol
-   *
-   * @param _spender The address which will spend the funds.
-   * @param _subtractedValue The amount of tokens to decrease the allowance by.
-   * @param _data ABI-encoded contract call to call `_spender` address.
-   */
-  function decreaseApprovalAndCall(
-    address _spender,
-    uint _subtractedValue,
-    bytes _data
-  )
-    public
-    payable
-    returns (bool)
-  {
-    require(_spender != address(this));
-
-    super.decreaseApproval(_spender, _subtractedValue);
-
-    // solium-disable-next-line security/no-call-value
-    require(_spender.call.value(msg.value)(_data));
-
-    return true;
-  }
-
 }
 
-contract TucToken is ERC827Token, Ownable {
 
-    mapping(address => uint256) preApprovedBalances;
-    mapping(address => bool) approvedAccounts;
+/**
+ * @title TokenTimelock
+ * @dev TokenTimelock is a token holder contract that will allow a
+ * beneficiary to extract the tokens after a time has passed
+ */
+contract TokenTimelock {
 
-    address admin1;
-    address admin2;
+  // ERC20 basic token contract being held
+  ERC20Basic token;
 
-    address public accountPubICOSale;
-    uint8 public decimals;
-	string public name;
-	string public symbol;
-	
-	uint constant pubICOStartsAt = 1541030400; // 1.11.2018 = 1541030400
+  // beneficiary of tokens after they are released
+  address beneficiary;
 
-    modifier onlyKycTeam {
-        require(msg.sender == admin1 || msg.sender == admin2);
-        _;
-    }
-	
-	modifier PubICOstarted {
-		require(now >= pubICOStartsAt );
-		_;
-	}
+  // timestamp where token release is enabled
+  uint releaseTime;
 
-    /**
-     * @dev Create new TUC token contract.
-     *
-     * @param _accountFounder The account for the found tokens that receives 1,024,000,000 tokens on creation.
-     * @param _accountPrivPreSale The account for the private pre-sale tokens that receives 1,326,000,000 tokens on creation.
-     * @param _accountPubPreSale The account for the public pre-sale tokens that receives 1,500,000,000 tokens on creation.
-     * @param _accountPubICOSale The account for the public pre-sale tokens that receives 4,150,000,000 tokens on creation.
-	 * @param _accountSalesMgmt The account for the Sales Management tokens that receives 2,000,000,000 tokens on creation.
-     * @param _accountTucWorld The account for the TUC World tokens that receives 2,000.000,000 tokens on creation.
-     */
-    constructor (
-        address _admin1,
-        address _admin2,
-		address _accountFounder,
-		address _accountPrivPreSale,
-		address _accountPubPreSale,
-        address _accountPubICOSale,
-		address _accountSalesMgmt,
-		address _accountTucWorld
-		)
-    public 
-    payable
-    {
-        admin1 = _admin1;
-        admin2 = _admin2;
-        accountPubICOSale = _accountPubICOSale;
-        decimals = 18; // 10**decimals=1000000000000000000
-		totalSupply_ = 12000000000000000000000000000;
-		 
-		balances[_accountFounder]     = 1024000000000000000000000000 ; // 1024000000 * 10**(decimals);
-        balances[_accountPrivPreSale] = 1326000000000000000000000000 ; // 1326000000 * 10**(decimals);
-        balances[_accountPubPreSale]  = 1500000000000000000000000000 ; // 1500000000 * 10**(decimals);
-		balances[_accountPubICOSale]  = 4150000000000000000000000000 ; // 4150000000 * 10**(decimals);
-        balances[_accountSalesMgmt]   = 2000000000000000000000000000 ; // 2000000000 * 10**(decimals);
-        balances[_accountTucWorld]    = 2000000000000000000000000000 ; // 2000000000 * 10**(decimals);
-		emit Transfer(0, _accountFounder, 		balances[_accountFounder]);
-		emit Transfer(0, _accountPrivPreSale, 	balances[_accountPrivPreSale]);
-		emit Transfer(0, _accountPubPreSale, 	balances[_accountPubPreSale]);
-		emit Transfer(0, _accountPubICOSale, 	balances[_accountPubICOSale]);
-		emit Transfer(0, _accountSalesMgmt, 	balances[_accountSalesMgmt]);
-		emit Transfer(0, _accountTucWorld, 		balances[_accountTucWorld]);
-		
-		name = "TUC.World";
-		symbol = "TUC";
-    }
+  function TokenTimelock(ERC20Basic _token, address _beneficiary, uint _releaseTime) {
+    require(_releaseTime > now);
+    token = _token;
+    beneficiary = _beneficiary;
+    releaseTime = _releaseTime;
+  }
 
-    /** 
-     * @dev During the public ICO users can buy TUC tokens by sending ETH to this method.
-     * @dev The price per token is fixed to 0.00000540 ETH / TUC.
-     *
-     * @dev The buyer will receive his tokens after successful KYC approval by the TUC team. In case KYC is refused,
-     * @dev the send ETH funds are send back to the buyer and no TUC tokens will be delivered.
-     */
-    function buyToken()
-    payable
-    external
-	PubICOstarted
-    {
-        uint256 tucAmount = (msg.value * 1000000000000000000) / 5400000000000;
-        require(balances[accountPubICOSale] >= tucAmount);
-		
-        if (approvedAccounts[msg.sender]) {
-            // already kyc approved
-            balances[msg.sender] += tucAmount;
-			emit Transfer(accountPubICOSale, msg.sender, tucAmount);
-        } else {
-            // not kyc approved
-            preApprovedBalances[msg.sender] += tucAmount;
-        }
-        balances[accountPubICOSale] -= tucAmount;
-    }
+  /**
+   * @dev beneficiary claims tokens held by time lock
+   */
+  function claim() {
+    require(msg.sender == beneficiary);
+    require(now >= releaseTime);
 
-    /**
-     * @dev Approve KYC of a user, who contributed in ETH.
-     * @dev Deliver the tokens to the user's account and move the ETH balance to the TUC contract.
-     *
-     * @param _user The account of the user to approve KYC.
-     */
-    function kycApprove(address _user)
-    external
-    onlyKycTeam
-    {
-        // account is approved
-        approvedAccounts[_user] = true;
-        // move balance for this account to "real" balances
-        balances[_user] += preApprovedBalances[_user];
-        // account has no more "unapproved" balance
-        preApprovedBalances[_user] = 0;
-		emit Transfer(accountPubICOSale, _user, balances[_user]);
-    }
+    uint amount = token.balanceOf(this);
+    require(amount > 0);
 
-    /**
-     * @dev Refusing KYC of a user, who contributed in ETH.
-     * @dev Send back the ETH funds and deny delivery of TUC tokens.
-     *
-     * @param _user The account of the user to refuse KYC.
-     */
-    function kycRefuse(address _user)
-    external
-    onlyKycTeam
-    {
-		require(approvedAccounts[_user] == false);
-        uint256 tucAmount = preApprovedBalances[_user];
-        uint256 weiAmount = (tucAmount * 5400000000000) / 1000000000000000000;
-        // account is not approved now
-        approvedAccounts[_user] = false;
-        // pubPreSale gets back its tokens
-        balances[accountPubICOSale] += tucAmount;
-        // user has no more balance
-        preApprovedBalances[_user] = 0;
-        // we transfer the eth back to the user that were used to buy the tokens
-        _user.transfer(weiAmount);
-    }
+    token.transfer(beneficiary, amount);
+  }
+}
 
-    /**
-     * @dev Retrieve ETH from the contract.
-     *
-     * @dev The contract owner can use this method to transfer received ETH to another wallet.
-     *
-     * @param _safe The address of the wallet the funds should get transferred to.
-     * @param _value The amount of ETH to transfer.
-     */
-    function retrieveEth(address _safe, uint256 _value)
-    external
-    onlyOwner
-    {
-        _safe.transfer(_value);
-    }
+
+/**
+ * @title The Bazeries Cylinder
+ * @dev The Bazeries Cylinder contract
+ */
+contract Bazeries is PausableToken, MintableToken {
+  using SafeMath for uint256;
+
+  string public name = "The Bazeries Cylinder";
+  string public symbol = "BAZ";
+  uint public decimals = 18;
+
+  /**
+   * @dev mint timelocked tokens
+   */
+  function mintTimelocked(address _to, uint256 _amount, uint256 _releaseTime)
+    onlyOwner canMint returns (TokenTimelock) {
+
+    TokenTimelock timelock = new TokenTimelock(this, _to, _releaseTime);
+    mint(timelock, _amount);
+
+    return timelock;
+  }
+
 }
