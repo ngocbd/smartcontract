@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZCVesting at 0xf3e945691aff247fffea3ba79f546a958ca2d744
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZCVesting at 0xab171afeac90acb3d4583714bb908dd887fee91d
 */
 pragma solidity ^0.4.24;
 
@@ -122,9 +122,6 @@ contract ZCVesting {
      * @param _releaseAddr The Address where to release funds to
      */
     constructor(ERC20Basic _tokenAddr, IZCDistribution _distAddr, address _releaseAddr) public {
-        assert(_tokenAddr != address(0));
-        assert(_distAddr != address(0));
-        assert(_releaseAddr != address(0));
         token = _tokenAddr;
         dist = _distAddr;
         releaseAddress = _releaseAddr;
