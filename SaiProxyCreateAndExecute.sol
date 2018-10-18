@@ -1,79 +1,22 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SaiProxyCreateAndExecute at 0x190c2cfc69e68a8e8d5e2b9e2b9cc3332caff77b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SaiProxyCreateAndExecute at 0xd64979357160e8146f6e1d805cf20437397bf1ba
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.23;
 
-contract TubInterface {
-    function open() public returns (bytes32);
-    function join(uint) public;
-    function exit(uint) public;
-    function lock(bytes32, uint) public;
-    function free(bytes32, uint) public;
-    function draw(bytes32, uint) public;
-    function wipe(bytes32, uint) public;
-    function give(bytes32, address) public;
-    function shut(bytes32) public;
-    function bite(bytes32) public;
-    function cups(bytes32) public returns (address, uint, uint, uint);
-    function gem() public returns (TokenInterface);
-    function gov() public returns (TokenInterface);
-    function skr() public returns (TokenInterface);
-    function sai() public returns (TokenInterface);
-    function vox() public returns (VoxInterface);
-    function ask(uint) public returns (uint);
-    function mat() public returns (uint);
-    function chi() public returns (uint);
-    function ink(bytes32) public returns (uint);
-    function tab(bytes32) public returns (uint);
-    function rap(bytes32) public returns (uint);
-    function per() public returns (uint);
-    function pip() public returns (PipInterface);
-    function pep() public returns (PepInterface);
-    function tag() public returns (uint);
-    function drip() public;
-}
+/// math.sol -- mixin for inline numerical wizardry
 
-contract TapInterface {
-    function skr() public returns (TokenInterface);
-    function sai() public returns (TokenInterface);
-    function tub() public returns (TubInterface);
-    function bust(uint) public;
-    function boom(uint) public;
-    function cash(uint) public;
-    function mock(uint) public;
-    function heal() public;
-}
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 
-contract TokenInterface {
-    function allowance(address, address) public returns (uint);
-    function balanceOf(address) public returns (uint);
-    function approve(address, uint) public;
-    function transfer(address, uint) public returns (bool);
-    function transferFrom(address, address, uint) public returns (bool);
-    function deposit() public payable;
-    function withdraw(uint) public;
-}
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
 
-contract VoxInterface {
-    function par() public returns (uint);
-}
-
-contract PipInterface {
-    function read() public returns (bytes32);
-}
-
-contract PepInterface {
-    function peek() public returns (bytes32, bool);
-}
-
-contract OtcInterface {
-    function getPayAmount(address, address, uint) public constant returns (uint);
-    function buyAllAmount(address, uint, address pay_gem, uint) public returns (uint);
-}
-
-contract ProxyRegistryInterface {
-    function build(address) public returns (address);
-}
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 contract DSMath {
     function add(uint x, uint y) internal pure returns (uint z) {
@@ -141,6 +84,74 @@ contract DSMath {
             }
         }
     }
+}
+
+contract TubInterface {
+    function open() public returns (bytes32);
+    function join(uint) public;
+    function exit(uint) public;
+    function lock(bytes32, uint) public;
+    function free(bytes32, uint) public;
+    function draw(bytes32, uint) public;
+    function wipe(bytes32, uint) public;
+    function give(bytes32, address) public;
+    function shut(bytes32) public;
+    function bite(bytes32) public;
+    function cups(bytes32) public returns (address, uint, uint, uint);
+    function gem() public returns (TokenInterface);
+    function gov() public returns (TokenInterface);
+    function skr() public returns (TokenInterface);
+    function sai() public returns (TokenInterface);
+    function vox() public returns (VoxInterface);
+    function ask(uint) public returns (uint);
+    function mat() public returns (uint);
+    function chi() public returns (uint);
+    function ink(bytes32) public returns (uint);
+    function tab(bytes32) public returns (uint);
+    function rap(bytes32) public returns (uint);
+    function per() public returns (uint);
+    function pip() public returns (PipInterface);
+    function pep() public returns (PepInterface);
+    function tag() public returns (uint);
+    function drip() public;
+}
+
+contract TapInterface {
+    function skr() public returns (TokenInterface);
+    function sai() public returns (TokenInterface);
+    function tub() public returns (TubInterface);
+    function bust(uint) public;
+    function boom(uint) public;
+    function cash(uint) public;
+    function mock(uint) public;
+    function heal() public;
+}
+
+contract TokenInterface {
+    function allowance(address, address) public returns (uint);
+    function balanceOf(address) public returns (uint);
+    function approve(address, uint) public;
+    function transfer(address, uint) public returns (bool);
+    function transferFrom(address, address, uint) public returns (bool);
+    function deposit() public payable;
+    function withdraw(uint) public;
+}
+
+contract VoxInterface {
+    function par() public returns (uint);
+}
+
+contract PipInterface {
+    function read() public returns (bytes32);
+}
+
+contract PepInterface {
+    function peek() public returns (bytes32, bool);
+}
+
+contract OtcInterface {
+    function getPayAmount(address, address, uint) public constant returns (uint);
+    function buyAllAmount(address, uint, address pay_gem, uint) public returns (uint);
 }
 
 contract SaiProxy is DSMath {
@@ -264,6 +275,10 @@ contract SaiProxy is DSMath {
         wipeAndFree(tub_, cup, rmul(tub.ink(cup), tub.per()), tub.tab(cup), otc_);
         tub.shut(cup);
     }
+}
+
+contract ProxyRegistryInterface {
+    function build(address) public returns (address);
 }
 
 contract SaiProxyCreateAndExecute is SaiProxy {
