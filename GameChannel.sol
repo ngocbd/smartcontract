@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GameChannel at 0xbf8b9092e809de87932b28ffaa00d520b04359aa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GameChannel at 0x3e07881993c7542a6da9025550b54331474b21dd
 */
 pragma solidity ^0.4.24;
 
@@ -7,6 +7,8 @@ interface ConflictResolutionInterface {
     function minHouseStake(uint activeGames) external pure returns(uint);
 
     function maxBalance() external pure returns(int);
+
+    function conflictEndFine() external pure returns(int);
 
     function isValidBet(uint8 _gameType, uint _betNum, uint _betValue) external pure returns(bool);
 
@@ -17,7 +19,7 @@ interface ConflictResolutionInterface {
         int _balance,
         uint _stake,
         bytes32 _serverSeed,
-        bytes32 _playerSeed
+        bytes32 _userSeed
     )
         external
         view
@@ -35,7 +37,7 @@ interface ConflictResolutionInterface {
         view
         returns(int);
 
-    function playerForceGameEnd(
+    function userForceGameEnd(
         uint8 _gameType,
         uint _betNum,
         uint _betValue,
@@ -118,12 +120,37 @@ contract Ownable {
     }
 
     /**
-     * @dev New owner can accpet ownership.
+     * @dev PendingOwner can accept ownership.
      */
     function claimOwnership() public onlyPendingOwner {
-        emit LogOwnerShipTransferred(owner, pendingOwner);
         owner = pendingOwner;
         pendingOwner = address(0);
+        emit LogOwnerShipTransferred(owner, pendingOwner);
+    }
+}
+
+contract Activatable is Ownable {
+    bool public activated = false;
+
+    /// @dev Event is fired if activated.
+    event LogActive();
+
+    /// @dev Modifier, which only allows function execution if activated.
+    modifier onlyActivated() {
+        require(activated);
+        _;
+    }
+
+    /// @dev Modifier, which only allows function execution if not activated.
+    modifier onlyNotActivated() {
+        require(!activated);
+        _;
+    }
+
+    /// @dev activate contract, can be only called once by the contract owner.
+    function activate() public onlyOwner onlyNotActivated {
+        activated = true;
+        emit LogActive();
     }
 }
 
@@ -184,16 +211,18 @@ contract ConflictResolutionManager is Ownable {
     }
 }
 
-contract Pausable is Ownable {
-    /// @dev Is contract paused.
-    bool public paused = false;
+contract Pausable is Activatable {
+    using SafeMath for uint;
+
+    /// @dev Is contract paused. Initial it is paused.
+    bool public paused = true;
 
     /// @dev Time pause was called
-    uint public timePaused = 0;
+    uint public timePaused = block.timestamp;
 
     /// @dev Modifier, which only allows function execution if not paused.
     modifier onlyNotPaused() {
-        require(!paused);
+        require(!paused, "paused");
         _;
     }
 
@@ -205,7 +234,7 @@ contract Pausable is Ownable {
 
     /// @dev Modifier, which only allows function execution if paused longer than timeSpan.
     modifier onlyPausedSince(uint timeSpan) {
-        require(paused && timePaused + timeSpan <= block.timestamp);
+        require(paused && (timePaused.add(timeSpan) <= block.timestamp));
         _;
     }
 
@@ -225,9 +254,9 @@ contract Pausable is Ownable {
     }
 
     /**
-     * @dev Unpause contract.
+     * @dev Unpause contract. Initial contract is paused and can only be unpaused after activating it.
      */
-    function unpause() public onlyOwner onlyPaused {
+    function unpause() public onlyOwner onlyPaused onlyActivated {
         paused = false;
         timePaused = 0;
         emit LogUnpause();
@@ -239,7 +268,7 @@ contract Destroyable is Pausable {
     uint public constant TIMEOUT_DESTROY = 20 days;
 
     /**
-     * @dev Destroy contract and transfer ether to address _targetAddress.
+     * @dev Destroy contract and transfer ether to owner.
      */
     function destroy() public onlyOwner onlyPausedSince(TIMEOUT_DESTROY) {
         selfdestruct(owner);
@@ -247,36 +276,43 @@ contract Destroyable is Pausable {
 }
 
 contract GameChannelBase is Destroyable, ConflictResolutionManager {
+    using SafeCast for int;
+    using SafeCast for uint;
+    using SafeMath for int;
+    using SafeMath for uint;
+
+
     /// @dev Different game session states.
     enum GameStatus {
         ENDED, ///< @dev Game session is ended.
         ACTIVE, ///< @dev Game session is active.
-        PLAYER_INITIATED_END, ///< @dev Player initiated non regular end.
+        USER_INITIATED_END, ///< @dev User initiated non regular end.
         SERVER_INITIATED_END ///< @dev Server initiated non regular end.
     }
 
     /// @dev Reason game session ended.
     enum ReasonEnded {
         REGULAR_ENDED, ///< @dev Game session is regularly ended.
-        END_FORCED_BY_SERVER, ///< @dev Player did not respond. Server forced end.
-        END_FORCED_BY_PLAYER ///< @dev Server did not respond. Player forced end.
+        SERVER_FORCED_END, ///< @dev User did not respond. Server forced end.
+        USER_FORCED_END, ///< @dev Server did not respond. User forced end.
+        CONFLICT_ENDED ///< @dev Server or user raised conflict ans pushed game state, opponent pushed same game state.
     }
 
     struct Game {
         /// @dev Game session status.
         GameStatus status;
 
-        /// @dev Player's stake.
+        /// @dev User's stake.
         uint128 stake;
 
         /// @dev Last game round info if not regularly ended.
         /// If game session is ended normally this data is not used.
         uint8 gameType;
         uint32 roundId;
-        uint16 betNum;
+        uint betNum;
         uint betValue;
         int balance;
-        bytes32 playerSeed;
+        bytes32 userSeed;
         bytes32 serverSeed;
         uint endInitiatedTime;
     }
@@ -287,24 +323,22 @@ contract GameChannelBase is Destroyable, ConflictResolutionManager {
     /// @dev Maximal time span between profit transfer.
     uint public constant MAX_TRANSFER_TIMSPAN = 6 * 30 days;
 
-    bytes32 public constant TYPE_HASH = keccak256(abi.encodePacked(
-        "uint32 Round Id",
-        "uint8 Game Type",
-        "uint16 Number",
-        "uint Value (Wei)",
-        "int Current Balance (Wei)",
-        "bytes32 Server Hash",
-        "bytes32 Player Hash",
-        "uint Game Id",
-        "address Contract Address"
-     ));
+    bytes32 public constant EIP712DOMAIN_TYPEHASH = keccak256(
+        "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
+    );
+
+    bytes32 public constant BET_TYPEHASH = keccak256(
+        "Bet(uint32 roundId,uint8 gameType,uint256 number,uint256 value,int256 balance,bytes32 serverHash,bytes32 userHash,uint256 gameId)"
+    );
+
+    bytes32 public DOMAIN_SEPERATOR;
 
     /// @dev Current active game sessions.
     uint public activeGames = 0;
 
     /// @dev Game session id counter. Points to next free game session slot. So gameIdCntr -1 is the
     // number of game sessions created.
-    uint public gameIdCntr;
+    uint public gameIdCntr = 1;
 
     /// @dev Only this address can accept and end games.
     address public serverAddress;
@@ -318,10 +352,10 @@ contract GameChannelBase is Destroyable, ConflictResolutionManager {
     /// @dev House profit since last profit transfer.
     int public houseProfit = 0;
 
-    /// @dev Min value player needs to deposit for creating game session.
+    /// @dev Min value user needs to deposit for creating game session.
     uint128 public minStake;
 
-    /// @dev Max value player can deposit for creating game session.
+    /// @dev Max value user can deposit for creating game session.
     uint128 public maxStake;
 
     /// @dev Timeout until next profit transfer is allowed.
@@ -333,22 +367,22 @@ contract GameChannelBase is Destroyable, ConflictResolutionManager {
     /// @dev Maps gameId to game struct.
     mapping (uint => Game) public gameIdGame;
 
-    /// @dev Maps player address to current player game id.
-    mapping (address => uint) public playerGameId;
+    /// @dev Maps user address to current user game id.
+    mapping (address => uint) public userGameId;
 
-    /// @dev Maps player address to pending returns.
+    /// @dev Maps user address to pending returns.
     mapping (address => uint) public pendingReturns;
 
     /// @dev Modifier, which only allows to execute if house stake is high enough.
     modifier onlyValidHouseStake(uint _activeGames) {
         uint minHouseStake = conflictRes.minHouseStake(_activeGames);
-        require(houseStake >= minHouseStake);
+        require(houseStake >= minHouseStake, "inv houseStake");
         _;
     }
 
-    /// @dev Modifier to check if value send fulfills player stake requirements.
+    /// @dev Modifier to check if value send fulfills user stake requirements.
     modifier onlyValidValue() {
-        require(minStake <= msg.value && msg.value <= maxStake);
+        require(minStake <= msg.value && msg.value <= maxStake, "inv stake");
         _;
     }
 
@@ -365,28 +399,29 @@ contract GameChannelBase is Destroyable, ConflictResolutionManager {
         _;
     }
 
-    /// @dev This event is fired when player creates game session.
-    event LogGameCreated(address indexed player, uint indexed gameId, uint128 stake, bytes32 indexed serverEndHash, bytes32 playerEndHash);
+    /// @dev This event is fired when user creates game session.
+    event LogGameCreated(address indexed user, uint indexed gameId, uint128 stake, bytes32 indexed serverEndHash, bytes32 userEndHash);
 
-    /// @dev This event is fired when player requests conflict end.
-    event LogPlayerRequestedEnd(address indexed player, uint indexed gameId);
+    /// @dev This event is fired when user requests conflict end.
+    event LogUserRequestedEnd(address indexed user, uint indexed gameId);
 
     /// @dev This event is fired when server requests conflict end.
-    event LogServerRequestedEnd(address indexed player, uint indexed gameId);
+    event LogServerRequestedEnd(address indexed user, uint indexed gameId);
 
     /// @dev This event is fired when game session is ended.
-    event LogGameEnded(address indexed player, uint indexed gameId, uint32 roundId, int balance, ReasonEnded reason);
+    event LogGameEnded(address indexed user, uint indexed gameId, uint32 roundId, int balance, ReasonEnded reason);
 
-    /// @dev this event is fired when owner modifies player's stake limits.
+    /// @dev this event is fired when owner modifies user's stake limits.
     event LogStakeLimitsModified(uint minStake, uint maxStake);
 
     /**
      * @dev Contract constructor.
      * @param _serverAddress Server address.
-     * @param _minStake Min value player needs to deposit to create game session.
-     * @param _maxStake Max value player can deposit to create game session.
+     * @param _minStake Min value user needs to deposit to create game session.
+     * @param _maxStake Max value user can deposit to create game session.
      * @param _conflictResAddress Conflict resolution contract address.
      * @param _houseAddress House address to move profit to.
+     * @param _chainId Chain id for signature domain.
      */
     constructor(
         address _serverAddress,
@@ -394,20 +429,34 @@ contract GameChannelBase is Destroyable, ConflictResolutionManager {
         uint128 _maxStake,
         address _conflictResAddress,
         address _houseAddress,
-        uint _gameIdCntr
+        uint _chainId
     )
         public
         ConflictResolutionManager(_conflictResAddress)
     {
         require(_minStake > 0 && _minStake <= _maxStake);
-        require(_gameIdCntr > 0);
 
-        gameIdCntr = _gameIdCntr;
         serverAddress = _serverAddress;
         houseAddress = _houseAddress;
         lastProfitTransferTimestamp = block.timestamp;
         minStake = _minStake;
         maxStake = _maxStake;
+
+        DOMAIN_SEPERATOR =  keccak256(abi.encode(
+            EIP712DOMAIN_TYPEHASH,
+            keccak256("Dicether"),
+            keccak256("2"),
+            _chainId,
+            address(this)
+        ));
+    }
+
+    /**
+     * @dev Set gameIdCntr. Can be only set before activating contract.
+     */
+    function setGameIdCntr(uint _gameIdCntr) public onlyOwner onlyNotActivated {
+        require(gameIdCntr > 0);
+        gameIdCntr = _gameIdCntr;
     }
 
     /**
@@ -425,7 +474,7 @@ contract GameChannelBase is Destroyable, ConflictResolutionManager {
      * @notice Transfer house profit to houseAddress.
      */
     function transferProfitToHouse() public {
-        require(lastProfitTransferTimestamp + profitTransferTimeSpan <= block.timestamp);
+        require(lastProfitTransferTimestamp.add(profitTransferTimeSpan) <= block.timestamp);
 
         // update last transfer timestamp
         lastProfitTransferTimestamp = block.timestamp;
@@ -435,12 +484,10 @@ contract GameChannelBase is Destroyable, ConflictResolutionManager {
             return;
         }
 
-        // houseProfit is gt 0 => safe to cast
-        uint toTransfer = uint(houseProfit);
-        assert(houseStake >= toTransfer);
+        uint toTransfer = houseProfit.castToUint();
 
         houseProfit = 0;
-        houseStake = houseStake - toTransfer;
+        houseStake = houseStake.sub(toTransfer);
 
         houseAddress.transfer(toTransfer);
     }
@@ -460,7 +507,7 @@ contract GameChannelBase is Destroyable, ConflictResolutionManager {
      * @dev Increase house stake by msg.value
      */
     function addHouseStake() public payable onlyOwner {
-        houseStake += msg.value;
+        houseStake = houseStake.add(msg.value);
     }
 
     /**
@@ -469,10 +516,10 @@ contract GameChannelBase is Destroyable, ConflictResolutionManager {
     function withdrawHouseStake(uint value) public onlyOwner {
         uint minHouseStake = conflictRes.minHouseStake(activeGames);
 
-        require(value <= houseStake && houseStake - value >= minHouseStake);
-        require(houseProfit <= 0 || uint(houseProfit) <= houseStake - value);
+        require(value <= houseStake && houseStake.sub(value) >= minHouseStake);
+        require(houseProfit <= 0 || houseProfit.castToUint() <= houseStake.sub(value));
 
-        houseStake = houseStake - value;
+        houseStake = houseStake.sub(value);
         owner.transfer(value);
     }
 
@@ -510,7 +557,7 @@ contract GameChannelBase is Destroyable, ConflictResolutionManager {
      * @dev Close game session.
      * @param _game Game session data.
      * @param _gameId Id of game session.
-     * @param _playerAddress Player's address of game session.
+     * @param _userAddress User's address of game session.
      * @param _reason Reason for closing game session.
      * @param _balance Game session balance.
      */
@@ -518,7 +565,7 @@ contract GameChannelBase is Destroyable, ConflictResolutionManager {
         Game storage _game,
         uint _gameId,
         uint32 _roundId,
-        address _playerAddress,
+        address _userAddress,
         ReasonEnded _reason,
         int _balance
     )
@@ -526,42 +573,42 @@ contract GameChannelBase is Destroyable, ConflictResolutionManager {
     {
         _game.status = GameStatus.ENDED;
 
-        assert(activeGames > 0);
-        activeGames = activeGames - 1;
+        activeGames = activeGames.sub(1);
 
-        payOut(_playerAddress, _game.stake, _balance);
+        payOut(_userAddress, _game.stake, _balance);
 
-        emit LogGameEnded(_playerAddress, _gameId, _roundId, _balance, _reason);
+        emit LogGameEnded(_userAddress, _gameId, _roundId, _balance, _reason);
     }
 
     /**
-     * @dev End game by paying out player and server.
-     * @param _playerAddress Player's address.
-     * @param _stake Player's stake.
-     * @param _balance Player's balance.
+     * @dev End game by paying out user and server.
+     * @param _userAddress User's address.
+     * @param _stake User's stake.
+     * @param _balance User's balance.
      */
-    function payOut(address _playerAddress, uint128 _stake, int _balance) internal {
+    function payOut(address _userAddress, uint128 _stake, int _balance) internal {
+        int stakeInt = _stake;
+        int houseStakeInt = houseStake.castToInt();
+
         assert(_balance <= conflictRes.maxBalance());
-        assert((int(_stake) + _balance) >= 0); // safe as _balance (see line above), _stake ranges are fixed.
+        assert((stakeInt.add(_balance)) >= 0);
 
-        uint valuePlayer = uint(int(_stake) + _balance); // safe as _balance, _stake ranges are fixed.
-
-        if (_balance > 0 && int(houseStake) < _balance) { // safe to cast houseStake is limited.
+        if (_balance > 0 && houseStakeInt < _balance) {
             // Should never happen!
             // House is bankrupt.
             // Payout left money.
-            valuePlayer = houseStake;
+            _balance = houseStakeInt;
         }
 
-        houseProfit = houseProfit - _balance;
+        houseProfit = houseProfit.sub(_balance);
 
-        int newHouseStake = int(houseStake) - _balance; // safe to cast and sub as houseStake, balance ranges are fixed
-        assert(newHouseStake >= 0);
-        houseStake = uint(newHouseStake);
+        int newHouseStake = houseStakeInt.sub(_balance);
+        houseStake = newHouseStake.castToUint();
 
-        pendingReturns[_playerAddress] += valuePlayer;
-        if (pendingReturns[_playerAddress] > 0) {
-            safeSend(_playerAddress);
+        uint valueUser = stakeInt.add(_balance).castToUint();
+        pendingReturns[_userAddress] += valueUser;
+        if (pendingReturns[_userAddress] > 0) {
+            safeSend(_userAddress);
         }
     }
 
@@ -587,11 +634,11 @@ contract GameChannelBase is Destroyable, ConflictResolutionManager {
     function verifySig(
         uint32 _roundId,
         uint8 _gameType,
-        uint16 _num,
+        uint _num,
         uint _value,
         int _balance,
         bytes32 _serverHash,
-        bytes32 _playerHash,
+        bytes32 _userHash,
         uint _gameId,
         address _contractAddress,
         bytes _sig,
@@ -602,7 +649,7 @@ contract GameChannelBase is Destroyable, ConflictResolutionManager {
     {
         // check if this is the correct contract
         address contractAddress = this;
-        require(_contractAddress == contractAddress);
+        require(_contractAddress == contractAddress, "inv contractAddress");
 
         bytes32 roundHash = calcHash(
                 _roundId,
@@ -611,9 +658,8 @@ contract GameChannelBase is Destroyable, ConflictResolutionManager {
                 _value,
                 _balance,
                 _serverHash,
-                _playerHash,
-                _gameId,
-                _contractAddress
+                _userHash,
+                _gameId
         );
 
         verify(
@@ -637,13 +683,9 @@ contract GameChannelBase is Destroyable, ConflictResolutionManager {
         internal
         pure
     {
-        bytes32 r;
-        bytes32 s;
-        uint8 v;
-
-        (r, s, v) = signatureSplit(_sig);
+        (bytes32 r, bytes32 s, uint8 v) = signatureSplit(_sig);
         address addressRecover = ecrecover(_hash, v, r, s);
-        require(addressRecover == _address);
+        require(addressRecover == _address, "inv sig");
     }
 
     /**
@@ -653,33 +695,33 @@ contract GameChannelBase is Destroyable, ConflictResolutionManager {
     function calcHash(
         uint32 _roundId,
         uint8 _gameType,
-        uint16 _num,
+        uint _num,
         uint _value,
         int _balance,
         bytes32 _serverHash,
-        bytes32 _playerHash,
-        uint _gameId,
-        address _contractAddress
+        bytes32 _userHash,
+        uint _gameId
     )
         private
-        pure
+        view
         returns(bytes32)
     {
-        bytes32 dataHash = keccak256(abi.encodePacked(
+        bytes32 betHash = keccak256(abi.encode(
+            BET_TYPEHASH,
             _roundId,
             _gameType,
             _num,
             _value,
             _balance,
             _serverHash,
-            _playerHash,
-            _gameId,
-            _contractAddress
+            _userHash,
+            _gameId
         ));
 
         return keccak256(abi.encodePacked(
-            TYPE_HASH,
-            dataHash
+            "\x19\x01",
+            DOMAIN_SEPERATOR,
+            betHash
         ));
     }
 
@@ -694,7 +736,7 @@ contract GameChannelBase is Destroyable, ConflictResolutionManager {
         pure
         returns (bytes32 r, bytes32 s, uint8 v)
     {
-        require(_signature.length == 65);
+        require(_signature.length == 65, "inv sig");
 
         assembly {
             r := mload(add(_signature, 32))
@@ -708,13 +750,19 @@ contract GameChannelBase is Destroyable, ConflictResolutionManager {
 }
 
 contract GameChannelConflict is GameChannelBase {
+    using SafeCast for int;
+    using SafeCast for uint;
+    using SafeMath for int;
+    using SafeMath for uint;
+
     /**
      * @dev Contract constructor.
      * @param _serverAddress Server address.
-     * @param _minStake Min value player needs to deposit to create game session.
-     * @param _maxStake Max value player can deposit to create game session.
+     * @param _minStake Min value user needs to deposit to create game session.
+     * @param _maxStake Max value user can deposit to create game session.
      * @param _conflictResAddress Conflict resolution contract address
      * @param _houseAddress House address to move profit to
+     * @param _chainId Chain id for signature domain.
      */
     constructor(
         address _serverAddress,
@@ -722,44 +770,44 @@ contract GameChannelConflict is GameChannelBase {
         uint128 _maxStake,
         address _conflictResAddress,
         address _houseAddress,
-        uint _gameIdCtr
+        uint _chainId
     )
         public
-        GameChannelBase(_serverAddress, _minStake, _maxStake, _conflictResAddress, _houseAddress, _gameIdCtr)
+        GameChannelBase(_serverAddress, _minStake, _maxStake, _conflictResAddress, _houseAddress, _chainId)
     {
         // nothing to do
     }
 
     /**
-     * @dev Used by server if player does not end game session.
+     * @dev Used by server if user does not end game session.
      * @param _roundId Round id of bet.
      * @param _gameType Game type of bet.
      * @param _num Number of bet.
      * @param _value Value of bet.
      * @param _balance Balance before this bet.
      * @param _serverHash Hash of server seed for this bet.
-     * @param _playerHash Hash of player seed for this bet.
+     * @param _userHash Hash of user seed for this bet.
      * @param _gameId Game session id.
      * @param _contractAddress Address of this contract.
-     * @param _playerSig Player signature of this bet.
-     * @param _playerAddress Address of player.
+     * @param _userSig User signature of this bet.
+     * @param _userAddress Address of user.
      * @param _serverSeed Server seed for this bet.
-     * @param _playerSeed Player seed for this bet.
+     * @param _userSeed User seed for this bet.
      */
     function serverEndGameConflict(
         uint32 _roundId,
         uint8 _gameType,
-        uint16 _num,
+        uint _num,
         uint _value,
         int _balance,
         bytes32 _serverHash,
-        bytes32 _playerHash,
+        bytes32 _userHash,
         uint _gameId,
         address _contractAddress,
-        bytes _playerSig,
-        address _playerAddress,
+        bytes _userSig,
+        address _userAddress,
         bytes32 _serverSeed,
-        bytes32 _playerSeed
+        bytes32 _userSeed
     )
         public
         onlyServer
@@ -771,11 +819,11 @@ contract GameChannelConflict is GameChannelBase {
                 _value,
                 _balance,
                 _serverHash,
-                _playerHash,
+                _userHash,
                 _gameId,
                 _contractAddress,
-                _playerSig,
-                _playerAddress
+                _userSig,
+                _userAddress
         );
 
         serverEndGameConflictImpl(
@@ -785,40 +833,40 @@ contract GameChannelConflict is GameChannelBase {
                 _value,
                 _balance,
                 _serverHash,
-                _playerHash,
+                _userHash,
                 _serverSeed,
-                _playerSeed,
+                _userSeed,
                 _gameId,
-                _playerAddress
+                _userAddress
         );
     }
 
     /**
-     * @notice Can be used by player if server does not answer to the end game session request.
+     * @notice Can be used by user if server does not answer to the end game session request.
      * @param _roundId Round id of bet.
      * @param _gameType Game type of bet.
      * @param _num Number of bet.
      * @param _value Value of bet.
      * @param _balance Balance before this bet.
      * @param _serverHash Hash of server seed for this bet.
-     * @param _playerHash Hash of player seed for this bet.
+     * @param _userHash Hash of user seed for this bet.
      * @param _gameId Game session id.
      * @param _contractAddress Address of this contract.
      * @param _serverSig Server signature of this bet.
-     * @param _playerSeed Player seed for this bet.
+     * @param _userSeed User seed for this bet.
      */
-    function playerEndGameConflict(
+    function userEndGameConflict(
         uint32 _roundId,
         uint8 _gameType,
-        uint16 _num,
+        uint _num,
         uint _value,
         int _balance,
         bytes32 _serverHash,
-        bytes32 _playerHash,
+        bytes32 _userHash,
         uint _gameId,
         address _contractAddress,
         bytes _serverSig,
-        bytes32 _playerSeed
+        bytes32 _userSeed
     )
         public
     {
@@ -829,21 +877,21 @@ contract GameChannelConflict is GameChannelBase {
             _value,
             _balance,
             _serverHash,
-            _playerHash,
+            _userHash,
             _gameId,
             _contractAddress,
             _serverSig,
             serverAddress
         );
 
-        playerEndGameConflictImpl(
+        userEndGameConflictImpl(
             _roundId,
             _gameType,
             _num,
             _value,
             _balance,
-            _playerHash,
-            _playerSeed,
+            _userHash,
+            _userSeed,
             _gameId,
             msg.sender
         );
@@ -854,63 +902,63 @@ contract GameChannelConflict is GameChannelBase {
      * one game is played.
      * @param _gameId Game session id.
      */
-    function playerCancelActiveGame(uint _gameId) public {
-        address playerAddress = msg.sender;
-        uint gameId = playerGameId[playerAddress];
+    function userCancelActiveGame(uint _gameId) public {
+        address userAddress = msg.sender;
+        uint gameId = userGameId[userAddress];
         Game storage game = gameIdGame[gameId];
 
-        require(gameId == _gameId);
+        require(gameId == _gameId, "inv gameId");
 
         if (game.status == GameStatus.ACTIVE) {
             game.endInitiatedTime = block.timestamp;
-            game.status = GameStatus.PLAYER_INITIATED_END;
+            game.status = GameStatus.USER_INITIATED_END;
 
-            emit LogPlayerRequestedEnd(msg.sender, gameId);
+            emit LogUserRequestedEnd(msg.sender, gameId);
         } else if (game.status == GameStatus.SERVER_INITIATED_END && game.roundId == 0) {
-            closeGame(game, gameId, 0, playerAddress, ReasonEnded.REGULAR_ENDED, 0);
+            cancelActiveGame(game, gameId, userAddress);
         } else {
             revert();
         }
     }
 
     /**
-     * @dev Cancel active game without playing. Useful if player starts game session and
+     * @dev Cancel active game without playing. Useful if user starts game session and
      * does not play.
-     * @param _playerAddress Players' address.
+     * @param _userAddress Users' address.
      * @param _gameId Game session id.
      */
-    function serverCancelActiveGame(address _playerAddress, uint _gameId) public onlyServer {
-        uint gameId = playerGameId[_playerAddress];
+    function serverCancelActiveGame(address _userAddress, uint _gameId) public onlyServer {
+        uint gameId = userGameId[_userAddress];
         Game storage game = gameIdGame[gameId];
 
-        require(gameId == _gameId);
+        require(gameId == _gameId, "inv gameId");
 
         if (game.status == GameStatus.ACTIVE) {
             game.endInitiatedTime = block.timestamp;
             game.status = GameStatus.SERVER_INITIATED_END;
 
             emit LogServerRequestedEnd(msg.sender, gameId);
-        } else if (game.status == GameStatus.PLAYER_INITIATED_END && game.roundId == 0) {
-            closeGame(game, gameId, 0, _playerAddress, ReasonEnded.REGULAR_ENDED, 0);
+        } else if (game.status == GameStatus.USER_INITIATED_END && game.roundId == 0) {
+            cancelActiveGame(game, gameId, _userAddress);
         } else {
             revert();
         }
     }
 
     /**
-    * @dev Force end of game if player does not respond. Only possible after a certain period of time
-    * to give the player a chance to respond.
-    * @param _playerAddress Player's address.
+    * @dev Force end of game if user does not respond. Only possible after a certain period of time
+    * to give the user a chance to respond.
+    * @param _userAddress User's address.
     */
-    function serverForceGameEnd(address _playerAddress, uint _gameId) public onlyServer {
-        uint gameId = playerGameId[_playerAddress];
+    function serverForceGameEnd(address _userAddress, uint _gameId) public onlyServer {
+        uint gameId = userGameId[_userAddress];
         Game storage game = gameIdGame[gameId];
 
-        require(gameId == _gameId);
-        require(game.status == GameStatus.SERVER_INITIATED_END);
+        require(gameId == _gameId, "inv gameId");
+        require(game.status == GameStatus.SERVER_INITIATED_END, "inv status");
 
         // theoretically we have enough data to calculate winner
-        // but as player did not respond assume he has lost.
+        // but as user did not respond assume he has lost.
         int newBalance = conflictRes.serverForceGameEnd(
             game.gameType,
             game.betNum,
@@ -920,22 +968,22 @@ contract GameChannelConflict is GameChannelBase {
             game.endInitiatedTime
         );
 
-        closeGame(game, gameId, game.roundId, _playerAddress, ReasonEnded.END_FORCED_BY_SERVER, newBalance);
+        closeGame(game, gameId, game.roundId, _userAddress, ReasonEnded.SERVER_FORCED_END, newBalance);
     }
 
     /**
     * @notice Force end of game if server does not respond. Only possible after a certain period of time
     * to give the server a chance to respond.
     */
-    function playerForceGameEnd(uint _gameId) public {
-        address playerAddress = msg.sender;
-        uint gameId = playerGameId[playerAddress];
+    function userForceGameEnd(uint _gameId) public {
+        address userAddress = msg.sender;
+        uint gameId = userGameId[userAddress];
         Game storage game = gameIdGame[gameId];
 
-        require(gameId == _gameId);
-        require(game.status == GameStatus.PLAYER_INITIATED_END);
+        require(gameId == _gameId, "inv gameId");
+        require(game.status == GameStatus.USER_INITIATED_END, "inv status");
 
-        int newBalance = conflictRes.playerForceGameEnd(
+        int newBalance = conflictRes.userForceGameEnd(
             game.gameType,
             game.betNum,
             game.betValue,
@@ -944,7 +992,7 @@ contract GameChannelConflict is GameChannelBase {
             game.endInitiatedTime
         );
 
-        closeGame(game, gameId, game.roundId, playerAddress, ReasonEnded.END_FORCED_BY_PLAYER, newBalance);
+        closeGame(game, gameId, game.roundId, userAddress, ReasonEnded.USER_FORCED_END, newBalance);
     }
 
     /**
@@ -956,59 +1004,60 @@ contract GameChannelConflict is GameChannelBase {
      * @param _num Number of bet.
      * @param _value Value of bet.
      * @param _balance Balance before this bet.
-     * @param _playerHash Hash of player's seed for this bet.
-     * @param _playerSeed Player's seed for this bet.
+     * @param _userHash Hash of user's seed for this bet.
+     * @param _userSeed User's seed for this bet.
      * @param _gameId game Game session id.
-     * @param _playerAddress Player's address.
+     * @param _userAddress User's address.
      */
-    function playerEndGameConflictImpl(
+    function userEndGameConflictImpl(
         uint32 _roundId,
         uint8 _gameType,
-        uint16 _num,
+        uint _num,
         uint _value,
         int _balance,
-        bytes32 _playerHash,
-        bytes32 _playerSeed,
+        bytes32 _userHash,
+        bytes32 _userSeed,
         uint _gameId,
-        address _playerAddress
+        address _userAddress
     )
         private
     {
-        uint gameId = playerGameId[_playerAddress];
+        uint gameId = userGameId[_userAddress];
         Game storage game = gameIdGame[gameId];
         int maxBalance = conflictRes.maxBalance();
+        int gameStake = game.stake;
 
-        require(gameId == _gameId);
-        require(_roundId > 0);
-        require(keccak256(abi.encodePacked(_playerSeed)) == _playerHash);
-        require(-int(game.stake) <= _balance && _balance <= maxBalance); // save to cast as ranges are fixed
-        require(conflictRes.isValidBet(_gameType, _num, _value));
-        require(int(game.stake) + _balance - int(_value) >= 0); // save to cast as ranges are fixed
+        require(gameId == _gameId, "inv gameId");
+        require(_roundId > 0, "inv roundId");
+        require(keccak256(abi.encodePacked(_userSeed)) == _userHash, "inv userSeed");
+        require(-gameStake <= _balance && _balance <= maxBalance, "inv balance"); // game.stake save to cast as uint128
+        require(conflictRes.isValidBet(_gameType, _num, _value), "inv bet");
+        require(gameStake.add(_balance).sub(_value.castToInt()) >= 0, "value too high"); // game.stake save to cast as uint128
 
         if (game.status == GameStatus.SERVER_INITIATED_END && game.roundId == _roundId) {
-            game.playerSeed = _playerSeed;
-            endGameConflict(game, gameId, _playerAddress);
+            game.userSeed = _userSeed;
+            endGameConflict(game, gameId, _userAddress);
         } else if (game.status == GameStatus.ACTIVE
                 || (game.status == GameStatus.SERVER_INITIATED_END && game.roundId < _roundId)) {
-            game.status = GameStatus.PLAYER_INITIATED_END;
+            game.status = GameStatus.USER_INITIATED_END;
             game.endInitiatedTime = block.timestamp;
             game.roundId = _roundId;
             game.gameType = _gameType;
             game.betNum = _num;
             game.betValue = _value;
             game.balance = _balance;
-            game.playerSeed = _playerSeed;
+            game.userSeed = _userSeed;
             game.serverSeed = bytes32(0);
 
-            emit LogPlayerRequestedEnd(msg.sender, gameId);
+            emit LogUserRequestedEnd(msg.sender, gameId);
         } else {
-            revert();
+            revert("inv state");
         }
     }
 
     /**
      * @dev Conflict handling implementation. Stores game data and timestamp if game
-     * is active. If player has already marked conflict for game session the conflict
+     * is active. If user has already marked conflict for game session the conflict
      * resolution contract is used (compare conflictRes).
      * @param _roundId Round id of bet.
      * @param _gameType Game type of bet.
@@ -1016,43 +1065,44 @@ contract GameChannelConflict is GameChannelBase {
      * @param _value Value of bet.
      * @param _balance Balance before this bet.
      * @param _serverHash Hash of server's seed for this bet.
-     * @param _playerHash Hash of player's seed for this bet.
+     * @param _userHash Hash of user's seed for this bet.
      * @param _serverSeed Server's seed for this bet.
-     * @param _playerSeed Player's seed for this bet.
-     * @param _playerAddress Player's address.
+     * @param _userSeed User's seed for this bet.
+     * @param _userAddress User's address.
      */
     function serverEndGameConflictImpl(
         uint32 _roundId,
         uint8 _gameType,
-        uint16 _num,
+        uint _num,
         uint _value,
         int _balance,
         bytes32 _serverHash,
-        bytes32 _playerHash,
+        bytes32 _userHash,
         bytes32 _serverSeed,
-        bytes32 _playerSeed,
+        bytes32 _userSeed,
         uint _gameId,
-        address _playerAddress
+        address _userAddress
     )
         private
     {
-        uint gameId = playerGameId[_playerAddress];
+        uint gameId = userGameId[_userAddress];
         Game storage game = gameIdGame[gameId];
         int maxBalance = conflictRes.maxBalance();
+        int gameStake = game.stake;
 
-        require(gameId == _gameId);
-        require(_roundId > 0);
-        require(keccak256(abi.encodePacked(_serverSeed)) == _serverHash);
-        require(keccak256(abi.encodePacked(_playerSeed)) == _playerHash);
-        require(-int(game.stake) <= _balance && _balance <= maxBalance); // save to cast as ranges are fixed
-        require(conflictRes.isValidBet(_gameType, _num, _value));
-        require(int(game.stake) + _balance - int(_value) >= 0); // save to cast as ranges are fixed
+        require(gameId == _gameId, "inv gameId");
+        require(_roundId > 0, "inv roundId");
+        require(keccak256(abi.encodePacked(_serverSeed)) == _serverHash, "inv serverSeed");
+        require(keccak256(abi.encodePacked(_userSeed)) == _userHash, "inv userSeed");
+        require(-gameStake <= _balance && _balance <= maxBalance, "inv balance"); // game.stake save to cast as uint128
+        require(conflictRes.isValidBet(_gameType, _num, _value), "inv bet");
+        require(gameStake.add(_balance).sub(_value.castToInt()) >= 0, "too high value"); // game.stake save to cast as uin128
 
-        if (game.status == GameStatus.PLAYER_INITIATED_END && game.roundId == _roundId) {
+        if (game.status == GameStatus.USER_INITIATED_END && game.roundId == _roundId) {
             game.serverSeed = _serverSeed;
-            endGameConflict(game, gameId, _playerAddress);
+            endGameConflict(game, gameId, _userAddress);
         } else if (game.status == GameStatus.ACTIVE
-                || (game.status == GameStatus.PLAYER_INITIATED_END && game.roundId < _roundId)) {
+                || (game.status == GameStatus.USER_INITIATED_END && game.roundId < _roundId)) {
             game.status = GameStatus.SERVER_INITIATED_END;
             game.endInitiatedTime = block.timestamp;
             game.roundId = _roundId;
@@ -1061,21 +1111,42 @@ contract GameChannelConflict is GameChannelBase {
             game.betValue = _value;
             game.balance = _balance;
             game.serverSeed = _serverSeed;
-            game.playerSeed = _playerSeed;
+            game.userSeed = _userSeed;
 
-            emit LogServerRequestedEnd(_playerAddress, gameId);
+            emit LogServerRequestedEnd(_userAddress, gameId);
         } else {
-            revert();
+            revert("inv state");
         }
+    }
+
+    /**
+     * @dev End conflicting game without placed bets.
+     * @param _game Game session data.
+     * @param _gameId Game session id.
+     * @param _userAddress User's address.
+     */
+    function cancelActiveGame(Game storage _game, uint _gameId, address _userAddress) private {
+        // user need to pay a fee when conflict ended.
+        // this ensures a malicious, rich user can not just generate game sessions and then wait
+        // for us to end the game session and then confirm the session status, so
+        // we would have to pay a high gas fee without profit.
+        int newBalance = -conflictRes.conflictEndFine();
+
+        // do not allow balance below user stake
+        int stake = _game.stake;
+        if (newBalance < -stake) {
+            newBalance = -stake;
+        }
+        closeGame(_game, _gameId, 0, _userAddress, ReasonEnded.CONFLICT_ENDED, newBalance);
     }
 
     /**
      * @dev End conflicting game.
      * @param _game Game session data.
      * @param _gameId Game session id.
-     * @param _playerAddress Player's address.
+     * @param _userAddress User's address.
      */
-    function endGameConflict(Game storage _game, uint _gameId, address _playerAddress) private {
+    function endGameConflict(Game storage _game, uint _gameId, address _userAddress) private {
         int newBalance = conflictRes.endGameConflict(
             _game.gameType,
             _game.betNum,
@@ -1083,10 +1154,10 @@ contract GameChannelConflict is GameChannelBase {
             _game.balance,
             _game.stake,
             _game.serverSeed,
-            _game.playerSeed
+            _game.userSeed
         );
 
-        closeGame(_game, _gameId, _game.roundId, _playerAddress, ReasonEnded.REGULAR_ENDED, newBalance);
+        closeGame(_game, _gameId, _game.roundId, _userAddress, ReasonEnded.CONFLICT_ENDED, newBalance);
     }
 }
 
@@ -1094,10 +1165,11 @@ contract GameChannel is GameChannelConflict {
     /**
      * @dev contract constructor
      * @param _serverAddress Server address.
-     * @param _minStake Min value player needs to deposit to create game session.
-     * @param _maxStake Max value player can deposit to create game session.
+     * @param _minStake Min value user needs to deposit to create game session.
+     * @param _maxStake Max value user can deposit to create game session.
      * @param _conflictResAddress Conflict resolution contract address.
      * @param _houseAddress House address to move profit to.
+     * @param _chainId Chain id for signature domain.
      */
     constructor(
         address _serverAddress,
@@ -1105,24 +1177,24 @@ contract GameChannel is GameChannelConflict {
         uint128 _maxStake,
         address _conflictResAddress,
         address _houseAddress,
-        uint _gameIdCntr
+        uint _chainId
     )
         public
-        GameChannelConflict(_serverAddress, _minStake, _maxStake, _conflictResAddress, _houseAddress, _gameIdCntr)
+        GameChannelConflict(_serverAddress, _minStake, _maxStake, _conflictResAddress, _houseAddress, _chainId)
     {
         // nothing to do
     }
 
     /**
      * @notice Create games session request. msg.value needs to be valid stake value.
-     * @param _playerEndHash last entry of players' hash chain.
-     * @param _previousGameId player's previous game id, initial 0.
-     * @param _createBefore game can be only created before this timestamp.
-     * @param _serverEndHash last entry of server's hash chain.
-     * @param _serverSig server signature. See verifyCreateSig
+     * @param _userEndHash Last entry of users' hash chain.
+     * @param _previousGameId User's previous game id, initial 0.
+     * @param _createBefore Game can be only created before this timestamp.
+     * @param _serverEndHash Last entry of server's hash chain.
+     * @param _serverSig Server signature. See verifyCreateSig
      */
     function createGame(
-        bytes32 _playerEndHash,
+        bytes32 _userEndHash,
         uint _previousGameId,
         uint _createBefore,
         bytes32 _serverEndHash,
@@ -1134,102 +1206,90 @@ contract GameChannel is GameChannelConflict {
         onlyValidHouseStake(activeGames + 1)
         onlyNotPaused
     {
-        uint previousGameId = playerGameId[msg.sender];
+        uint previousGameId = userGameId[msg.sender];
         Game storage game = gameIdGame[previousGameId];
 
-        require(game.status == GameStatus.ENDED);
-        require(previousGameId == _previousGameId);
-        require(block.timestamp < _createBefore);
+        require(game.status == GameStatus.ENDED, "prev game not ended");
+        require(previousGameId == _previousGameId, "inv gamePrevGameId");
+        require(block.timestamp < _createBefore, "expired");
 
         verifyCreateSig(msg.sender, _previousGameId, _createBefore, _serverEndHash, _serverSig);
 
         uint gameId = gameIdCntr++;
-        playerGameId[msg.sender] = gameId;
+        userGameId[msg.sender] = gameId;
         Game storage newGame = gameIdGame[gameId];
 
         newGame.stake = uint128(msg.value); // It's safe to cast msg.value as it is limited, see onlyValidValue
         newGame.status = GameStatus.ACTIVE;
 
-        activeGames = activeGames + 1;
+        activeGames = activeGames.add(1);
 
         // It's safe to cast msg.value as it is limited, see onlyValidValue
-        emit LogGameCreated(msg.sender, gameId, uint128(msg.value), _serverEndHash,  _playerEndHash);
+        emit LogGameCreated(msg.sender, gameId, uint128(msg.value), _serverEndHash,  _userEndHash);
     }
 
 
     /**
-     * @dev Regular end game session. Used if player and house have both
+     * @dev Regular end game session. Used if user and house have both
      * accepted current game session state.
      * The game session with gameId _gameId is closed
-     * and the player paid out. This functions is called by the server after
-     * the player requested the termination of the current game session.
+     * and the user paid out. This functions is called by the server after
+     * the user requested the termination of the current game session.
      * @param _roundId Round id of bet.
-     * @param _gameType Game type of bet.
-     * @param _num Number of bet.
-     * @param _value Value of bet.
      * @param _balance Current balance.
      * @param _serverHash Hash of server's seed for this bet.
-     * @param _playerHash Hash of player's seed for this bet.
+     * @param _userHash Hash of user's seed for this bet.
      * @param _gameId Game session id.
      * @param _contractAddress Address of this contract.
-     * @param _playerAddress Address of player.
-     * @param _playerSig Player's signature of this bet.
+     * @param _userAddress Address of user.
+     * @param _userSig User's signature of this bet.
      */
     function serverEndGame(
         uint32 _roundId,
-        uint8 _gameType,
-        uint16 _num,
-        uint _value,
         int _balance,
         bytes32 _serverHash,
-        bytes32 _playerHash,
+        bytes32 _userHash,
         uint _gameId,
         address _contractAddress,
-        address _playerAddress,
-        bytes _playerSig
+        address _userAddress,
+        bytes _userSig
     )
         public
         onlyServer
     {
         verifySig(
                 _roundId,
-                _gameType,
-                _num,
-                _value,
+                0,
+                0,
+                0,
                 _balance,
                 _serverHash,
-                _playerHash,
+                _userHash,
                 _gameId,
                 _contractAddress,
-                _playerSig,
-                _playerAddress
+                _userSig,
+                _userAddress
         );
 
-        regularEndGame(_playerAddress, _roundId, _gameType, _num, _value, _balance, _gameId, _contractAddress);
+        regularEndGame(_userAddress, _roundId, _balance, _gameId, _contractAddress);
     }
 
     /**
      * @notice Regular end game session. Normally not needed as server ends game (@see serverEndGame).
-     * Can be used by player if server does not end game session.
+     * Can be used by user if server does not end game session.
      * @param _roundId Round id of bet.
-     * @param _gameType Game type of bet.
-     * @param _num Number of bet.
-     * @param _value Value of bet.
      * @param _balance Current balance.
      * @param _serverHash Hash of server's seed for this bet.
-     * @param _playerHash Hash of player's seed for this bet.
+     * @param _userHash Hash of user's seed for this bet.
      * @param _gameId Game session id.
      * @param _contractAddress Address of this contract.
      * @param _serverSig Server's signature of this bet.
      */
-    function playerEndGame(
+    function userEndGame(
         uint32 _roundId,
-        uint8 _gameType,
-        uint16 _num,
-        uint _value,
         int _balance,
         bytes32 _serverHash,
-        bytes32 _playerHash,
+        bytes32 _userHash,
         uint _gameId,
         address _contractAddress,
         bytes _serverSig
@@ -1238,31 +1298,31 @@ contract GameChannel is GameChannelConflict {
     {
         verifySig(
                 _roundId,
-                _gameType,
-                _num,
-                _value,
+                0,
+                0,
+                0,
                 _balance,
                 _serverHash,
-                _playerHash,
+                _userHash,
                 _gameId,
                 _contractAddress,
                 _serverSig,
                 serverAddress
         );
 
-        regularEndGame(msg.sender, _roundId, _gameType, _num, _value, _balance, _gameId, _contractAddress);
+        regularEndGame(msg.sender, _roundId, _balance, _gameId, _contractAddress);
     }
 
     /**
      * @dev Verify server signature.
-     * @param _playerAddress player's address.
-     * @param _previousGameId player's previous game id, initial 0.
-     * @param _createBefore game can be only created before this timestamp.
-     * @param _serverEndHash last entry of server's hash chain.
-     * @param _serverSig server signature.
+     * @param _userAddress User's address.
+     * @param _previousGameId User's previous game id, initial 0.
+     * @param _createBefore Game can be only created before this timestamp.
+     * @param _serverEndHash Last entry of server's hash chain.
+     * @param _serverSig Server signature.
      */
     function verifyCreateSig(
-        address _playerAddress,
+        address _userAddress,
         uint _previousGameId,
         uint _createBefore,
         bytes32 _serverEndHash,
@@ -1272,50 +1332,151 @@ contract GameChannel is GameChannelConflict {
     {
         address contractAddress = this;
         bytes32 hash = keccak256(abi.encodePacked(
-            contractAddress, _playerAddress, _previousGameId, _createBefore, _serverEndHash
+            contractAddress, _userAddress, _previousGameId, _createBefore, _serverEndHash
         ));
 
         verify(hash, _serverSig, serverAddress);
     }
 
     /**
-     * @dev Regular end game session implementation. Used if player and house have both
+     * @dev Regular end game session implementation. Used if user and house have both
      * accepted current game session state. The game session with gameId _gameId is closed
-     * and the player paid out.
-     * @param _playerAddress Address of player.
-     * @param _gameType Game type of bet.
-     * @param _num Number of bet.
-     * @param _value Value of bet.
+     * and the user paid out.
+     * @param _userAddress Address of user.
      * @param _balance Current balance.
      * @param _gameId Game session id.
      * @param _contractAddress Address of this contract.
      */
     function regularEndGame(
-        address _playerAddress,
+        address _userAddress,
         uint32 _roundId,
-        uint8 _gameType,
-        uint16 _num,
-        uint _value,
         int _balance,
         uint _gameId,
         address _contractAddress
     )
         private
     {
-        uint gameId = playerGameId[_playerAddress];
+        uint gameId = userGameId[_userAddress];
         Game storage game = gameIdGame[gameId];
-        address contractAddress = this;
         int maxBalance = conflictRes.maxBalance();
+        int gameStake = game.stake;
 
-        require(_gameId == gameId);
-        require(_roundId > 0);
+        require(_gameId == gameId, "inv gameId");
+        require(_roundId > 0, "inv roundId");
         // save to cast as game.stake hash fixed range
-        require(-int(game.stake) <= _balance && _balance <= maxBalance);
-        require((_gameType == 0) && (_num == 0) && (_value == 0));
-        require(game.status == GameStatus.ACTIVE);
+        require(-gameStake <= _balance && _balance <= maxBalance, "inv balance");
+        require(game.status == GameStatus.ACTIVE, "inv status");
 
-        assert(_contractAddress == contractAddress);
+        assert(_contractAddress == address(this));
 
-        closeGame(game, gameId, _roundId, _playerAddress, ReasonEnded.REGULAR_ENDED, _balance);
+        closeGame(game, gameId, _roundId, _userAddress, ReasonEnded.REGULAR_ENDED, _balance);
+    }
+}
+
+library SafeCast {
+    /**
+     * Cast unsigned a to signed a.
+     */
+    function castToInt(uint a) internal pure returns(int) {
+        assert(a < (1 << 255));
+        return int(a);
+    }
+
+    /**
+     * Cast signed a to unsigned a.
+     */
+    function castToUint(int a) internal pure returns(uint) {
+        assert(a >= 0);
+        return uint(a);
+    }
+}
+
+library SafeMath {
+
+    /**
+    * @dev Multiplies two unsigned integers, throws on overflow.
+    */
+    function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+        // benefit is lost if 'b' is also tested.
+        // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+        if (a == 0) {
+            return 0;
+        }
+
+        c = a * b;
+        assert(c / a == b);
+        return c;
+    }
+
+    /**
+    * @dev Multiplies two signed integers, throws on overflow.
+    */
+    function mul(int256 a, int256 b) internal pure returns (int256) {
+        // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+        // benefit is lost if 'b' is also tested.
+        // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+        if (a == 0) {
+            return 0;
+        }
+        int256 c = a * b;
+        assert(c / a == b);
+        return c;
+    }
+
+    /**
+    * @dev Integer division of two unsigned integers, truncating the quotient.
+    */
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        // uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return a / b;
+    }
+
+    /**
+    * @dev Integer division of two signed integers, truncating the quotient.
+    */
+    function div(int256 a, int256 b) internal pure returns (int256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        // Overflow only happens when the smallest negative int is multiplied by -1.
+        int256 INT256_MIN = int256((uint256(1) << 255));
+        assert(a != INT256_MIN || b != - 1);
+        return a / b;
+    }
+
+    /**
+    * @dev Subtracts two unsigned integers, throws on overflow (i.e. if subtrahend is greater than minuend).
+    */
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
+
+    /**
+    * @dev Subtracts two signed integers, throws on overflow.
+    */
+    function sub(int256 a, int256 b) internal pure returns (int256) {
+        int256 c = a - b;
+        assert((b >= 0 && c <= a) || (b < 0 && c > a));
+        return c;
+    }
+
+    /**
+    * @dev Adds two unsigned integers, throws on overflow.
+    */
+    function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        c = a + b;
+        assert(c >= a);
+        return c;
+    }
+
+    /**
+    * @dev Adds two signed integers, throws on overflow.
+    */
+    function add(int256 a, int256 b) internal pure returns (int256) {
+        int256 c = a + b;
+        assert((b >= 0 && c >= a) || (b < 0 && c < a));
+        return c;
     }
 }
