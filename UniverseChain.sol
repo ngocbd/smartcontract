@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UniverseChain at 0x4bfdd2c84ebb58daad7651da193d961966797d31
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UniverseChain at 0xc2d2a8f0272183d94af5a9b0424f04e42111c0e3
 */
 pragma solidity ^0.4.4;
 
@@ -108,8 +108,8 @@ contract UniverseChain is StandardToken { // CHANGE THIS. Update the contract na
     // This is a constructor function 
     // which means the following function name has to match the contract name declared above
     function UniverseChain() {
-        balances[msg.sender] = 600000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
-        totalSupply = 600000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
+        balances[msg.sender] = 900000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
+        totalSupply = 900000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
         name = "UniverseChain";                                   // Set the name for display purposes (CHANGE THIS)
         decimals = 8;                                               // Amount of decimals for display purposes (CHANGE THIS)
         symbol = "XUCH";                                             // Set the symbol for display purposes (CHANGE THIS)
