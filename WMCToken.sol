@@ -1,8 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WMCToken at 0xc301f0a7f62b5ef5cfa8454af23a688da5a65ec8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WMCToken at 0x93a4554827caf217be7d9e254f27d3275bcd6a3f
 */
 pragma solidity ^0.4.18;
-
 
 /**
  * @title ERC20Basic
@@ -10,64 +9,22 @@ pragma solidity ^0.4.18;
  * @dev see https://github.com/ethereum/EIPs/issues/179
  */
 contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
+  uint256 public totalSupply;
   function balanceOf(address who) public view returns (uint256);
   function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-
-
 /**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
  */
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
 }
-
-
-
-
-
-
-
-
-
-
-
 
 
 /**
@@ -75,10 +32,6 @@ contract Ownable {
  * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     if (a == 0) {
       return 0;
@@ -88,9 +41,6 @@ library SafeMath {
     return c;
   }
 
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
@@ -98,24 +48,17 @@ library SafeMath {
     return c;
   }
 
-  /**
-  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
   function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
   function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
     return c;
   }
 }
-
 
 
 /**
@@ -126,15 +69,6 @@ contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
 
   mapping(address => uint256) balances;
-
-  uint256 totalSupply_;
-
-  /**
-  * @dev total number of tokens in existence
-  */
-  function totalSupply() public view returns (uint256) {
-    return totalSupply_;
-  }
 
   /**
   * @dev transfer token for a specified address
@@ -162,24 +96,6 @@ contract BasicToken is ERC20Basic {
   }
 
 }
-
-
-
-
-
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-
 
 /**
  * @title Standard ERC20 token
@@ -238,14 +154,10 @@ contract StandardToken is ERC20, BasicToken {
   }
 
   /**
-   * @dev Increase the amount of tokens that an owner allowed to a spender.
-   *
    * approve should be called when allowed[_spender] == 0. To increment
    * allowed value is better to use this function to avoid 2 calls (and wait until
    * the first transaction is mined)
    * From MonolithDAO Token.sol
-   * @param _spender The address which will spend the funds.
-   * @param _addedValue The amount of tokens to increase the allowance by.
    */
   function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
     allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
@@ -253,16 +165,6 @@ contract StandardToken is ERC20, BasicToken {
     return true;
   }
 
-  /**
-   * @dev Decrease the amount of tokens that an owner allowed to a spender.
-   *
-   * approve should be called when allowed[_spender] == 0. To decrement
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   * @param _spender The address which will spend the funds.
-   * @param _subtractedValue The amount of tokens to decrease the allowance by.
-   */
   function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
     uint oldValue = allowed[msg.sender][_spender];
     if (_subtractedValue > oldValue) {
@@ -276,60 +178,175 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
 
 
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
 
 /**
- * @title Mintable token
- * @dev Simple ERC20 Token example, with mintable token creation
- * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
- * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
  */
-contract MintableToken is StandardToken, Ownable {
-  event Mint(address indexed to, uint256 amount);
-  event MintFinished();
+contract Pausable is Ownable {
+  event PausePublic(bool newState);
+  event PauseOwnerAdmin(bool newState);
 
-  bool public mintingFinished = false;
+  bool public pausedPublic = true;
+  bool public pausedOwnerAdmin = false;
 
+  address public admin;
 
-  modifier canMint() {
-    require(!mintingFinished);
+  /**
+   * @dev Modifier to make a function callable based on pause states.
+   */
+  modifier whenNotPaused() {
+    if(pausedPublic) {
+      if(!pausedOwnerAdmin) {
+        require(msg.sender == admin || msg.sender == owner);
+      } else {
+        revert();
+      }
+    }
     _;
   }
 
   /**
-   * @dev Function to mint tokens
-   * @param _to The address that will receive the minted tokens.
-   * @param _amount The amount of tokens to mint.
-   * @return A boolean that indicates if the operation was successful.
+   * @dev called by the owner to set new pause flags
+   * pausedPublic can't be false while pausedOwnerAdmin is true
    */
-  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
-    totalSupply_ = totalSupply_.add(_amount);
-    balances[_to] = balances[_to].add(_amount);
-    Mint(_to, _amount);
-    Transfer(address(0), _to, _amount);
-    return true;
+  function pause(bool newPausedPublic, bool newPausedOwnerAdmin) onlyOwner public {
+    require(!(newPausedPublic == false && newPausedOwnerAdmin == true));
+
+    pausedPublic = newPausedPublic;
+    pausedOwnerAdmin = newPausedOwnerAdmin;
+
+    PausePublic(newPausedPublic);
+    PauseOwnerAdmin(newPausedOwnerAdmin);
+  }
+}
+
+contract PausableToken is StandardToken, Pausable {
+
+  function transfer(address _to, uint256 _value) public whenNotPaused returns (bool) {
+    return super.transfer(_to, _value);
   }
 
-  /**
-   * @dev Function to stop minting new tokens.
-   * @return True if the operation was successful.
-   */
-  function finishMinting() onlyOwner canMint public returns (bool) {
-    mintingFinished = true;
-    MintFinished();
-    return true;
+  function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool) {
+    return super.transferFrom(_from, _to, _value);
+  }
+
+  function approve(address _spender, uint256 _value) public whenNotPaused returns (bool) {
+    return super.approve(_spender, _value);
+  }
+
+  function increaseApproval(address _spender, uint _addedValue) public whenNotPaused returns (bool success) {
+    return super.increaseApproval(_spender, _addedValue);
+  }
+
+  function decreaseApproval(address _spender, uint _subtractedValue) public whenNotPaused returns (bool success) {
+    return super.decreaseApproval(_spender, _subtractedValue);
   }
 }
 
 
-/**
- * @title WMCToken
- * @dev Very simple ERC20 Token that can be minted.
- * It is meant to be used in a crowdsale contract.
- */
-contract WMCToken is MintableToken {
-  string public constant name = "WORLD MEDICAL COINS"; // solium-disable-line uppercase
-  string public constant symbol = "WMC"; // solium-disable-line uppercase
-  uint8 public constant decimals = 18; // solium-disable-line uppercase
+contract WMCToken is PausableToken {
+    string  public  constant name = "WMCToken";
+    string  public  constant symbol = "WMCT";
+    uint8   public  constant decimals = 18;
+
+    modifier validDestination( address to )
+    {
+        require(to != address(0x0));
+        require(to != address(this));
+        _;
+    }
+
+    function WMCToken( address _admin, uint _totalTokenAmount ) 
+    {
+        // assign the admin account
+        admin = _admin;
+
+        // assign the total tokens to SunPower
+        totalSupply = _totalTokenAmount;
+        balances[msg.sender] = _totalTokenAmount;
+        Transfer(address(0x0), msg.sender, _totalTokenAmount);
+    }
+
+    function transfer(address _to, uint _value) validDestination(_to) returns (bool) 
+    {
+        return super.transfer(_to, _value);
+    }
+
+    function transferFrom(address _from, address _to, uint _value) validDestination(_to) returns (bool) 
+    {
+        return super.transferFrom(_from, _to, _value);
+    }
+
+    event Burn(address indexed _burner, uint _value);
+
+    function burn(uint _value) returns (bool)
+    {
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        totalSupply = totalSupply.sub(_value);
+        Burn(msg.sender, _value);
+        Transfer(msg.sender, address(0x0), _value);
+        return true;
+    }
+
+    // save some gas by making only one contract call
+    function burnFrom(address _from, uint256 _value) returns (bool) 
+    {
+        assert( transferFrom( _from, msg.sender, _value ) );
+        return burn(_value);
+    }
+
+    function emergencyERC20Drain( ERC20 token, uint amount ) onlyOwner {
+        // owner can drain tokens that are sent here by mistake
+        token.transfer( owner, amount );
+    }
+
+    event AdminTransferred(address indexed previousAdmin, address indexed newAdmin);
+
+    function changeAdmin(address newAdmin) onlyOwner {
+        // owner can re-assign the admin
+        AdminTransferred(admin, newAdmin);
+        admin = newAdmin;
+    }
 }
