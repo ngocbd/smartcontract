@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EnsSubdomainFactory at 0xe47405af3c470e91a02bfc46921c3632776f9c6b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EnsSubdomainFactory at 0x111e97ad0a2762372c7fba98c9f7f4869d23b07d
 */
 pragma solidity ^0.4.24;
 
@@ -11,24 +11,22 @@ pragma solidity ^0.4.24;
 // ---------------------------------------------------------------------------------------------------
 
 /**
- * @title EnsResolver
- * @dev Extract of the interface for ENS Resolver
- */
-contract EnsResolver {
-	function setAddr(bytes32 node, address addr) public;
-	function addr(bytes32 node) public view returns (address);
-}
-
-/**
- * @title EnsRegistry
- * @dev Extract of the interface for ENS Registry
- */
+* @title EnsRegistry
+* @dev Extract of the interface for ENS Registry
+*/
 contract EnsRegistry {
 	function setOwner(bytes32 node, address owner) public;
 	function setSubnodeOwner(bytes32 node, bytes32 label, address owner) public;
 	function setResolver(bytes32 node, address resolver) public;
 	function owner(bytes32 node) public view returns (address);
-	function resolver(bytes32 node) public view returns (address);
+}
+
+/**
+* @title EnsResolver
+* @dev Extract of the interface for ENS Resolver
+*/
+contract EnsResolver {
+	function setAddr(bytes32 node, address addr) public;
 }
 
 /**
@@ -43,7 +41,7 @@ contract EnsSubdomainFactory {
 	EnsRegistry public registry;
 	EnsResolver public resolver;
 	bool public locked;
-    bytes32 emptyNamehash = 0x00;
+        bytes32 emptyNamehash = 0x00;
 
 	event SubdomainCreated(address indexed creator, address indexed owner, string subdomain, string domain, string topdomain);
 	event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
@@ -105,9 +103,9 @@ contract EnsSubdomainFactory {
 	/**
 	 * @dev Returns the owner of a domain (e.g. "startonchain.eth"),
 	 * @param _domain - domain name e.g. "startonchain"
-	 * @param _topdomain - parent domain name e.g. "eth" or "xyz"
+	 * @param _topdomain - parent domain name e.g. "eth"
 	 */
-	function domainOwner(string _domain, string _topdomain) public view returns (address) {
+	function domainOwner(string _domain, string _topdomain) public view returns(address) {
 		bytes32 topdomainNamehash = keccak256(abi.encodePacked(emptyNamehash, keccak256(abi.encodePacked(_topdomain))));
 		bytes32 namehash = keccak256(abi.encodePacked(topdomainNamehash, keccak256(abi.encodePacked(_domain))));
 		return registry.owner(namehash);
@@ -117,28 +115,13 @@ contract EnsSubdomainFactory {
 	 * @dev Return the owner of a subdomain (e.g. "radek.startonchain.eth"),
 	 * @param _subdomain - sub domain name only e.g. "radek"
 	 * @param _domain - parent domain name e.g. "startonchain"
-	 * @param _topdomain - parent domain name e.g. "eth", "xyz"
 	 */
-	function subdomainOwner(string _subdomain, string _domain, string _topdomain) public view returns (address) {
+	function subdomainOwner(string _subdomain, string _domain, string _topdomain) public view returns(address) {
 		bytes32 topdomainNamehash = keccak256(abi.encodePacked(emptyNamehash, keccak256(abi.encodePacked(_topdomain))));
 		bytes32 domainNamehash = keccak256(abi.encodePacked(topdomainNamehash, keccak256(abi.encodePacked(_domain))));
 		bytes32 subdomainNamehash = keccak256(abi.encodePacked(domainNamehash, keccak256(abi.encodePacked(_subdomain))));
 		return registry.owner(subdomainNamehash);
 	}
-
-    /**
-    * @dev Return the target address where the subdomain is pointing to (e.g. "0x12345..."),
-    * @param _subdomain - sub domain name only e.g. "radek"
-    * @param _domain - parent domain name e.g. "startonchain"
-    * @param _topdomain - parent domain name e.g. "eth", "xyz"
-    */
-    function subdomainTarget(string _subdomain, string _domain, string _topdomain) public view returns (address) {
-        bytes32 topdomainNamehash = keccak256(abi.encodePacked(emptyNamehash, keccak256(abi.encodePacked(_topdomain))));
-        bytes32 domainNamehash = keccak256(abi.encodePacked(topdomainNamehash, keccak256(abi.encodePacked(_domain))));
-        bytes32 subdomainNamehash = keccak256(abi.encodePacked(domainNamehash, keccak256(abi.encodePacked(_subdomain))));
-        address currentResolver = registry.resolver(subdomainNamehash);
-        return EnsResolver(currentResolver).addr(subdomainNamehash);
-    }
 
 	/**
 	 * @dev The contract owner can take away the ownership of any domain owned by this contract.
