@@ -1,8 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SaleMarket at 0xca891ae246e7177aad7b50dfb1b5e9993a63eafe
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SaleMarket at 0xe3bd8baa15e0314baf7a819520a121f2f8a5d66d
 */
 pragma solidity ^0.4.24;
-
 
 contract CutieCoreInterface
 {
@@ -102,6 +101,11 @@ contract CutieCoreInterface
 
     function getApproved(uint256 _tokenId) external returns (address);
 }
+
+pragma solidity ^0.4.24;
+
+
+pragma solidity ^0.4.24;
 
 
 /**
@@ -416,7 +420,7 @@ contract Market is MarketInterface, Pausable, TokenRecipientInterface
         _removeAuction(_cutieId);
 
         // Transfer proceeds to seller (if there are any!)
-        if (price > 0 && seller != address(coreContract)) {
+        if (price > 0) {
             uint128 fee = _computeFee(price);
             uint128 sellerValue = price - fee;
 
@@ -766,47 +770,6 @@ contract Market is MarketInterface, Pausable, TokenRecipientInterface
     function removeToken(ERC20 _tokenContract) external onlyOwner
     {
         delete priceOracle[address(_tokenContract)];
-    }
-
-    function isPluginInterface() public pure returns (bool)
-    {
-        return true;
-    }
-
-    function onRemove() public pure {}
-
-    function run(
-        uint40 /*_cutieId*/,
-        uint256 /*_parameter*/,
-        address /*_seller*/
-    )
-    public
-    payable
-    {
-        revert();
-    }
-
-    function runSigned(
-        uint40 /*_cutieId*/,
-        uint256 /*_parameter*/,
-        address /*_owner*/
-    )
-    external
-    payable
-    {
-        revert();
-    }
-
-    function withdraw() public
-    {
-        require(
-            msg.sender == owner ||
-            msg.sender == address(coreContract)
-        );
-        if (address(this).balance > 0)
-        {
-            address(coreContract).transfer(address(this).balance);
-        }
     }
 }
 
