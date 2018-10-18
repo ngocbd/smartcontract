@@ -1,145 +1,235 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sale at 0xfec8c5187aee4c2d460dad811338723b7bc8d50e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sale at 0x08bf43432bfac307d0a18a5b2a7c27cd858c5cfb
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.13;
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() {
+    owner = msg.sender;
+  }
+
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner {
+    require(newOwner != address(0));      
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
 
 /*
-    Sale(address ethwallet)   // this will send the received ETH funds to this address
-  @author Yumerium Ltd
-*/
+ * ??????? ????????, ??????? ???????????? ????????? ??????
+ */
+
+contract Haltable is Ownable {
+    bool public halted;
+
+    modifier stopInEmergency {
+        require(!halted);
+        _;
+    }
+
+    /* ???????????, ??????? ?????????? ? ???????? */
+    modifier onlyInEmergency {
+        require(halted);
+        _;
+    }
+
+    /* ????? ??????? ??????? ???????, ???????? ????? ?????? ???????? */
+    function halt() external onlyOwner {
+        halted = true;
+    }
+
+    /* ????? ?????????? ????? ?????? */
+    function unhalt() external onlyOwner onlyInEmergency {
+        halted = false;
+    }
+
+}
+
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+uint256 public totalSupply;
+function balanceOf(address who) constant returns (uint256);
+function transfer(address to, uint256 value) returns (bool);
+event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+/**
+ * ????????? ????????? ??????
+ */
+
+contract ImpToken is ERC20Basic {
+    function decimals() public returns (uint) {}
+}
+
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
 
-    /**
-    * @dev Multiplies two numbers, throws on overflow.
-    */
-    function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
-        if (a == 0) {
-            return 0;
-        }
-        c = a * b;
-        assert(c / a == b);
-        return c;
-    }
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
 
-    /**
-    * @dev Integer division of two numbers, truncating the quotient.
-    */
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        // uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return a / b;
-    }
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
 
-    /**
-    * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-    */
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
-
-    /**
-    * @dev Adds two numbers, throws on overflow.
-    */
-    function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-        c = a + b;
-        assert(c >= a);
-        return c;
-    }
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
-contract YumeriumManager {
-    function getYumerium(address sender) external payable returns (uint256);
-}
+/* ???????? ?????? */
 
-contract Sale {
-    uint public saleEnd1 = 1535846400 + 1 days; //9/3/2018 @ 12:00am (UTC)
-    uint public saleEnd2 = saleEnd1 + 1 days; //9/4/2018 @ 12:00am (UTC)
-    uint public saleEnd3 = saleEnd2 + 1 days; //9/5/2018 @ 12:00am (UTC)
-    uint public saleEnd4 = 1539129600; //10/10/2018 @ 12:00am (UTC)
-    uint256 public minEthValue = 10 ** 15; // 0.001 eth
-    
-    using SafeMath for uint256;
-    uint256 public maxSale;
-    uint256 public totalSaled;
-    mapping(uint256 => mapping(address => uint256)) public ticketsEarned;   // tickets earned for each user each day
-                                                                            // (day => (user address => # tickets))
-    mapping(uint256 => uint256) public totalTickets; // (day => # total tickets)
-    mapping(uint256 => uint256) public eachDaySold; // how many ethereum sold for each day
-    uint256 public currentDay;  // shows what day current day is for event sale (0 = event sale ended)
-                                // 1 = day 1, 2 = day 2, 3 = day 3
-    mapping(uint256 => address[]) public eventSaleParticipants; // participants for event sale for each day
-    
-    YumeriumManager public manager;
+contract Sale is Haltable {
+    using SafeMath for uint;
 
-    address public creator;
+    /* ?????, ??????? ??????? */
+    ImpToken public impToken;
 
-    event Contribution(address from, uint256 amount);
+    /* ????????? ???????? ????? ???????????? ???? */
+    address public destinationWallet;
 
-    constructor(address _manager_address) public {
-        maxSale = 316906850 * 10 ** 8; 
-        manager = YumeriumManager(_manager_address);
-        creator = msg.sender;
-        currentDay = 1;
+    /*  ??????? ?????? ????? 1 IMP ? wei */
+    uint public oneImpInWei;
+
+    /*  ??????????? ???-?? ???????, ??????? ????? ??????? */
+    uint public minBuyTokenAmount;
+
+    /*  ???????????? ???-?? ???????, ??????? ????? ?????? ?? 1 ??? */
+    uint public maxBuyTokenAmount;
+
+    /* ??????? ??????? ?????? */
+    event Invested(address receiver, uint weiAmount, uint tokenAmount);
+
+    /* ??????????? */
+    function Sale(address _impTokenAddress, address _destinationWallet) {
+        require(_impTokenAddress != 0);
+        require(_destinationWallet != 0);
+
+        impToken = ImpToken(_impTokenAddress);
+
+        destinationWallet = _destinationWallet;
     }
 
-    function () external payable {
-        buy();
+    /**
+     * Fallback ??????? ???????????? ??? ???????? ?????
+     */
+    function() payable stopInEmergency {
+        uint weiAmount = msg.value;
+        address receiver = msg.sender;
+
+        uint tokenMultiplier = 10 ** impToken.decimals();
+        uint tokenAmount = weiAmount.mul(tokenMultiplier).div(oneImpInWei);
+
+        require(tokenAmount > 0);
+
+        require(tokenAmount >= minBuyTokenAmount && tokenAmount <= maxBuyTokenAmount);
+
+        // ??????? ???????? ??????? ?? ????????? ??????
+        uint tokensLeft = getTokensLeft();
+
+        require(tokensLeft > 0);
+
+        require(tokenAmount <= tokensLeft);
+
+        // ????????? ?????? ?????????
+        assignTokens(receiver, tokenAmount);
+
+        // ???? ?? ??????? ????
+        destinationWallet.transfer(weiAmount);
+
+        // ???????? ???????
+        Invested(receiver, weiAmount, tokenAmount);
     }
 
-    // CONTRIBUTE FUNCTION
-    // converts ETH to TOKEN and sends new TOKEN to the sender
-    function contribute() external payable {
-        buy();
-    }
-    
-    function getNumParticipants(uint256 whichDay) public view returns (uint256) {
-        return eventSaleParticipants[whichDay].length;
-    }
-    
-    function buy() internal {
-        require(msg.value>=minEthValue);
-        require(now < saleEnd4); // main sale postponed
-        
-        uint256 amount = manager.getYumerium.value(msg.value)(msg.sender);
-        uint256 total = totalSaled.add(amount);
-        
-        require(total<=maxSale);
-        
-        totalSaled = total;
-        if (currentDay > 0) {
-            eachDaySold[currentDay] = eachDaySold[currentDay].add(msg.value);
-            uint256 tickets = msg.value.div(10 ** 17);
-            if (ticketsEarned[currentDay][msg.sender] == 0) {
-                eventSaleParticipants[currentDay].push(msg.sender);
-            }
-            ticketsEarned[currentDay][msg.sender] = ticketsEarned[currentDay][msg.sender].add(tickets);
-            totalTickets[currentDay] = totalTickets[currentDay].add(tickets);
-            if (now >= saleEnd3)
-            {
-                currentDay = 0;
-            }
-            else if (now >= saleEnd2)
-            {
-                currentDay = 3;
-            }
-            else if (now >= saleEnd1)
-            {
-                currentDay = 2;
-            }
-        }
-        
-        emit Contribution(msg.sender, amount);
+    /**
+     * ????? ???????? ??? ????? ???????
+     */
+    function setDestinationWallet(address destinationAddress) external onlyOwner {
+        destinationWallet = destinationAddress;
     }
 
-    // change yumo address
-    function changeManagerAddress(address _manager_address) external {
-        require(msg.sender==creator, "You are not a creator!");
-        manager = YumeriumManager(_manager_address);
+    /**
+     *  ??????????? ???-?? ???????, ??????? ????? ???????
+     */
+    function setMinBuyTokenAmount(uint value) external onlyOwner {
+        minBuyTokenAmount = value;
+    }
+
+    /**
+     *  ???????????? ???-?? ???????, ??????? ????? ???????
+     */
+    function setMaxBuyTokenAmount(uint value) external onlyOwner {
+        maxBuyTokenAmount = value;
+    }
+
+    /**
+     * ???????, ??????? ?????? ??????? ???? ETH ? ??????
+     */
+    function setOneImpInWei(uint value) external onlyOwner {
+        require(value > 0);
+
+        oneImpInWei = value;
+    }
+
+    /**
+     * ??????? ??????? ??????????
+     */
+    function assignTokens(address receiver, uint tokenAmount) private {
+        impToken.transfer(receiver, tokenAmount);
+    }
+
+    /**
+     * ?????????? ???-?? ?????????????? ???????
+     */
+    function getTokensLeft() public constant returns (uint) {
+        return impToken.balanceOf(address(this));
     }
 }
