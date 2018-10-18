@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ExToke at 0x4d74a7db43bbd1de7708cdf55acbbdd71b65cf6d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ExToke at 0x43377d26bf2394d3cce3dde3fc612609b62fd100
 */
-pragma solidity ^0.4.25;
+pragma solidity ^0.4.21;
 
 contract ERC20 {
     bytes32 public standard;
