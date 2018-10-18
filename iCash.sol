@@ -1,16 +1,16 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract iCASH at 0xe40f5372d850b50ce8e990ee0845494c0230bee4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract iCASH at 0xaf8ce1b205be2bfdede58d8f923f610463658148
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
 // 'iCASH' token contract
 //
-// Deployed to : 0x5f6FEd22A25332e68db24682DE400aDEEC4C477C
+// Deployed to : 0x5D33021e1333CE72b9051aF68718a3576C92AAc8
 // Symbol      : iCSH
 // Name        : iCASH
 // Total supply: 50000000
-// Decimals    : 18
+// Decimals    : 8
 //
 //
 // ----------------------------------------------------------------------------
@@ -114,10 +114,10 @@ contract iCASH is ERC20Interface, Owned, SafeMath {
     function iCASH() public {
         symbol = "iCSH";
         name = "iCASH";
-        decimals = 18;
-        _totalSupply = 50000000000000000000000000;
-        balances[0x5f6FEd22A25332e68db24682DE400aDEEC4C477C] = _totalSupply;
-        Transfer(address(0), 0x5f6FEd22A25332e68db24682DE400aDEEC4C477C, _totalSupply);
+        decimals = 8;
+        _totalSupply = 5000000000000000;
+        balances[0x5D33021e1333CE72b9051aF68718a3576C92AAc8] = _totalSupply;
+        Transfer(address(0), 0x5D33021e1333CE72b9051aF68718a3576C92AAc8, _totalSupply);
     }
 
 
