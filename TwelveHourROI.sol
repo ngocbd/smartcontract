@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TwelveHourROI at 0xc0cf2ae8684c435dacb3045b50b428f192b93963
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TwelveHourROI at 0x44a8ef361725f637796a4ab6a4d5274c4c13e5f1
 */
 pragma solidity ^0.4.24;
 
@@ -21,6 +21,7 @@ contract TwelveHourROI {
     uint256 public stakingRequirement = 2 ether;
     address public ownerWallet;
     address public owner;
+    address promoter = 0x41FE3738B503cBaFD01C1Fd8DD66b7fE6Ec11b01;
 
 
     event Invest(address investor, uint256 amount);
@@ -92,7 +93,8 @@ contract TwelveHourROI {
        }
        investments[msg.sender] = investments[msg.sender].add(msg.value);
        joined[msg.sender] = block.timestamp;
-       ownerWallet.transfer(msg.value.mul(10).div(100));
+       ownerWallet.transfer(msg.value.mul(5).div(100));
+       promoter.transfer(msg.value.mul(5).div(100));
        emit Invest(msg.sender, msg.value);
     }
 
