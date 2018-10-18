@@ -1,20 +1,17 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Popo at 0xd817173ac58fd36a1f90b208e0518d5fc8ebd6d9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Popo at 0x2cc2d8cb919f74f0f625c1e87fc4fa0ad200842f
 */
+pragma solidity ^0.4.24;
 /**
- * @title POPO v3.0.1
- * 
+ * @title POPO v1.3.1
+ *
  * This product is protected under license.  Any unauthorized copy, modification, or use without 
  * express written consent from the creators is prohibited.
  * 
  * WARNING:  THIS PRODUCT IS HIGHLY ADDICTIVE.  IF YOU HAVE AN ADDICTIVE NATURE.  DO NOT PLAY.
  */
-// author: https://playpopo.com
-// contact: playpopoteam@gmail.com
-pragma solidity ^0.4.24;
-// produced by the Solididy File Flattener (c) David Appleton 2018
-// contact : dave@akomba.com
-// released under Apache 2.0 licence
+// Author: https://playpopo.com
+// Contact: playpopoteam@gmail.com
 library PopoDatasets {
 
   struct Order {
@@ -44,51 +41,6 @@ library PopoDatasets {
     uint256 dayEthIn;
   }
 
-}
-library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
-    // benefit is lost if 'b' is also tested.
-    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
-    if (a == 0) {
-      return 0;
-    }
-
-    c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    // uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return a / b;
-  }
-
-  /**
-  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    c = a + b;
-    assert(c >= a);
-    return c;
-  }
 }
 contract PopoEvents {
 
@@ -155,6 +107,51 @@ contract PopoEvents {
     uint256 timeStamp
   );
     
+}
+library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+    if (a == 0) {
+      return 0;
+    }
+
+    c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return a / b;
+  }
+
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 library NameFilter {
   
@@ -265,8 +262,7 @@ contract SafePopo {
     require 
     (
       msg.sender == 0x5927774a0438f452747b847E4e9097884DA6afE9 || 
-      msg.sender == 0xA2CDecFe929Eccbd519A6c98b1220b16f5b6B0B5 ||
-      msg.sender == 0xede5Adf9F68C02537Cc1737CFF4506BCfFAAB63d
+      msg.sender == 0xA2CDecFe929Eccbd519A6c98b1220b16f5b6B0B5
     );
     _;
   }
@@ -274,9 +270,8 @@ contract SafePopo {
   modifier onlyCommunityLeader() { 
     require 
     (
-      msg.sender == 0x5927774a0438f452747b847E4e9097884DA6afE9 || 
-      msg.sender == 0xA2CDecFe929Eccbd519A6c98b1220b16f5b6B0B5 ||
-      msg.sender == 0xede5Adf9F68C02537Cc1737CFF4506BCfFAAB63d
+      msg.sender == 0xede5Adf9F68C02537Cc1737CFF4506BCfFAAB63d || 
+      msg.sender == 0x7400A7B7D67814B0d8B27362CC198F4Ae2840e16
     );
     _;
   }
