@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MemeRecorder at 0xd8ee3a6b246674a7c6ca07ed9d8b4500d1d80371
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MemeRecorder at 0xfb1b64f06888e5a893bb5504b3ed1e1d39a9a35f
 */
 pragma solidity ^0.4.24;
 
@@ -111,7 +111,7 @@ contract Meme {
 
     function kill() public {
         // I give myself the ability to kill any contracts, though will only do so with duplicates aka cheaters
-        require(msg.sender == address(0xE76197fAa1C8c4973087d9d79064d2bb6F940946));
+        require(msg.sender == address(0x45405DAa47EFf12Bc225ddcAC932Ce5ef965B39b));
         selfdestruct(this);
     }
 }
