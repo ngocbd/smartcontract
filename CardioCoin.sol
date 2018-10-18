@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CardioCoin at 0x9546e99d892968d02605a40d1522529fcd848777
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CardioCoin at 0x237b33851c40c59533f3585dd0b03df80afdc7f6
 */
 pragma solidity ^0.4.24;
 
@@ -127,170 +127,15 @@ contract ERC20Basic {
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-/**
- * @title Roles
- * @author Francisco Giordano (@frangio)
- * @dev Library for managing addresses assigned to a Role.
- * See RBAC.sol for example usage.
- */
-library Roles {
-  struct Role {
-    mapping (address => bool) bearer;
-  }
-
-  /**
-   * @dev give an address access to this role
-   */
-  function add(Role storage _role, address _addr)
-    internal
-  {
-    _role.bearer[_addr] = true;
-  }
-
-  /**
-   * @dev remove an address' access to this role
-   */
-  function remove(Role storage _role, address _addr)
-    internal
-  {
-    _role.bearer[_addr] = false;
-  }
-
-  /**
-   * @dev check if an address has this role
-   * // reverts
-   */
-  function check(Role storage _role, address _addr)
-    internal
-    view
-  {
-    require(has(_role, _addr));
-  }
-
-  /**
-   * @dev check if an address has this role
-   * @return bool
-   */
-  function has(Role storage _role, address _addr)
-    internal
-    view
-    returns (bool)
-  {
-    return _role.bearer[_addr];
-  }
+contract Constants {
+    uint public constant RESELLING_LOCK_UP_PERIOD = 210 days;
+    uint public constant RESELLING_UNLOCK_COUNT = 10;
 }
 
-
-/**
- * @title RBAC (Role-Based Access Control)
- * @author Matt Condon (@Shrugs)
- * @dev Stores and provides setters and getters for roles and addresses.
- * Supports unlimited numbers of roles and addresses.
- * See //contracts/mocks/RBACMock.sol for an example of usage.
- * This RBAC method uses strings to key roles. It may be beneficial
- * for you to write your own implementation of this interface using Enums or similar.
- */
-contract RBAC {
-  using Roles for Roles.Role;
-
-  mapping (string => Roles.Role) private roles;
-
-  event RoleAdded(address indexed operator, string role);
-  event RoleRemoved(address indexed operator, string role);
-
-  /**
-   * @dev reverts if addr does not have role
-   * @param _operator address
-   * @param _role the name of the role
-   * // reverts
-   */
-  function checkRole(address _operator, string _role)
-    public
-    view
-  {
-    roles[_role].check(_operator);
-  }
-
-  /**
-   * @dev determine if addr has role
-   * @param _operator address
-   * @param _role the name of the role
-   * @return bool
-   */
-  function hasRole(address _operator, string _role)
-    public
-    view
-    returns (bool)
-  {
-    return roles[_role].has(_operator);
-  }
-
-  /**
-   * @dev add a role to an address
-   * @param _operator address
-   * @param _role the name of the role
-   */
-  function addRole(address _operator, string _role)
-    internal
-  {
-    roles[_role].add(_operator);
-    emit RoleAdded(_operator, _role);
-  }
-
-  /**
-   * @dev remove a role from an address
-   * @param _operator address
-   * @param _role the name of the role
-   */
-  function removeRole(address _operator, string _role)
-    internal
-  {
-    roles[_role].remove(_operator);
-    emit RoleRemoved(_operator, _role);
-  }
-
-  /**
-   * @dev modifier to scope access to a single role (uses msg.sender as addr)
-   * @param _role the name of the role
-   * // reverts
-   */
-  modifier onlyRole(string _role)
-  {
-    checkRole(msg.sender, _role);
-    _;
-  }
-
-  /**
-   * @dev modifier to scope access to a set of roles (uses msg.sender as addr)
-   * @param _roles the names of the roles to scope access to
-   * // reverts
-   *
-   * @TODO - when solidity supports dynamic arrays as arguments to modifiers, provide this
-   *  see: https://github.com/ethereum/solidity/issues/2467
-   */
-  // modifier onlyRoles(string[] _roles) {
-  //     bool hasAnyRole = false;
-  //     for (uint8 i = 0; i < _roles.length; i++) {
-  //         if (hasRole(msg.sender, _roles[i])) {
-  //             hasAnyRole = true;
-  //             break;
-  //         }
-  //     }
-
-  //     require(hasAnyRole);
-
-  //     _;
-  // }
-}
-
-contract CardioCoin is ERC20Basic, Ownable, RBAC {
-    string public constant ROLE_NEED_LOCK_UP = "need_lock_up";
-
+contract CardioCoin is ERC20Basic, Ownable, Constants {
     using SafeMath for uint256;
 
-    uint public constant RESELLING_LOCKUP_PERIOD = 210 days;
-    uint public constant PRE_PUBLIC_LOCKUP_PERIOD = 180 days;
-    uint public constant UNLOCK_TEN_PERCENT_PERIOD = 30 days;
+    uint public constant UNLOCK_PERIOD = 30 days;
 
     string public name = "CardioCoin";
     string public symbol = "CRDC";
@@ -300,6 +145,17 @@ contract CardioCoin is ERC20Basic, Ownable, RBAC {
 
     mapping (address => uint256) internal reselling;
     uint256 internal resellingAmount = 0;
+
+    struct locker {
+        bool isLocker;
+        string role;
+        uint lockUpPeriod;
+        uint unlockCount;
+    }
+
+    mapping (address => locker) internal lockerList;
+
+    event AddToLocker(address owner, uint lockUpPeriod, uint unlockCount);
 
     event ResellingAdded(address seller, uint256 amount);
     event ResellingSubtracted(address seller, uint256 amount);
@@ -315,20 +171,19 @@ contract CardioCoin is ERC20Basic, Ownable, RBAC {
         balances[msg.sender] = b;
     }
 
-    function addLockedUpTokens(address _owner, uint256 amount, uint lockupPeriod)
+    function addLockedUpTokens(address _owner, uint256 amount, uint lockUpPeriod, uint unlockCount)
     internal {
         balance storage b = balances[_owner];
-        lockup memory l;
+        lockUp memory l;
 
         l.amount = amount;
-        l.unlockTimestamp = now + lockupPeriod;
+        l.unlockTimestamp = now + lockUpPeriod;
+        l.unlockCount = unlockCount;
         b.lockedUp += amount;
         b.lockUpData[b.lockUpCount] = l;
         b.lockUpCount += 1;
         emit TokenLocked(_owner, amount);
     }
-
-    // ??? ??
 
     function addResellingAmount(address seller, uint256 amount)
     public
@@ -384,25 +239,23 @@ contract CardioCoin is ERC20Basic, Ownable, RBAC {
 
         reselling[seller] = reselling[seller].sub(amount);
         resellingAmount = resellingAmount.sub(amount);
-
-        addLockedUpTokens(buyer, amount, RESELLING_LOCKUP_PERIOD);
+        addLockedUpTokens(buyer, amount, RESELLING_LOCK_UP_PERIOD, RESELLING_UNLOCK_COUNT);
         emit Reselled(seller, buyer, amount);
 
         return true;
     }
 
-    // BasicToken
-
-    struct lockup {
+    struct lockUp {
         uint256 amount;
         uint unlockTimestamp;
+        uint unlockedCount;
         uint unlockCount;
     }
 
     struct balance {
         uint256 available;
         uint256 lockedUp;
-        mapping (uint => lockup) lockUpData;
+        mapping (uint => lockUp) lockUpData;
         uint lockUpCount;
         uint unlockIndex;
     }
@@ -414,70 +267,65 @@ contract CardioCoin is ERC20Basic, Ownable, RBAC {
 
         if (b.lockUpCount > 0 && b.unlockIndex < b.lockUpCount) {
             for (uint i = b.unlockIndex; i < b.lockUpCount; i++) {
-                lockup storage l = b.lockUpData[i];
+                lockUp storage l = b.lockUpData[i];
 
                 if (l.unlockTimestamp <= now) {
-                    uint count = unlockCount(l.unlockTimestamp, l.unlockCount);
-                    uint256 unlockedAmount = l.amount.mul(count).div(10);
+                    uint count = calculateUnlockCount(l.unlockTimestamp, l.unlockedCount, l.unlockCount);
+                    uint256 unlockedAmount = l.amount.mul(count).div(l.unlockCount);
 
                     if (unlockedAmount > b.lockedUp) {
                         unlockedAmount = b.lockedUp;
-                        l.unlockCount = 10;
+                        l.unlockedCount = l.unlockCount;
                     } else {
                         b.available = b.available.add(unlockedAmount);
                         b.lockedUp = b.lockedUp.sub(unlockedAmount);
-                        l.unlockCount += count;
+                        l.unlockedCount += count;
                     }
                     emit TokenUnlocked(_owner, unlockedAmount);
-                    if (l.unlockCount == 10) {
-                        lockup memory tempA = b.lockUpData[i];
-                        lockup memory tempB = b.lockUpData[b.unlockIndex];
+                    if (l.unlockedCount == l.unlockCount) {
+                        lockUp memory tempA = b.lockUpData[i];
+                        lockUp memory tempB = b.lockUpData[b.unlockIndex];
 
                         b.lockUpData[i] = tempB;
                         b.lockUpData[b.unlockIndex] = tempA;
                         b.unlockIndex += 1;
                     } else {
-                        l.unlockTimestamp += UNLOCK_TEN_PERCENT_PERIOD * count;
+                        l.unlockTimestamp += UNLOCK_PERIOD * count;
                     }
                 }
             }
         }
     }
 
-    function unlockCount(uint timestamp, uint _unlockCount) view internal returns (uint) {
+    function calculateUnlockCount(uint timestamp, uint unlockedCount, uint unlockCount) view internal returns (uint) {
         uint count = 0;
         uint nowFixed = now;
 
-        while (timestamp < nowFixed && _unlockCount + count < 10) {
+        while (timestamp < nowFixed && unlockedCount + count < unlockCount) {
             count++;
-            timestamp += UNLOCK_TEN_PERCENT_PERIOD;
+            timestamp += UNLOCK_PERIOD;
         }
 
         return count;
     }
 
-    /**
-    * @dev Total number of tokens in existence
-    */
     function totalSupply() public view returns (uint256) {
         return totalSupply_;
     }
 
-    /**
-    * @dev Transfer token for a specified address
-    * @param _to The address to transfer to.
-    * @param _value The amount to be transferred.
-    */
     function transfer(address _to, uint256 _value)
     public
     returns (bool) {
         unlockBalance(msg.sender);
-        if (hasRole(msg.sender, ROLE_NEED_LOCK_UP)) {
+
+        locker storage l = lockerList[msg.sender];
+
+        if (l.isLocker) {
             require(_value <= balances[msg.sender].available);
             require(_to != address(0));
 
             balances[msg.sender].available = balances[msg.sender].available.sub(_value);
-            addLockedUpTokens(_to, _value, RESELLING_LOCKUP_PERIOD);
+            addLockedUpTokens(_to, _value, l.lockUpPeriod, l.unlockCount);
         } else {
             require(_value <= balances[msg.sender].available);
             require(_to != address(0));
@@ -490,30 +338,40 @@ contract CardioCoin is ERC20Basic, Ownable, RBAC {
         return true;
     }
 
-    /**
-    * @dev Gets the balance of the specified address.
-    * @param _owner The address to query the the balance of.
-    * @return An uint256 representing the amount owned by the passed address.
-    */
     function balanceOf(address _owner) public view returns (uint256) {
         return balances[_owner].available.add(balances[_owner].lockedUp);
     }
 
     function lockedUpBalanceOf(address _owner) public view returns (uint256) {
-        return balances[_owner].lockedUp;
+        balance storage b = balances[_owner];
+        uint256 lockedUpBalance = b.lockedUp;
+
+        if (b.lockUpCount > 0 && b.unlockIndex < b.lockUpCount) {
+            for (uint i = b.unlockIndex; i < b.lockUpCount; i++) {
+                lockUp storage l = b.lockUpData[i];
+
+                if (l.unlockTimestamp <= now) {
+                    uint count = calculateUnlockCount(l.unlockTimestamp, l.unlockedCount, l.unlockCount);
+                    uint256 unlockedAmount = l.amount.mul(count).div(l.unlockCount);
+
+                    if (unlockedAmount > lockedUpBalance) {
+                        lockedUpBalance = 0;
+                        break;
+                    } else {
+                        lockedUpBalance = lockedUpBalance.sub(unlockedAmount);
+                    }
+                }
+            }
+        }
+
+        return lockedUpBalance;
     }
 
     function resellingBalanceOf(address _owner) public view returns (uint256) {
         return reselling[_owner];
     }
 
-    function refreshLockUpStatus()
-    public
-    {
-        unlockBalance(msg.sender);
-    }
-
-    function transferWithLockUp(address _to, uint256 _value)
+    function transferWithLockUp(address _to, uint256 _value, uint lockUpPeriod, uint unlockCount)
     public
     onlyOwner
     returns (bool) {
@@ -521,28 +379,20 @@ contract CardioCoin is ERC20Basic, Ownable, RBAC {
         require(_to != address(0));
 
         balances[owner].available = balances[owner].available.sub(_value);
-        addLockedUpTokens(_to, _value, PRE_PUBLIC_LOCKUP_PERIOD);
+        addLockedUpTokens(_to, _value, lockUpPeriod, unlockCount);
         emit Transfer(msg.sender, _to, _value);
 
         return true;
     }
 
-    // Burnable
-
     event Burn(address indexed burner, uint256 value);
 
-    /**
-     * @dev Burns a specific amount of tokens.
-     * @param _value The amount of token to be burned.
-     */
     function burn(uint256 _value) public {
         _burn(msg.sender, _value);
     }
 
     function _burn(address _who, uint256 _value) internal {
         require(_value <= balances[_who].available);
-        // no need to require value <= totalSupply, since that would imply the
-        // sender's balance is greater than the totalSupply, which *should* be an assertion failure
 
         balances[_who].available = balances[_who].available.sub(_value);
         totalSupply_ = totalSupply_.sub(_value);
@@ -550,17 +400,32 @@ contract CardioCoin is ERC20Basic, Ownable, RBAC {
         emit Transfer(_who, address(0), _value);
     }
 
-    // ??? ??
-
-    function addAddressToNeedLockUpList(address _operator)
+    function addAddressToLockerList(address _operator, string role, uint lockUpPeriod, uint unlockCount)
     public
     onlyOwner {
-        addRole(_operator, ROLE_NEED_LOCK_UP);
+        locker storage existsLocker = lockerList[_operator];
+
+        require(!existsLocker.isLocker);
+
+        locker memory l;
+
+        l.isLocker = true;
+        l.role = role;
+        l.lockUpPeriod = lockUpPeriod;
+        l.unlockCount = unlockCount;
+        lockerList[_operator] = l;
+        emit AddToLocker(_operator, lockUpPeriod, unlockCount);
     }
 
-    function removeAddressToNeedLockUpList(address _operator)
-    public
-    onlyOwner {
-        removeRole(_operator, ROLE_NEED_LOCK_UP);
+    function lockerRole(address _operator) public view returns (string) {
+        return lockerList[_operator].role;
+    }
+
+    function lockerLockUpPeriod(address _operator) public view returns (uint) {
+        return lockerList[_operator].lockUpPeriod;
+    }
+
+    function lockerUnlockCount(address _operator) public view returns (uint) {
+        return lockerList[_operator].unlockCount;
     }
 }
