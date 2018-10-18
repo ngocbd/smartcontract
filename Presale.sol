@@ -1,44 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreSale at 0x87cdabc87128476d84462eb9c5a67a7acfa7889e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Presale at 0xbb5350b4727835d8da25250719330ff6664bf1c8
 */
-pragma solidity ^0.4.24;
-
-// File: openzeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol
-
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * See https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address _who) public view returns (uint256);
-  function transfer(address _to, uint256 _value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-// File: openzeppelin-solidity/contracts/token/ERC20/ERC20.sol
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address _owner, address _spender)
-    public view returns (uint256);
-
-  function transferFrom(address _from, address _to, uint256 _value)
-    public returns (bool);
-
-  function approve(address _spender, uint256 _value) public returns (bool);
-  event Approval(
-    address indexed owner,
-    address indexed spender,
-    uint256 value
-  );
-}
-
-// File: openzeppelin-solidity/contracts/math/SafeMath.sol
+pragma solidity ^0.4.21;
 
 /**
  * @title SafeMath
@@ -46,1012 +9,852 @@ contract ERC20 is ERC20Basic {
  */
 library SafeMath {
 
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
-    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
-    // benefit is lost if 'b' is also tested.
-    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
-    if (_a == 0) {
-      return 0;
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a * b;
+        assert(a == 0 || c / a == b);
+        return c;
     }
 
-    c = _a * _b;
-    assert(c / _a == _b);
-    return c;
-  }
-
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 _a, uint256 _b) internal pure returns (uint256) {
-    // assert(_b > 0); // Solidity automatically throws when dividing by 0
-    // uint256 c = _a / _b;
-    // assert(_a == _b * c + _a % _b); // There is no case in which this doesn't hold
-    return _a / _b;
-  }
-
-  /**
-  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 _a, uint256 _b) internal pure returns (uint256) {
-    assert(_b <= _a);
-    return _a - _b;
-  }
-
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
-    c = _a + _b;
-    assert(c >= _a);
-    return c;
-  }
-}
-
-// File: openzeppelin-solidity/contracts/ownership/Ownable.sol
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipRenounced(address indexed previousOwner);
-  event OwnershipTransferred(
-    address indexed previousOwner,
-    address indexed newOwner
-  );
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  constructor() public {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to relinquish control of the contract.
-   * @notice Renouncing to ownership will leave the contract without an owner.
-   * It will not be possible to call the functions with the `onlyOwner`
-   * modifier anymore.
-   */
-  function renounceOwnership() public onlyOwner {
-    emit OwnershipRenounced(owner);
-    owner = address(0);
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param _newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address _newOwner) public onlyOwner {
-    _transferOwnership(_newOwner);
-  }
-
-  /**
-   * @dev Transfers control of the contract to a newOwner.
-   * @param _newOwner The address to transfer ownership to.
-   */
-  function _transferOwnership(address _newOwner) internal {
-    require(_newOwner != address(0));
-    emit OwnershipTransferred(owner, _newOwner);
-    owner = _newOwner;
-  }
-}
-
-// File: openzeppelin-solidity/contracts/payment/Escrow.sol
-
-/**
- * @title Escrow
- * @dev Base escrow contract, holds funds destinated to a payee until they
- * withdraw them. The contract that uses the escrow as its payment method
- * should be its owner, and provide public methods redirecting to the escrow's
- * deposit and withdraw.
- */
-contract Escrow is Ownable {
-  using SafeMath for uint256;
-
-  event Deposited(address indexed payee, uint256 weiAmount);
-  event Withdrawn(address indexed payee, uint256 weiAmount);
-
-  mapping(address => uint256) private deposits;
-
-  function depositsOf(address _payee) public view returns (uint256) {
-    return deposits[_payee];
-  }
-
-  /**
-  * @dev Stores the sent amount as credit to be withdrawn.
-  * @param _payee The destination address of the funds.
-  */
-  function deposit(address _payee) public onlyOwner payable {
-    uint256 amount = msg.value;
-    deposits[_payee] = deposits[_payee].add(amount);
-
-    emit Deposited(_payee, amount);
-  }
-
-  /**
-  * @dev Withdraw accumulated balance for a payee.
-  * @param _payee The address whose funds will be withdrawn and transferred to.
-  */
-  function withdraw(address _payee) public onlyOwner {
-    uint256 payment = deposits[_payee];
-    assert(address(this).balance >= payment);
-
-    deposits[_payee] = 0;
-
-    _payee.transfer(payment);
-
-    emit Withdrawn(_payee, payment);
-  }
-}
-
-// File: openzeppelin-solidity/contracts/payment/ConditionalEscrow.sol
-
-/**
- * @title ConditionalEscrow
- * @dev Base abstract escrow to only allow withdrawal if a condition is met.
- */
-contract ConditionalEscrow is Escrow {
-  /**
-  * @dev Returns whether an address is allowed to withdraw their funds. To be
-  * implemented by derived contracts.
-  * @param _payee The destination address of the funds.
-  */
-  function withdrawalAllowed(address _payee) public view returns (bool);
-
-  function withdraw(address _payee) public {
-    require(withdrawalAllowed(_payee));
-    super.withdraw(_payee);
-  }
-}
-
-// File: openzeppelin-solidity/contracts/payment/RefundEscrow.sol
-
-/**
- * @title RefundEscrow
- * @dev Escrow that holds funds for a beneficiary, deposited from multiple parties.
- * The contract owner may close the deposit period, and allow for either withdrawal
- * by the beneficiary, or refunds to the depositors.
- */
-contract RefundEscrow is Ownable, ConditionalEscrow {
-  enum State { Active, Refunding, Closed }
-
-  event Closed();
-  event RefundsEnabled();
-
-  State public state;
-  address public beneficiary;
-
-  /**
-   * @dev Constructor.
-   * @param _beneficiary The beneficiary of the deposits.
-   */
-  constructor(address _beneficiary) public {
-    require(_beneficiary != address(0));
-    beneficiary = _beneficiary;
-    state = State.Active;
-  }
-
-  /**
-   * @dev Stores funds that may later be refunded.
-   * @param _refundee The address funds will be sent to if a refund occurs.
-   */
-  function deposit(address _refundee) public payable {
-    require(state == State.Active);
-    super.deposit(_refundee);
-  }
-
-  /**
-   * @dev Allows for the beneficiary to withdraw their funds, rejecting
-   * further deposits.
-   */
-  function close() public onlyOwner {
-    require(state == State.Active);
-    state = State.Closed;
-    emit Closed();
-  }
-
-  /**
-   * @dev Allows for refunds to take place, rejecting further deposits.
-   */
-  function enableRefunds() public onlyOwner {
-    require(state == State.Active);
-    state = State.Refunding;
-    emit RefundsEnabled();
-  }
-
-  /**
-   * @dev Withdraws the beneficiary's funds.
-   */
-  function beneficiaryWithdraw() public {
-    require(state == State.Closed);
-    beneficiary.transfer(address(this).balance);
-  }
-
-  /**
-   * @dev Returns whether refundees can withdraw their deposits (be refunded).
-   */
-  function withdrawalAllowed(address _payee) public view returns (bool) {
-    return state == State.Refunding;
-  }
-}
-
-// File: openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol
-
-/**
- * @title SafeERC20
- * @dev Wrappers around ERC20 operations that throw on failure.
- * To use this library you can add a `using SafeERC20 for ERC20;` statement to your contract,
- * which allows you to call the safe operations as `token.safeTransfer(...)`, etc.
- */
-library SafeERC20 {
-  function safeTransfer(
-    ERC20Basic _token,
-    address _to,
-    uint256 _value
-  )
-    internal
-  {
-    require(_token.transfer(_to, _value));
-  }
-
-  function safeTransferFrom(
-    ERC20 _token,
-    address _from,
-    address _to,
-    uint256 _value
-  )
-    internal
-  {
-    require(_token.transferFrom(_from, _to, _value));
-  }
-
-  function safeApprove(
-    ERC20 _token,
-    address _spender,
-    uint256 _value
-  )
-    internal
-  {
-    require(_token.approve(_spender, _value));
-  }
-}
-
-// File: contracts/crowdsale/Crowdsale.sol
-
-/**
- * @title Crowdsale
- * @dev Crowdsale is a base contract for managing a token crowdsale,
- * allowing investors to purchase tokens with ether. This contract implements
- * such functionality in its most fundamental form and can be extended to provide additional
- * functionality and/or custom behavior.
- * The external interface represents the basic interface for purchasing tokens, and conform
- * the base architecture for crowdsales. They are *not* intended to be modified / overridden.
- * The internal interface conforms the extensible and modifiable surface of crowdsales. Override
- * the methods to add functionality. Consider using 'super' where appropriate to concatenate
- * behavior.
- */
-contract Crowdsale {
-    using SafeMath for uint256;
-    using SafeERC20 for ERC20;
-
-    // The token being sold
-    ERC20 public token;
-
-    // Address where funds are collected
-    address public wallet;
-
-    // How many token units a buyer gets per wei.
-    // The rate is the conversion between wei and the smallest and indivisible token unit.
-    // So, if you are using a rate of 1 with a DetailedERC20 token with 3 decimals called TOK
-    // 1 wei will give you 1 unit, or 0.001 TOK.
-    uint256 public rate;
-
-    // Amount of wei raised
-    uint256 public weiRaised;
-
-    // Amount tokens Sold
-    uint256 public tokensSold;
-    
-    /**
-    * Event for token purchase logging
-    * @param purchaser who paid for the tokens
-    * @param beneficiary who got the tokens
-    * @param value weis paid for purchase
-    * @param amount amount of tokens purchased
-    */
-    event TokenPurchase(
-        address indexed purchaser,
-        address indexed beneficiary,
-        uint256 value,
-        uint256 amount
-    );
-
-    /**
-    * @param _rate Number of token units a buyer gets per wei
-    * @param _wallet Address where collected funds will be forwarded to
-    * @param _token Address of the token being sold
-    */
-    constructor(uint256 _rate, address _wallet, ERC20 _token) public {
-        require(_rate > 0);
-        require(_wallet != address(0));
-        require(_token != address(0));
-
-        rate = _rate;
-        wallet = _wallet;
-        token = _token;
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return c;
     }
 
-    // -----------------------------------------
-    // Crowdsale external interface
-    // -----------------------------------------
-
-    /**
-    * @dev fallback function ***DO NOT OVERRIDE***
-    */
-    function () external payable {
-        buyTokens(msg.sender);
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
     }
 
-    /**
-    * @dev low level token purchase ***DO NOT OVERRIDE***
-    * @param _beneficiary Address performing the token purchase
-    */
-    function buyTokens(address _beneficiary) public payable {
-
-        uint256 weiAmount = msg.value;
-
-        // calculate token amount to be created
-        uint256 tokens = _getTokenAmount(weiAmount);
-
-        _preValidatePurchase(_beneficiary, weiAmount, tokens);
-
-        // update state
-        weiRaised = weiRaised.add(weiAmount);
-        tokensSold = tokensSold.add(tokens);
-
-        _processPurchase(_beneficiary, tokens);
-        emit TokenPurchase(
-            msg.sender,
-            _beneficiary,
-            weiAmount,
-            tokens
-        );
-
-        _updatePurchasingState(_beneficiary, weiAmount, tokens);
-
-        _forwardFunds();
-        _postValidatePurchase(_beneficiary, weiAmount, tokens);
-    }
-
-    // -----------------------------------------
-    // Internal interface (extensible)
-    // -----------------------------------------
-
-    /**
-    * @dev Validation of an incoming purchase. Use require statements to revert state when conditions are not met. Use `super` in contracts that inherit from Crowdsale to extend their validations.
-    * Example from CappedCrowdsale.sol's _preValidatePurchase method: 
-    *   super._preValidatePurchase(_beneficiary, _weiAmount);
-    *   require(weiRaised.add(_weiAmount) <= cap);
-    * @param _beneficiary Address performing the token purchase
-    * @param _weiAmount Value in wei involved in the purchase
-    * @param _tokenAmount Value in token involved in the purchase
-    */
-    function _preValidatePurchase(
-        address _beneficiary,
-        uint256 _weiAmount,
-        uint256 _tokenAmount
-    )
-        internal
-    {
-        require(_beneficiary != address(0));
-        require(_weiAmount != 0);
-    }
-
-    /**
-    * @dev Validation of an executed purchase. Observe state and use revert statements to undo rollback when valid conditions are not met.
-    * @param _beneficiary Address performing the token purchase
-    * @param _weiAmount Value in wei involved in the purchase
-    * @param _tokenAmount Value in token involved in the purchase
-    */
-    function _postValidatePurchase(
-        address _beneficiary,
-        uint256 _weiAmount,
-        uint256 _tokenAmount
-    )
-        internal
-    {
-        // optional override
-    }
-
-    /**
-    * @dev Source of tokens. Override this method to modify the way in which the crowdsale ultimately gets and sends its tokens.
-    * @param _beneficiary Address performing the token purchase
-    * @param _tokenAmount Number of tokens to be emitted
-    */
-    function _deliverTokens(
-        address _beneficiary,
-        uint256 _tokenAmount
-    )
-        internal
-    {
-        token.safeTransfer(_beneficiary, _tokenAmount);
-    }
-
-    /**
-    * @dev Executed when a purchase has been validated and is ready to be executed. Not necessarily emits/sends tokens.
-    * @param _beneficiary Address receiving the tokens
-    * @param _tokenAmount Number of tokens to be purchased
-    */
-    function _processPurchase(
-        address _beneficiary,
-        uint256 _tokenAmount
-    )
-        internal
-    {
-        _deliverTokens(_beneficiary, _tokenAmount);
-    }
-
-    /**
-    * @dev Override for extensions that require an internal state to check for validity (current user contributions, etc.)
-    * @param _beneficiary Address receiving the tokens
-    * @param _weiAmount Value in wei involved in the purchase
-    * @param _tokenAmount Value in token involved in the purchase
-    */
-    function _updatePurchasingState(
-        address _beneficiary,
-        uint256 _weiAmount,
-        uint256 _tokenAmount
-    )
-        internal
-    {
-        // optional override
-    }
-
-    /**
-    * @dev Override to extend the way in which ether is converted to tokens.
-    * @param _weiAmount Value in wei to be converted into tokens
-    * @return Number of tokens that can be purchased with the specified _weiAmount
-    */
-    function _getTokenAmount(uint256 _weiAmount)
-        internal view returns (uint256)
-    {
-        return _weiAmount.mul(rate);
-    }
-
-    /**
-    * @dev Determines how ETH is stored/forwarded on purchases.
-    */
-    function _forwardFunds() internal {
-        wallet.transfer(msg.value);
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
     }
 }
 
-// File: contracts/crowdsale/validation/TimedCrowdsale.sol
 
-/**
- * @title TimedCrowdsale
- * @dev Crowdsale accepting contributions only within a time frame.
- */
-contract TimedCrowdsale is Crowdsale {
-    using SafeMath for uint256;
 
-    uint256 public openingTime;
-    uint256 public closingTime;
 
-    /**
-    * @dev Reverts if not in crowdsale time range.
-    */
-    modifier onlyWhileOpen {
-        // solium-disable-next-line security/no-block-members
-        require(block.timestamp >= openingTime && block.timestamp <= closingTime);
+contract ERC20 {
+
+    uint256 public totalSupply;
+
+    function balanceOf(address _owner) public view returns (uint256 balance);
+
+    function transfer(address _to, uint256 _value) public returns (bool success);
+
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+
+    function approve(address _spender, uint256 _value) public returns (bool success);
+
+    function allowance(address _owner, address _spender) public view returns (uint256 remaining);
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+}
+
+
+contract MultiOwnable {
+
+    mapping (address => bool) public isOwner;
+    address[] public ownerHistory;
+
+    event OwnerAddedEvent(address indexed _newOwner);
+    event OwnerRemovedEvent(address indexed _oldOwner);
+
+    constructor() {
+        // Add default owner
+        address owner = msg.sender;
+        ownerHistory.push(owner);
+        isOwner[owner] = true;
+    }
+
+    modifier onlyOwner() {
+        require(isOwner[msg.sender]);
         _;
     }
 
-    /**
-    * @dev Constructor, takes crowdsale opening and closing times.
-    * @param _openingTime Crowdsale opening time
-    * @param _closingTime Crowdsale closing time
-    */
-    constructor(uint256 _openingTime, uint256 _closingTime) public {
-        // solium-disable-next-line security/no-block-members
-        require(_openingTime >= block.timestamp);
-        require(_closingTime > _openingTime);
-
-        openingTime = _openingTime;
-        closingTime = _closingTime;
+    function ownerHistoryCount() public view returns (uint) {
+        return ownerHistory.length;
     }
 
-    /**
-    * @dev Checks whether the period in which the crowdsale is open has already elapsed.
-    * @return Whether crowdsale period has elapsed
-    */
-    function hasClosed() public view returns (bool) {
-        // solium-disable-next-line security/no-block-members
-        return block.timestamp > closingTime;
+    /** Add extra owner. */
+    function addOwner(address owner) onlyOwner public {
+        require(owner != address(0));
+        require(!isOwner[owner]);
+        ownerHistory.push(owner);
+        isOwner[owner] = true;
+        emit OwnerAddedEvent(owner);
     }
 
-    /**
-    * @dev Extend parent behavior requiring to be within contributing period
-    * @param _beneficiary Token purchaser
-    * @param _weiAmount Amount of wei contributed
-    * @param _tokenAmount Amount of token purchased
-    */
-    function _preValidatePurchase(
-        address _beneficiary,
-        uint256 _weiAmount,
-        uint256 _tokenAmount
-    )
-        internal
-        onlyWhileOpen
-    {
-        super._preValidatePurchase(_beneficiary, _weiAmount, _tokenAmount);
+    /** Remove extra owner. */
+    function removeOwner(address owner) onlyOwner public {
+        require(isOwner[owner]);
+        isOwner[owner] = false;
+        emit OwnerRemovedEvent(owner);
     }
-
 }
 
-// File: contracts/crowdsale/validation/MilestoneCrowdsale.sol
 
-/**
- * @title MilestoneCrowdsale
- * @dev Crowdsale with multiple milestones separated by time and cap
- * @author Nikola Wyatt <nikola.wyatt@foodnation.io>
- */
-contract MilestoneCrowdsale is TimedCrowdsale {
-    using SafeMath for uint256;
 
-    uint256 public constant MAX_MILESTONE = 10;
 
-    /**
-    * Define pricing schedule using milestones.
-    */
-    struct Milestone {
 
-        // Milestone index in array
-        uint256 index;
 
-        // UNIX timestamp when this milestone starts
-        uint256 startTime;
 
-        // Amount of tokens sold in milestone
-        uint256 tokensSold;
 
-        // Maximum amount of Tokens accepted in the current Milestone.
-        uint256 cap;
 
-        // How many tokens per wei you will get after this milestone has been passed
-        uint256 rate;
+contract Pausable is MultiOwnable {
 
+    bool public paused;
+
+    modifier ifNotPaused {
+        require(!paused);
+        _;
+    }
+
+    modifier ifPaused {
+        require(paused);
+        _;
+    }
+
+    // Called by the owner on emergency, triggers paused state
+    function pause() external onlyOwner ifNotPaused {
+        paused = true;
+    }
+
+    // Called by the owner on end of emergency, returns to normal state
+    function resume() external onlyOwner ifPaused {
+        paused = false;
+    }
+}
+
+
+
+
+
+
+
+
+contract StandardToken is ERC20 {
+
+    using SafeMath for uint;
+
+    mapping(address => uint256) balances;
+
+    mapping(address => mapping(address => uint256)) allowed;
+
+    function balanceOf(address _owner) public view returns (uint256 balance) {
+        return balances[_owner];
+    }
+
+    function transfer(address _to, uint256 _value) public returns (bool) {
+        require(_to != address(0));
+
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        emit Transfer(msg.sender, _to, _value);
+        return true;
+    }
+
+    /// @dev Allows allowed third party to transfer tokens from one address to another. Returns success.
+    /// @param _from Address from where tokens are withdrawn.
+    /// @param _to Address to where tokens are sent.
+    /// @param _value Number of tokens to transfer.
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+        require(_to != address(0));
+
+        balances[_from] = balances[_from].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+        emit Transfer(_from, _to, _value);
+        return true;
+    }
+
+    /// @dev Sets approved amount of tokens for spender. Returns success.
+    /// @param _spender Address of allowed account.
+    /// @param _value Number of approved tokens.
+    function approve(address _spender, uint256 _value) public returns (bool) {
+        allowed[msg.sender][_spender] = _value;
+        emit Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    /// @dev Returns number of allowed tokens for given address.
+    /// @param _owner Address of token owner.
+    /// @param _spender Address of token spender.
+    function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
+        return allowed[_owner][_spender];
+    }
+}
+
+
+
+contract CommonToken is StandardToken, MultiOwnable {
+
+    string public constant name   = 'TMSY';
+    string public constant symbol = 'TMSY';
+    uint8 public constant decimals = 18;
+
+    uint256 public saleLimit;   // 85% of tokens for sale.
+    uint256 public teamTokens;  // 7% of tokens goes to the team and will be locked for 1 year.
+    uint256 public partnersTokens;
+    uint256 public advisorsTokens;
+    uint256 public reservaTokens;
+
+    // 7% of team tokens will be locked at this address for 1 year.
+    address public teamWallet; // Team address.
+    address public partnersWallet; // bountry address.
+    address public advisorsWallet; // Team address.
+    address public reservaWallet;
+
+    uint public unlockTeamTokensTime = now + 365 days;
+
+    // The main account that holds all tokens at the beginning and during tokensale.
+    address public seller; // Seller address (main holder of tokens)
+
+    uint256 public tokensSold; // (e18) Number of tokens sold through all tiers or tokensales.
+    uint256 public totalSales; // Total number of sales (including external sales) made through all tiers or tokensales.
+
+    // Lock the transfer functions during tokensales to prevent price speculations.
+    bool public locked = true;
+    mapping (address => bool) public walletsNotLocked;
+
+    event SellEvent(address indexed _seller, address indexed _buyer, uint256 _value);
+    event ChangeSellerEvent(address indexed _oldSeller, address indexed _newSeller);
+    event Burn(address indexed _burner, uint256 _value);
+    event Unlock();
+
+    constructor (
+        address _seller,
+        address _teamWallet,
+        address _partnersWallet,
+        address _advisorsWallet,
+        address _reservaWallet
+    ) MultiOwnable() public {
+
+        totalSupply    = 600000000 ether;
+        saleLimit      = 390000000 ether;
+        teamTokens     = 120000000 ether;
+        partnersTokens =  30000000 ether;
+        reservaTokens  =  30000000 ether;
+        advisorsTokens =  30000000 ether;
+
+        seller         = _seller;
+        teamWallet     = _teamWallet;
+        partnersWallet = _partnersWallet;
+        advisorsWallet = _advisorsWallet;
+        reservaWallet  = _reservaWallet;
+
+        uint sellerTokens = totalSupply - teamTokens - partnersTokens - advisorsTokens - reservaTokens;
+        balances[seller] = sellerTokens;
+        emit Transfer(0x0, seller, sellerTokens);
+
+        balances[teamWallet] = teamTokens;
+        emit Transfer(0x0, teamWallet, teamTokens);
+
+        balances[partnersWallet] = partnersTokens;
+        emit Transfer(0x0, partnersWallet, partnersTokens);
+
+        balances[reservaWallet] = reservaTokens;
+        emit Transfer(0x0, reservaWallet, reservaTokens);
+
+        balances[advisorsWallet] = advisorsTokens;
+        emit Transfer(0x0, advisorsWallet, advisorsTokens);
+    }
+
+    modifier ifUnlocked(address _from, address _to) {
+        //TODO: lockup excepto para direcciones concretas... pago de servicio, conversion fase 2
+        //TODO: Hacer funcion que añada direcciones de excepcion
+        //TODO: Para el team hacer las exceptions
+        require(walletsNotLocked[_to]);
+
+        require(!locked);
+
+        // If requested a transfer from the team wallet:
+        // TODO: fecha cada 6 meses 25% de desbloqueo
+        /*if (_from == teamWallet) {
+            require(now >= unlockTeamTokensTime);
+        }*/
+        // Advisors: 25% cada 3 meses
+
+        // Reserva: 25% cada 6 meses
+
+        // Partners: El bloqueo de todos... no pueden hacer nada
+
+        _;
+    }
+
+    /** Can be called once by super owner. */
+    function unlock() onlyOwner public {
+        require(locked);
+        locked = false;
+        emit Unlock();
+    }
+
+    function walletLocked(address _wallet) onlyOwner public {
+      walletsNotLocked[_wallet] = false;
+    }
+
+    function walletNotLocked(address _wallet) onlyOwner public {
+      walletsNotLocked[_wallet] = true;
     }
 
     /**
-    * Store milestones in a fixed array, so that it can be seen in a blockchain explorer
-    * Milestone 0 is always (0, 0)
-    * (TODO: change this when we confirm dynamic arrays are explorable)
-    */
-    Milestone[10] public milestones;
+     * An address can become a new seller only in case it has no tokens.
+     * This is required to prevent stealing of tokens  from newSeller via
+     * 2 calls of this function.
+     */
+    function changeSeller(address newSeller) onlyOwner public returns (bool) {
+        require(newSeller != address(0));
+        require(seller != newSeller);
 
-    // How many active milestones have been created
-    uint256 public milestoneCount = 0;
+        // To prevent stealing of tokens from newSeller via 2 calls of changeSeller:
+        require(balances[newSeller] == 0);
 
+        address oldSeller = seller;
+        uint256 unsoldTokens = balances[oldSeller];
+        balances[oldSeller] = 0;
+        balances[newSeller] = unsoldTokens;
+        emit Transfer(oldSeller, newSeller, unsoldTokens);
 
-    bool public milestoningFinished = false;
-
-    constructor(        
-        uint256 _openingTime,
-        uint256 _closingTime
-        ) 
-        TimedCrowdsale(_openingTime, _closingTime)
-        public 
-        {
-        }
+        seller = newSeller;
+        emit ChangeSellerEvent(oldSeller, newSeller);
+        return true;
+    }
 
     /**
-    * @dev Contruction, setting a list of milestones
-    * @param _milestoneStartTime uint[] milestones start time 
-    * @param _milestoneCap uint[] milestones cap 
-    * @param _milestoneRate uint[] milestones price 
-    */
-    function setMilestonesList(uint256[] _milestoneStartTime, uint256[] _milestoneCap, uint256[] _milestoneRate) public {
-        // Need to have tuples, length check
-        require(!milestoningFinished);
-        require(_milestoneStartTime.length > 0);
-        require(_milestoneStartTime.length == _milestoneCap.length && _milestoneCap.length == _milestoneRate.length);
-        require(_milestoneStartTime[0] == openingTime);
-        require(_milestoneStartTime[_milestoneStartTime.length-1] < closingTime);
+     * User-friendly alternative to sell() function.
+     */
+    function sellNoDecimals(address _to, uint256 _value) public returns (bool) {
+        return sell(_to, _value * 1e18);
+    }
 
-        for (uint iterator = 0; iterator < _milestoneStartTime.length; iterator++) {
-            if (iterator > 0) {
-                assert(_milestoneStartTime[iterator] > milestones[iterator-1].startTime);
+    function sell(address _to, uint256 _value)  public returns (bool) {
+        // Check that we are not out of limit and still can sell tokens:
+        // Cambiar a hardcap en usd
+        //require(tokensSold.add(_value) <= saleLimit);
+        require(msg.sender == seller, "User not authorized");
+
+        require(_to != address(0));
+        require(_value > 0);
+
+        require(_value <= balances[seller]);
+
+        balances[seller] = balances[seller].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+
+        emit Transfer(seller, _to, _value);
+
+        totalSales++;
+        tokensSold = tokensSold.add(_value);
+        emit SellEvent(seller, _to, _value);
+        return true;
+    }
+
+    /**
+     * Until all tokens are sold, tokens can be transfered to/from owner's accounts.
+     */
+    function transfer(address _to, uint256 _value) ifUnlocked(msg.sender, _to) public returns (bool) {
+        return super.transfer(_to, _value);
+    }
+
+    /**
+     * Until all tokens are sold, tokens can be transfered to/from owner's accounts.
+     */
+    function transferFrom(address _from, address _to, uint256 _value) ifUnlocked(_from, _to) public returns (bool) {
+        return super.transferFrom(_from, _to, _value);
+    }
+
+    function burn(uint256 _value) public returns (bool) {
+        require(_value > 0, 'Value is zero');
+
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        totalSupply = totalSupply.sub(_value);
+        emit Transfer(msg.sender, 0x0, _value);
+        emit Burn(msg.sender, _value);
+        return true;
+    }
+}
+
+
+
+contract CommonTokensale is MultiOwnable, Pausable {
+
+    using SafeMath for uint;
+
+    address public beneficiary;
+    uint public refundDeadlineTime;
+
+    // Balances of beneficiaries:
+    uint public balance;
+    uint public balanceComision;
+    uint public balanceComisionHold;
+    uint public balanceComisionDone;
+
+    // Token contract reference.
+    CommonToken public token;
+
+    uint public minPaymentUSD = 250;
+
+    uint public minCapWei;
+    uint public maxCapWei;
+
+    uint public minCapUSD;
+    uint public maxCapUSD;
+
+    uint public startTime;
+    uint public endTime;
+
+    // Stats for current tokensale:
+
+    uint public totalTokensSold;  // Total amount of tokens sold during this tokensale.
+    uint public totalWeiReceived; // Total amount of wei received during this tokensale.
+    uint public totalUSDReceived; // Total amount of wei received during this tokensale.
+
+    // This mapping stores info on how many ETH (wei) have been sent to this tokensale from specific address.
+    mapping (address => uint256) public buyerToSentWei;
+    mapping (address => uint256) public sponsorToComisionDone;
+    mapping (address => uint256) public sponsorToComision;
+    mapping (address => uint256) public sponsorToComisionHold;
+    mapping (address => uint256) public sponsorToComisionFromInversor;
+    mapping (address => bool) public kicInversor;
+    mapping (address => bool) public validateKYC;
+    mapping (address => bool) public comisionInTokens;
+
+    address[] public sponsorToComisionList;
+
+    // TODO: realizar opcion de que el inversor quiera cobrar en ETH o TMSY
+
+    event ReceiveEthEvent(address indexed _buyer, uint256 _amountWei);
+    event NewInverstEvent(address indexed _child, address indexed _sponsor);
+    event ComisionEvent(address indexed _sponsor, address indexed _child, uint256 _value, uint256 _comision);
+    event ComisionPayEvent(address indexed _sponsor, uint256 _value, uint256 _comision);
+    event ComisionInversorInTokensEvent(address indexed _sponsor, bool status);
+    event ChangeEndTimeEvent(address _sender, uint _date);
+    event verifyKycEvent(address _sender, uint _date, bool _status);
+    event payComisionSponsorTMSY(address _sponsor, uint _date, uint _value);
+    event payComisionSponsorETH(address _sponsor, uint _date, uint _value);
+    event withdrawEvent(address _sender, address _to, uint value, uint _date);
+    // ratio USD-ETH
+    uint public rateUSDETH;
+
+    bool public isSoftCapComplete = false;
+
+    // Array para almacenar los inversores
+    mapping(address => bool) public inversors;
+    address[] public inversorsList;
+
+    // Array para almacenar los sponsors para hacer reparto de comisiones
+    mapping(address => address) public inversorToSponsor;
+
+    constructor (
+        address _token,
+        address _beneficiary,
+        uint _startTime,
+        uint _endTime
+    ) MultiOwnable() public {
+
+        require(_token != address(0));
+        token = CommonToken(_token);
+
+        beneficiary = _beneficiary;
+
+        startTime = _startTime;
+        endTime   = _endTime;
+
+
+        minCapUSD = 400000;
+        maxCapUSD = 4000000;
+    }
+
+    function setRatio(uint _rate) onlyOwner public returns (bool) {
+      rateUSDETH = _rate;
+      return true;
+    }
+
+    //TODO: validateKYC
+    //En el momento que validan el KYC se les entregan los tokens
+
+    function burn(uint _value) onlyOwner public returns (bool) {
+      return token.burn(_value);
+    }
+
+    function newInversor(address _newInversor, address _sponsor) onlyOwner public returns (bool) {
+      inversors[_newInversor] = true;
+      inversorsList.push(_newInversor);
+      inversorToSponsor[_newInversor] = _sponsor;
+      emit NewInverstEvent(_newInversor,_sponsor);
+      return inversors[_newInversor];
+    }
+    function setComisionInvesorInTokens(address _inversor, bool _inTokens) onlyOwner public returns (bool) {
+      comisionInTokens[_inversor] = _inTokens;
+      emit ComisionInversorInTokensEvent(_inversor, _inTokens);
+      return true;
+    }
+    function setComisionInTokens() public returns (bool) {
+      comisionInTokens[msg.sender] = true;
+      emit ComisionInversorInTokensEvent(msg.sender, true);
+      return true;
+    }
+    function setComisionInETH() public returns (bool) {
+      comisionInTokens[msg.sender] = false;
+      emit ComisionInversorInTokensEvent(msg.sender, false);
+
+      return true;
+    }
+    function inversorIsKyc(address who) public returns (bool) {
+      return validateKYC[who];
+    }
+    function unVerifyKyc(address _inversor) onlyOwner public returns (bool) {
+      require(!isSoftCapComplete);
+
+      validateKYC[_inversor] = false;
+
+      address sponsor = inversorToSponsor[_inversor];
+      uint balanceHold = sponsorToComisionFromInversor[_inversor];
+
+      //Actualizamos contadores globales
+      balanceComision = balanceComision.sub(balanceHold);
+      balanceComisionHold = balanceComisionHold.add(balanceHold);
+
+      //Actualizamos contadores del sponsor
+      sponsorToComision[sponsor] = sponsorToComision[sponsor].sub(balanceHold);
+      sponsorToComisionHold[sponsor] = sponsorToComisionHold[sponsor].add(balanceHold);
+
+      //Actualizamos contador comision por inversor
+    //  sponsorToComisionFromInversor[_inversor] = sponsorToComisionFromInversor[_inversor].sub(balanceHold);
+      emit verifyKycEvent(_inversor, now, false);
+    }
+    function verifyKyc(address _inversor) onlyOwner public returns (bool) {
+      validateKYC[_inversor] = true;
+
+      address sponsor = inversorToSponsor[_inversor];
+      uint balanceHold = sponsorToComisionFromInversor[_inversor];
+
+      //Actualizamos contadores globales
+      balanceComision = balanceComision.add(balanceHold);
+      balanceComisionHold = balanceComisionHold.sub(balanceHold);
+
+      //Actualizamos contadores del sponsor
+      sponsorToComision[sponsor] = sponsorToComision[sponsor].add(balanceHold);
+      sponsorToComisionHold[sponsor] = sponsorToComisionHold[sponsor].sub(balanceHold);
+
+      //Actualizamos contador comision por inversor
+      //sponsorToComisionFromInversor[_inversor] = sponsorToComisionFromInversor[_inversor].sub(balanceHold);
+      emit verifyKycEvent(_inversor, now, true);
+      //Enviamos comisiones en caso de tener
+      /*uint256 value = sponsorToComision[_inversor];
+      sponsorToComision[_inversor] = sponsorToComision[_inversor].sub(value);
+      _inversor.transfer(value);*/
+      return true;
+    }
+    function buyerToSentWeiOf(address who) public view returns (uint256) {
+      return buyerToSentWei[who];
+    }
+    function balanceOf(address who) public view returns (uint256) {
+      return token.balanceOf(who);
+    }
+    function balanceOfComision(address who)  public view returns (uint256) {
+      return sponsorToComision[who];
+    }
+    function balanceOfComisionHold(address who)  public view returns (uint256) {
+      return sponsorToComisionHold[who];
+    }
+    function balanceOfComisionDone(address who)  public view returns (uint256) {
+      return sponsorToComisionDone[who];
+    }
+
+    function isInversor(address who) public view returns (bool) {
+      return inversors[who];
+    }
+    function payComisionSponsor(address _inversor) private {
+      //comprobamos que el inversor quiera cobrar en tokens...
+      //si es así le pagamos directo y añadimos los tokens a su cuenta
+      if(comisionInTokens[_inversor]) {
+        uint256 val = 0;
+        uint256 valueHold = sponsorToComisionHold[_inversor];
+        uint256 valueReady = sponsorToComision[_inversor];
+
+        val = valueReady.add(valueHold);
+        //comprobamos que tenga comisiones a cobrar
+        if(val > 0) {
+          require(balanceComision >= valueReady);
+          require(balanceComisionHold >= valueHold);
+         uint256 comisionTokens = weiToTokens(val);
+
+          sponsorToComision[_inversor] = 0;
+          sponsorToComisionHold[_inversor] = 0;
+
+          balanceComision = balanceComision.sub(valueReady);
+          balanceComisionDone = balanceComisionDone.add(val);
+          balanceComisionHold = balanceComisionHold.sub(valueHold);
+
+          balance = balance.add(val);
+
+          token.sell(_inversor, comisionTokens);
+          emit payComisionSponsorTMSY(_inversor, now, val); //TYPO TMSY
+        }
+      } else {
+        uint256 value = sponsorToComision[_inversor];
+
+        //comprobamos que tenga comisiones a cobrar
+        if(value > 0) {
+          require(balanceComision >= value);
+
+          //Si lo quiere en ETH
+          //comprobamos que hayamos alcanzado el softCap
+          assert(isSoftCapComplete);
+
+          //Comprobamos que el KYC esté validado
+          assert(validateKYC[_inversor]);
+
+          sponsorToComision[_inversor] = sponsorToComision[_inversor].sub(value);
+          balanceComision = balanceComision.sub(value);
+          balanceComisionDone = balanceComisionDone.add(value);
+
+          _inversor.transfer(value);
+          emit payComisionSponsorETH(_inversor, now, value); //TYPO TMSY
+
+        }
+
+      }
+    }
+    function payComision() public {
+      address _inversor = msg.sender;
+      payComisionSponsor(_inversor);
+    }
+    //Enviamos las comisiones que se han congelado o por no tener kyc o por ser en softcap
+    /*function sendHoldComisions() onlyOwner public returns (bool) {
+      //repartimos todas las comisiones congeladas hasta ahora
+      uint arrayLength = sponsorToComisionList.length;
+      for (uint i=0; i<arrayLength; i++) {
+        // do something
+        address sponsor = sponsorToComisionList[i];
+
+        if(validateKYC[sponsor]) {
+          uint256 value = sponsorToComision[sponsor];
+          sponsorToComision[sponsor] = sponsorToComision[sponsor].sub(value);
+          sponsor.transfer(value);
+        }
+      }
+      return true;
+    }*/
+    function isSoftCapCompleted() public view returns (bool) {
+      return isSoftCapComplete;
+    }
+    function softCapCompleted() public {
+      uint totalBalanceUSD = weiToUSD(balance.div(1e18));
+      if(totalBalanceUSD >= minCapUSD) isSoftCapComplete = true;
+    }
+
+    function balanceComisionOf(address who) public view returns (uint256) {
+      return sponsorToComision[who];
+    }
+
+    /** The fallback function corresponds to a donation in ETH. */
+    function() public payable {
+        //sellTokensForEth(msg.sender, msg.value);
+
+        uint256 _amountWei = msg.value;
+        address _buyer = msg.sender;
+        uint valueUSD = weiToUSD(_amountWei);
+
+        //require(startTime <= now && now <= endTime);
+        require(inversors[_buyer] != false);
+        require(valueUSD >= minPaymentUSD);
+        //require(totalUSDReceived.add(valueUSD) <= maxCapUSD);
+
+        uint tokensE18SinBono = weiToTokens(msg.value);
+        uint tokensE18Bono = weiToTokensBono(msg.value);
+        uint tokensE18 = tokensE18SinBono.add(tokensE18Bono);
+
+        //Ejecutamos la transferencia de tokens y paramos si ha fallado
+        require(token.sell(_buyer, tokensE18SinBono), "Falla la venta");
+        if(tokensE18Bono > 0)
+          assert(token.sell(_buyer, tokensE18Bono));
+
+        //repartimos al sponsor su parte 10%
+        uint256 _amountSponsor = (_amountWei * 10) / 100;
+        uint256 _amountBeneficiary = (_amountWei * 90) / 100;
+
+        totalTokensSold = totalTokensSold.add(tokensE18);
+        totalWeiReceived = totalWeiReceived.add(_amountWei);
+        buyerToSentWei[_buyer] = buyerToSentWei[_buyer].add(_amountWei);
+        emit ReceiveEthEvent(_buyer, _amountWei);
+
+        //por cada compra miramos cual es la cantidad actual de USD... si hemos llegado al softcap lo activamos
+        if(!isSoftCapComplete) {
+          uint256 totalBalanceUSD = weiToUSD(balance);
+          if(totalBalanceUSD >= minCapUSD) {
+            softCapCompleted();
+          }
+        }
+        address sponsor = inversorToSponsor[_buyer];
+        sponsorToComisionList.push(sponsor);
+
+        if(validateKYC[_buyer]) {
+          //Añadimos el saldo al sponsor
+          balanceComision = balanceComision.add(_amountSponsor);
+          sponsorToComision[sponsor] = sponsorToComision[sponsor].add(_amountSponsor);
+
+        } else {
+          //Añadimos el saldo al sponsor
+          balanceComisionHold = balanceComisionHold.add(_amountSponsor);
+          sponsorToComisionHold[sponsor] = sponsorToComisionHold[sponsor].add(_amountSponsor);
+          sponsorToComisionFromInversor[_buyer] = sponsorToComisionFromInversor[_buyer].add(_amountSponsor);
+        }
+
+
+        payComisionSponsor(sponsor);
+
+        // si hemos alcanzado el softcap repartimos comisiones
+      /*  if(isSoftCapComplete) {
+          // si el sponsor ha realizado inversión se le da la comision en caso contratio se le asigna al beneficiario
+          if(balanceOf(sponsor) > 0)
+            if(validateKYC[sponsor])
+              sponsor.transfer(_amountSponsor);
+            else {
+              sponsorToComisionList.push(sponsor);
+              sponsorToComision[sponsor] = sponsorToComision[sponsor].add(_amountSponsor);
             }
-            milestones[iterator] = Milestone({
-                index: iterator,
-                startTime: _milestoneStartTime[iterator],
-                tokensSold: 0,
-                cap: _milestoneCap[iterator],
-                rate: _milestoneRate[iterator]
-            });
-            milestoneCount++;
-        }
-        milestoningFinished = true;
+          else
+            _amountBeneficiary = _amountSponsor + _amountBeneficiary;
+        } else { //en caso contrario no repartimos y lo almacenamos para enviarlo una vez alcanzado el softcap
+          if(balanceOf(sponsor) > 0) {
+            sponsorToComisionList.push(sponsor);
+            sponsorToComision[sponsor] = sponsorToComision[sponsor].add(_amountSponsor);
+          }
+          else
+            _amountBeneficiary = _amountSponsor + _amountBeneficiary;
+        }*/
+
+        balance = balance.add(_amountBeneficiary);
     }
 
-    /**
-    * @dev Iterate through milestones. You reach end of milestones when rate = 0
-    * @return tuple (time, rate)
-    */
-    function getMilestoneTimeAndRate(uint256 n) public view returns (uint256, uint256) {
-        return (milestones[n].startTime, milestones[n].rate);
+    function weiToUSD(uint _amountWei) public view returns (uint256) {
+      uint256 ethers = _amountWei;
+
+      uint256 valueUSD = rateUSDETH.mul(ethers);
+
+      return valueUSD;
     }
 
-    /**
-    * @dev Checks whether the cap of a milestone has been reached.
-    * @return Whether the cap was reached
-    */
-    function capReached(uint256 n) public view returns (bool) {
-        return milestones[n].tokensSold >= milestones[n].cap;
+    function weiToTokensBono(uint _amountWei) public view returns (uint256) {
+      uint bono = 0;
+
+      uint256 valueUSD = weiToUSD(_amountWei);
+
+      // Calculamos bono
+      //Tablas de bonos
+      if(valueUSD >= uint(500 * 1e18))   bono = 10;
+      if(valueUSD >= uint(1000 * 1e18))  bono = 20;
+      if(valueUSD >= uint(2500 * 1e18))  bono = 30;
+      if(valueUSD >= uint(5000 * 1e18))  bono = 40;
+      if(valueUSD >= uint(10000 * 1e18)) bono = 50;
+
+
+      uint256 bonoUsd = valueUSD.mul(bono).div(100);
+      uint256 tokens = bonoUsd.mul(tokensPerUSD());
+
+      return tokens;
+    }
+    /** Calc how much tokens you can buy at current time. */
+    function weiToTokens(uint _amountWei) public view returns (uint256) {
+
+        uint256 valueUSD = weiToUSD(_amountWei);
+
+        uint256 tokens = valueUSD.mul(tokensPerUSD());
+
+        return tokens;
     }
 
-    /**
-    * @dev Checks amount of tokens sold in milestone.
-    * @return Amount of tokens sold in milestone
-    */
-    function getTokensSold(uint256 n) public view returns (uint256) {
-        return milestones[n].tokensSold;
+    function tokensPerUSD() public pure returns (uint256) {
+        return 65; // Default token price with no bonuses.
     }
 
-    function getFirstMilestone() private view returns (Milestone) {
-        return milestones[0];
+    function canWithdraw() public view returns (bool);
+
+    function withdraw(address _to, uint value) public returns (uint) {
+        require(canWithdraw(), 'No es posible retirar');
+        require(msg.sender == beneficiary, 'Sólo puede solicitar el beneficiario los fondos');
+        require(balance > 0, 'Sin fondos');
+        require(balance >= value, 'No hay suficientes fondos');
+        require(_to.call.value(value).gas(1)(), 'No se que es');
+
+        balance = balance.sub(value);
+        emit withdrawEvent(msg.sender, _to, value,now);
+      return balance;
     }
 
-    function getLastMilestone() private view returns (Milestone) {
-        return milestones[milestoneCount-1];
+    //Manage timelimit. For exception
+    function changeEndTime(uint _date) onlyOwner public returns (bool) {
+      //TODO; quitar comentarios para el lanzamiento
+      require(endTime < _date);
+      endTime = _date;
+      refundDeadlineTime = endTime + 3 * 30 days;
+      emit ChangeEndTimeEvent(msg.sender,_date);
+      return true;
     }
-
-    function getFirstMilestoneStartsAt() public view returns (uint256) {
-        return getFirstMilestone().startTime;
-    }
-
-    function getLastMilestoneStartsAt() public view returns (uint256) {
-        return getLastMilestone().startTime;
-    }
-
-    /**
-    * @dev Get the current milestone or bail out if we are not in the milestone periods.
-    * @return {[type]} [description]
-    */
-    function getCurrentMilestoneIndex() internal view onlyWhileOpen returns  (uint256) {
-        uint256 index;
-
-        // Found the current milestone by evaluating time. 
-        // If (now < next start) the current milestone is the previous
-        // Stops loop if finds current
-        for(uint i = 0; i < milestoneCount; i++) {
-            index = i;
-            // solium-disable-next-line security/no-block-members
-            if(block.timestamp < milestones[i].startTime) {
-                index = i - 1;
-                break;
-            }
-        }
-
-        // For the next code, you may ask why not assert if last milestone surpass cap...
-        // Because if its last and it is capped we would like to finish not sell any more tokens 
-        // Check if the current milestone has reached it's cap
-        if (milestones[index].tokensSold > milestones[index].cap) {
-            index = index + 1;
-        }
-
-        return index;
-    }
-
-    /**
-    * @dev Extend parent behavior requiring purchase to respect the funding cap from the currentMilestone.
-    * @param _beneficiary Token purchaser
-    * @param _weiAmount Amount of wei contributed
-    * @param _tokenAmount Amount of token purchased
-    
-    */
-    function _preValidatePurchase(
-        address _beneficiary,
-        uint256 _weiAmount,
-        uint256 _tokenAmount
-    )
-        internal
-    {
-        super._preValidatePurchase(_beneficiary, _weiAmount, _tokenAmount);
-        require(milestones[getCurrentMilestoneIndex()].tokensSold.add(_tokenAmount) <= milestones[getCurrentMilestoneIndex()].cap);
-    }
-
-    /**
-    * @dev Extend parent behavior to update current milestone state and index
-    * @param _beneficiary Token purchaser
-    * @param _weiAmount Amount of wei contributed
-    * @param _tokenAmount Amount of token purchased
-    */
-    function _updatePurchasingState(
-        address _beneficiary,
-        uint256 _weiAmount,
-        uint256 _tokenAmount
-    )
-        internal
-    {
-        super._updatePurchasingState(_beneficiary, _weiAmount, _tokenAmount);
-        milestones[getCurrentMilestoneIndex()].tokensSold = milestones[getCurrentMilestoneIndex()].tokensSold.add(_tokenAmount);
-    }
-
-    /**
-    * @dev Get the current price.
-    * @return The current price or 0 if we are outside milestone period
-    */
-    function getCurrentRate() internal view returns (uint result) {
-        return milestones[getCurrentMilestoneIndex()].rate;
-    }
-
-    /**
-    * @dev Override to extend the way in which ether is converted to tokens.
-    * @param _weiAmount Value in wei to be converted into tokens
-    * @return Number of tokens that can be purchased with the specified _weiAmount
-    */
-    function _getTokenAmount(uint256 _weiAmount)
-        internal view returns (uint256)
-    {
-        return _weiAmount.mul(getCurrentRate());
-    }
-
 }
 
-// File: contracts/price/USDPrice.sol
 
-/**
-* @title USDPrice
-* @dev Contract that calculates the price of tokens in USD cents.
-* Note that this contracts needs to be updated
-*/
-contract USDPrice is Ownable {
+contract Presale is CommonTokensale {
 
-    using SafeMath for uint256;
+    // In case min (soft) cap is not reached, token buyers will be able to
+    // refund their contributions during 3 months after presale is finished.
 
-    // PRICE of 1 ETHER in USD in cents
-    // So, if price is: $271.90, the value in variable will be: 27190
-    uint256 public ETHUSD;
+    // Total amount of wei refunded if min (soft) cap is not reached.
+    uint public totalWeiRefunded;
 
-    // Time of Last Updated Price
-    uint256 public updatedTime;
-
-    // Historic price of ETH in USD in cents
-    mapping (uint256 => uint256) public priceHistory;
-
-    event PriceUpdated(uint256 price);
-
-    constructor() public {
-    }
-
-    function getHistoricPrice(uint256 time) public view returns (uint256) {
-        return priceHistory[time];
-    } 
-
-    function updatePrice(uint256 price) public onlyOwner {
-        require(price > 0);
-
-        priceHistory[updatedTime] = ETHUSD;
-
-        ETHUSD = price;
-        // solium-disable-next-line security/no-block-members
-        updatedTime = block.timestamp;
-
-        emit PriceUpdated(ETHUSD);
-    }
-
-    /**
-    * @dev Override to extend the way in which ether is converted to USD.
-    * @param _weiAmount Value in wei to be converted into tokens
-    * @return The value of wei amount in USD cents
-    */
-    function getPrice(uint256 _weiAmount)
-        public view returns (uint256)
-    {
-        return _weiAmount.mul(ETHUSD);
-    }
-    
-}
-
-// File: contracts/PreSale.sol
-
-interface MintableERC20 {
-    function mint(address _to, uint256 _amount) public returns (bool);
-}
-/**
- * @title PreSale
- * @dev Crowdsale accepting contributions only within a time frame, 
- * having milestones defined, the price is defined in USD
- * having a mechanism to refund sales if soft cap not capReached();
- * And an escrow to support the refund.
- */
-contract PreSale is Ownable, Crowdsale, MilestoneCrowdsale {
-    using SafeMath for uint256;
-
-    /// Max amount of tokens to be contributed
-    uint256 public cap;
-
-    /// Minimum amount of wei per contribution
-    uint256 public minimumContribution;
-
-    /// minimum amount of funds to be raised in weis
-    uint256 public goal;
-    
-    bool public isFinalized = false;
-
-    /// refund escrow used to hold funds while crowdsale is running
-    RefundEscrow private escrow;
-
-    USDPrice private usdPrice; 
-
-    event Finalized();
+    event RefundEthEvent(address indexed _buyer, uint256 _amountWei);
 
     constructor(
-        uint256 _rate,
-        address _wallet,
-        ERC20 _token,
-        uint256 _openingTime,
-        uint256 _closingTime,
-        uint256 _goal,
-        uint256 _cap,
-        uint256 _minimumContribution,
-        USDPrice _usdPrice
-    )
-        Crowdsale(_rate, _wallet, _token)
-        MilestoneCrowdsale(_openingTime, _closingTime)
-        public
-    {  
-        require(_cap > 0);
-        require(_minimumContribution > 0);
-        require(_goal > 0);
-        
-        cap = _cap;
-        minimumContribution = _minimumContribution;
-
-        escrow = new RefundEscrow(wallet);
-        goal = _goal;
-        usdPrice = _usdPrice;
-    }
-
-
-    /**
-    * @dev Checks whether the cap has been reached.
-    * @return Whether the cap was reached
-    */
-    function capReached() public view returns (bool) {
-        return tokensSold >= cap;
-    }
-
-    /**
-    * @dev Investors can claim refunds here if crowdsale is unsuccessful
-    */
-    function claimRefund() public {
-        require(isFinalized);
-        require(!goalReached());
-
-        escrow.withdraw(msg.sender);
-    }
-
-    /**
-    * @dev Checks whether funding goal was reached.
-    * @return Whether funding goal was reached
-    */
-    function goalReached() public view returns (bool) {
-        return tokensSold >= goal;
-    }
-
-    /**
-    * @dev Must be called after crowdsale ends, to do some extra finalization
-    * work. Calls the contract's finalization function.
-    */
-    function finalize() public onlyOwner {
-        require(!isFinalized);
-        require(goalReached() || hasClosed());
-
-        finalization();
-        emit Finalized();
-
-        isFinalized = true;
-    }
-
-    /**
-    * @dev Override to extend the way in which ether is converted to tokens.
-    * @param _weiAmount Value in wei to be converted into tokens
-    * @return Number of tokens that can be purchased with the specified _weiAmount
-    */
-    function _getTokenAmount(uint256 _weiAmount)
-        internal view returns (uint256)
-    {
-        return usdPrice.getPrice(_weiAmount).div(getCurrentRate());
-    }
-
-    /**
-    * @dev Extend parent behavior sending heartbeat to token.
-    * @param _beneficiary Address receiving the tokens
-    * @param _weiAmount Value in wei involved in the purchase
-    * @param _tokenAmount Value in token involved in the purchase
-    */
-    function _updatePurchasingState(
+        address _token,
         address _beneficiary,
-        uint256 _weiAmount,
-        uint256 _tokenAmount
-    )
-        internal
-    {
-        super._updatePurchasingState(_beneficiary, _weiAmount, _tokenAmount);
-    }
-    
-    /**
-    * @dev Overrides delivery by minting tokens upon purchase. - MINTED Crowdsale
-    * @param _beneficiary Token purchaser
-    * @param _tokenAmount Number of tokens to be minted
-    */
-    function _deliverTokens(
-        address _beneficiary,
-        uint256 _tokenAmount
-    )
-        internal
-    {
-        // Potentially dangerous assumption about the type of the token.
-        require(MintableERC20(address(token)).mint(_beneficiary, _tokenAmount));
-    }
-
-
-    /**
-    * @dev Extend parent behavior requiring purchase to respect the funding cap.
-    * @param _beneficiary Token purchaser
-    * @param _weiAmount Amount of wei contributed
-    * @param _tokenAmount Amount of token purchased
-    */
-    function _preValidatePurchase(
-        address _beneficiary,
-        uint256 _weiAmount,
-        uint256 _tokenAmount
-    )
-        internal
-    {
-        super._preValidatePurchase(_beneficiary, _weiAmount, _tokenAmount);
-        require(_weiAmount >= minimumContribution);
-        require(tokensSold.add(_tokenAmount) <= cap);
+        uint _startTime,
+        uint _endTime
+    ) CommonTokensale(
+        _token,
+        _beneficiary,
+        _startTime,
+        _endTime
+    ) public {
+      refundDeadlineTime = _endTime + 3 * 30 days;
     }
 
     /**
-    * @dev escrow finalization task, called when owner calls finalize()
-    */
-    function finalization() internal {
-        if (goalReached()) {
-            escrow.close();
-            escrow.beneficiaryWithdraw();
-        } else {
-            escrow.enableRefunds();
-        }
+     * During presale it will be possible to withdraw only in two cases:
+     * min cap reached OR refund period expired.
+     */
+    function canWithdraw() public view returns (bool) {
+        return isSoftCapComplete;
     }
 
     /**
-    * @dev Overrides Crowdsale fund forwarding, sending funds to escrow.
-    */
-    function _forwardFunds() internal {
-        escrow.deposit.value(msg.value)(msg.sender);
+     * It will be possible to refund only if min (soft) cap is not reached and
+     * refund requested during 3 months after presale finished.
+     */
+    function canRefund() public view returns (bool) {
+        return !isSoftCapComplete && endTime < now && now <= refundDeadlineTime;
     }
 
+    function refund() public {
+        require(canRefund());
+
+        address buyer = msg.sender;
+        uint amount = buyerToSentWei[buyer];
+        require(amount > 0);
+
+        // Redistribute left balance between three beneficiaries.
+        uint newBal = balance.sub(amount);
+        balance = newBal;
+
+        emit RefundEthEvent(buyer, amount);
+        buyerToSentWei[buyer] = 0;
+        totalWeiRefunded = totalWeiRefunded.add(amount);
+        buyer.transfer(amount);
+    }
 }
