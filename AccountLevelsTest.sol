@@ -1,38 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AccountLevelsTest at 0x76d8afdea71bc1577f1c86c8a83688b6e5a25419
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AccountLevelsTest at 0xb21c195e376af31df3aa15b28965c547982b4f7a
 */
-contract Ownable {
-  address public owner;
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-}
-
 contract AccountLevels {
   //given a user, returns an account level
   //0 = regular user (pays take fee and make fee)
@@ -41,10 +9,10 @@ contract AccountLevels {
   function accountLevel(address user) constant returns(uint) {}
 }
 
-contract AccountLevelsTest is AccountLevels, Ownable {
+contract AccountLevelsTest is AccountLevels {
   mapping (address => uint) public accountLevels;
 
-  function setAccountLevel(address user, uint level) onlyOwner {
+  function setAccountLevel(address user, uint level) {
     accountLevels[user] = level;
   }
 
