@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZethrDice at 0xb3ed21d5475817134c8f086d46dd1b5f6c49de0a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZethrDice at 0x1332059337953dbba74c89f6cb7ff0c8498ea925
 */
 /*
   Zethr | https://zethr.io
@@ -992,25 +992,7 @@ contract ZethrDice is ZethrGame {
   public
   returns (uint winAmount, uint lossAmount)
   {
-    // If current block for the first spin is older than 255 blocks, ALL rolls are losses
-    if (block.number - _blockNumber > 255) {
-      lossAmount = _tokenValue.mul(_numRolls);
-    } else {
-      uint profit = calculateProfit(_tokenValue, _rollUnder);
-
-      for (uint i = 0; i < _numRolls; i++) {
-        // Store the output
-        uint output = random(100, _blockNumber, _target, i) + 1;
-
-        if (output < _rollUnder) {
-          winAmount += profit + _tokenValue;
-        } else {
-          lossAmount += _tokenValue;
-        }
-      }
-    }
-
-    return (winAmount, lossAmount);
+    (winAmount, lossAmount,) = getRollOutput(_blockNumber, _rollUnder, _numRolls, _tokenValue, _target);
   }
 
   /****************************
