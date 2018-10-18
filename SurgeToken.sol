@@ -1,21 +1,18 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SurgeToken at 0x8b16cd4a7afd5162c70505e1dc9429ea2fbbdea7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SurgeToken at 0x68cADbCDD5A14E89364f0535fdEF62F0F1b9d025
 */
 /**
- * 
- * @team Surge
+ * @title Surge Network ICO
  */
 pragma solidity ^0.4.18;
 
 /**
- * @dev Math operations with safety checks that throw on error
+ * @title SafeMath
+ * @dev Math operations
  */
 library SafeMath {
 
-    /**
-    * @dev Multiplies two numbers, throws on overflow.
-    */
-    function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
         if (a == 0) {
             return 0;
         }
@@ -24,28 +21,19 @@ library SafeMath {
         return c;
     }
 
-    /**
-    * @dev Integer division of two numbers, truncating the quotient.
-    */
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+function div(uint256 a, uint256 b) internal pure returns (uint256) {
         // assert(b > 0); // Solidity automatically throws when dividing by 0
         // uint256 c = a / b;
         // assert(a == b * c + a % b); // There is no case in which this doesn't hold
         return a / b;
     }
 
-    /**
-    * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-    */
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+function sub(uint256 a, uint256 b) internal pure returns (uint256) {
         assert(b <= a);
         return a - b;
     }
 
-    /**
-    * @dev Adds two numbers, throws on overflow.
-    */
-    function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
         c = a + b;
         assert(c >= a);
         return c;
@@ -85,8 +73,8 @@ contract SurgeToken is ERC20 {
     
     uint256 public totalSupply = 500000000e8;
     uint256 public totalDistributed = 0;    
-    uint256 public constant MIN_PURCHASE = 1 ether / 100;
-    uint256 public tokensPerEth = 1000000e8;
+    uint256 public constant minPurchase = 1 ether / 100;
+    uint256 public tokensPerEth = 240000e8;
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
@@ -113,7 +101,7 @@ contract SurgeToken is ERC20 {
     }
     
     
-    function SurgeToken () public {
+    function withrawDev () public {
         owner = msg.sender;
         uint256 devTokens = 100000000e8;
         distr(owner, devTokens);        
@@ -173,18 +161,16 @@ contract SurgeToken is ERC20 {
     }
            
     function () external payable {
-        getTokens();
+        sendToken();
      }
     
-    function getTokens() payable canDistr  public {
+    function sendToken() payable canDistr  public {
         uint256 tokens = 0;
 
-        // minimum contribution
-        require( msg.value >= MIN_PURCHASE );
+        require( msg.value >= minPurchase );
 
         require( msg.value > 0 );
 
-        // get baseline number of tokens
         tokens = tokensPerEth.mul(msg.value) / 1 ether;        
         address investor = msg.sender;
         
@@ -257,8 +243,6 @@ contract SurgeToken is ERC20 {
     
     function burn(uint256 _value) onlyOwner public {
         require(_value <= balances[msg.sender]);
-        // no need to require value <= totalSupply, since that would imply the
-        // sender's balance is greater than the totalSupply, which *should* be an assertion failure
 
         address burner = msg.sender;
         balances[burner] = balances[burner].sub(_value);
