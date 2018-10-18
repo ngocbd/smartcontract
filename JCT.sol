@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JCT at 0x48249eeb17e2a2227b6bcf4ffcfb4e6320ebff70
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JCT at 0x9288d6b823927f528aea244c5fa71a356b807112
 */
 pragma solidity ^0.4.24;
 
@@ -185,7 +185,7 @@ contract JCT is ERC20, Ownable {
     string public name = "JCT";
     string public symbol = "JCT";
     uint8 public decimals = 8;
-    uint256 public totalSupply = 17e7 * 1e8;
+    uint256 public totalSupply = 18e7 * 1e8;
     address public relay;
 
     mapping(address => uint256) public balanceOf;
