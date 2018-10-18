@@ -1,12 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FixedSupplyToken at 0xa3b5fdeb5dbc592ffc5e222223376464b9c56fb8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FixedSupplyToken at 0xdb64ccb307e379cd21d5c4c6f18a4643b627d869
 */
+pragma solidity ^0.4.24;
+
 // ----------------------------------------------------------------------------
-// 'FIXED' 'Example Fixed Supply Token' token contract
+// 'EDP' 'EDP Token' token contract
 //
-// Symbol      : FIXED
-// Name        : Example Fixed Supply Token
-// Total supply: 1,000,000.000000000000000000
+// Symbol      : EDP
+// Name        : Fixed Supply Token
+// Total supply: 1,200,000,000.000000000000000000
 // Decimals    : 18
 //
 // Enjoy.
@@ -115,10 +117,10 @@ contract FixedSupplyToken is ERC20Interface, Owned {
     // Constructor
     // ------------------------------------------------------------------------
     constructor() public {
-        symbol = "FDGT";
-        name = "Fake Doge Token";
+        symbol = "EDP";
+        name = "";
         decimals = 18;
-        _totalSupply = 1000000000 * 10**uint(decimals);
+        _totalSupply = 1200000000 * 10**uint(decimals);
         balances[owner] = _totalSupply;
         emit Transfer(address(0), owner, _totalSupply);
     }
