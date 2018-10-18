@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ToknTalkToken at 0x6f3b2f2100875409c5c011bc3bb97ea6e0f671db
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ToknTalkToken at 0x2612bb62eaa42991d12be0892c27040d4143e037
 */
-pragma solidity ^0.4.25;
+pragma solidity ^0.4.24;
 
 contract ToknTalkToken {
 
@@ -11,7 +11,7 @@ contract ToknTalkToken {
     uint private constant MAX_UINT = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
 
     address public mintSigner = msg.sender;
-    string public constant name = "https://tokntalk.club";
+    string public constant name = "tokntalk.club";
     string public constant symbol = "TTT";
     uint public constant decimals = 0;
     uint public totalSupply = 0;
@@ -67,12 +67,10 @@ contract ToknTalkToken {
         ));
         require(ecrecover(hash, v, r, s) == mintSigner);
         uint mintedByMsgSender = mintedBy[msg.sender];
-        require(max >= mintedByMsgSender);
-        uint minting = max - mintedByMsgSender;
-        totalSupply += minting;
-        balanceOf[msg.sender] += minting;
+        require(max > mintedByMsgSender);
         mintedBy[msg.sender] = max;
-        emit Transfer(0, msg.sender, minting);
+        balanceOf[msg.sender] += max - mintedByMsgSender;
+        emit Transfer(0, msg.sender, max - mintedByMsgSender);
     }
 
     function toString(uint value) private pure returns (bytes) {
