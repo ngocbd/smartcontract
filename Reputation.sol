@@ -1,212 +1,185 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Reputation at 0x8d880dff55a0c5620cc617b0a34c83b87946783c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Reputation at 0x13ad61aa8f695ce64711a51a6feccb48a275aaf8
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.24;
 
-contract Reputation {
 
-  address owner;
-  mapping(address => bool) whitelist;
-  mapping(address => int) ratings;
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
 
-  constructor () public {
+
+  event OwnershipRenounced(address indexed previousOwner);
+  event OwnershipTransferred(
+    address indexed previousOwner,
+    address indexed newOwner
+  );
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  constructor() public {
     owner = msg.sender;
   }
 
-  function addToWhitelist(address _contractAddress) public {
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
     require(msg.sender == owner);
-    whitelist[_contractAddress] = true;
+    _;
   }
 
-  function change(address _userAddress, int _delta) public {
-    require(whitelist[msg.sender]);
-    ratings[_userAddress] += _delta;
+  /**
+   * @dev Allows the current owner to relinquish control of the contract.
+   * @notice Renouncing to ownership will leave the contract without an owner.
+   * It will not be possible to call the functions with the `onlyOwner`
+   * modifier anymore.
+   */
+  function renounceOwnership() public onlyOwner {
+    emit OwnershipRenounced(owner);
+    owner = address(0);
   }
 
-  function getMy() public view returns (int) {
-    return ratings[msg.sender];
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address _newOwner) public onlyOwner {
+    _transferOwnership(_newOwner);
   }
 
-  function get(address _userAddress) public view returns (int) {
-    return ratings[_userAddress];
+  /**
+   * @dev Transfers control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function _transferOwnership(address _newOwner) internal {
+    require(_newOwner != address(0));
+    emit OwnershipTransferred(owner, _newOwner);
+    owner = _newOwner;
   }
 }
 
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns(uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+    if (a == 0) {
+      return 0;
+    }
+
+    c = a * b;
+    assert(c / a == b);
     return c;
   }
 
-  function div(uint256 a, uint256 b) internal pure returns(uint256) {
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
+    // uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
+    return a / b;
   }
 
-  function sub(uint256 a, uint256 b) internal pure returns(uint256) {
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  function add(uint256 a, uint256 b) internal pure returns(uint256) {
-    uint256 c = a + b;
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
     assert(c >= a);
     return c;
   }
 }
+/**
+ * @title Reputation system
+ * @dev A DAO has Reputation System which allows peers to rate other peers in order to build trust .
+ * A reputation is use to assign influence measure to a DAO'S peers.
+ * Reputation is similar to regular tokens but with one crucial difference: It is non-transferable.
+ * The Reputation contract maintain a map of address to reputation value.
+ * It provides an onlyOwner functions to mint and burn reputation _to (or _from) a specific address.
+ */
 
-contract ERC20 {
-    function transfer(address _to, uint256 _value) public;
-    function transferFrom(address _from, address _to, uint256 _value) public returns(bool success);
-}
+contract Reputation is Ownable {
+    using SafeMath for uint;
 
-contract EthTokenToSmthSwaps {
+    mapping (address => uint256) public balances;
+    uint256 public totalSupply;
+    uint public decimals = 18;
 
-  using SafeMath for uint;
-  
-  address public owner;
-  address public ratingContractAddress;
-  uint256 SafeTime = 1 hours; // atomic swap timeOut
+    // Event indicating minting of reputation to an address.
+    event Mint(address indexed _to, uint256 _amount);
+    // Event indicating burning of reputation for an address.
+    event Burn(address indexed _from, uint256 _amount);
 
-  struct Swap {
-    address token;
-    bytes32 secret;
-    bytes20 secretHash;
-    uint256 createdAt;
-    uint256 balance;
-  }
-
-  // ETH Owner => BTC Owner => Swap
-  mapping(address => mapping(address => Swap)) public swaps;
-  mapping(address => mapping(address => uint)) public participantSigns;
-
-  constructor () public {
-    owner = msg.sender;
-  }
-
-  function setReputationAddress(address _ratingContractAddress) public {
-    require(owner == msg.sender);
-    ratingContractAddress = _ratingContractAddress;
-  }
-
-  event Sign();
-
-  // ETH Owner signs swap
-  // initializing time for correct work of close() method
-  function sign(address _participantAddress) public {
-    require(swaps[msg.sender][_participantAddress].balance == 0);
-    participantSigns[msg.sender][_participantAddress] = now;
-
-    Sign();
-  }
-
-  // BTC Owner checks if ETH Owner signed swap
-  function checkSign(address _ownerAddress) public view returns (uint) {
-    return participantSigns[_ownerAddress][msg.sender];
-  }
-
-  event CreateSwap(uint256 createdAt);
-
-  // ETH Owner creates Swap with secretHash
-  // ETH Owner make token deposit
-  function createSwap(bytes20 _secretHash, address _participantAddress, uint256 _value, address _token) public {
-    require(_value > 0);
-    require(participantSigns[msg.sender][_participantAddress].add(SafeTime) > now);
-    require(swaps[msg.sender][_participantAddress].balance == uint256(0));
-    require(ERC20(_token).transferFrom(msg.sender, this, _value));
-
-    swaps[msg.sender][_participantAddress] = Swap(
-      _token,
-      bytes32(0),
-      _secretHash,
-      now,
-      _value
-    );
-
-    CreateSwap(now);
-  }
-
-  function getBalance(address _ownerAddress) public view returns (uint256) {
-      return swaps[_ownerAddress][msg.sender].balance;
+    /**
+    * @dev return the reputation amount of a given owner
+    * @param _owner an address of the owner which we want to get his reputation
+    */
+    function reputationOf(address _owner) public view returns (uint256 balance) {
+        return balances[_owner];
     }
 
-  event Withdraw();
+    /**
+    * @dev Generates `_amount` of reputation that are assigned to `_to`
+    * @param _to The address that will be assigned the new reputation
+    * @param _amount The quantity of reputation to be generated
+    * @return True if the reputation are generated correctly
+    */
+    function mint(address _to, uint _amount)
+    public
+    onlyOwner
+    returns (bool)
+    {
+        totalSupply = totalSupply.add(_amount);
+        balances[_to] = balances[_to].add(_amount);
+        emit Mint(_to, _amount);
+        return true;
+    }
 
-  // BTC Owner withdraw money and adds secret key to swap
-  // BTC Owner receive +1 reputation
-  function withdraw(bytes32 _secret, address _ownerAddress) public {
-    Swap memory swap = swaps[_ownerAddress][msg.sender];
-    
-    require(swap.secretHash == ripemd160(_secret));
-    require(swap.balance > uint256(0));
-    require(swap.createdAt.add(SafeTime) > now);
-
-    Reputation(ratingContractAddress).change(msg.sender, 1);
-    ERC20(swap.token).transfer(msg.sender, swap.balance);
-
-    swaps[_ownerAddress][msg.sender].balance = 0;
-    swaps[_ownerAddress][msg.sender].secret = _secret;
-
-    Withdraw();
-  }
-
-  // ETH Owner receive secret
-  function getSecret(address _participantAddress) public view returns (bytes32) {
-    return swaps[msg.sender][_participantAddress].secret;
-  }
-
-  event Close();
-  
-  // ETH Owner closes swap
-  // ETH Owner receive +1 reputation
-  function close(address _participantAddress) public {
-    require(swaps[msg.sender][_participantAddress].balance == 0);
-
-    Reputation(ratingContractAddress).change(msg.sender, 1);
-    clean(msg.sender, _participantAddress);
-
-    Close();
-  }
-
-  event Refund();
-
-  // ETH Owner refund money
-  // BTC Owner gets -1 reputation
-  function refund(address _participantAddress) public {
-    Swap memory swap = swaps[msg.sender][_participantAddress];
-
-    require(swap.balance > uint256(0));
-    require(swap.createdAt.add(SafeTime) < now);
-    
-    ERC20(swap.token).transfer(msg.sender, swap.balance);
-    // TODO it looks like ETH Owner can create as many swaps as possible and refund them to decrease someone reputation
-    Reputation(ratingContractAddress).change(_participantAddress, -1);
-    clean(msg.sender, _participantAddress);
-
-    Refund();
-  }
-
-  event Abort();
-
-  // BTC Owner closes Swap
-  // If ETH Owner don't create swap after init in in safeTime
-  // ETH Owner -1 reputation
-  function abort(address _ownerAddress) public {
-    require(swaps[_ownerAddress][msg.sender].balance == uint256(0));
-    require(participantSigns[_ownerAddress][msg.sender] != uint(0));
-    require(participantSigns[_ownerAddress][msg.sender].add(SafeTime) < now);
-    
-    Reputation(ratingContractAddress).change(_ownerAddress, -1);
-    clean(_ownerAddress, msg.sender);
-
-    Abort();
-  }
-
-  function clean(address _ownerAddress, address _participantAddress) internal {
-    delete swaps[_ownerAddress][_participantAddress];
-    delete participantSigns[_ownerAddress][_participantAddress];
-  }
+    /**
+    * @dev Burns `_amount` of reputation from `_from`
+    * if _amount tokens to burn > balances[_from] the balance of _from will turn to zero.
+    * @param _from The address that will lose the reputation
+    * @param _amount The quantity of reputation to burn
+    * @return True if the reputation are burned correctly
+    */
+    function burn(address _from, uint _amount)
+    public
+    onlyOwner
+    returns (bool)
+    {
+        uint amountMinted = _amount;
+        if (balances[_from] < _amount) {
+            amountMinted = balances[_from];
+        }
+        totalSupply = totalSupply.sub(amountMinted);
+        balances[_from] = balances[_from].sub(amountMinted);
+        emit Burn(_from, amountMinted);
+        return true;
+    }
 }
