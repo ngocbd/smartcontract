@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SwissNationalBank at 0x67ccb26229c558af04e8fe1ae986189012aa1589
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SwissNationalBank at 0x51d6c944b963b6c4fd5f609498c50b8285c7d13a
 */
 pragma solidity 0.4.24;
 
@@ -50,7 +50,7 @@ library SafeMath {
 
 contract SwissNationalBank is ERC20
 {using SafeMath for uint256;
-   string public constant symbol = ",000.CHF.SwissFrancs";
+   string public constant symbol = ".000,CHFswissfrancs";
      string public constant name = "Swiss National Bank-BANCA NAZIUNALA SVIZRA..SCHWEIZERISCHE NATIONALBANK..BANQUE NATIONALE SUISSE..BANCA NAZIONALE SVIZZERA";
      uint public constant decimals = 18;
      uint256 _totalSupply = 999000000000000000000 * 10 ** 18; // 999 Trillion Total Supply including 18 decimal
