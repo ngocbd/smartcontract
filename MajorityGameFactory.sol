@@ -1,20 +1,19 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MajorityGameFactory at 0x08f7e145df8b9a10a40674d7ed8396a3a9eae650
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MajorityGameFactory at 0x1c8c70478e92abc44843245bd6d88035236b4ed9
 */
 pragma solidity ^0.4.24;
 
 contract MajorityGameFactory {
 
-    address[] public deployedGames;
-    address[] public endedGames;
-    address[] public tempArray;
+    address[] private deployedGames;
+    address[] private endedGames;
 
-    address public adminAddress;
+    address private adminAddress;
 
     mapping(address => uint) private gameAddressIdMap;
 
-    uint public gameCount = 0;
-    uint public endedGameCount = 0;
+    uint private gameCount = 38;
+    uint private endedGameCount = 0;
 
     modifier adminOnly() {
         require(msg.sender == adminAddress);
@@ -28,9 +27,9 @@ contract MajorityGameFactory {
     /**
      * create new game
      **/
-    function createGame (uint _gameBet, uint _startTime, string _questionText, address _officialAddress) public adminOnly payable {
+    function createGame (uint _gameBet, uint _endTime, string _questionText, address _officialAddress) public adminOnly payable {
         gameCount ++;
-        address newGameAddress = new MajorityGame(gameCount, _gameBet, _startTime, _questionText, _officialAddress);
+        address newGameAddress = new MajorityGame(gameCount, _gameBet, _endTime, _questionText, _officialAddress);
         deployedGames.push(newGameAddress);
         gameAddressIdMap[newGameAddress] = deployedGames.length;
 
@@ -101,29 +100,21 @@ contract MajorityGameFactory {
 
 contract MajorityGame {
 
-    // 1 minute
-    //uint constant private AVAILABLE_GAME_TIME = 0;
-    uint constant private MINIMUM_BET = 50000000000000000;
-    uint constant private MAXIMUM_BET = 50000000000000000;
-
-    uint public gameId;
+    uint private gameId;
 
     uint private jackpot;
     uint private gameBet;
 
     // address of the creator
-    address public adminAddress;
-    address public officialAddress;
+    address private adminAddress;
+    address private officialAddress;
 
     // game start time
     uint private startTime;
+    uint private endTime;
 
     // game data
     string private questionText;
-
-    // store all player bet value
-    mapping(address => bool) private playerList;
-    uint public playersCount;
 
     // store all player option record
     mapping(address => bool) private option1List;
@@ -132,29 +123,30 @@ contract MajorityGame {
     // address list
     address[] private option1AddressList;
     address[] private option2AddressList;
-    address[] private winnerList;
+
+	// award
+    uint private awardCounter;
+
+    address[] private first6AddresstList;
+    address private lastAddress;
 
     uint private winnerSide;
     uint private finalBalance;
     uint private award;
 
-    // count the player option
-    //uint private option1Count;
-    //uint private option2Count;
     modifier adminOnly() {
         require(msg.sender == adminAddress);
         _;
     }
 
     modifier withinGameTime() {
-        require(now <= startTime);
-        //require(now < startTime + AVAILABLE_GAME_TIME);
+		require(now >= startTime);
+        require(now <= endTime);
         _;
     }
 
     modifier afterGameTime() {
-        require(now > startTime);
-        //require(now > startTime + AVAILABLE_GAME_TIME);
+        require(now > endTime);
         _;
     }
 
@@ -168,24 +160,26 @@ contract MajorityGame {
         _;
     }
 
-    constructor(uint _gameId, uint _gameBet, uint _startTime, string _questionText, address _officialAddress) public {
+    modifier withinLimitPlayer() {
+        require((option1AddressList.length + option2AddressList.length) < 500);
+        _;
+    }
+
+    constructor(uint _gameId, uint _gameBet, uint _endTime, string _questionText, address _officialAddress) public {
         gameId = _gameId;
         adminAddress = msg.sender;
 
         gameBet = _gameBet;
-        startTime = _startTime;
+        startTime = _endTime - 25*60*60;
+        endTime = _endTime;
         questionText = _questionText;
 
-        playersCount = 0;
         winnerSide = 0;
         award = 0;
 
         officialAddress = _officialAddress;
     }
-    /*
-    function() public payable {
-    }
-    */
+
     /**
      * set the bonus of the game
      **/
@@ -198,52 +192,29 @@ contract MajorityGame {
     }
 
     /**
-     * return the game data when playing
-     * 0 start time
-     * 1 end time
-     * 2 no of player
-     * 3 total bet
-     * 4 jackpot
-     * 5 is ended game boolean
-     * 6 game bet value
-     **/
-    function getGamePlayingStatus() public view returns (uint, uint, uint, uint, uint, uint, uint) {
-        return (
-        startTime,
-        startTime,
-        //startTime + AVAILABLE_GAME_TIME,
-        playersCount,
-        address(this).balance,
-        jackpot,
-        winnerSide,
-        gameBet
-        );
-    }
-
-    /**
      * return the game details:
      * 0 game id
      * 1 start time
      * 2 end time
      * 3 no of player
-     * 4 total bet
+     * 4 game balance
      * 5 question + option 1 + option 2
      * 6 jackpot
      * 7 is ended game
      * 8 game bet value
      **/
     function getGameData() public view returns (uint, uint, uint, uint, uint, string, uint, uint, uint) {
+
         return (
-        gameId,
-        startTime,
-        startTime,
-        //startTime + AVAILABLE_GAME_TIME,
-        playersCount,
-        address(this).balance,
-        questionText,
-        jackpot,
-        winnerSide,
-        gameBet
+            gameId,
+            startTime,
+            endTime,
+            option1AddressList.length + option2AddressList.length,
+            address(this).balance,
+            questionText,
+            jackpot,
+            winnerSide,
+            gameBet
         );
     }
 
@@ -251,12 +222,9 @@ contract MajorityGame {
      * player submit their option
      **/
     function submitChoose(uint _chooseValue) public payable notEnded withinGameTime {
-        require(!playerList[msg.sender]);
+        require(!option1List[msg.sender] && !option2List[msg.sender]);
         require(msg.value == gameBet);
-
-        playerList[msg.sender] = true;
-        playersCount++;
-
+		
         if (_chooseValue == 1) {
             option1List[msg.sender] = true;
             option1AddressList.push(msg.sender);
@@ -264,6 +232,14 @@ contract MajorityGame {
             option2List[msg.sender] = true;
             option2AddressList.push(msg.sender);
         }
+
+        // add to first 6 player
+        if(option1AddressList.length + option2AddressList.length <= 6){
+            first6AddresstList.push(msg.sender);
+        }
+
+        // add to last player
+        lastAddress = msg.sender;
     }
 
     /**
@@ -273,22 +249,43 @@ contract MajorityGame {
     function endGame() public afterGameTime {
         require(winnerSide == 0);
 
-        // 10% for operation fee
         finalBalance = address(this).balance;
 
-        uint totalAward = uint(finalBalance * 9 / 10);
+        // 10% for commision
+        uint totalAward = finalBalance * 9 / 10;
 
-        uint option1Count = option1AddressList.length;
-        uint option2Count = option2AddressList.length;
+        uint option1Count = uint(option1AddressList.length);
+        uint option2Count = uint(option2AddressList.length);
 
-        if (option1Count > option2Count || (option1Count == option2Count && gameId % 2 == 1)) { // option1 win
-            award = option1Count == 0 ? 0 : uint(totalAward / option1Count);
-            winnerSide = 1;
-            winnerList = option1AddressList;
-        } else if (option2Count > option1Count || (option1Count == option2Count && gameId % 2 == 0)) { // option2 win
-            award = option2Count == 0 ? 0 : uint(totalAward / option2Count);
-            winnerSide = 2;
-            winnerList = option2AddressList;
+        uint sumCount = option1Count + option2Count;
+
+        if(sumCount == 0 ){
+            award = 0;
+            awardCounter = 0;
+            if(gameId % 2 == 1){
+                winnerSide = 1;
+            }else{
+                winnerSide = 2;
+            }
+            return;
+        }else{
+            if (option1Count != 0 && sumCount / option1Count > 10) {
+				winnerSide = 1;
+			} else if (option2Count != 0 && sumCount / option2Count > 10) {
+				winnerSide = 2;
+			} else if (option1Count > option2Count || (option1Count == option2Count && gameId % 2 == 1)) {
+				winnerSide = 1;
+			} else {
+				winnerSide = 2;
+			}
+        }
+
+        if (winnerSide == 1) {
+            award = uint(totalAward / option1Count);
+            awardCounter = option1Count;
+        } else {
+            award = uint(totalAward / option2Count);
+            awardCounter = option2Count;
         }
     }
 
@@ -298,56 +295,92 @@ contract MajorityGame {
      **/
     function forceEndGame() public adminOnly {
         require(winnerSide == 0);
-        // 10% for operation fee
+
         finalBalance = address(this).balance;
 
-        uint totalAward = uint(finalBalance * 9 / 10);
+        // 10% for commision
+        uint totalAward = finalBalance * 9 / 10;
 
-        uint option1Count = option1AddressList.length;
-        uint option2Count = option2AddressList.length;
+        uint option1Count = uint(option1AddressList.length);
+        uint option2Count = uint(option2AddressList.length);
 
-        if (option1Count > option2Count || (option1Count == option2Count && gameId % 2 == 1)) { // option1 win
-            award = option1Count == 0 ? 0 : uint(totalAward / option1Count);
+        uint sumCount = option1Count + option2Count;
+
+        if(sumCount == 0 ){
+            award = 0;
+            awardCounter = 0;
+            if(gameId % 2 == 1){
+                winnerSide = 1;
+            }else{
+                winnerSide = 2;
+            }
+            return;
+        }
+
+        if (option1Count != 0 && sumCount / option1Count > 10) {
             winnerSide = 1;
-            winnerList = option1AddressList;
-        } else if (option2Count > option1Count || (option1Count == option2Count && gameId % 2 == 0)) { // option2 win
-            award = option2Count == 0 ? 0 : uint(totalAward / option2Count);
+        } else if (option2Count != 0 && sumCount / option2Count > 10) {
             winnerSide = 2;
-            winnerList = option2AddressList;
+        } else if (option1Count > option2Count || (option1Count == option2Count && gameId % 2 == 1)) {
+            winnerSide = 1;
+        } else {
+            winnerSide = 2;
+        }
+
+        if (winnerSide == 1) {
+            award = uint(totalAward / option1Count);
+            awardCounter = option1Count;
+        } else {
+            award = uint(totalAward / option2Count);
+            awardCounter = option2Count;
         }
     }
 
     /**
      * send award to winner
-     **/
+     **/    
     function sendAward() public isEnded {
-        require(winnerList.length > 0);
+        require(awardCounter > 0);
 
-        uint count = winnerList.length;
+        uint count = awardCounter;
 
-        if (count > 250) {
-            for (uint i = 0; i < 250; i++) {
-                this.sendAwardToLastWinner();
+        if (awardCounter > 400) {
+            for (uint i = 0; i < 400; i++) {
+                this.sendAwardToLastOne();
             }
         } else {
             for (uint j = 0; j < count; j++) {
-                this.sendAwardToLastWinner();
+                this.sendAwardToLastOne();
             }
         }
     }
 
     /**
      * send award to last winner of the list
-     **/
-    function sendAwardToLastWinner() public isEnded {
-        address(winnerList[winnerList.length - 1]).transfer(award);
+     **/    
+    function sendAwardToLastOne() public isEnded {
+		require(awardCounter > 0);
+        if(winnerSide == 1){
+            address(option1AddressList[awardCounter - 1]).transfer(award);
+        }else{
+            address(option2AddressList[awardCounter - 1]).transfer(award);
+        }
+        
+        awardCounter--;
 
-        delete winnerList[winnerList.length - 1];
-        winnerList.length--;
+        if(awardCounter == 0){
+            if(option1AddressList.length + option2AddressList.length >= 7){
+                // send 0.5% of total bet to each first player
+                uint awardFirst6 = uint(finalBalance / 200);
+                for (uint k = 0; k < 6; k++) {
+                    address(first6AddresstList[k]).transfer(awardFirst6);
+                }
+                // send 2% of total bet to last player
+                address(lastAddress).transfer(uint(finalBalance / 50));
+            }
 
-        if(winnerList.length == 0){
-          address add=address(officialAddress);
-          address(add).transfer(address(this).balance);
+            // send the rest of balance to officialAddress
+            address(officialAddress).transfer(address(this).balance);
         }
     }
 
@@ -370,7 +403,7 @@ contract MajorityGame {
     }
 
     /**
-    * get the option os the player choosed
+    * get the option of the player choosed
     **/
     function getPlayerOption() public view returns (uint) {
         if (option1List[msg.sender]) {
@@ -394,7 +427,7 @@ contract MajorityGame {
     }
 
     /**
-     * return the players who won the game
+     * return the players who lose the game
      **/
     function getLoserAddressList() public isEnded view returns (address[]) {
       if (winnerSide == 1) {
@@ -402,19 +435,5 @@ contract MajorityGame {
       }else {
         return option1AddressList;
       }
-    }
-
-    /**
-     * return winner list
-     **/
-    function getWinnerList() public isEnded view returns (address[]) {
-        return winnerList;
-    }
-
-    /**
-     * return winner list size
-     **/
-    function getWinnerListLength() public isEnded view returns (uint) {
-        return winnerList.length;
     }
 }
