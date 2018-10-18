@@ -1,11 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ID at 0xb2c19e757f60fc874d1f6dfead59f5bdc45caf50
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ID at 0xd6146d0192c8eabf2335c9e43b6838371bf6345f
 */
 pragma solidity ^0.4.24;
 
 // 'EVERID' token contract
 //
-// Deployed to : 0xb2c19E757f60fC874D1f6dfeAD59F5bdC45Caf50
+// Deployed to : 0xD6146d0192c8Eabf2335c9E43B6838371BF6345F
 // Symbol      : ID
 // Name        : Everest ID
 // Total supply: 24,000,000,000
@@ -16,7 +16,7 @@ interface tokenRecipient { function receiveApproval(address _from, uint256 _valu
 
 contract ID {
     // Public variables of the token
-    string public name = "Tolar Token";
+    string public name = "Everest";
     string public symbol = "ID";
     uint8 public decimals = 18;
     // 18 decimals is the strongly suggested default
@@ -38,7 +38,7 @@ contract ID {
      * Initializes contract with initial supply tokens to the creator of the contract
      */
     function ID() public {
-        totalSupply = tokenSupply * 24 ** uint256(decimals);  // Update total supply with the decimal amount
+        totalSupply = tokenSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;    // Give DatBoiCoin Mint the total created tokens
         creator = msg.sender;
     }
