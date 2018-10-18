@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Divs4D at 0x398301a2322fc2e2d052d04a926e7a4f643a156e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Divs4D at 0xdf401155b75cbe5b916a724873cf61f136900e75
 */
 pragma solidity ^0.4.18;
 
@@ -24,26 +24,67 @@ __/\\\\\\\\\\\\_____/\\\\\\\\\\\__/\\\________/\\\_____/\\\\\\\\\\\_____________
                 _________________________________________________________________________\/\\\____\/\\\\\\\\\\\\/___ 
                  _________________________________________________________________________\///_____\////////////_____
 
-* www.Divs4D.com
-* 25% return every 24 hours
-* ROI in 4 days
-* 5% Referral commision
+                                   
+                              ____  ???    ???????  ?????? ???   ???    ???????  ??????? ??? _____
+                           _______ ????    ???????????????????? ????    ???????????????????? ________
+?                         ________  ???    ???  ??????????? ???????     ???????????   ?????? _________
+                           _______  ???    ???  ???????????  ?????      ???????????   ?????? ________
+                             _____  ???    ???????????  ???   ???       ???  ??????????????? ______
+                               ___  ???    ??????? ???  ???   ???       ???  ??? ??????? ??? ____
+                                _______________________________________________________________
+                                                  _____________________________
+                                                 |      www.Divs4D.com/1Day    |
+                                                 | 100% return every 24 hours  |
+                                                 |        ROI in 1 day         |
+                                                 |    5% Referral commision    |
+                                                 |_____________________________|                            
 */
-
 contract Divs4D{
-    
+       
+                                             /*=====================================      
+                                              |-|-|-|-|-|-|--MAPPINGS--|-|-|-|-|-|-|                   
+                                              =====================================*/      
+
     mapping (address => uint256) public investedETH;
     mapping (address => uint256) public lastInvest;
-    
     mapping (address => uint256) public affiliateCommision;
     
     address dev = 0xF5c47144e20B78410f40429d78E7A18a2A429D0e;
     address promoter = 0xC7a4Bf373476e265fC1b428CC4110E83aE32e8A3;
     
+    
+    bool public started;
+
+
+                                             /*____________________________________
+                                              |   ONLY DEV CAN START THE MADNESS   |
+                                              |____________________________________*/
+    
+    
+    modifier onlyDev() {
+        require(msg.sender == dev);
+        _;
+    }
+
+
+                                             /*=====================================
+                                              ||||||||||||||FUNCTIONS|||||||||||||||             
+                                              =====================================*/
+
+    function start() public onlyDev {
+        started = true;
+    }
+                                             /*____________________________________
+                                              |   Minimum of 0.01 ETHER deposit    |
+                                              |  And game must be started by dev   |      
+                                              |____________________________________*/
+    
+    
     function investETH(address referral) public payable {
-        
+
         require(msg.value >= 0.01 ether);
-        
+        require(started);
+                              
         if(getProfit(msg.sender) > 0){
             uint256 profit = getProfit(msg.sender);
             lastInvest[msg.sender] = now;
@@ -62,7 +103,10 @@ contract Divs4D{
         investedETH[msg.sender] = SafeMath.add(investedETH[msg.sender], amount);
         lastInvest[msg.sender] = now;
     }
-    
+                                             /*____________________________________
+                                              |    Players can withdraw profit     |
+                                              |  anytime as long as there is ETH   |      
+                                              |____________________________________*/
     
     function withdraw() public{
         uint256 profit = getProfit(msg.sender);
@@ -77,7 +121,7 @@ contract Divs4D{
 
     function getProfit(address customer) public view returns(uint256){
         uint256 secondsPassed = SafeMath.sub(now, lastInvest[customer]);
-        return SafeMath.div(SafeMath.mul(secondsPassed, investedETH[customer]), 345600);
+        return SafeMath.div(SafeMath.mul(secondsPassed, investedETH[customer]), 86400);
     }
     
     function reinvestProfit() public {
@@ -114,6 +158,12 @@ contract Divs4D{
         return a > b ? a : b;
     }
 }
+
+
+
+                                             /*======================================
+                                              ||||||GOTTA HAVE THAT SAFE MATH||||||||             
+                                              ======================================*/
 
 library SafeMath {
 
