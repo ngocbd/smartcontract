@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BRPerSellControl at 0x3612d93f91c8fdb5f158a7c35dd7f87c63ad3f9b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BRPerSellControl at 0x911babbe0e88bb379b31c13033505e87266a4bfb
 */
 pragma solidity ^0.4.7;
 contract MobaBase {
@@ -8,8 +8,6 @@ contract MobaBase {
     constructor ()  public  {
         owner = msg.sender;
     }
-    
-    event transferToOwnerEvent(uint256 price);
     
     modifier onlyOwner {
         require(msg.sender == owner,"only owner can call this function");
@@ -36,22 +34,11 @@ contract MobaBase {
         }
     }
     
-    function transferToOwner()    
-    onlyOwner 
-    msgSendFilter 
-    public {
-        uint256 totalBalace = address(this).balance;
-        owner.transfer(totalBalace);
-        emit transferToOwnerEvent(totalBalace);
-    }
-    
     function updateLock(bool b) onlyOwner public {
         
         require(isLock != b," updateLock new status == old status");
         isLock = b;
     }
-    
-   
 }
 
 contract IBRInviteData {
@@ -63,8 +50,8 @@ contract IBRPerSellData {
 
 contract BRPerSellControl is MobaBase {
     
-    IBRInviteData public mInviteAddr;
-    IBRPerSellData public mPerSellData;
+    IBRInviteData mInviteAddr;
+    IBRPerSellData mPerSellData;
     mapping (address => uint16[]) public mBuyList;
 
     event updateIntefaceEvent();
@@ -84,7 +71,16 @@ contract BRPerSellControl is MobaBase {
         emit updateIntefaceEvent();
     }
     
-    function GetPerSellInfo(uint16 id) public view returns (uint16 pesellId,uint256 price,bool isOver) {
+    function transferToOwner()    
+    onlyOwner 
+    msgSendFilter 
+    public {
+        uint256 totalBalace = address(this).balance;
+        owner.transfer(totalBalace);
+        emit transferToOwnerEvent(totalBalace);
+    }
+    
+   function GetPerSellInfo(uint16 id) public view returns (uint16 pesellId,uint256 price,bool isOver) {
         return mPerSellData.GetPerSellInfo(id);
     }
     
@@ -105,10 +101,6 @@ contract BRPerSellControl is MobaBase {
         }
         mBuyList[msg.sender].push(id);
         emit buyPerSellEvent(perSellId,name,price);
-    }
-    
-    function getBuyInfo(address addr) public view returns (uint16[]){
-        return mBuyList[addr];
     }
     
 
