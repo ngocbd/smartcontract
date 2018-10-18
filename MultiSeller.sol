@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSeller at 0xd7293f80c77fec2abaeed126cf33cacc49e80c3c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSeller at 0x99b001735036d937b4a11c17a9a44f86fbddf4d0
 */
 pragma solidity ^0.4.24;
 
@@ -424,12 +424,7 @@ contract MultiChanger is CanReclaimToken {
         }
     }
 
-    function change(
-        bytes _callDatas,
-        uint[] _starts // including 0 and LENGTH values
-    )
-        internal
-    {
+    function change(bytes _callDatas, uint[] _starts) public payable { // _starts should include 0 and _callDatas.length
         for (uint i = 0; i < _starts.length - 1; i++) {
             require(externalCall(this, 0, _callDatas, _starts[i], _starts[i + 1] - _starts[i]));
         }
@@ -467,15 +462,33 @@ contract MultiChanger is CanReclaimToken {
 
     function transferTokenAmount(address _target, bytes _data, ERC20 _fromToken, uint256 _amount) external {
         _fromToken.asmTransfer(_target, _amount);
-        // solium-disable-next-line security/no-low-level-calls
-        require(_target.call(_data));
+        if (_target != address(0)) {
+            // solium-disable-next-line security/no-low-level-calls
+            require(_target.call(_data));
+        }
     }
 
     function transferTokenProportion(address _target, bytes _data, ERC20 _fromToken, uint256 _mul, uint256 _div) external {
         uint256 amount = _fromToken.balanceOf(this).mul(_mul).div(_div);
         _fromToken.asmTransfer(_target, amount);
-        // solium-disable-next-line security/no-low-level-calls
-        require(_target.call(_data));
+        if (_target != address(0)) {
+            // solium-disable-next-line security/no-low-level-calls
+            require(_target.call(_data));
+        }
+    }
+
+    // Multitoken
+
+    function multitokenChangeAmount(IMultiToken _mtkn, ERC20 _fromToken, ERC20 _toToken, uint256 _minReturn, uint256 _amount) external {
+        if (_fromToken.allowance(this, _mtkn) == 0) {
+            _fromToken.asmApprove(_mtkn, uint256(-1));
+        }
+        _mtkn.change(_fromToken, _toToken, _amount, _minReturn);
+    }
+
+    function multitokenChangeProportion(IMultiToken _mtkn, ERC20 _fromToken, ERC20 _toToken, uint256 _minReturn, uint256 _mul, uint256 _div) external {
+        uint256 amount = _fromToken.balanceOf(this).mul(_mul).div(_div);
+        this.multitokenChangeAmount(_mtkn, _fromToken, _toToken, _minReturn, amount);
     }
 
     // Ether token
@@ -574,6 +587,7 @@ contract MultiChanger is CanReclaimToken {
 // File: contracts/registry/MultiSeller.sol
 
 contract MultiSeller is MultiChanger {
+    using CheckedERC20 for ERC20;
     using CheckedERC20 for IMultiToken;
 
     function() public payable {
@@ -632,7 +646,7 @@ contract MultiSeller is MultiChanger {
             _exchanges,
             _datas,
             _datasIndexes,
-            tx.origin
+            tx.origin       // solium-disable-line security/no-tx-origin
         );
     }
 
@@ -668,22 +682,25 @@ contract MultiSeller is MultiChanger {
 
             if (i == _exchanges.length - 1 && _throughToken != address(0)) {
                 if (_throughToken.allowance(this, _exchanges[i]) == 0) {
-                    _throughToken.approve(_exchanges[i], uint256(-1));
+                    _throughToken.asmApprove(_exchanges[i], uint256(-1));
                 }
             } else {
                 ERC20 token = _mtkn.tokens(i);
                 if (_exchanges[i] == 0) {
-                    token.transfer(_for, token.balanceOf(this));
+                    token.asmTransfer(_for, token.balanceOf(this));
                     continue;
                 }
-                token.approve(_exchanges[i], token.balanceOf(this));
+                if (token.allowance(this, _exchanges[i]) == 0) {
+                    token.asmApprove(_exchanges[i], uint256(-1));
+                }
             }
+            // solium-disable-next-line security/no-low-level-calls
             require(_exchanges[i].call(data), "sell: exchange arbitrary call failed");
         }
 
         _for.transfer(address(this).balance);
         if (_throughToken != address(0) && _throughToken.balanceOf(this) > 0) {
-            _throughToken.transfer(_for, _throughToken.balanceOf(this));
+            _throughToken.asmTransfer(_for, _throughToken.balanceOf(this));
         }
     }
 }
