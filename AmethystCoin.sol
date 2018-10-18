@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AmethystCoin at 0x4f1dc67c2a9977522a19c54aedd81e8c6838e0b8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AmethystCoin at 0x3f8828955db539ddd78ecc2a0cecd77d3eb8b033
 */
 pragma solidity ^0.4.18;
 
@@ -76,10 +76,10 @@ contract AmethystCoin is ERC20 {
     mapping (address => mapping (address => uint256)) allowed;    
 
     string public constant name = "AmethystCoin";
-    string public constant symbol = "ATH";
+    string public constant symbol = "AMSC";
     uint public constant decimals = 8;
     
-    uint256 public totalSupply = 9500000000e8;
+    uint256 public totalSupply = 9800000000e8;
     uint256 public totalDistributed = 0;        
     uint256 public tokensPerEth = 20000000e8;
     uint256 public constant minContribution = 1 ether / 1000; // 0.01 Ether
