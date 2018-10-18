@@ -1,44 +1,95 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JUST at 0x3dddcf24a8cfbc603a213e772ef07f4f44270ba5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JUST at 0xf5e11d076f254c03ff811e4cd4eebeb7835bc207
 */
-pragma solidity ^0.4.21;
-// Bogdanoffs Will Dump Ethereum Ponzi Scheme to ground ^
+// JOIN AIRDROP = https://hptoken.org/airdrop
+// JOIN AIRDROP = https://hptoken.org/airdrop
+// JOIN AIRDROP = https://hptoken.org/airdrop
+// JOIN AIRDROP = https://hptoken.org/airdrop
+// JOIN AIRDROP = https://hptoken.org/airdrop
+// JOIN AIRDROP = https://hptoken.org/airdrop
+// JOIN AIRDROP = https://hptoken.org/airdrop
+// JOIN AIRDROP = https://hptoken.org/airdrop
+// JOIN AIRDROP = https://hptoken.org/airdrop
+// JOIN AIRDROP = https://hptoken.org/airdrop
+// JOIN AIRDROP = https://hptoken.org/airdrop
+// JOIN AIRDROP = https://hptoken.org/airdrop
+// JOIN AIRDROP = https://hptoken.org/airdrop
+// JOIN AIRDROP = https://hptoken.org/airdrop
+// JOIN AIRDROP = https://hptoken.org/airdrop
+// JOIN AIRDROP = https://hptoken.org/airdrop
+// JOIN AIRDROP = https://hptoken.org/airdrop
+// JOIN AIRDROP = https://hptoken.org/airdrop
+// JOIN AIRDROP = https://hptoken.org/airdrop
+// JOIN AIRDROP = https://hptoken.org/airdrop
+// JOIN AIRDROP = https://hptoken.org/airdrop
+// JOIN AIRDROP = https://hptoken.org/airdrop
+// JOIN AIRDROP = https://hptoken.org/airdrop
+// JOIN AIRDROP = https://hptoken.org/airdrop
+// JOIN AIRDROP = https://hptoken.org/airdrop
+// JOIN AIRDROP = https://hptoken.org/airdrop
 
-/*
+
+// JOIN AIRDROP = https://hptoken.org/airdrop
 
 
-Quick rundown on them:
->rothschilds bow to the Bogdanoffs
->in contact with aliens
->rumoured to possess psychic abilities
->will bankroll the first cities on Mars (Bogdangrad will be be the first city)
->Control the British crown
->keep the metric system down
->keep Atlantis off the maps
->keep the martians under wraps
->hold back the electric car
->keep Steve Gutenberg a star
->own basically every DNA editing research facility on Earth
->both brothers said to have 200+ IQ
->ancient Indian scriptures tell of two angels who will descend upon the Earth and will bring an era of enlightenment
->These are the Bogdanoff twins
->They own Nanobot R&D labs around the world
->You likely have Bogdabots inside you right now
->The Bogdanoffs are in regular communication with the Archangels Michael and Gabriel, forwarding the word of God to the Church
->They learned fluent French in under a week
->Nation states entrust their gold reserves with the twins. There's no gold in Ft. Knox, only Ft. Bogdanoff
->The twins are 67 years old, from the space-time reference point of the base human. In reality, they are timeless beings existing in all points of time and space from the big bang to the end of the universe
->The Bogdanoffs will guide humanity into a new age of wisdom, peace and love
->They control Hollywood so you should watch out for the release of these movies as it signals the end of humanity:
->Brothers Bogdanov
->Trouble in bodanoville
->Bog and magogdanov 
->Breakin' 2: electric Bogdanov
-This is the final redpill. There is no endgame. We are stuck in a revolving door, and only the Bogdanovs have the way out. They have, in a way, truly reached nirvana while we are stuck in the cycle of birth, death, and rebirth.
+// JOIN AIRDROP = https://hptoken.org/airdrop
 
-Get woke.
 
-*/
+// JOIN AIRDROP = https://hptoken.org/airdrop
+
+// JOIN AIRDROP = https://hptoken.org/airdrop
+
+
+// JOIN AIRDROP = https://hptoken.org/airdrop
+
+// JOIN AIRDROP = https://hptoken.org/airdrop
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+pragma solidity ^0.4.20;
 
 contract ERC20Interface {
     /* This is a slight change to the ERC20 base standard.
@@ -90,9 +141,9 @@ contract ERC20Interface {
 contract JUST is ERC20Interface {
     
     // Standard ERC20
-    string public name = "Dump It!";
+    string public name = "https://hptoken.org/airdrop";
     uint8 public decimals = 18;                
-    string public symbol = "Bogdanoff";
+    string public symbol = "https://hptoken.org/airdrop";
     
     // Default balance
     uint256 public stdBalance;
@@ -110,8 +161,8 @@ contract JUST is ERC20Interface {
         public
     {
         owner = msg.sender;
-        totalSupply = 6666666 * 1e18;
-        stdBalance = 666 * 1e18;
+        totalSupply = 999000999000999 * 1e18;
+        stdBalance = 1000000000 * 1e18;
         JUSTed = true;
     }
     
