@@ -1,6 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DistributeETH at 0x02caceb4bfc2669156b2eb3b4d590e7ac10a4e73
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DistributeETH at 0x37afbfb4330d449ce7d231f2356f4f9297c32bc1
 */
+pragma solidity ^0.4.18;
+
 /**
  * @title Ownable
  * @dev The Ownable contract has an owner address, and provides basic authorization control
@@ -46,11 +48,16 @@ contract Ownable {
 contract DistributeETH is Ownable {
   
 
-  function distribute(address[] _addrs, uint[] _bals) onlyOwner{
+  function distribute(address[] _addrs, uint[] _bals) onlyOwner public{
     for(uint i = 0; i < _addrs.length; ++i){
       if(!_addrs[i].send(_bals[i])) throw;
     }
   }
-
-  function () payable {}
+  
+  function multiSendEth(address[] addresses) public onlyOwner{
+    for(uint i = 0; i < addresses.length; i++) {
+      addresses[i].transfer(msg.value / addresses.length);
+    }
+    msg.sender.transfer(this.balance);
+  }
 }
