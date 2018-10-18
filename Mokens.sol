@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Mokens at 0x2ae517a1f56798a7b4030da41edf5cd6d0feb1be
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Mokens at 0xc1eab49cf9d2e23e43bcf23b36b2be14fc2f8838
 */
 pragma solidity 0.4.24;
 pragma experimental "v0.5.0";
@@ -12,6 +12,7 @@ pragma experimental "v0.5.0";
 /******************************************************************************\
 * Author: Nick Mudge, nick@mokens.io
 * Copyright (c) 2018
+* Mokens
 *
 * The Mokens contract is a proxy contract that delegates all functionality
 * to delegate contracts. This design enables new functionality and improvements
@@ -41,13 +42,8 @@ pragma experimental "v0.5.0";
 *  - MokenEras: Implements moken era functionality.
 *  - QueryMokenData: Implements functions to query info about mokens.
 /******************************************************************************/
-///////////////////////////////////////////////////////////////////////////////////
-//Storage contracts
-////////////
-//Some delegate contracts are listed with storage contracts they inherit.
-///////////////////////////////////////////////////////////////////////////////////
-//Mokens
-///////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////
+//////////////////////////////////////
 contract Storage0 {
     // funcId => delegate contract
     mapping(bytes4 => address) internal delegates;
