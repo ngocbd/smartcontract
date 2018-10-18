@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZethrBigWheel at 0x9ccbccffd3bf7b2fed7781c07d3d7726689bb68c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZethrBigWheel at 0xf2861ad8dd602269c21eddd4d18255903cca47c7
 */
 /*
   Zethr | https://zethr.io
@@ -2861,6 +2861,15 @@ contract ZethrBigWheel is ZethrGame {
     return (winAmount, lossAmount, jackpotAmount, jackpotWins, output);
   }
 
+  event WheelResult(
+    uint _blockNumber,
+    address _target,
+    uint40[5] _bets,
+    uint _winAmount,
+    uint _lossAmount,
+    uint _winCategory
+  );
+
   /** @dev Retrieve the results of the spin, for web3 calls.
     * @param _blockNumber The block number of the spin
     * @param _target The address of the better
@@ -2902,36 +2911,44 @@ contract ZethrBigWheel is ZethrGame {
     // 270270   -   513511    4x   
     // 513512   -   999996    2x        
 
+    uint _winCategory = 0;
+    
     if (result < 2) {
       jackpotWins++;
+      _winCategory = 99;
     } else {
       if (result < 27028) {
         if (betsMul[4] > 0) {
           // Player has won the 25x multiplier category!
+          _winCategory = 25;
           winAmount = SafeMath.mul(betsMul[4], 25);
           lossAmount -= betsMul[4];
         }
       } else if (result < 108108) {
         if (betsMul[3] > 0) {
           // Player has won the 10x multiplier category!
+          _winCategory = 10;
           winAmount = SafeMath.mul(betsMul[3], 10);
           lossAmount -= betsMul[3];
         }
       } else if (result < 270269) {
         if (betsMul[2] > 0) {
           // Player has won the 6x multiplier category!
+          _winCategory = 6;
           winAmount = SafeMath.mul(betsMul[2], 6);
           lossAmount -= betsMul[2];
         }
       } else if (result < 513512) {
         if (betsMul[1] > 0) {
           // Player has won the 4x multiplier category!
+          _winCategory = 4;
           winAmount = SafeMath.mul(betsMul[1], 4);
           lossAmount -= betsMul[1];
         }
       } else if (result < 999997) {
         if (betsMul[0] > 0) {
           // Player has won the 2x multiplier category!
+          _winCategory = 2;
           winAmount = SafeMath.mul(betsMul[0], 2);
           lossAmount -= betsMul[0];
         }
@@ -2940,7 +2957,7 @@ contract ZethrBigWheel is ZethrGame {
       jackpotAmount = lossAmount.div(100);
       lossAmount -= jackpotAmount;
     }
-
+    emit WheelResult(_blockNumber, _target, _bets, winAmount, lossAmount, _winCategory);
     return (winAmount, lossAmount, jackpotAmount, jackpotWins, result);
   }
 
@@ -3151,12 +3168,10 @@ contract ZethrBigWheel is ZethrGame {
   }
 
   /** @dev Determines if a supplied bet is valid
-    * @param _tokenCount The total number of tokens bet
-    * @param _divRate The dividend rate of the bet
     * @param _data The game-specific bet data
     * @return bool Whether or not the bet is valid
     */
-  function isBetValid(uint _tokenCount, uint _divRate, bytes _data)
+  function isBetValid(uint /*_tokenCount*/, uint /*_divRate*/, bytes _data)
   public view
   returns (bool)
   {
@@ -3202,7 +3217,7 @@ contract ZethrBigWheel is ZethrGame {
   }
   
   
-  function betInputToBytes(uint40 bet1, uint40 bet2, uint40 bet3, uint40 bet4, uint40 bet5) public view returns (bytes32){
+  function betInputToBytes(uint40 bet1, uint40 bet2, uint40 bet3, uint40 bet4, uint40 bet5) pure public returns (bytes32){
     bytes memory concat = (abi.encodePacked(uint56(0), bet1, bet2, bet3, bet4, bet5));
     bytes32 output;
         
