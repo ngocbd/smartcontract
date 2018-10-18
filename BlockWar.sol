@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BlockWar at 0xd2720894f1d4b908c769464c00f8a1d020244661
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BlockWar at 0xf5303ef35aa29792630944e17636756a7cec0668
 */
 pragma solidity ^0.4.24;
 
@@ -57,12 +57,12 @@ contract BlockWar {
     uint currentRound = 0;
     uint leftBlockNumber = 0;
     uint rightBlockNumber = 0;
-    uint maxBlockNumber = 500;  
-    uint buildFee = 100 finney;
+    uint maxBlockNumber = 500;
+    uint buildFee = 10 finney;
     uint gameStartTimestamp;  // if gameEnded and currentRound==0 wait gameStartTimestamp
     uint gameIntervalTimestamp = 600;  // how many seconds game start after game end
     uint gamePrizePool = 0;  // game prize pool
-    uint public gameLength = 10800;  
+    uint public gameLength = 10800;
     uint public doCallNumber;
     /* Modifiers */
     modifier onlyOwner() {
@@ -82,7 +82,7 @@ contract BlockWar {
 
     function BlockWar() public {
         owner = msg.sender;
-        gameStartTimestamp = 1535605200;  // set gameStartTimestamp
+        gameStartTimestamp = 1535968800;  // set gameStartTimestamp
     }
 
     function getBlockBuildFee(uint currentBlockNumber) public view returns(uint) {
@@ -117,11 +117,11 @@ contract BlockWar {
         // handle ether
         uint devFee = 0;
         uint inviteFee = 0;
-        devFee = totalBuildFee.mul(4).div(100);
+        devFee = totalBuildFee.mul(3).div(100);
         if (inviteAddress != address(0)) {
-    		inviteFee = totalBuildFee.mul(3).div(100);
+    		inviteFee = totalBuildFee.mul(2).div(100);
         } else {
-    		devFee = totalBuildFee.mul(7).div(100);  // 7% percent if not invite
+    		devFee = totalBuildFee.mul(5).div(100);  // 7% percent if not invite
         }
         owner.transfer(devFee);
         if (inviteFee > 0) {
@@ -152,11 +152,11 @@ contract BlockWar {
         // handle ether
         uint devFee = 0;
         uint inviteFee = 0;
-        devFee = totalBuildFee.mul(4).div(100);
+        devFee = totalBuildFee.mul(3).div(100);
         if (inviteAddress != address(0)) {
-    		inviteFee = totalBuildFee.mul(3).div(100);
+    		inviteFee = totalBuildFee.mul(2).div(100);
         } else {
-    		devFee = totalBuildFee.mul(7).div(100);  // 7% percent if not invite
+    		devFee = totalBuildFee.mul(5).div(100);  // 5% percent if not invite
         }
         owner.transfer(devFee);
         if (inviteFee > 0) {
