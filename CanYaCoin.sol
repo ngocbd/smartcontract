@@ -1,23 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CanYaCoin at 0x06afad679999600ed84b8ad0a0f5ef65e4dbb57c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CanYaCoin at 0x07bfa395d7242cc038ca2ebcf1acf0fe6b72f6e5
 */
 /**
- *  CanYaCoin Presale contract
+ *  CanYaCoin (CAN) contract (FINAL)
  */
 
-pragma solidity 0.4.15;
+pragma solidity 0.4.24;
 
-library SafeMath {
-
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-}
 
 contract ERC20TokenInterface {
+
     /// @return The total amount of tokens
     function totalSupply() constant returns (uint256 supply);
 
@@ -51,7 +43,9 @@ contract ERC20TokenInterface {
 
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed owner, address indexed spender, uint256 value);
+
 }
+
 
 contract CanYaCoin is ERC20TokenInterface {
 
@@ -105,79 +99,5 @@ contract CanYaCoin is ERC20TokenInterface {
     function allowance(address _owner, address _spender) constant public returns (uint256 remaining) {
         return allowed[_owner][_spender];
     }
-}
 
-/* Included for compilation to match bytecode for etherscan. Unused. */
-contract Presale {
-    using SafeMath for uint256;
-
-    CanYaCoin public CanYaCoinToken;
-    bool public ended = false;
-    uint256 internal refundAmount = 0;
-    uint256 public constant MAX_CONTRIBUTION = 3780 ether;
-    uint256 public constant MIN_CONTRIBUTION = 1 ether;
-    address public owner;
-    address public multisig;
-    uint256 public constant pricePerToken = 400000000; // (wei per CAN)
-    uint256 public tokensAvailable = 9450000 * (10**6); // Whitepaper 9.45mil * 10^6
-
-    event LogRefund(uint256 _amount);
-    event LogEnded(bool _soldOut);
-    event LogContribution(uint256 _amount, uint256 _tokensPurchased);
-
-    modifier notEnded() {
-        require(!ended);
-        _;
-    }
-
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-
-    /// @dev Sets up the amount of tokens available as per the whitepaper
-    /// @param _token Address of the CanYaCoin contract
-    function Presale(address _token, address _multisig) {
-        require (_token != address(0) && _multisig != address(0));
-        owner = msg.sender;
-        CanYaCoinToken = CanYaCoin(_token);
-        multisig = _multisig;
-    }
-
-    /// @dev Fallback function, this allows users to purchase tokens by simply sending ETH to the
-    /// contract; they will however need to specify a higher amount of gas than the default (21000)
-    function () notEnded payable public {
-        require(msg.value >= MIN_CONTRIBUTION && msg.value <= MAX_CONTRIBUTION);
-        uint256 tokensPurchased = msg.value.div(pricePerToken);
-        if (tokensPurchased > tokensAvailable) {
-            ended = true;
-            LogEnded(true);
-            refundAmount = (tokensPurchased - tokensAvailable) * pricePerToken;
-            tokensPurchased = tokensAvailable;
-        }
-        tokensAvailable -= tokensPurchased;
-        
-        //Refund the difference
-        if (ended && refundAmount > 0) {
-            uint256 toRefund = refundAmount;
-            refundAmount = 0;
-            // reentry should not be possible
-            msg.sender.transfer(toRefund);
-            LogRefund(toRefund);
-        }
-        LogContribution(msg.value, tokensPurchased);
-        CanYaCoinToken.transfer(msg.sender, tokensPurchased);
-        multisig.transfer(msg.value - toRefund);
-    }
-
-    /// @dev Ends the crowdsale and withdraws any remaining tokens
-    /// @param _to Address to withdraw the tokens to
-    function withdrawTokens(address _to) onlyOwner public {
-        require(_to != address(0));
-        if (!ended) {
-            LogEnded(false);
-        }
-        ended = true;
-        CanYaCoinToken.transfer(_to, tokensAvailable);
-    }
 }
