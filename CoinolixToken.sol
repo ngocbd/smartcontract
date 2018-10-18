@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoinolixToken at 0x1719c53b5237f2e689eae62646df76d8167638a0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoinolixToken at 0x67fe7b4958a00f263ebd16d246a9a3b2ea3050d7
 */
 pragma solidity ^0.4.24;
 
