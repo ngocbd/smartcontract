@@ -1,11 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NicknameRegistrar at 0x4d6ec066345e3466d9e970caad4732983ae4bc2c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NicknameRegistrar at 0xb47b1ea3a294df2502a54ccdc1bbe49d71fc8a10
 */
 pragma solidity^0.4.24;
 
-/// A completely standalone nickname registrar
-/// https://M2D.win
-/// Laughing Man
+/**
+*    /// A completely standalone nickname registrar
+*    /// https://mobius.red/
+*    !!!!!!!!!!!!!!
+*/
 
 contract DSAuthority {
     function canCall(
