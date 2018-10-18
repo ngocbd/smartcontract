@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EternalStorageProxyForStormMultisender at 0xf479c029ed8af4a6a23248ac826812cf7cbd4d2c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EternalStorageProxyForStormMultisender at 0x43d999789559f9a352537d979d024b335bf34ba3
 */
+// File: contracts/EternalStorage.sol
+
+// Roman Storm Multi Sender
+// To Use this Dapp: https://poanetwork.github.io/multisender
 pragma solidity 0.4.20;
 
-
-// This DApp let you send tokens to multiple addresses at one Transaction
-// efficient and less errors
-// To Use this Dapp: http://tokensender.me/
 
 /**
  * @title EternalStorage
@@ -23,10 +23,10 @@ contract EternalStorage {
 
 }
 
-// This DApp let you send tokens to multiple addresses at one Transaction
-// efficient and less errors
-// To Use this Dapp: http://tokensender.me/
+// File: contracts/UpgradeabilityOwnerStorage.sol
 
+// Roman Storm Multi Sender
+// To Use this Dapp: https://poanetwork.github.io/multisender
 pragma solidity 0.4.20;
 
 
@@ -55,10 +55,10 @@ contract UpgradeabilityOwnerStorage {
 
 }
 
-// This DApp let you send tokens to multiple addresses at one Transaction
-// efficient and less errors
-// To Use this Dapp: http://tokensender.me/
+// File: contracts/Proxy.sol
 
+// Roman Storm Multi Sender
+// To Use this Dapp: https://poanetwork.github.io/multisender
 pragma solidity 0.4.20;
 
 
@@ -97,11 +97,10 @@ contract Proxy {
     function implementation() public view returns (address);
 }
 
-// This DApp let you send tokens to multiple addresses at one Transaction
-// efficient and less errors
-// To Use this Dapp: http://tokensender.me/
+// File: contracts/UpgradeabilityStorage.sol
 
-
+// Roman Storm Multi Sender
+// To Use this Dapp: https://poanetwork.github.io/multisender
 pragma solidity 0.4.20;
 
 
@@ -133,11 +132,10 @@ contract UpgradeabilityStorage {
     }
 }
 
-// This DApp let you send tokens to multiple addresses at one Transaction
-// efficient and less errors
-// To Use this Dapp: http://tokensender.me/
+// File: contracts/UpgradeabilityProxy.sol
 
-
+// Roman Storm Multi Sender
+// To Use this Dapp: https://poanetwork.github.io/multisender
 pragma solidity 0.4.20;
 
 
@@ -168,11 +166,10 @@ contract UpgradeabilityProxy is Proxy, UpgradeabilityStorage {
     }
 }
 
-// This DApp let you send tokens to multiple addresses at one Transaction
-// efficient and less errors
-// To Use this Dapp: http://tokensender.me/
+// File: contracts/OwnedUpgradeabilityProxy.sol
 
-
+// Roman Storm Multi Sender
+// To Use this Dapp: https://poanetwork.github.io/multisender
 pragma solidity 0.4.20;
 
 
@@ -246,12 +243,13 @@ contract OwnedUpgradeabilityProxy is UpgradeabilityOwnerStorage, UpgradeabilityP
     }
 }
 
+// File: contracts/EternalStorageProxyForStormMultisender.sol
 
-// This DApp let you send tokens to multiple addresses at one Transaction
-// efficient and less errors
-// To Use this Dapp: http://tokensender.me/
-
+// Roman Storm Multi Sender
+// To Use this Dapp: https://poanetwork.github.io/multisender
 pragma solidity 0.4.20;
+
+
 
 
 /**
