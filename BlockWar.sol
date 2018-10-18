@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BlockWar at 0x816deb500db0a0d7a1881958cbda124677b1e43b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BlockWar at 0x3333e9dff062022cb586172257da4e41f332cd67
 */
 pragma solidity ^0.4.24;
 
@@ -57,7 +57,7 @@ contract BlockWar {
     uint currentRound = 0;
     uint leftBlockNumber = 0;
     uint rightBlockNumber = 0;
-    uint maxBlockNumber = 1000;  
+    uint maxBlockNumber = 500;  
     uint buildFee = 100 finney;
     uint gameStartTimestamp;  // if gameEnded and currentRound==0 wait gameStartTimestamp
     uint gameIntervalTimestamp = 600;  // how many seconds game start after game end
@@ -82,10 +82,16 @@ contract BlockWar {
 
     function BlockWar() public {
         owner = msg.sender;
-        gameStartTimestamp = 1535547600;  // set gameStartTimestamp
+        gameStartTimestamp = 1535634000;  // set gameStartTimestamp
     }
 
     function getBlockBuildFee(uint currentBlockNumber) public view returns(uint) {
+        if (currentBlockNumber <= 10) {
+            return 0;
+        }
+        if (currentBlockNumber <= 20) {
+            return buildFee.div(4);
+        }
 		if (currentBlockNumber <= 100) {
 			return buildFee.div(2);  // 50 percent
 		}
@@ -178,7 +184,7 @@ contract BlockWar {
 				gameEnd = true;
 		}
 		if (gameEnd) {
-			uint maxUserPrize = gamePrizePool.mul(5).div(100);
+			uint maxUserPrize = gamePrizePool.mul(3).div(100);
 			uint nextGamePrizePool = gamePrizePool.div(10);
 			if (gamePrizePool > 0) {
 					msg.sender.transfer(maxUserPrize);
