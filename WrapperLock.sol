@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WrapperLock at 0x4c24a4dfb0c67916d47b4726958eb66b63bdd268
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WrapperLock at 0x99416180ae5d41c0e912985576094cd8c3a218fa
 */
 pragma solidity ^0.4.24;
 
@@ -187,11 +187,12 @@ contract Ownable {
 
 */
 
+
 contract WrapperLock is BasicToken, Ownable {
     using SafeMath for uint256;
 
-
-    address public TRANSFER_PROXY;
+    address public TRANSFER_PROXY_VEFX = 0xdcDb42C9a256690bd153A7B409751ADFC8Dd5851;
+    address public TRANSFER_PROXY_V2 = 0x2240Dab907db71e64d3E0dbA4800c83B5C502d4E;
     mapping (address => bool) public isSigner;
 
     bool public erc20old;
@@ -203,9 +204,8 @@ contract WrapperLock is BasicToken, Ownable {
     mapping (address => uint256) public depositLock;
     mapping (address => uint256) public balances;
 
-    function WrapperLock(address _originalToken, string _name, string _symbol, uint _decimals, address _transferProxy, bool _erc20old) Ownable() {
+    function WrapperLock(address _originalToken, string _name, string _symbol, uint _decimals, bool _erc20old) Ownable() {
         originalToken = _originalToken;
-        TRANSFER_PROXY = _transferProxy;
         name = _name;
         symbol = _symbol;
         decimals = _decimals;
@@ -281,7 +281,7 @@ contract WrapperLock is BasicToken, Ownable {
 
     function transferFrom(address _from, address _to, uint _value) public {
         require(isSigner[_to] || isSigner[_from]);
-        assert(msg.sender == TRANSFER_PROXY);
+        assert(msg.sender == TRANSFER_PROXY_VEFX || msg.sender == TRANSFER_PROXY_V2);
         balances[_to] = balances[_to].add(_value);
         depositLock[_to] = depositLock[_to] > now ? depositLock[_to] : now + 1 hours;
         balances[_from] = balances[_from].sub(_value);
@@ -289,7 +289,7 @@ contract WrapperLock is BasicToken, Ownable {
     }
 
     function allowance(address _owner, address _spender) public constant returns (uint) {
-        if (_spender == TRANSFER_PROXY) {
+        if (_spender == TRANSFER_PROXY_VEFX || _spender == TRANSFER_PROXY_V2) {
             return 2**256 - 1;
         }
     }
