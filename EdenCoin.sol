@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EdenCoin at 0x05860d453c7974cbf46508c06cba14e211c629ce
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EdenCoin at 0xefe485bf6a608a41a3d1330c9af25eac90dea59b
 */
 pragma solidity ^0.4.24;
 
@@ -49,7 +49,7 @@ contract EdenCoin is IERC20 {
   address private deployer;
   address private multisend = 0xB76a20D5d42c041593DF95D7d72b74B2543824f9;
   string public name = "Eden Coin";
-  string public symbol = "EDN";
+  string public symbol = "EDEN";
   uint8 public constant decimals = 18;
   uint256 public constant decimalFactor = 10 ** uint256(decimals);
   uint256 public constant totalSupply = 1000000000 * decimalFactor;
