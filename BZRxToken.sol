@@ -1,7 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BZRxToken at 0x13939ac9f1e0f99872fa873b6e00de9248ac95a0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BZRxToken at 0x75d1d5b95558f6320f707943b85e951426521673
 */
+/**
+ * Copyright 2017–2018, bZeroX, LLC. All Rights Reserved.
+ * Licensed under the Apache License, Version 2.0.
+ */
+
 pragma solidity 0.4.24;
+
 
 /**
  * @title SafeMath
@@ -12,43 +18,43 @@ library SafeMath {
   /**
   * @dev Multiplies two numbers, throws on overflow.
   */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+  function mul(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
     // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
     // benefit is lost if 'b' is also tested.
     // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
-    if (a == 0) {
+    if (_a == 0) {
       return 0;
     }
 
-    c = a * b;
-    assert(c / a == b);
+    c = _a * _b;
+    assert(c / _a == _b);
     return c;
   }
 
   /**
   * @dev Integer division of two numbers, truncating the quotient.
   */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    // uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return a / b;
+  function div(uint256 _a, uint256 _b) internal pure returns (uint256) {
+    // assert(_b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = _a / _b;
+    // assert(_a == _b * c + _a % _b); // There is no case in which this doesn't hold
+    return _a / _b;
   }
 
   /**
   * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
   */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
+  function sub(uint256 _a, uint256 _b) internal pure returns (uint256) {
+    assert(_b <= _a);
+    return _a - _b;
   }
 
   /**
   * @dev Adds two numbers, throws on overflow.
   */
-  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    c = a + b;
-    assert(c >= a);
+  function add(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
+    c = _a + _b;
+    assert(c >= _a);
     return c;
   }
 }
@@ -87,6 +93,9 @@ contract Ownable {
 
   /**
    * @dev Allows the current owner to relinquish control of the contract.
+   * @notice Renouncing to ownership will leave the contract without an owner.
+   * It will not be possible to call the functions with the `onlyOwner`
+   * modifier anymore.
    */
   function renounceOwnership() public onlyOwner {
     emit OwnershipRenounced(owner);
@@ -115,12 +124,12 @@ contract Ownable {
 /**
  * @title ERC20Basic
  * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
+ * See https://github.com/ethereum/EIPs/issues/179
  */
 contract ERC20Basic {
   function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
+  function balanceOf(address _who) public view returns (uint256);
+  function transfer(address _to, uint256 _value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
@@ -129,18 +138,36 @@ contract ERC20Basic {
  * @dev see https://github.com/ethereum/EIPs/issues/20
  */
 contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender)
+  function allowance(address _owner, address _spender)
     public view returns (uint256);
 
-  function transferFrom(address from, address to, uint256 value)
+  function transferFrom(address _from, address _to, uint256 _value)
     public returns (bool);
 
-  function approve(address spender, uint256 value) public returns (bool);
+  function approve(address _spender, uint256 _value) public returns (bool);
   event Approval(
     address indexed owner,
     address indexed spender,
     uint256 value
   );
+}
+
+/**
+ * @title DetailedERC20 token
+ * @dev The decimals are only for visualization purposes.
+ * All the operations are done using the smallest and indivisible token unit,
+ * just as on Ethereum all the operations are done in wei.
+ */
+contract DetailedERC20 is ERC20 {
+  string public name;
+  string public symbol;
+  uint8 public decimals;
+
+  constructor(string _name, string _symbol, uint8 _decimals) public {
+    name = _name;
+    symbol = _symbol;
+    decimals = _decimals;
+  }
 }
 
 /**
@@ -150,25 +177,25 @@ contract ERC20 is ERC20Basic {
 contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
 
-  mapping(address => uint256) balances;
+  mapping(address => uint256) internal balances;
 
-  uint256 totalSupply_;
+  uint256 internal totalSupply_;
 
   /**
-  * @dev total number of tokens in existence
+  * @dev Total number of tokens in existence
   */
   function totalSupply() public view returns (uint256) {
     return totalSupply_;
   }
 
   /**
-  * @dev transfer token for a specified address
+  * @dev Transfer token for a specified address
   * @param _to The address to transfer to.
   * @param _value The amount to be transferred.
   */
   function transfer(address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
     require(_value <= balances[msg.sender]);
+    require(_to != address(0));
 
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
@@ -188,39 +215,11 @@ contract BasicToken is ERC20Basic {
 }
 
 /**
- * @title Burnable Token
- * @dev Token that can be irreversibly burned (destroyed).
- */
-contract BurnableToken is BasicToken {
-
-  event Burn(address indexed burner, uint256 value);
-
-  /**
-   * @dev Burns a specific amount of tokens.
-   * @param _value The amount of token to be burned.
-   */
-  function burn(uint256 _value) public {
-    _burn(msg.sender, _value);
-  }
-
-  function _burn(address _who, uint256 _value) internal {
-    require(_value <= balances[_who]);
-    // no need to require value <= totalSupply, since that would imply the
-    // sender's balance is greater than the totalSupply, which *should* be an assertion failure
-
-    balances[_who] = balances[_who].sub(_value);
-    totalSupply_ = totalSupply_.sub(_value);
-    emit Burn(_who, _value);
-    emit Transfer(_who, address(0), _value);
-  }
-}
-
-/**
  * @title Standard ERC20 token
  *
  * @dev Implementation of the basic standard token.
- * @dev https://github.com/ethereum/EIPs/issues/20
- * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ * https://github.com/ethereum/EIPs/issues/20
+ * Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
  */
 contract StandardToken is ERC20, BasicToken {
 
@@ -241,9 +240,9 @@ contract StandardToken is ERC20, BasicToken {
     public
     returns (bool)
   {
-    require(_to != address(0));
     require(_value <= balances[_from]);
     require(_value <= allowed[_from][msg.sender]);
+    require(_to != address(0));
 
     balances[_from] = balances[_from].sub(_value);
     balances[_to] = balances[_to].add(_value);
@@ -254,7 +253,6 @@ contract StandardToken is ERC20, BasicToken {
 
   /**
    * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   *
    * Beware that changing an allowance with this method brings the risk that someone may use both the old
    * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
    * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
@@ -287,7 +285,6 @@ contract StandardToken is ERC20, BasicToken {
 
   /**
    * @dev Increase the amount of tokens that an owner allowed to a spender.
-   *
    * approve should be called when allowed[_spender] == 0. To increment
    * allowed value is better to use this function to avoid 2 calls (and wait until
    * the first transaction is mined)
@@ -297,7 +294,7 @@ contract StandardToken is ERC20, BasicToken {
    */
   function increaseApproval(
     address _spender,
-    uint _addedValue
+    uint256 _addedValue
   )
     public
     returns (bool)
@@ -310,7 +307,6 @@ contract StandardToken is ERC20, BasicToken {
 
   /**
    * @dev Decrease the amount of tokens that an owner allowed to a spender.
-   *
    * approve should be called when allowed[_spender] == 0. To decrement
    * allowed value is better to use this function to avoid 2 calls (and wait until
    * the first transaction is mined)
@@ -320,13 +316,13 @@ contract StandardToken is ERC20, BasicToken {
    */
   function decreaseApproval(
     address _spender,
-    uint _subtractedValue
+    uint256 _subtractedValue
   )
     public
     returns (bool)
   {
-    uint oldValue = allowed[msg.sender][_spender];
-    if (_subtractedValue > oldValue) {
+    uint256 oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue >= oldValue) {
       allowed[msg.sender][_spender] = 0;
     } else {
       allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
@@ -337,277 +333,267 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-/**
- * @title ERC827 interface, an extension of ERC20 token standard
- *
- * @dev Interface of a ERC827 token, following the ERC20 standard with extra
- * @dev methods to transfer value and data and execute calls in transfers and
- * @dev approvals.
- */
-contract ERC827 is ERC20 {
-  function approveAndCall(
-    address _spender,
-    uint256 _value,
-    bytes _data
-  )
-    public
-    payable
-    returns (bool);
-
-  function transferAndCall(
-    address _to,
-    uint256 _value,
-    bytes _data
-  )
-    public
-    payable
-    returns (bool);
-
-  function transferFromAndCall(
-    address _from,
-    address _to,
-    uint256 _value,
-    bytes _data
-  )
-    public
-    payable
-    returns (bool);
-}
-
-/**
- * @title ERC827, an extension of ERC20 token standard
- *
- * @dev Implementation the ERC827, following the ERC20 standard with extra
- * @dev methods to transfer value and data and execute calls in transfers and
- * @dev approvals.
- *
- * @dev Uses OpenZeppelin StandardToken.
- */
-contract ERC827Token is ERC827, StandardToken {
-
-  /**
-   * @dev Addition to ERC20 token methods. It allows to
-   * @dev approve the transfer of value and execute a call with the sent data.
-   *
-   * @dev Beware that changing an allowance with this method brings the risk that
-   * @dev someone may use both the old and the new allowance by unfortunate
-   * @dev transaction ordering. One possible solution to mitigate this race condition
-   * @dev is to first reduce the spender's allowance to 0 and set the desired value
-   * @dev afterwards:
-   * @dev https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-   *
-   * @param _spender The address that will spend the funds.
-   * @param _value The amount of tokens to be spent.
-   * @param _data ABI-encoded contract call to call `_to` address.
-   *
-   * @return true if the call function was executed successfully
-   */
-  function approveAndCall(
-    address _spender,
-    uint256 _value,
-    bytes _data
-  )
-    public
-    payable
-    returns (bool)
-  {
-    require(_spender != address(this));
-
-    super.approve(_spender, _value);
-
-    // solium-disable-next-line security/no-call-value
-    require(_spender.call.value(msg.value)(_data));
-
-    return true;
-  }
-
-  /**
-   * @dev Addition to ERC20 token methods. Transfer tokens to a specified
-   * @dev address and execute a call with the sent data on the same transaction
-   *
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amout of tokens to be transfered
-   * @param _data ABI-encoded contract call to call `_to` address.
-   *
-   * @return true if the call function was executed successfully
-   */
-  function transferAndCall(
-    address _to,
-    uint256 _value,
-    bytes _data
-  )
-    public
-    payable
-    returns (bool)
-  {
-    require(_to != address(this));
-
-    super.transfer(_to, _value);
-
-    // solium-disable-next-line security/no-call-value
-    require(_to.call.value(msg.value)(_data));
-    return true;
-  }
-
-  /**
-   * @dev Addition to ERC20 token methods. Transfer tokens from one address to
-   * @dev another and make a contract call on the same transaction
-   *
-   * @param _from The address which you want to send tokens from
-   * @param _to The address which you want to transfer to
-   * @param _value The amout of tokens to be transferred
-   * @param _data ABI-encoded contract call to call `_to` address.
-   *
-   * @return true if the call function was executed successfully
-   */
-  function transferFromAndCall(
-    address _from,
-    address _to,
-    uint256 _value,
-    bytes _data
-  )
-    public payable returns (bool)
-  {
-    require(_to != address(this));
-
-    super.transferFrom(_from, _to, _value);
-
-    // solium-disable-next-line security/no-call-value
-    require(_to.call.value(msg.value)(_data));
-    return true;
-  }
-
-  /**
-   * @dev Addition to StandardToken methods. Increase the amount of tokens that
-   * @dev an owner allowed to a spender and execute a call with the sent data.
-   *
-   * @dev approve should be called when allowed[_spender] == 0. To increment
-   * @dev allowed value is better to use this function to avoid 2 calls (and wait until
-   * @dev the first transaction is mined)
-   * @dev From MonolithDAO Token.sol
-   *
-   * @param _spender The address which will spend the funds.
-   * @param _addedValue The amount of tokens to increase the allowance by.
-   * @param _data ABI-encoded contract call to call `_spender` address.
-   */
-  function increaseApprovalAndCall(
-    address _spender,
-    uint _addedValue,
-    bytes _data
-  )
-    public
-    payable
-    returns (bool)
-  {
-    require(_spender != address(this));
-
-    super.increaseApproval(_spender, _addedValue);
-
-    // solium-disable-next-line security/no-call-value
-    require(_spender.call.value(msg.value)(_data));
-
-    return true;
-  }
-
-  /**
-   * @dev Addition to StandardToken methods. Decrease the amount of tokens that
-   * @dev an owner allowed to a spender and execute a call with the sent data.
-   *
-   * @dev approve should be called when allowed[_spender] == 0. To decrement
-   * @dev allowed value is better to use this function to avoid 2 calls (and wait until
-   * @dev the first transaction is mined)
-   * @dev From MonolithDAO Token.sol
-   *
-   * @param _spender The address which will spend the funds.
-   * @param _subtractedValue The amount of tokens to decrease the allowance by.
-   * @param _data ABI-encoded contract call to call `_spender` address.
-   */
-  function decreaseApprovalAndCall(
-    address _spender,
-    uint _subtractedValue,
-    bytes _data
-  )
-    public
-    payable
-    returns (bool)
-  {
-    require(_spender != address(this));
-
-    super.decreaseApproval(_spender, _subtractedValue);
-
-    // solium-disable-next-line security/no-call-value
-    require(_spender.call.value(msg.value)(_data));
-
-    return true;
-  }
-
-}
-
-contract UnlimitedAllowanceToken is ERC827Token {
+contract UnlimitedAllowanceToken is StandardToken {
 
     uint internal constant MAX_UINT = 2**256 - 1;
     
-    /// @dev ERC20 transferFrom, modified such that an allowance of MAX_UINT represents an unlimited allowance.
+    /// @dev ERC20 transferFrom, modified such that an allowance of MAX_UINT represents an unlimited allowance, and to add revert reasons.
     /// @param _from Address to transfer from.
     /// @param _to Address to transfer to.
     /// @param _value Amount to transfer.
     /// @return Success of transfer.
-    function transferFrom(address _from, address _to, uint _value)
+    function transferFrom(
+        address _from,
+        address _to,
+        uint256 _value)
         public
         returns (bool)
     {
         uint allowance = allowed[_from][msg.sender];
-        if (balances[_from] >= _value
-            && allowance >= _value
-            && balances[_to] + _value >= balances[_to]
-        ) {
-            balances[_to] += _value;
-            balances[_from] -= _value;
-            if (allowance < MAX_UINT) {
-                allowed[_from][msg.sender] -= _value;
-            }
-            emit Transfer(_from, _to, _value);
-            return true;
-        } else {
-            return false;
+        require(_value <= balances[_from], "insufficient balance");
+        require(_value <= allowance, "insufficient allowance");
+        require(_to != address(0), "token burn not allowed");
+
+        balances[_from] = balances[_from].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        if (allowance < MAX_UINT) {
+            allowed[_from][msg.sender] = allowance.sub(_value);
         }
+        emit Transfer(_from, _to, _value);
+        return true;
     }
-}
 
-contract BaseToken is UnlimitedAllowanceToken, BurnableToken {
-    string public name;
-    uint8 public decimals;
-    string public symbol;
-
-    constructor(
-        uint256 _initialAmount,
-        string _tokenName,
-        uint8 _decimalUnits,
-        string _tokenSymbol
-        ) public {
-        balances[msg.sender] = _initialAmount;               // Give the creator all initial tokens
-        totalSupply_ = _initialAmount;                       // Update total supply
-        name = _tokenName;                                   // Set the name for display purposes
-        decimals = _decimalUnits;                            // Amount of decimals for display purposes
-        symbol = _tokenSymbol;                               // Set the symbol for display purposes
-    }
-}
-
-// 1 billion tokens (18 decimal places)
-contract BZRxToken is Ownable, BaseToken( // solhint-disable-line no-empty-blocks
-    1000000000000000000000000000,
-    "BZRX-Fake Protocol Token", 
-    18,
-    "BZRXFAKE"
-) {
-    function renameToken(
-        string _newName,
-        string _newSymbol
-        )
-        public
-        onlyOwner
+    /// @dev Transfer token for a specified address, modified to add revert reasons.
+    /// @param _to The address to transfer to.
+    /// @param _value The amount to be transferred.
+    function transfer(
+        address _to,
+        uint256 _value)
+        public 
+        returns (bool)
     {
-        name = _newName;
-        symbol = _newSymbol;
+        require(_value <= balances[msg.sender], "insufficient balance");
+        require(_to != address(0), "token burn not allowed");
+
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        emit Transfer(msg.sender, _to, _value);
+        return true;
+    }
+}
+
+contract BZRxToken is UnlimitedAllowanceToken, DetailedERC20, Ownable {
+
+    event Mint(address indexed to, uint256 amount);
+    event MintFinished();
+    event LockingFinished();
+
+    bool public mintingFinished = false;
+    bool public lockingFinished = false;
+
+    mapping (address => bool) public minters;
+
+    modifier canMint() {
+        require(!mintingFinished);
+        _;
+    }
+
+    modifier hasMintPermission() {
+        require(minters[msg.sender]);
+        _;
+    }
+
+    modifier isLocked() {
+        require(!lockingFinished);
+        _;
+    }
+
+    constructor()
+        public
+        DetailedERC20(
+            "BZRX Protocol Token",
+            "BZRX", 
+            18
+        )
+    {
+        minters[msg.sender] = true;
+    }
+
+    /// @dev ERC20 transferFrom function
+    /// @param _from Address to transfer from.
+    /// @param _to Address to transfer to.
+    /// @param _value Amount to transfer.
+    /// @return Success of transfer.
+    function transferFrom(
+        address _from,
+        address _to,
+        uint256 _value)
+        public
+        returns (bool)
+    {
+        if (lockingFinished || minters[msg.sender]) {
+            return super.transferFrom(
+                _from,
+                _to,
+                _value
+            );
+        }
+
+        revert("this token is locked for transfers");
+    }
+
+    /**
+    * @dev ERC20 transfer function
+    * @param _to The address to transfer to.
+    * @param _value The amount to be transferred.
+    */
+    function transfer(
+        address _to, 
+        uint256 _value) 
+        public 
+        returns (bool)
+    {
+        if (lockingFinished || minters[msg.sender]) {
+            return super.transfer(
+                _to,
+                _value
+            );
+        }
+
+        revert("this token is locked for transfers");
+    }
+
+    /// @dev Allows minter to initiate a transfer on behalf of another spender
+    /// @param _spender Minter with permission to spend.
+    /// @param _from Address to transfer from.
+    /// @param _to Address to transfer to.
+    /// @param _value Amount to transfer.
+    /// @return Success of transfer.
+    function minterTransferFrom(
+        address _spender,
+        address _from,
+        address _to,
+        uint256 _value)
+        public
+        hasMintPermission
+        canMint
+        returns (bool)
+    {
+        require(canTransfer(
+            _spender,
+            _from,
+            _value),
+            "canTransfer is false");
+
+        require(_to != address(0), "token burn not allowed");
+
+        uint allowance = allowed[_from][_spender];
+        balances[_from] = balances[_from].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        if (allowance < MAX_UINT) {
+            allowed[_from][_spender] = allowance.sub(_value);
+        }
+        emit Transfer(_from, _to, _value);
+        return true;
+    }
+
+    /**
+    * @dev Function to mint tokens
+    * @param _to The address that will receive the minted tokens.
+    * @param _amount The amount of tokens to mint.
+    * @return A boolean that indicates if the operation was successful.
+    */
+    function mint(
+        address _to,
+        uint256 _amount)
+        public
+        hasMintPermission
+        canMint
+        returns (bool)
+    {
+        require(_to != address(0), "token burn not allowed");
+        totalSupply_ = totalSupply_.add(_amount);
+        balances[_to] = balances[_to].add(_amount);
+        emit Mint(_to, _amount);
+        emit Transfer(address(0), _to, _amount);
+        return true;
+    }
+
+    /**
+    * @dev Function to stop minting new tokens.
+    * @return True if the operation was successful.
+    */
+    function finishMinting() 
+        public 
+        onlyOwner 
+        canMint 
+        returns (bool)
+    {
+        mintingFinished = true;
+        emit MintFinished();
+        return true;
+    }
+
+    /**
+    * @dev Function to stop locking token.
+    * @return True if the operation was successful.
+    */
+    function finishLocking() 
+        public 
+        onlyOwner 
+        isLocked 
+        returns (bool)
+    {
+        lockingFinished = true;
+        emit LockingFinished();
+        return true;
+    }
+
+    /**
+    * @dev Function to add minter address.
+    * @return True if the operation was successful.
+    */
+    function addMinter(
+        address _minter) 
+        public 
+        onlyOwner 
+        canMint 
+        returns (bool)
+    {
+        minters[_minter] = true;
+        return true;
+    }
+
+    /**
+    * @dev Function to remove minter address.
+    * @return True if the operation was successful.
+    */
+    function removeMinter(
+        address _minter) 
+        public 
+        onlyOwner 
+        canMint 
+        returns (bool)
+    {
+        minters[_minter] = false;
+        return true;
+    }
+
+    /**
+    * @dev Function to check balance and allowance for a spender.
+    * @return True transfer will succeed based on balance and allowance.
+    */
+    function canTransfer(
+        address _spender,
+        address _from,
+        uint256 _value)
+        public
+        view
+        returns (bool)
+    {
+        return (
+            balances[_from] >= _value && 
+            (_spender == _from || allowed[_from][_spender] >= _value)
+        );
     }
 }
