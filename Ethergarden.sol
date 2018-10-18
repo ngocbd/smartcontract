@@ -1,12 +1,145 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ethergarden at 0x471cd7a690b752e13826bbf3745a9111c66906f5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherGarden at 0x28973cb2e33d3cc7401a4d4c35600fe0d81e70e4
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.25; 
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
+
+
+contract EtherGarden{
+
+	mapping (uint256 => uint256) public VegetablesTradeBalance;
+ 	mapping (address => mapping (uint256 => uint256)) public OwnerVegetableStartGrowing;
+ 	mapping (address => mapping (uint256 => uint256)) public OwnerVegetableFieldSize;
+	mapping (address => address) public Referrals;
+
+	uint256 VegetableCount=4;
+	uint256 minimum=0.0001 ether;
+	uint256 growingSpeed=86400; //1 day
+	uint256 public FreeFieldSize=50;
+
+	bool public initialized=false;
+	address public coOwner;
+	
+	
+    /**
+     * @dev ?onstructor Sets the original roles of the contract 
+     */
+     
+    constructor() public {
+        coOwner=msg.sender;
+    }
+	
+    /**
+     * @dev Modifiers
+     */	
+	 
+    modifier onlyOwner() {
+        require(msg.sender == coOwner);
+        _;
+    }
+    modifier isInitialized() {
+        require(initialized);
+        _;
+    }	
+
+    /**
+     * @dev Market functions
+     */		
+
+    function sellVegetables(uint256 _VegetableId) public isInitialized {
+        require(_VegetableId < VegetableCount);
+		
+		uint256 value=vegetablesValue(_VegetableId);
+        if (value>0) {
+			uint256 price=SafeMath.mul(vegetablePrice(_VegetableId),value);
+			uint256 fee=devFee(price);
+			
+			OwnerVegetableStartGrowing[msg.sender][_VegetableId]=now;
+			VegetablesTradeBalance[_VegetableId]=SafeMath.add(VegetablesTradeBalance[_VegetableId],value);
+			
+			coOwner.transfer(fee);
+			msg.sender.transfer(SafeMath.sub(price,fee));
+		}
+    }	 
+	
+    function buyField(uint256 _VegetableId, address _referral) public payable isInitialized {
+        require(_VegetableId < VegetableCount);
+		require(msg.value > minimum);
+		
+		uint256 acres=SafeMath.div(msg.value,fieldPrice(msg.value));
+        
+		if (OwnerVegetableStartGrowing[msg.sender][_VegetableId]>0)
+			sellVegetables(_VegetableId);
+		
+		OwnerVegetableStartGrowing[msg.sender][_VegetableId]=now;
+		OwnerVegetableFieldSize[msg.sender][_VegetableId]=SafeMath.add(OwnerVegetableFieldSize[msg.sender][_VegetableId],acres);
+		VegetablesTradeBalance[_VegetableId]=SafeMath.add(VegetablesTradeBalance[_VegetableId],acres);
+		
+        uint256 fee=devFee(msg.value);
+		coOwner.transfer(fee);
+		
+		if (address(_referral)>0 && address(_referral)!=msg.sender && Referrals[msg.sender]==address(0)) {
+			Referrals[msg.sender]=_referral;
+		}
+		if (Referrals[msg.sender]!=address(0)) {
+		    address refAddr=Referrals[msg.sender];
+			refAddr.transfer(fee);
+		}
+		
+    }
+	 
+	function reInvest(uint256 _VegetableId) public isInitialized {
+		require(_VegetableId < VegetableCount);
+		uint256 value=vegetablesValue(_VegetableId);
+		require(value>0);
+		
+		OwnerVegetableFieldSize[msg.sender][_VegetableId]=SafeMath.add(OwnerVegetableFieldSize[msg.sender][_VegetableId],value);
+		OwnerVegetableStartGrowing[msg.sender][_VegetableId]=now;
+	}
+	
+    function getFreeField(uint256 _VegetableId) public isInitialized {
+		require(OwnerVegetableFieldSize[msg.sender][_VegetableId]==0);
+		OwnerVegetableFieldSize[msg.sender][_VegetableId]=FreeFieldSize;
+		OwnerVegetableStartGrowing[msg.sender][_VegetableId]=now;
+		
+    }
+	
+    function initMarket(uint256 _init_value) public payable onlyOwner{
+        require(!initialized);
+        initialized=true;
+
+		for (uint256 vegetableId=0; vegetableId<VegetableCount; vegetableId++)
+			VegetablesTradeBalance[vegetableId]=_init_value;
+    }	
+	
+    /**
+     * @dev Views
+     */		
+	 
+    function vegetablePrice(uint256 _VegetableId) public view returns(uint256){
+		return SafeMath.div(SafeMath.div(address(this).balance,VegetableCount),VegetablesTradeBalance[_VegetableId]);
+    }
+
+    function vegetablesValue(uint256 _VegetableId) public view returns(uint256){
+		//1 acre gives 1 vegetable per day
+		return SafeMath.div(SafeMath.mul(OwnerVegetableFieldSize[msg.sender][_VegetableId], SafeMath.sub(now,OwnerVegetableStartGrowing[msg.sender][_VegetableId])),growingSpeed);		
+    }	
+	
+    function fieldPrice(uint256 subValue) public view returns(uint256){
+	    uint256 CommonTradeBalance;
+		
+		for (uint256 vegetableId=0; vegetableId<VegetableCount; vegetableId++)
+			CommonTradeBalance=SafeMath.add(CommonTradeBalance,VegetablesTradeBalance[vegetableId]);
+		
+		return SafeMath.div(SafeMath.sub(address(this).balance,subValue), CommonTradeBalance);
+    }
+	
+	function devFee(uint256 _amount) internal pure returns(uint256){
+        return SafeMath.div(SafeMath.mul(_amount,4),100);
+    }
+	
+}
+
 library SafeMath {
 
   /**
@@ -47,116 +180,4 @@ library SafeMath {
     assert(c >= a);
     return c;
   }
-}
-
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-}
-
-contract Ethergarden is Ownable {
-  using SafeMath for uint256;
-
-  struct Tree {
-    uint256 amount;
-    string name;
-    string url;
-  }
-
-  event NewTree(uint256 treeId, string name, string url, uint256 amount);
-  event TreeWatered(uint256 treeId, uint256 amount);
-  event TreeCutted(uint256 treeId, uint256 amount);
-  event TreeUpdated(uint256 treeId, string name, string url);
-
-  Tree[] public forest;
-  mapping (uint256 => address) public treeToOwner;
-  mapping (address => uint256) internal ownerTreeCount;
-
-  function _createTree(string _name, string _url, uint256 _amount) private {
-    uint256 id = forest.push(Tree(_amount, _name, _url)) - 1;
-    treeToOwner[id] = msg.sender;
-    ownerTreeCount[msg.sender] = ownerTreeCount[msg.sender].add(1);
-
-    NewTree(id, _name, _url, _amount);
-  }
-
-  function createTree(string _name, string _url) payable external {
-    require(msg.value >= 0.001 ether);
-
-    _createTree(_name, _url, msg.value);
-  }
-
-  function getForestCount() external view returns(uint256) {
-    return forest.length;
-  }
-
-  function changeTreeAttributes(uint256 _treeId, string _name, string _url) external {
-    require(msg.sender == treeToOwner[_treeId]);
-
-    Tree storage myTree = forest[_treeId];
-    myTree.name = _name;
-    myTree.url = _url;
-
-    TreeUpdated(_treeId, myTree.name, myTree.url);
-  }
-
-  function dagheAcqua(uint256 _treeId) payable external {
-    require(msg.value > 0.0001 ether);
-
-    Tree storage myTree = forest[_treeId];
-    myTree.amount = myTree.amount.add(msg.value);
-
-    TreeWatered(_treeId, myTree.amount);
-  }
-
-  function cut(uint256 _treeId) payable external {
-    require(msg.value > 0.0001 ether);
-
-    Tree storage myTree = forest[_treeId];
-    myTree.amount = myTree.amount.sub(msg.value);
-
-    TreeCutted(_treeId, myTree.amount);
-  }
-
-  function withdraw() external onlyOwner {
-    owner.transfer(this.balance);
-  }
-  // fallback function for getting eth sent directly to the contract address
-  function() public payable {}
 }
