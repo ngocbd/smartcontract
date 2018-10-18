@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zethell at 0x9caf6df977bc4afad838f00f8819cc2d1d63d6a2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zethell at 0xc14ab1817dd84deb79c866ed724903c4be0ac7a8
 */
 pragma solidity ^0.4.23;
 
@@ -16,7 +16,6 @@ contract ZTHReceivingContract {
 }
 
 contract ZTHInterface {
-    function balanceOf(address who) public view returns (uint);
     function transfer(address _to, uint _value) public returns (bool);
     function approve(address spender, uint tokens) public returns (bool);
 }
@@ -135,9 +134,6 @@ contract Zethell is ZTHReceivingContract {
             _tkn.value        = _value;
             _stakeTokens(_tkn); 
             return true;
-        }else{
-            contractBalance = contractBalance.add(_value);
-            tokensInPlay    = tokensInPlay.add(_value);
         }
     }
 
@@ -227,12 +223,7 @@ contract Zethell is ZTHReceivingContract {
 
         emit HouseRetrievedTake(now, toTake);
     }
-    function ownerKill() public onlyOwner {
 
-        ZTHTKN.transfer(bankroll, ZTHTKN.balanceOf(address(this)));
-        selfdestruct(bankroll);
-
-    }
     // If, for any reason, betting needs to be paused (very unlikely), this will freeze all bets.
     function pauseGame() public onlyOwner {
         gameActive = false;
