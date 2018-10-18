@@ -1,8 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xfc7817873a3f4d448691839e5de38219f41ea4e6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x978ea7f09ba5bb5c16214f189a5a5c2a50ee6204
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.20;
+
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; }
+
 contract TokenERC20 {
     // Public variables of the token
     string public name;
@@ -29,15 +31,12 @@ contract TokenERC20 {
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    constructor(
-        uint256 initialSupply,
-        string tokenName,
-        string tokenSymbol
+    function TokenERC20(
     ) public {
-        totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
+        totalSupply = 100000000 *10 **uint256(decimals); // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
-        name = tokenName;                                   // Set the name for display purposes
-        symbol = tokenSymbol;                               // Set the symbol for display purposes
+        name = "Spartha";                                   // Set the name for display purposes
+        symbol = "SPA";                               // Set the symbol for display purposes
     }
 
     /**
