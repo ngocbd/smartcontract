@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiTokenNetwork at 0xae269be192e253c643e4f316c9fd7d2c56f06053
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiTokenNetwork at 0x04d190939a84d9729b6becd86bcf09317f2a3d3a
 */
 pragma solidity ^0.4.24;
 
@@ -262,12 +262,6 @@ contract MultiTokenNetwork is Pausable {
 
     function disableChangesMultitoken(uint index) public onlyOwner {
         IMultiToken(_multitokens[index]).disableChanges();
-    }
-
-    function addDeployer(AbstractDeployer deployer) public onlyOwner whenNotPaused {
-        require(deployer.owner() == address(this), "addDeployer: first set MultiTokenNetwork as owner");
-        emit NewDeployer(_deployers.length, address(0), deployer);
-        _deployers.push(deployer);
     }
 
     function setDeployer(uint256 index, AbstractDeployer deployer) public onlyOwner whenNotPaused {
