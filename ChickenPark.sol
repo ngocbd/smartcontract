@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChickenPark at 0x211f3175e3632ed194368311223bd4f4e834fc33
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChickenPark at 0x1d6b371b0d23d169e87db2fc14ab34f82d190988
 */
 pragma solidity ^0.4.24;
 
@@ -232,8 +232,8 @@ contract ChickenPark is Owned{
     uint internal tokenSupply = 0;
 
     // Sub Contract
-    mapping(address => bool)  public gameAddress;
     address public marketAddress;
+    address public gameAddress;
 
     /*================================
     =            FUNCTION            =
@@ -261,12 +261,12 @@ contract ChickenPark is Owned{
         return referralBalance_[tokenOwner];
     }
 
-    function setGameAddrt(address addr_, bool status_) public onlyOwner{
-        gameAddress[addr_] = status_;
+    function setMarket(address add) public onlyOwner{
+        marketAddress = add;
     }
-    
-    function setMarketAddr(address addr_) public onlyOwner{
-        marketAddress = addr_;
+
+    function setGame(address add) public onlyOwner{
+        gameAddress = add;
     }
 
     // ------------------------------------------------------------------------
@@ -341,7 +341,7 @@ contract ChickenPark is Owned{
         balances[msg.sender] = balances[msg.sender].add(tokenAdd);
 
         uint price2 = getCKNPriceNow();
-        emit Transfer(address(0x0), msg.sender, tokenAdd);
+
         emit CKNPrice(msg.sender,price1,price2,msg.value,tokenAdd,now,"BUY");
     } 
 
@@ -371,15 +371,13 @@ contract ChickenPark is Owned{
         msg.sender.transfer((sellEther.mul(98)/(100)).sub(diviTo));
 
         uint price2 = getCKNPriceNow();
-        emit Transfer(msg.sender, address(0x0), tokenSub);
         emit CKNPrice(msg.sender,price1,price2,sellEther,tokenSub,now,"SELL");
     }
 
     // ------------------------------------------------------------------------
     // Withdraw your ETH dividents from Referral & CKN Dividents
     // ------------------------------------------------------------------------
-    function withdraw() public {
-        require(msg.sender == tx.origin || msg.sender == marketAddress || gameAddress[msg.sender]);
+    function withdraw() notContract() public {
         require(myDividends(true)>0);
 
         uint dividents_ = uint(getDividents()).add(referralBalance_[msg.sender]);
@@ -471,4 +469,5 @@ contract ChickenPark is Owned{
         require(int((balances[msg.sender].mul(profitPerShare_)/1e18))-(payoutsTo_[msg.sender])>=0);
         return uint(int((balances[msg.sender].mul(profitPerShare_)/1e18))-(payoutsTo_[msg.sender]));
     }
+
 }
