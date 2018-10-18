@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DailyDivsSavings at 0xc23531c3987370647423f58699287dcc15670797
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DailyDivsSavings at 0x4f417f4c6579bfaf712026690317d90405ade95e
 */
 pragma solidity ^0.4.20; // solhint-disable-line
 
@@ -193,7 +193,7 @@ contract DailyDivsSavings{
     {
         // fetch dividends
         uint256 _dividends = myDividends(); // retrieve ref. bonus later in the code
-        require(_dividends>1);
+        //require(_dividends>1);
         // pay out the dividends virtually
         address _customerAddress = msg.sender;
         payoutsTo_[_customerAddress] +=  (int256) (_dividends * magnitude);
