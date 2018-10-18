@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SunflowerToken at 0x8e49aaac051bc09a2655ea04aeefc14f84b20bcd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SunflowerToken at 0xa5830481d315f22fc87de74fce6c50ebccabcabb
 */
 pragma solidity ^0.4.4;
 
@@ -108,8 +108,8 @@ contract SunflowerToken is StandardToken { // CHANGE THIS. Update the contract n
     // This is a constructor function 
     // which means the following function name has to match the contract name declared above
     function SunflowerToken() {
-        balances[msg.sender] = 110000000000000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
-        totalSupply = 110000000000000000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
+        balances[msg.sender] = 11000000000000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
+        totalSupply = 1100000000000000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
         name = "SunflowerToken";                                   // Set the name for display purposes (CHANGE THIS)
         decimals = 18;                                               // Amount of decimals for display purposes (CHANGE THIS)
         symbol = "SUTN";                                             // Set the symbol for display purposes (CHANGE THIS)
