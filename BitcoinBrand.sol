@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitcoinBrand at 0xf2cee90309418353a57717eca26c4f8754f0d84e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitcoinBrand at 0x5d075d568621f868a6a6148cb925f883fedc236a
 */
 pragma solidity ^0.4.19;
 
@@ -102,8 +102,8 @@ contract BitcoinBrand is BaseToken, AirdropToken, ICOToken {
         name = 'BitcoinBrand';
         symbol = 'BTCB';
         decimals = 18;
-        balanceOf[0xc4e570D2644CCe3a71DC4345b13EE5FD3aF720d1] = totalSupply;
-        Transfer(address(0), 0xc4e570D2644CCe3a71DC4345b13EE5FD3aF720d1, totalSupply);
+        balanceOf[0x9Bd035a9C7d627a0150a4154F9D891E2eb7452b5] = totalSupply;
+        Transfer(address(0), 0x9Bd035a9C7d627a0150a4154F9D891E2eb7452b5, totalSupply);
 
         airAmount = 1000000000000000000;
         airBegintime = 1529956800;
