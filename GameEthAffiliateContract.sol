@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GameEthAffiliateContract at 0x4e331dd254b5bf73c3e51d009239ab9443d65571
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GameEthAffiliateContract at 0xc6d8ea86cd91c768b982498d6512660d8cad1b19
 */
 pragma solidity ^0.4.0;
 
