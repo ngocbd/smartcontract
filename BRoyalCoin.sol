@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BRoyalCoin at 0x975b9f7b124e484bc67a244d19f723c2393f5dd5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BROYALCOIN at 0x109bae16a0bd1b57016af0a1f9db001e37ea86b2
 */
 pragma solidity ^0.4.4;
 
@@ -87,7 +87,7 @@ contract StandardToken is Token {
     uint256 public totalSupply;
 }
 
-contract BRoyalCoin is StandardToken { // CHANGE THIS. Update the contract name.
+contract BROYALCOIN is StandardToken { // CHANGE THIS. Update the contract name.
 
     /* Public variables of the token */
 
@@ -107,13 +107,13 @@ contract BRoyalCoin is StandardToken { // CHANGE THIS. Update the contract name.
 
     // This is a constructor function 
     // which means the following function name has to match the contract name declared above
-    function BRoyalCoin() {
-        balances[msg.sender] = 60000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
-        totalSupply = 60000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
-        name = "BRoyal";                                   // Set the name for display purposes (CHANGE THIS)
+    function BROYALCOIN() {
+        balances[msg.sender] = 600000000000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
+        totalSupply = 600000000000000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
+        name = "BROYAL";                                   // Set the name for display purposes (CHANGE THIS)
         decimals = 18;                                               // Amount of decimals for display purposes (CHANGE THIS)
-        symbol = "BRC";                                             // Set the symbol for display purposes (CHANGE THIS)
-        unitsOneEthCanBuy = 8500;                                      // Set the price of your token for the ICO (CHANGE THIS)
+        symbol = "BR";                                             // Set the symbol for display purposes (CHANGE THIS)
+        unitsOneEthCanBuy = 200;                                      // Set the price of your token for the ICO (CHANGE THIS)
         fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
     }
 
