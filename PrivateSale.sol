@@ -1,59 +1,56 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PrivateSale at 0xB9560eacFAd923886e944eDb3EfE847D107099d7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PrivateSale at 0x3a044f6c79cd8831b714226099f8d7eb36779b85
 */
-pragma solidity ^0.4.24;
+pragma solidity 0.4.24;
 
-contract TokenInfo {
-    // Base prices in wei, going off from an Ether value of $500
-    uint256 public constant PRIVATESALE_BASE_PRICE_IN_WEI = 200000000000000;
-    uint256 public constant PRESALE_BASE_PRICE_IN_WEI = 600000000000000;
-    uint256 public constant ICO_BASE_PRICE_IN_WEI = 800000000000000;
-    uint256 public constant FIRSTSALE_BASE_PRICE_IN_WEI = 200000000000000;
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
 
-    // First sale minimum and maximum contribution, going off from an Ether value of $500
-    uint256 public constant MIN_PURCHASE_OTHERSALES = 80000000000000000;
-    uint256 public constant MIN_PURCHASE = 1000000000000000000;
-    uint256 public constant MAX_PURCHASE = 1000000000000000000000;
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
+    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+    if (_a == 0) {
+      return 0;
+    }
 
-    // Bonus percentages for each respective sale level
+    c = _a * _b;
+    assert(c / _a == _b);
+    return c;
+  }
 
-    uint256 public constant PRESALE_PERCENTAGE_1 = 10;
-    uint256 public constant PRESALE_PERCENTAGE_2 = 15;
-    uint256 public constant PRESALE_PERCENTAGE_3 = 20;
-    uint256 public constant PRESALE_PERCENTAGE_4 = 25;
-    uint256 public constant PRESALE_PERCENTAGE_5 = 35;
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 _a, uint256 _b) internal pure returns (uint256) {
+    // assert(_b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = _a / _b;
+    // assert(_a == _b * c + _a % _b); // There is no case in which this doesn't hold
+    return _a / _b;
+  }
 
-    uint256 public constant ICO_PERCENTAGE_1 = 5;
-    uint256 public constant ICO_PERCENTAGE_2 = 10;
-    uint256 public constant ICO_PERCENTAGE_3 = 15;
-    uint256 public constant ICO_PERCENTAGE_4 = 20;
-    uint256 public constant ICO_PERCENTAGE_5 = 25;
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 _a, uint256 _b) internal pure returns (uint256) {
+    assert(_b <= _a);
+    return _a - _b;
+  }
 
-    // Bonus levels in wei for each respective level
-
-    uint256 public constant PRESALE_LEVEL_1 = 5000000000000000000;
-    uint256 public constant PRESALE_LEVEL_2 = 10000000000000000000;
-    uint256 public constant PRESALE_LEVEL_3 = 15000000000000000000;
-    uint256 public constant PRESALE_LEVEL_4 = 20000000000000000000;
-    uint256 public constant PRESALE_LEVEL_5 = 25000000000000000000;
-
-    uint256 public constant ICO_LEVEL_1 = 6666666666666666666;
-    uint256 public constant ICO_LEVEL_2 = 13333333333333333333;
-    uint256 public constant ICO_LEVEL_3 = 20000000000000000000;
-    uint256 public constant ICO_LEVEL_4 = 26666666666666666666;
-    uint256 public constant ICO_LEVEL_5 = 33333333333333333333;
-
-    // Caps for the respective sales, the amount of tokens allocated to the team and the total cap
-    uint256 public constant PRIVATESALE_TOKENCAP = 18750000;
-    uint256 public constant PRESALE_TOKENCAP = 18750000;
-    uint256 public constant ICO_TOKENCAP = 22500000;
-    uint256 public constant FIRSTSALE_TOKENCAP = 5000000;
-    uint256 public constant LEDTEAM_TOKENS = 35000000;
-    uint256 public constant TOTAL_TOKENCAP = 100000000;
-
-    uint256 public constant DECIMALS_MULTIPLIER = 1 ether;
-
-    address public constant LED_MULTISIG = 0x865e785f98b621c5fdde70821ca7cea9eeb77ef4;
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
+    c = _a + _b;
+    assert(c >= _a);
+    return c;
+  }
 }
 
 /**
@@ -65,8 +62,16 @@ contract Ownable {
   address public owner;
 
 
+  event OwnershipRenounced(address indexed previousOwner);
+  event OwnershipTransferred(
+    address indexed previousOwner,
+    address indexed newOwner
+  );
+
+
   /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender account.
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
    */
   constructor() public {
     owner = msg.sender;
@@ -81,1245 +86,1243 @@ contract Ownable {
   }
 
   /**
+   * @dev Allows the current owner to relinquish control of the contract.
+   * @notice Renouncing to ownership will leave the contract without an owner.
+   * It will not be possible to call the functions with the `onlyOwner`
+   * modifier anymore.
+   */
+  function renounceOwnership() public onlyOwner {
+    emit OwnershipRenounced(owner);
+    owner = address(0);
+  }
+
+  /**
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
+   * @param _newOwner The address to transfer ownership to.
    */
-  function transferOwnership(address newOwner) public onlyOwner {
-    if (newOwner != address(0)) {
-      owner = newOwner;
-    }
-  }
-
-}
-
-
-contract Pausable is Ownable {
-  event Pause();
-  event Unpause();
-
-  bool public paused = false;
-
-  constructor() public {}
-
-  /**
-   * @dev modifier to allow actions only when the contract IS paused
-   */
-  modifier whenNotPaused() {
-    require(!paused);
-    _;
+  function transferOwnership(address _newOwner) public onlyOwner {
+    _transferOwnership(_newOwner);
   }
 
   /**
-   * @dev modifier to allow actions only when the contract IS NOT paused
+   * @dev Transfers control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
    */
-  modifier whenPaused {
-    require(paused);
-    _;
+  function _transferOwnership(address _newOwner) internal {
+    require(_newOwner != address(0));
+    emit OwnershipTransferred(owner, _newOwner);
+    owner = _newOwner;
   }
-
-  /**
-   * @dev called by the owner to pause, triggers stopped state
-   */
-  function pause() public onlyOwner whenNotPaused returns (bool) {
-    paused = true;
-    emit Pause();
-    return true;
-  }
-
-  /**
-   * @dev called by the owner to unpause, returns to normal state
-   */
-  function unpause() public onlyOwner whenPaused returns (bool) {
-    paused = false;
-    emit Unpause();
-    return true;
-  }
-}
-
-contract ApproveAndCallReceiver {
-    function receiveApproval(address from, uint256 _amount, address _token, bytes _data) public;
 }
 
 /**
- * @title Controllable
- * @dev The Controllable contract has an controller address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * See https://github.com/ethereum/EIPs/issues/179
  */
-contract Controllable {
-  address public controller;
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender account.
-   */
-  constructor() public {
-    controller = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyController() {
-    require(msg.sender == controller);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newController The address to transfer ownership to.
-   */
-  function transferControl(address newController) public onlyController {
-    if (newController != address(0)) {
-      controller = newController;
-    }
-  }
-
-}
-
-/// @dev The token controller contract must implement these functions
-contract ControllerInterface {
-
-    function proxyPayment(address _owner) public payable returns(bool);
-    function onTransfer(address _from, address _to, uint _amount) public returns(bool);
-    function onApprove(address _owner, address _spender, uint _amount) public returns(bool);
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address _who) public view returns (uint256);
+  function transfer(address _to, uint256 _value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
 /**
  * @title ERC20 interface
  * @dev see https://github.com/ethereum/EIPs/issues/20
  */
-contract ERC20 {
+contract ERC20 is ERC20Basic {
+  function allowance(address _owner, address _spender)
+    public view returns (uint256);
 
-  uint256 public totalSupply;
+  function transferFrom(address _from, address _to, uint256 _value)
+    public returns (bool);
 
-  function balanceOf(address _owner) public constant returns (uint256);
-  function transfer(address _to, uint256 _value) public returns (bool);
-  function transferFrom(address _from, address _to, uint256 _amount) public returns (bool);
-  function approve(address _spender, uint256 _amount) public returns (bool);
-  function allowance(address _owner, address _spender) public constant returns (uint256);
+  function approve(address _spender, uint256 _value) public returns (bool);
+  event Approval(
+    address indexed owner,
+    address indexed spender,
+    uint256 value
+  );
+}
 
-  event Transfer(address indexed from, address indexed to, uint256 value);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
+/**
+ * @title SafeERC20
+ * @dev Wrappers around ERC20 operations that throw on failure.
+ * To use this library you can add a `using SafeERC20 for ERC20;` statement to your contract,
+ * which allows you to call the safe operations as `token.safeTransfer(...)`, etc.
+ */
+library SafeERC20 {
+  function safeTransfer(
+    ERC20Basic _token,
+    address _to,
+    uint256 _value
+  )
+    internal
+  {
+    require(_token.transfer(_to, _value));
+  }
+
+  function safeTransferFrom(
+    ERC20 _token,
+    address _from,
+    address _to,
+    uint256 _value
+  )
+    internal
+  {
+    require(_token.transferFrom(_from, _to, _value));
+  }
+
+  function safeApprove(
+    ERC20 _token,
+    address _spender,
+    uint256 _value
+  )
+    internal
+  {
+    require(_token.approve(_spender, _value));
+  }
+}
+
+/**
+ * @title Crowdsale
+ * @dev Crowdsale is a base contract for managing a token crowdsale,
+ * allowing investors to purchase tokens with ether. This contract implements
+ * such functionality in its most fundamental form and can be extended to provide additional
+ * functionality and/or custom behavior.
+ * The external interface represents the basic interface for purchasing tokens, and conform
+ * the base architecture for crowdsales. They are *not* intended to be modified / overridden.
+ * The internal interface conforms the extensible and modifiable surface of crowdsales. Override
+ * the methods to add functionality. Consider using 'super' where appropriate to concatenate
+ * behavior.
+ */
+contract Crowdsale {
+  using SafeMath for uint256;
+  using SafeERC20 for ERC20;
+
+  // The token being sold
+  ERC20 public token;
+
+  // Address where funds are collected
+  address public wallet;
+
+  // How many token units a buyer gets per wei.
+  // The rate is the conversion between wei and the smallest and indivisible token unit.
+  // So, if you are using a rate of 1 with a DetailedERC20 token with 3 decimals called TOK
+  // 1 wei will give you 1 unit, or 0.001 TOK.
+  uint256 public rate;
+
+  // Amount of wei raised
+  uint256 public weiRaised;
+
+  /**
+   * Event for token purchase logging
+   * @param purchaser who paid for the tokens
+   * @param beneficiary who got the tokens
+   * @param value weis paid for purchase
+   * @param amount amount of tokens purchased
+   */
+  event TokenPurchase(
+    address indexed purchaser,
+    address indexed beneficiary,
+    uint256 value,
+    uint256 amount
+  );
+
+  /**
+   * @param _rate Number of token units a buyer gets per wei
+   * @param _wallet Address where collected funds will be forwarded to
+   * @param _token Address of the token being sold
+   */
+  constructor(uint256 _rate, address _wallet, ERC20 _token) public {
+    require(_rate > 0);
+    require(_wallet != address(0));
+    require(_token != address(0));
+
+    rate = _rate;
+    wallet = _wallet;
+    token = _token;
+  }
+
+  // -----------------------------------------
+  // Crowdsale external interface
+  // -----------------------------------------
+
+  /**
+   * @dev fallback function ***DO NOT OVERRIDE***
+   */
+  function () external payable {
+    buyTokens(msg.sender);
+  }
+
+  /**
+   * @dev low level token purchase ***DO NOT OVERRIDE***
+   * @param _beneficiary Address performing the token purchase
+   */
+  function buyTokens(address _beneficiary) public payable {
+
+    uint256 weiAmount = msg.value;
+    _preValidatePurchase(_beneficiary, weiAmount);
+
+    // calculate token amount to be created
+    uint256 tokens = _getTokenAmount(weiAmount);
+
+    // update state
+    weiRaised = weiRaised.add(weiAmount);
+
+    _processPurchase(_beneficiary, tokens);
+    emit TokenPurchase(
+      msg.sender,
+      _beneficiary,
+      weiAmount,
+      tokens
+    );
+
+    _updatePurchasingState(_beneficiary, weiAmount);
+
+    _forwardFunds();
+    _postValidatePurchase(_beneficiary, weiAmount);
+  }
+
+  // -----------------------------------------
+  // Internal interface (extensible)
+  // -----------------------------------------
+
+  /**
+   * @dev Validation of an incoming purchase. Use require statements to revert state when conditions are not met. Use `super` in contracts that inherit from Crowdsale to extend their validations.
+   * Example from CappedCrowdsale.sol's _preValidatePurchase method: 
+   *   super._preValidatePurchase(_beneficiary, _weiAmount);
+   *   require(weiRaised.add(_weiAmount) <= cap);
+   * @param _beneficiary Address performing the token purchase
+   * @param _weiAmount Value in wei involved in the purchase
+   */
+  function _preValidatePurchase(
+    address _beneficiary,
+    uint256 _weiAmount
+  )
+    internal
+  {
+    require(_beneficiary != address(0));
+    require(_weiAmount != 0);
+  }
+
+  /**
+   * @dev Validation of an executed purchase. Observe state and use revert statements to undo rollback when valid conditions are not met.
+   * @param _beneficiary Address performing the token purchase
+   * @param _weiAmount Value in wei involved in the purchase
+   */
+  function _postValidatePurchase(
+    address _beneficiary,
+    uint256 _weiAmount
+  )
+    internal
+  {
+    // optional override
+  }
+
+  /**
+   * @dev Source of tokens. Override this method to modify the way in which the crowdsale ultimately gets and sends its tokens.
+   * @param _beneficiary Address performing the token purchase
+   * @param _tokenAmount Number of tokens to be emitted
+   */
+  function _deliverTokens(
+    address _beneficiary,
+    uint256 _tokenAmount
+  )
+    internal
+  {
+    token.safeTransfer(_beneficiary, _tokenAmount);
+  }
+
+  /**
+   * @dev Executed when a purchase has been validated and is ready to be executed. Not necessarily emits/sends tokens.
+   * @param _beneficiary Address receiving the tokens
+   * @param _tokenAmount Number of tokens to be purchased
+   */
+  function _processPurchase(
+    address _beneficiary,
+    uint256 _tokenAmount
+  )
+    internal
+  {
+    _deliverTokens(_beneficiary, _tokenAmount);
+  }
+
+  /**
+   * @dev Override for extensions that require an internal state to check for validity (current user contributions, etc.)
+   * @param _beneficiary Address receiving the tokens
+   * @param _weiAmount Value in wei involved in the purchase
+   */
+  function _updatePurchasingState(
+    address _beneficiary,
+    uint256 _weiAmount
+  )
+    internal
+  {
+    // optional override
+  }
+
+  /**
+   * @dev Override to extend the way in which ether is converted to tokens.
+   * @param _weiAmount Value in wei to be converted into tokens
+   * @return Number of tokens that can be purchased with the specified _weiAmount
+   */
+  function _getTokenAmount(uint256 _weiAmount)
+    internal view returns (uint256)
+  {
+    return _weiAmount.mul(rate);
+  }
+
+  /**
+   * @dev Determines how ETH is stored/forwarded on purchases.
+   */
+  function _forwardFunds() internal {
+    wallet.transfer(msg.value);
+  }
+}
+
+/**
+ * @title TimedCrowdsale
+ * @dev Crowdsale accepting contributions only within a time frame.
+ */
+contract TimedCrowdsale is Crowdsale {
+  using SafeMath for uint256;
+
+  uint256 public openingTime;
+  uint256 public closingTime;
+
+  /**
+   * @dev Reverts if not in crowdsale time range.
+   */
+  modifier onlyWhileOpen {
+    // solium-disable-next-line security/no-block-members
+    require(block.timestamp >= openingTime && block.timestamp <= closingTime);
+    _;
+  }
+
+  /**
+   * @dev Constructor, takes crowdsale opening and closing times.
+   * @param _openingTime Crowdsale opening time
+   * @param _closingTime Crowdsale closing time
+   */
+  constructor(uint256 _openingTime, uint256 _closingTime) public {
+    // solium-disable-next-line security/no-block-members
+    require(_openingTime >= block.timestamp);
+    require(_closingTime >= _openingTime);
+
+    openingTime = _openingTime;
+    closingTime = _closingTime;
+  }
+
+  /**
+   * @dev Checks whether the period in which the crowdsale is open has already elapsed.
+   * @return Whether crowdsale period has elapsed
+   */
+  function hasClosed() public view returns (bool) {
+    // solium-disable-next-line security/no-block-members
+    return block.timestamp > closingTime;
+  }
+
+  /**
+   * @dev Extend parent behavior requiring to be within contributing period
+   * @param _beneficiary Token purchaser
+   * @param _weiAmount Amount of wei contributed
+   */
+  function _preValidatePurchase(
+    address _beneficiary,
+    uint256 _weiAmount
+  )
+    internal
+    onlyWhileOpen
+  {
+    super._preValidatePurchase(_beneficiary, _weiAmount);
+  }
 
 }
 
-contract Crowdsale is Pausable, TokenInfo {
-
+/**
+ * @title FinalizableCrowdsale
+ * @dev Extension of Crowdsale where an owner can do extra work
+ * after finishing.
+ */
+contract FinalizableCrowdsale is Ownable, TimedCrowdsale {
   using SafeMath for uint256;
 
-  LedTokenInterface public ledToken;
-  uint256 public startTime;
-  uint256 public endTime;
+  bool public isFinalized = false;
 
-  uint256 public totalWeiRaised;
-  uint256 public tokensMinted;
-  uint256 public totalSupply;
-  uint256 public contributors;
-  uint256 public surplusTokens;
-
-  bool public finalized;
-
-  bool public ledTokensAllocated;
-  address public ledMultiSig = LED_MULTISIG;
-
-  //uint256 public tokenCap = FIRSTSALE_TOKENCAP;
-  //uint256 public cap = tokenCap * DECIMALS_MULTIPLIER;
-  //uint256 public weiCap = tokenCap * FIRSTSALE_BASE_PRICE_IN_WEI;
-
-  bool public started = false;
-
-  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
-  event NewClonedToken(address indexed _cloneToken);
-  event OnTransfer(address _from, address _to, uint _amount);
-  event OnApprove(address _owner, address _spender, uint _amount);
-  event LogInt(string _name, uint256 _value);
   event Finalized();
 
-  // constructor(address _tokenAddress, uint256 _startTime, uint256 _endTime) public {
-    
-
-  //   startTime = _startTime;
-  //   endTime = _endTime;
-  //   ledToken = LedTokenInterface(_tokenAddress);
-
-  //   assert(_tokenAddress != 0x0);
-  //   assert(_startTime > 0);
-  //   assert(_endTime > _startTime);
-  // }
-
   /**
-   * Low level token purchase function
-   * @param _beneficiary will receive the tokens.
+   * @dev Must be called after crowdsale ends, to do some extra finalization
+   * work. Calls the contract's finalization function.
    */
-  /*function buyTokens(address _beneficiary) public payable whenNotPaused whenNotFinalized {
-    require(_beneficiary != 0x0);
-    require(validPurchase());
+  function finalize() public onlyOwner {
+    require(!isFinalized);
+    require(hasClosed());
 
-    uint256 weiAmount = msg.value;
-    require(weiAmount >= MIN_PURCHASE && weiAmount <= MAX_PURCHASE);
-    uint256 priceInWei = FIRSTSALE_BASE_PRICE_IN_WEI;
-    totalWeiRaised = totalWeiRaised.add(weiAmount);
-
-    uint256 tokens = weiAmount.mul(DECIMALS_MULTIPLIER).div(priceInWei);
-    tokensMinted = tokensMinted.add(tokens);
-    require(tokensMinted < cap);
-
-    contributors = contributors.add(1);
-
-    ledToken.mint(_beneficiary, tokens);
-    emit TokenPurchase(msg.sender, _beneficiary, weiAmount, tokens);
-    forwardFunds();
-  }*/
-
-
-  /**
-  * Forwards funds to the tokensale wallet
-  */
-  function forwardFunds() internal {
-    ledMultiSig.transfer(msg.value);
-  }
-
-
-  /**
-  * Validates the purchase (period, minimum amount, within cap)
-  * @return {bool} valid
-  */
-  function validPurchase() internal constant returns (bool) {
-    uint256 current = now;
-    bool presaleStarted = (current >= startTime || started);
-    bool presaleNotEnded = current <= endTime;
-    bool nonZeroPurchase = msg.value != 0;
-    return nonZeroPurchase && presaleStarted && presaleNotEnded;
-  }
-
-  /**
-  * Returns the total Led token supply
-  * @return totalSupply {uint256} Led Token Total Supply
-  */
-  function totalSupply() public constant returns (uint256) {
-    return ledToken.totalSupply();
-  }
-
-  /**
-  * Returns token holder Led Token balance
-  * @param _owner {address} Token holder address
-  * @return balance {uint256} Corresponding token holder balance
-  */
-  function balanceOf(address _owner) public constant returns (uint256) {
-    return ledToken.balanceOf(_owner);
-  }
-
-  /**
-  * Change the Led Token controller
-  * @param _newController {address} New Led Token controller
-  */
-  function changeController(address _newController) public onlyOwner {
-    require(isContract(_newController));
-    ledToken.transferControl(_newController);
-  }
-
-  function enableMasterTransfers() public onlyOwner {
-    ledToken.enableMasterTransfers(true);
-  }
-
-  function lockMasterTransfers() public onlyOwner {
-    ledToken.enableMasterTransfers(false);
-  }
-
-  function forceStart() public onlyOwner {
-    started = true;
-  }
-
-  /*function finalize() public onlyOwner {
-    require(paused);
-    require(!finalized);
-    surplusTokens = cap - tokensMinted;
-    ledToken.mint(ledMultiSig, surplusTokens);
-    ledToken.transferControl(owner);
-
+    finalization();
     emit Finalized();
 
-    finalized = true;
-  }*/
-
-  function isContract(address _addr) constant internal returns(bool) {
-    uint size;
-    if (_addr == 0)
-      return false;
-    assembly {
-        size := extcodesize(_addr)
-    }
-    return size>0;
+    isFinalized = true;
   }
 
-  modifier whenNotFinalized() {
-    require(!finalized);
+  /**
+   * @dev Can be overridden to add finalization logic. The overriding function
+   * should call super.finalization() to ensure the chain of finalization is
+   * executed entirely.
+   */
+  function finalization() internal {
+  }
+
+}
+
+/*
+Copyright 2018 Binod Nirvan
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+ */
+
+
+
+
+
+///@title This contract enables to create multiple contract administrators.
+contract CustomAdmin is Ownable {
+  ///@notice List of administrators.
+  mapping(address => bool) public admins;
+
+  event AdminAdded(address indexed _address);
+  event AdminRemoved(address indexed _address);
+
+  ///@notice Validates if the sender is actually an administrator.
+  modifier onlyAdmin() {
+    require(admins[msg.sender] || msg.sender == owner);
     _;
   }
 
-}
-/**
- * @title FirstSale
- * FirstSale allows investors to make token purchases and assigns them tokens based
+  ///@notice Adds the specified address to the list of administrators.
+  ///@param _address The address to add to the administrator list.
+  function addAdmin(address _address) external onlyAdmin {
+    require(_address != address(0));
+    require(!admins[_address]);
 
- * on a token per ETH rate. Funds collected are forwarded to a wallet as they arrive.
+    //The owner is already an admin and cannot be added.
+    require(_address != owner);
+
+    admins[_address] = true;
+
+    emit AdminAdded(_address);
+  }
+
+  ///@notice Adds multiple addresses to the administrator list.
+  ///@param _accounts The wallet addresses to add to the administrator list.
+  function addManyAdmins(address[] _accounts) external onlyAdmin {
+    for(uint8 i=0; i<_accounts.length; i++) {
+      address account = _accounts[i];
+
+      ///Zero address cannot be an admin.
+      ///The owner is already an admin and cannot be assigned.
+      ///The address cannot be an existing admin.
+      if(account != address(0) && !admins[account] && account != owner){
+        admins[account] = true;
+
+        emit AdminAdded(_accounts[i]);
+      }
+    }
+  }
+  
+  ///@notice Removes the specified address from the list of administrators.
+  ///@param _address The address to remove from the administrator list.
+  function removeAdmin(address _address) external onlyAdmin {
+    require(_address != address(0));
+    require(admins[_address]);
+
+    //The owner cannot be removed as admin.
+    require(_address != owner);
+
+    admins[_address] = false;
+    emit AdminRemoved(_address);
+  }
+
+
+  ///@notice Removes multiple addresses to the administrator list.
+  ///@param _accounts The wallet addresses to remove from the administrator list.
+  function removeManyAdmins(address[] _accounts) external onlyAdmin {
+    for(uint8 i=0; i<_accounts.length; i++) {
+      address account = _accounts[i];
+
+      ///Zero address can neither be added or removed from this list.
+      ///The owner is the super admin and cannot be removed.
+      ///The address must be an existing admin in order for it to be removed.
+      if(account != address(0) && admins[account] && account != owner){
+        admins[account] = false;
+
+        emit AdminRemoved(_accounts[i]);
+      }
+    }
+  }
+}
+
+/*
+Copyright 2018 Binod Nirvan
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
  */
-contract FirstSale is Crowdsale {
 
-  uint256 public tokenCap = FIRSTSALE_TOKENCAP;
-  uint256 public cap = tokenCap * DECIMALS_MULTIPLIER;
-  uint256 public weiCap = tokenCap * FIRSTSALE_BASE_PRICE_IN_WEI;
 
-  constructor(address _tokenAddress, uint256 _startTime, uint256 _endTime) public {
-    
+ 
 
-    startTime = _startTime;
-    endTime = _endTime;
-    ledToken = LedTokenInterface(_tokenAddress);
 
-    assert(_tokenAddress != 0x0);
-    assert(_startTime > 0);
-    assert(_endTime > _startTime);
+
+
+
+///@title This contract enables you to create pausable mechanism to stop in case of emergency.
+contract CustomPausable is CustomAdmin {
+  event Paused();
+  event Unpaused();
+
+  bool public paused = false;
+
+  ///@notice Verifies whether the contract is not paused.
+  modifier whenNotPaused() {
+    require(!paused);
+    _;
   }
 
-    /**
-   * High level token purchase function
-   */
-  function() public payable {
-    buyTokens(msg.sender);
-  }
-
-  /**
-   * Low level token purchase function
-   * @param _beneficiary will receive the tokens.
-   */
-  function buyTokens(address _beneficiary) public payable whenNotPaused whenNotFinalized {
-    require(_beneficiary != 0x0);
-    require(validPurchase());
-
-    uint256 weiAmount = msg.value;
-    require(weiAmount >= MIN_PURCHASE && weiAmount <= MAX_PURCHASE);
-    uint256 priceInWei = FIRSTSALE_BASE_PRICE_IN_WEI;
-    totalWeiRaised = totalWeiRaised.add(weiAmount);
-
-    uint256 tokens = weiAmount.mul(DECIMALS_MULTIPLIER).div(priceInWei);
-    tokensMinted = tokensMinted.add(tokens);
-    require(tokensMinted < cap);
-
-    contributors = contributors.add(1);
-
-    ledToken.mint(_beneficiary, tokens);
-    emit TokenPurchase(msg.sender, _beneficiary, weiAmount, tokens);
-    forwardFunds();
-  }
-
-  function getInfo() public view returns(uint256, uint256, string, bool,  uint256, uint256, uint256, 
-  bool, uint256, uint256){
-    uint256 decimals = 18;
-    string memory symbol = "LED";
-    bool transfersEnabled = ledToken.transfersEnabled();
-    return (
-      TOTAL_TOKENCAP, // Tokencap with the decimal point in place. should be 100.000.000
-      decimals, // Decimals
-      symbol,
-      transfersEnabled,
-      contributors,
-      totalWeiRaised,
-      tokenCap, // Tokencap for the first sale with the decimal point in place.
-      started,
-      startTime, // Start time and end time in Unix timestamp format with a length of 10 numbers.
-      endTime
-    );
-  }
-
-  function finalize() public onlyOwner {
+  ///@notice Verifies whether the contract is paused.
+  modifier whenPaused() {
     require(paused);
-    require(!finalized);
-    surplusTokens = cap - tokensMinted;
-    ledToken.mint(ledMultiSig, surplusTokens);
-    ledToken.transferControl(owner);
-
-    emit Finalized();
-
-    finalized = true;
+    _;
   }
 
+  ///@notice Pauses the contract.
+  function pause() external onlyAdmin whenNotPaused {
+    paused = true;
+    emit Paused();
+  }
+
+  ///@notice Unpauses the contract and returns to normal state.
+  function unpause() external onlyAdmin whenPaused {
+    paused = false;
+    emit Unpaused();
+  }
 }
 
-contract LedToken is Controllable {
+/*
+Copyright 2018 Binod Nirvan
 
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+ */
+
+
+
+
+///@title This contract enables to maintain a list of whitelisted wallets.
+contract CustomWhitelist is CustomPausable {
+  mapping(address => bool) public whitelist;
+
+  event WhitelistAdded(address indexed _account);
+  event WhitelistRemoved(address indexed _account);
+
+  ///@notice Verifies if the account is whitelisted.
+  modifier ifWhitelisted(address _account) {
+    require(_account != address(0));
+    require(whitelist[_account]);
+
+    _;
+  }
+
+  ///@notice Adds an account to the whitelist.
+  ///@param _account The wallet address to add to the whitelist.
+  function addWhitelist(address _account) external whenNotPaused onlyAdmin {
+    require(_account!=address(0));
+
+    if(!whitelist[_account]) {
+      whitelist[_account] = true;
+
+      emit WhitelistAdded(_account);
+    }
+  }
+
+  ///@notice Adds multiple accounts to the whitelist.
+  ///@param _accounts The wallet addresses to add to the whitelist.
+  function addManyWhitelist(address[] _accounts) external whenNotPaused onlyAdmin {
+    for(uint8 i=0;i<_accounts.length;i++) {
+      if(_accounts[i] != address(0) && !whitelist[_accounts[i]]) {
+        whitelist[_accounts[i]] = true;
+
+        emit WhitelistAdded(_accounts[i]);
+      }
+    }
+  }
+
+  ///@notice Removes an account from the whitelist.
+  ///@param _account The wallet address to remove from the whitelist.
+  function removeWhitelist(address _account) external whenNotPaused onlyAdmin {
+    require(_account != address(0));
+    if(whitelist[_account]) {
+      whitelist[_account] = false;
+
+      emit WhitelistRemoved(_account);
+    }
+  }
+
+  ///@notice Removes multiple accounts from the whitelist.
+  ///@param _accounts The wallet addresses to remove from the whitelist.
+  function removeManyWhitelist(address[] _accounts) external whenNotPaused onlyAdmin {
+    for(uint8 i=0;i<_accounts.length;i++) {
+      if(_accounts[i] != address(0) && whitelist[_accounts[i]]) {
+        whitelist[_accounts[i]] = false;
+        
+        emit WhitelistRemoved(_accounts[i]);
+      }
+    }
+  }
+}
+
+/*
+Copyright 2018 Binod Nirvan, Subramanian Venkatesan
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+
+
+
+///@title This contract keeps track of the VRH token price.
+contract TokenPrice is CustomPausable {
+  ///@notice The price per token in cents.
+  uint256 public tokenPriceInCents;
+
+  event TokenPriceChanged(uint256 _newPrice, uint256 _oldPrice);
+
+  function setTokenPrice(uint256 _cents) public onlyAdmin whenNotPaused {
+    require(_cents > 0);
+    
+    emit TokenPriceChanged(_cents, tokenPriceInCents );
+    tokenPriceInCents  = _cents;
+  }
+}
+
+/*
+Copyright 2018 Binod Nirvan, Subramanian Venkatesan
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+
+
+
+///@title This contract keeps track of Ether price.
+contract EtherPrice is CustomPausable {
+  uint256 public etherPriceInCents; //price of 1 ETH in cents
+
+  event EtherPriceChanged(uint256 _newPrice, uint256 _oldPrice);
+
+  function setEtherPrice(uint256 _cents) public whenNotPaused onlyAdmin {
+    require(_cents > 0);
+
+    emit EtherPriceChanged(_cents, etherPriceInCents);
+    etherPriceInCents = _cents;
+  }
+}
+
+/*
+Copyright 2018 Binod Nirvan, Subramanian Venkatesan
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+ */
+
+ 
+
+
+///@title This contract keeps track of Binance Coin price.
+contract BinanceCoinPrice is CustomPausable {
+  uint256 public binanceCoinPriceInCents;
+
+  event BinanceCoinPriceChanged(uint256 _newPrice, uint256 _oldPrice);
+
+  function setBinanceCoinPrice(uint256 _cents) public whenNotPaused onlyAdmin {
+    require(_cents > 0);
+
+    emit BinanceCoinPriceChanged(_cents, binanceCoinPriceInCents);
+    binanceCoinPriceInCents = _cents;
+  }
+}
+
+/*
+Copyright 2018 Binod Nirvan, Subramanian Venkatesan
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+ */
+
+ 
+
+
+///@title This contract keeps track of Credits Token price.
+contract CreditsTokenPrice is CustomPausable {
+  uint256 public creditsTokenPriceInCents;
+
+  event CreditsTokenPriceChanged(uint256 _newPrice, uint256 _oldPrice);
+
+  function setCreditsTokenPrice(uint256 _cents) public whenNotPaused onlyAdmin {
+    require(_cents > 0);
+
+    emit CreditsTokenPriceChanged(_cents, creditsTokenPriceInCents);
+    creditsTokenPriceInCents = _cents;
+  }
+}
+
+/*
+Copyright 2018 Binod Nirvan, Subramanian Venkatesan
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+
+
+
+
+
+///@title This contract enables assigning bonus to crowdsale contributors.
+contract BonusHolder is CustomPausable {
   using SafeMath for uint256;
-  LedTokenInterface public parentToken;
-  TokenFactoryInterface public tokenFactory;
 
-  string public name;
-  string public symbol;
-  string public version;
-  uint8 public decimals;
+  ///@notice The list of addresses and their respective bonuses.
+  mapping(address => uint256) public bonusHolders;
 
-  uint256 public parentSnapShotBlock;
-  uint256 public creationBlock;
-  bool public transfersEnabled;
+  ///@notice The timestamp on which bonus will be available.
+  uint256 public releaseDate;
 
-  bool public masterTransfersEnabled;
-  address public masterWallet = 0x865e785f98b621c5fdde70821ca7cea9eeb77ef4;
+  ///@notice The ERC20 token contract of the bonus coin.
+  ERC20 public bonusCoin;
 
+  ///@notice The total amount of bonus coins provided to the contributors.
+  uint256 public bonusProvided;
 
-  struct Checkpoint {
-    uint128 fromBlock;
-    uint128 value;
+  ///@notice The total amount of bonus withdrawn by the contributors.
+  uint256 public bonusWithdrawn;
+
+  event BonusReleaseDateSet(uint256 _releaseDate);
+  event BonusAssigned(address indexed _address, uint _amount);
+  event BonusWithdrawn(address indexed _address, uint _amount);
+
+  ///@notice Constructs bonus holder.
+  ///@param _bonusCoin The ERC20 token of the coin to hold bonus.
+  constructor(ERC20 _bonusCoin) internal {
+    bonusCoin = _bonusCoin;
   }
 
-  Checkpoint[] totalSupplyHistory;
-  mapping(address => Checkpoint[]) balances;
-  mapping (address => mapping (address => uint)) allowed;
+  ///@notice Enables the administrators to set the bonus release date.
+  ///Please note that the release date can only be set once.
+  ///@param _releaseDate The timestamp after which the bonus will be available.
+  function setReleaseDate(uint256 _releaseDate) external onlyAdmin whenNotPaused {
+    require(releaseDate == 0);
+    require(_releaseDate > now);
 
-  bool public mintingFinished = false;
-  bool public presaleBalancesLocked = false;
+    releaseDate = _releaseDate;
 
-  uint256 public totalSupplyAtCheckpoint;
-
-  event MintFinished();
-  event NewCloneToken(address indexed cloneToken);
-  event Approval(address indexed _owner, address indexed _spender, uint256 _amount);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-
-
-
-
-  constructor(
-    address _tokenFactory,
-    address _parentToken,
-    uint256 _parentSnapShotBlock,
-    string _tokenName,
-    string _tokenSymbol
-    ) public {
-      tokenFactory = TokenFactoryInterface(_tokenFactory);
-      parentToken = LedTokenInterface(_parentToken);
-      parentSnapShotBlock = _parentSnapShotBlock;
-      name = _tokenName;
-      symbol = _tokenSymbol;
-      decimals = 18;
-      transfersEnabled = false;
-      masterTransfersEnabled = false;
-      creationBlock = block.number;
-      version = '0.1';
+    emit BonusReleaseDateSet(_releaseDate);
   }
 
-
-  /**
-  * Returns the total Led token supply at the current block
-  * @return total supply {uint256}
-  */
-  function totalSupply() public constant returns (uint256) {
-    return totalSupplyAt(block.number);
-  }
-
-  /**
-  * Returns the total Led token supply at the given block number
-  * @param _blockNumber {uint256}
-  * @return total supply {uint256}
-  */
-  function totalSupplyAt(uint256 _blockNumber) public constant returns(uint256) {
-    // These next few lines are used when the totalSupply of the token is
-    //  requested before a check point was ever created for this token, it
-    //  requires that the `parentToken.totalSupplyAt` be queried at the
-    //  genesis block for this token as that contains totalSupply of this
-    //  token at this block number.
-    if ((totalSupplyHistory.length == 0) || (totalSupplyHistory[0].fromBlock > _blockNumber)) {
-        if (address(parentToken) != 0x0) {
-            return parentToken.totalSupplyAt(min(_blockNumber, parentSnapShotBlock));
-        } else {
-            return 0;
-        }
-
-    // This will return the expected totalSupply during normal situations
-    } else {
-        return getValueAt(totalSupplyHistory, _blockNumber);
-    }
-  }
-
-  /**
-  * Returns the token holder balance at the current block
-  * @param _owner {address}
-  * @return balance {uint256}
-   */
-  function balanceOf(address _owner) public constant returns (uint256 balance) {
-    return balanceOfAt(_owner, block.number);
-  }
-
-  /**
-  * Returns the token holder balance the the given block number
-  * @param _owner {address}
-  * @param _blockNumber {uint256}
-  * @return balance {uint256}
-  */
-  function balanceOfAt(address _owner, uint256 _blockNumber) public constant returns (uint256) {
-    // These next few lines are used when the balance of the token is
-    //  requested before a check point was ever created for this token, it
-    //  requires that the `parentToken.balanceOfAt` be queried at the
-    //  genesis block for that token as this contains initial balance of
-    //  this token
-    if ((balances[_owner].length == 0) || (balances[_owner][0].fromBlock > _blockNumber)) {
-        if (address(parentToken) != 0x0) {
-            return parentToken.balanceOfAt(_owner, min(_blockNumber, parentSnapShotBlock));
-        } else {
-            // Has no parent
-            return 0;
-        }
-
-    // This will return the expected balance during normal situations
-    } else {
-        return getValueAt(balances[_owner], _blockNumber);
-    }
-  }
-
-  /**
-  * Standard ERC20 transfer tokens function
-  * @param _to {address}
-  * @param _amount {uint}
-  * @return success {bool}
-  */
-  function transfer(address _to, uint256 _amount) public returns (bool success) {
-    return doTransfer(msg.sender, _to, _amount);
-  }
-
-  /**
-  * Standard ERC20 transferFrom function
-  * @param _from {address}
-  * @param _to {address}
-  * @param _amount {uint256}
-  * @return success {bool}
-  */
-  function transferFrom(address _from, address _to, uint256 _amount) public returns (bool success) {
-    require(allowed[_from][msg.sender] >= _amount);
-    allowed[_from][msg.sender] -= _amount;
-    return doTransfer(_from, _to, _amount);
-  }
-
-  /**
-  * Standard ERC20 approve function
-  * @param _spender {address}
-  * @param _amount {uint256}
-  * @return success {bool}
-  */
-  function approve(address _spender, uint256 _amount) public returns (bool success) {
-    require(transfersEnabled);
-
-    //https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    require((_amount == 0) || (allowed[msg.sender][_spender] == 0));
-
-    allowed[msg.sender][_spender] = _amount;
-    emit Approval(msg.sender, _spender, _amount);
-    return true;
-  }
-
-  /**
-  * Standard ERC20 approve function
-  * @param _spender {address}
-  * @param _amount {uint256}
-  * @return success {bool}
-  */
-  function approveAndCall(address _spender, uint256 _amount, bytes _extraData) public returns (bool success) {
-    approve(_spender, _amount);
-
-    ApproveAndCallReceiver(_spender).receiveApproval(
-        msg.sender,
-        _amount,
-        this,
-        _extraData
-    );
-
-    return true;
-  }
-
-  /**
-  * Standard ERC20 allowance function
-  * @param _owner {address}
-  * @param _spender {address}
-  * @return remaining {uint256}
-   */
-  function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
-    return allowed[_owner][_spender];
-  }
-
-  /**
-  * Internal Transfer function - Updates the checkpoint ledger
-  * @param _from {address}
-  * @param _to {address}
-  * @param _amount {uint256}
-  * @return success {bool}
-  */
-  function doTransfer(address _from, address _to, uint256 _amount) internal returns(bool) {
-
-    if (msg.sender != masterWallet) {
-      require(transfersEnabled);
-    } else {
-      require(masterTransfersEnabled);
+  ///@notice Assigns bonus tokens to the specific contributor.
+  ///@param _investor The wallet address of the investor/contributor.
+  ///@param _bonus The amount of bonus in token value.
+  function assignBonus(address _investor, uint256 _bonus) internal {
+    if(_bonus == 0){
+      return;
     }
 
-    require(_amount > 0);
-    require(parentSnapShotBlock < block.number);
-    require((_to != address(0)) && (_to != address(this)));
+    bonusProvided = bonusProvided.add(_bonus);
+    bonusHolders[_investor] = bonusHolders[_investor].add(_bonus);
 
-    // If the amount being transfered is more than the balance of the
-    // account the transfer returns false
-    uint256 previousBalanceFrom = balanceOfAt(_from, block.number);
-    require(previousBalanceFrom >= _amount);
-
-    // First update the balance array with the new value for the address
-    //  sending the tokens
-    updateValueAtNow(balances[_from], previousBalanceFrom - _amount);
-
-    // Then update the balance array with the new value for the address
-    //  receiving the tokens
-    uint256 previousBalanceTo = balanceOfAt(_to, block.number);
-    require(previousBalanceTo + _amount >= previousBalanceTo); // Check for overflow
-    updateValueAtNow(balances[_to], previousBalanceTo + _amount);
-
-    // An event to make the transfer easy to find on the blockchain
-    emit Transfer(_from, _to, _amount);
-    return true;
+    emit BonusAssigned(_investor, _bonus);
   }
 
+  ///@notice Enables contributors to withdraw their bonus.
+  ///The bonus can only be withdrawn after the release date.
+  function withdrawBonus() external whenNotPaused {
+    require(releaseDate != 0);
+    require(now > releaseDate);
 
-  /**
-  * Token creation functions - can only be called by the tokensale controller during the tokensale period
-  * @param _owner {address}
-  * @param _amount {uint256}
-  * @return success {bool}
-  */
-  function mint(address _owner, uint256 _amount) public onlyController canMint returns (bool) {
-    uint256 curTotalSupply = totalSupply();
-    uint256 previousBalanceTo = balanceOf(_owner);
+    uint256 amount = bonusHolders[msg.sender];
+    require(amount > 0);
 
-    require(curTotalSupply + _amount >= curTotalSupply); // Check for overflow
-    require(previousBalanceTo + _amount >= previousBalanceTo); // Check for overflow
+    bonusWithdrawn = bonusWithdrawn.add(amount);
 
-    updateValueAtNow(totalSupplyHistory, curTotalSupply + _amount);
-    updateValueAtNow(balances[_owner], previousBalanceTo + _amount);
-    emit Transfer(0, _owner, _amount);
-    return true;
+    bonusHolders[msg.sender] = 0;
+    require(bonusCoin.transfer(msg.sender, amount));
+
+    emit BonusWithdrawn(msg.sender, amount);
   }
 
-  modifier canMint() {
-    require(!mintingFinished);
-    _;
+  ///@notice Returns the remaining bonus held on behalf of the crowdsale contributors by this contract.
+  function getRemainingBonus() public view returns(uint256) {
+    return bonusProvided.sub(bonusWithdrawn);
   }
-
-
-  /**
-   * Import presale balances before the start of the token sale. After importing
-   * balances, lockPresaleBalances() has to be called to prevent further modification
-   * of presale balances.
-   * @param _addresses {address[]} Array of presale addresses
-   * @param _balances {uint256[]} Array of balances corresponding to presale addresses.
-   * @return success {bool}
-   */
-  function importPresaleBalances(address[] _addresses, uint256[] _balances) public onlyController returns (bool) {
-    require(presaleBalancesLocked == false);
-
-    for (uint256 i = 0; i < _addresses.length; i++) {
-      totalSupplyAtCheckpoint += _balances[i];
-      updateValueAtNow(balances[_addresses[i]], _balances[i]);
-      updateValueAtNow(totalSupplyHistory, totalSupplyAtCheckpoint);
-      emit Transfer(0, _addresses[i], _balances[i]);
-    }
-    return true;
-  }
-
-  /**
-   * Lock presale balances after successful presale balance import
-   * @return A boolean that indicates if the operation was successful.
-   */
-  function lockPresaleBalances() public onlyController returns (bool) {
-    presaleBalancesLocked = true;
-    return true;
-  }
-
-  /**
-   * Lock the minting of Led Tokens - to be called after the presale
-   * @return {bool} success
-  */
-  function finishMinting() public onlyController returns (bool) {
-    mintingFinished = true;
-    emit MintFinished();
-    return true;
-  }
-
-  /**
-   * Enable or block transfers - to be called in case of emergency
-   * @param _value {bool}
-  */
-  function enableTransfers(bool _value) public onlyController {
-    transfersEnabled = _value;
-  }
-
-  /**
-   * Enable or block transfers - to be called in case of emergency
-   * @param _value {bool}
-  */
-  function enableMasterTransfers(bool _value) public onlyController {
-    masterTransfersEnabled = _value;
-  }
-
-  /**
-   * Internal balance method - gets a certain checkpoint value a a certain _block
-   * @param _checkpoints {Checkpoint[]} List of checkpoints - supply history or balance history
-   * @return value {uint256} Value of _checkpoints at _block
-  */
-  function getValueAt(Checkpoint[] storage _checkpoints, uint256 _block) constant internal returns (uint256) {
-
-      if (_checkpoints.length == 0)
-        return 0;
-      // Shortcut for the actual value
-      if (_block >= _checkpoints[_checkpoints.length-1].fromBlock)
-        return _checkpoints[_checkpoints.length-1].value;
-      if (_block < _checkpoints[0].fromBlock)
-        return 0;
-
-      // Binary search of the value in the array
-      uint256 min = 0;
-      uint256 max = _checkpoints.length-1;
-      while (max > min) {
-          uint256 mid = (max + min + 1) / 2;
-          if (_checkpoints[mid].fromBlock<=_block) {
-              min = mid;
-          } else {
-              max = mid-1;
-          }
-      }
-      return _checkpoints[min].value;
-  }
-
-
-  /**
-  * Internal update method - updates the checkpoint ledger at the current block
-  * @param _checkpoints {Checkpoint[]}  List of checkpoints - supply history or balance history
-  * @return value {uint256} Value to add to the checkpoints ledger
-   */
-  function updateValueAtNow(Checkpoint[] storage _checkpoints, uint256 _value) internal {
-      if ((_checkpoints.length == 0) || (_checkpoints[_checkpoints.length-1].fromBlock < block.number)) {
-              Checkpoint storage newCheckPoint = _checkpoints[_checkpoints.length++];
-              newCheckPoint.fromBlock = uint128(block.number);
-              newCheckPoint.value = uint128(_value);
-          } else {
-              Checkpoint storage oldCheckPoint = _checkpoints[_checkpoints.length-1];
-              oldCheckPoint.value = uint128(_value);
-          }
-  }
-
-
-  function min(uint256 a, uint256 b) internal pure returns (uint) {
-      return a < b ? a : b;
-  }
-
-  /**
-  * Clones Led Token at the given snapshot block
-  * @param _snapshotBlock {uint256}
-  * @param _name {string} - The cloned token name
-  * @param _symbol {string} - The cloned token symbol
-  * @return clonedTokenAddress {address}
-   */
-  function createCloneToken(uint256 _snapshotBlock, string _name, string _symbol) public returns(address) {
-
-      if (_snapshotBlock == 0) {
-        _snapshotBlock = block.number;
-      }
-
-      if (_snapshotBlock > block.number) {
-        _snapshotBlock = block.number;
-      }
-
-      LedToken cloneToken = tokenFactory.createCloneToken(
-          this,
-          _snapshotBlock,
-          _name,
-          _symbol
-        );
-
-
-      cloneToken.transferControl(msg.sender);
-
-      // An event to make the token easy to find on the blockchain
-      emit NewCloneToken(address(cloneToken));
-      return address(cloneToken);
-    }
-
 }
 
-/**
- * @title LedToken (LED)
- * Standard Mintable ERC20 Token
- * https://github.com/ethereum/EIPs/issues/20
- * Based on code by FirstBlood:
- * https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+/*
+Copyright 2018 Virtual Rehab (http://virtualrehab.co)
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+    http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
  */
-contract LedTokenInterface is Controllable {
 
-  bool public transfersEnabled;
 
-  event Mint(address indexed to, uint256 amount);
-  event MintFinished();
-  event ClaimedTokens(address indexed _token, address indexed _owner, uint _amount);
-  event NewCloneToken(address indexed _cloneToken, uint _snapshotBlock);
-  event Approval(address indexed _owner, address indexed _spender, uint256 _amount);
-  event Transfer(address indexed from, address indexed to, uint256 value);
 
-  function totalSupply() public constant returns (uint);
-  function totalSupplyAt(uint _blockNumber) public constant returns(uint);
-  function balanceOf(address _owner) public constant returns (uint256 balance);
-  function balanceOfAt(address _owner, uint _blockNumber) public constant returns (uint);
-  function transfer(address _to, uint256 _amount) public returns (bool success);
-  function transferFrom(address _from, address _to, uint256 _amount) public returns (bool success);
-  function approve(address _spender, uint256 _amount) public returns (bool success);
-  function approveAndCall(address _spender, uint256 _amount, bytes _extraData) public returns (bool success);
-  function allowance(address _owner, address _spender) public constant returns (uint256 remaining);
-  function mint(address _owner, uint _amount) public returns (bool);
-  function importPresaleBalances(address[] _addresses, uint256[] _balances, address _presaleAddress) public returns (bool);
-  function lockPresaleBalances() public returns (bool);
-  function finishMinting() public returns (bool);
-  function enableTransfers(bool _value) public;
-  function enableMasterTransfers(bool _value) public;
-  function createCloneToken(uint _snapshotBlock, string _cloneTokenName, string _cloneTokenSymbol) public returns (address);
 
-}
 
-/**
- * @title Presale
- * Presale allows investors to make token purchases and assigns them tokens based
 
- * on a token per ETH rate. Funds collected are forwarded to a wallet as they arrive.
- */
-contract Presale is Crowdsale {
 
-  uint256 public tokenCap = PRESALE_TOKENCAP;
-  uint256 public cap = tokenCap * DECIMALS_MULTIPLIER;
-  uint256 public weiCap = tokenCap * PRESALE_BASE_PRICE_IN_WEI;
 
-  constructor(address _tokenAddress, uint256 _startTime, uint256 _endTime) public {
-    
 
-    startTime = _startTime;
-    endTime = _endTime;
-    ledToken = LedTokenInterface(_tokenAddress);
 
-    assert(_tokenAddress != 0x0);
-    assert(_startTime > 0);
-    assert(_endTime > _startTime);
+
+
+///@title Virtual Rehab Private Sale.
+///@author Binod Nirvan, Subramanian Venkatesan (http://virtualrehab.co)
+///@notice This contract enables contributors to participate in Virtual Rehab Private Sale.
+///
+///The Virtual Rehab Private Sale provides early investors with an opportunity
+///to take part into the Virtual Rehab token sale ahead of the pre-sale and main sale launch.
+///All early investors are expected to successfully complete KYC and whitelisting
+///to contribute to the Virtual Rehab token sale.
+///
+///US investors must be accredited investors and must provide all requested documentation
+///to validate their accreditation. We, unfortunately, do not accept contributions
+///from non-accredited investors within the US along with any contribution
+///from China, Republic of Korea, and New Zealand. Any questions or additional information needed
+///can be sought by sending an e-mail to investors?virtualrehab.co.
+///
+///Accepted Currencies: Ether, Binance Coin, Credits Token.
+contract PrivateSale is TokenPrice, EtherPrice, BinanceCoinPrice, CreditsTokenPrice, BonusHolder, FinalizableCrowdsale, CustomWhitelist {
+  ///@notice The ERC20 token contract of Binance Coin. Must be: 0xB8c77482e45F1F44dE1745F52C74426C631bDD52
+  ERC20 public binanceCoin;
+
+  ///@notice The ERC20 token contract of Credits Token. Must be: 0x46b9Ad944d1059450Da1163511069C718F699D31
+  ERC20 public creditsToken;
+
+  ///@notice The total amount of VRH tokens sold in the private round.
+  uint256 public totalTokensSold;
+
+  ///@notice The total amount of VRH tokens allocated for the private sale.
+  uint256 public totalSaleAllocation;
+
+  ///@notice The minimum contribution in dollar cent value.
+  uint256 public minContributionInUSDCents;
+
+  mapping(address => uint256) public assignedBonusRates;
+  uint[3] public bonusLimits;
+  uint[3] public bonusPercentages;
+
+  ///@notice Signifies if the private sale was started.
+  bool public initialized;
+
+  event SaleInitialized();
+
+  event MinimumContributionChanged(uint256 _newContribution, uint256 _oldContribution);
+  event ClosingTimeChanged(uint256 _newClosingTime, uint256 _oldClosingTime);
+  event FundsWithdrawn(address indexed _wallet, uint256 _amount);
+  event ERC20Withdrawn(address indexed _contract, uint256 _amount);
+  event TokensAllocatedForSale(uint256 _newAllowance, uint256 _oldAllowance);
+
+  ///@notice Creates and constructs this private sale contract.
+  ///@param _startTime The date and time of the private sale start.
+  ///@param _endTime The date and time of the private sale end.
+  ///@param _binanceCoin Binance coin contract. Must be: 0xB8c77482e45F1F44dE1745F52C74426C631bDD52.
+  ///@param _creditsToken credits Token contract. Must be: 0x46b9Ad944d1059450Da1163511069C718F699D31.
+  ///@param _vrhToken VRH token contract.
+  constructor(uint256 _startTime, uint256 _endTime, ERC20 _binanceCoin, ERC20 _creditsToken, ERC20 _vrhToken) public
+  TimedCrowdsale(_startTime, _endTime)
+  Crowdsale(1, msg.sender, _vrhToken)
+  BonusHolder(_vrhToken) {
+    //require(address(_binanceCoin) == 0xB8c77482e45F1F44dE1745F52C74426C631bDD52);
+    //require(address(_creditsToken) == 0x46b9Ad944d1059450Da1163511069C718F699D31);
+    binanceCoin = _binanceCoin;
+    creditsToken = _creditsToken;
   }
 
-    /**
-   * High level token purchase function
-   */
-  function() public payable {
-    buyTokens(msg.sender);
+  ///@notice Initializes the private sale.
+  ///@param _etherPriceInCents Ether Price in cents
+  ///@param _tokenPriceInCents VRHToken Price in cents
+  ///@param _binanceCoinPriceInCents Binance Coin Price in cents
+  ///@param _creditsTokenPriceInCents Credits Token Price in cents
+  ///@param _minContributionInUSDCents The minimum contribution in dollar cent value
+  function initializePrivateSale(uint _etherPriceInCents, uint _tokenPriceInCents, uint _binanceCoinPriceInCents, uint _creditsTokenPriceInCents, uint _minContributionInUSDCents) external onlyAdmin {
+    require(!initialized);
+    require(_etherPriceInCents > 0);
+    require(_tokenPriceInCents > 0);
+    require(_binanceCoinPriceInCents > 0);
+    require(_creditsTokenPriceInCents > 0);
+    require(_minContributionInUSDCents > 0);
+
+    setEtherPrice(_etherPriceInCents);
+    setTokenPrice(_tokenPriceInCents);
+    setBinanceCoinPrice(_binanceCoinPriceInCents);
+    setCreditsTokenPrice(_creditsTokenPriceInCents);
+    setMinimumContribution(_minContributionInUSDCents);
+
+    increaseTokenSaleAllocation();
+
+    bonusLimits[0] = 25000000;
+    bonusLimits[1] = 10000000;
+    bonusLimits[2] = 1500000;
+
+    bonusPercentages[0] = 50;
+    bonusPercentages[1] = 40;
+    bonusPercentages[2] = 35;
+
+
+    initialized = true;
+
+    emit SaleInitialized();
   }
 
-  /**
-   * Low level token purchase function
-   * @param _beneficiary will receive the tokens.
-   */
-  function buyTokens(address _beneficiary) public payable whenNotPaused whenNotFinalized {
-    require(_beneficiary != 0x0);
-    require(validPurchase());
+  ///@notice Enables a contributor to contribute using Binance coin.
+  function contributeInBNB() external ifWhitelisted(msg.sender) whenNotPaused onlyWhileOpen {
+    require(initialized);
 
-    uint256 weiAmount = msg.value;
-    require(weiAmount >= MIN_PURCHASE_OTHERSALES && weiAmount <= MAX_PURCHASE);
-    uint256 priceInWei = PRESALE_BASE_PRICE_IN_WEI;
-    
-    totalWeiRaised = totalWeiRaised.add(weiAmount);
+    ///Check the amount of Binance coins allowed to (be transferred by) this contract by the contributor.
+    uint256 allowance = binanceCoin.allowance(msg.sender, this);
+    require (allowance > 0, "You have not approved any Binance Coin for this contract to receive.");
 
-    uint256 bonusPercentage = determineBonus(weiAmount);
-    uint256 bonusTokens;
+    ///Calculate equivalent amount in dollar cent value.
+    uint256 contributionCents  = convertToCents(allowance, binanceCoinPriceInCents, 18);
 
-    uint256 initialTokens = weiAmount.mul(DECIMALS_MULTIPLIER).div(priceInWei);
-    if(bonusPercentage>0){
-      uint256 initialDivided = initialTokens.div(100);
-      bonusTokens = initialDivided.mul(bonusPercentage);
-    } else {
-      bonusTokens = 0;
+
+    if(assignedBonusRates[msg.sender] == 0) {
+      require(contributionCents >= minContributionInUSDCents);
+      assignedBonusRates[msg.sender] = getBonusPercentage(contributionCents);
     }
-    uint256 tokens = initialTokens.add(bonusTokens);
-    tokensMinted = tokensMinted.add(tokens);
-    require(tokensMinted < cap);
 
-    contributors = contributors.add(1);
+    ///Calculate the amount of tokens per the contribution.
+    uint256 numTokens = contributionCents.mul(1 ether).div(tokenPriceInCents);
 
-    ledToken.mint(_beneficiary, tokens);
-    emit TokenPurchase(msg.sender, _beneficiary, weiAmount, tokens);
-    forwardFunds();
+    ///Calculate the bonus based on the number of tokens and the dollar cent value.
+    uint256 bonus = calculateBonus(numTokens, assignedBonusRates[msg.sender]);
+
+    require(totalTokensSold.add(numTokens).add(bonus) <= totalSaleAllocation);
+
+    ///Receive the Binance coins immediately.
+    require(binanceCoin.transferFrom(msg.sender, this, allowance));
+
+    ///Send the VRH tokens to the contributor.
+    require(token.transfer(msg.sender, numTokens));
+
+    ///Assign the bonus to be vested and later withdrawn.
+    assignBonus(msg.sender, bonus);
+
+    totalTokensSold = totalTokensSold.add(numTokens).add(bonus);
   }
 
-  function determineBonus(uint256 _wei) public view returns (uint256) {
-    if(_wei > PRESALE_LEVEL_1) {
-      if(_wei > PRESALE_LEVEL_2) {
-        if(_wei > PRESALE_LEVEL_3) {
-          if(_wei > PRESALE_LEVEL_4) {
-            if(_wei > PRESALE_LEVEL_5) {
-              return PRESALE_PERCENTAGE_5;
-            } else {
-              return PRESALE_PERCENTAGE_4;
-            }
-          } else {
-            return PRESALE_PERCENTAGE_3;
-          }
-        } else {
-          return PRESALE_PERCENTAGE_2;
-        }
-      } else {
-        return PRESALE_PERCENTAGE_1;
+  function contributeInCreditsToken() external ifWhitelisted(msg.sender) whenNotPaused onlyWhileOpen {
+    require(initialized);
+
+    ///Check the amount of Binance coins allowed to (be transferred by) this contract by the contributor.
+    uint256 allowance = creditsToken.allowance(msg.sender, this);
+    require (allowance > 0, "You have not approved any Credits Token for this contract to receive.");
+
+    ///Calculate equivalent amount in dollar cent value.
+    uint256 contributionCents = convertToCents(allowance, creditsTokenPriceInCents, 6);
+
+    if(assignedBonusRates[msg.sender] == 0) {
+      require(contributionCents >= minContributionInUSDCents);
+      assignedBonusRates[msg.sender] = getBonusPercentage(contributionCents);
+    }
+
+    ///Calculate the amount of tokens per the contribution.
+    uint256 numTokens = contributionCents.mul(1 ether).div(tokenPriceInCents);
+
+    ///Calculate the bonus based on the number of tokens and the dollar cent value.
+    uint256 bonus = calculateBonus(numTokens, assignedBonusRates[msg.sender]);
+
+    require(totalTokensSold.add(numTokens).add(bonus) <= totalSaleAllocation);
+
+    ///Receive the Credits Token immediately.
+    require(creditsToken.transferFrom(msg.sender, this, allowance));
+
+    ///Send the VRH tokens to the contributor.
+    require(token.transfer(msg.sender, numTokens));
+
+    ///Assign the bonus to be vested and later withdrawn.
+    assignBonus(msg.sender, bonus);
+
+    totalTokensSold = totalTokensSold.add(numTokens).add(bonus);
+  }
+
+  function setMinimumContribution(uint256 _cents) public whenNotPaused onlyAdmin {
+    require(_cents > 0);
+
+    emit MinimumContributionChanged(minContributionInUSDCents, _cents);
+    minContributionInUSDCents = _cents;
+  }
+
+  ///@notice The equivalent dollar amount of each contribution request.
+  uint256 private amountInUSDCents;
+
+  ///@notice Additional validation rules before token contribution is actually allowed.
+  ///@param _beneficiary The contributor who wishes to purchase the VRH tokens.
+  ///@param _weiAmount The amount of Ethers (in wei) wished to contribute.
+  function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) internal whenNotPaused ifWhitelisted(_beneficiary) {
+    require(initialized);
+
+    amountInUSDCents = convertToCents(_weiAmount, etherPriceInCents, 18);
+
+    if(assignedBonusRates[_beneficiary] == 0) {
+      require(amountInUSDCents >= minContributionInUSDCents);
+      assignedBonusRates[_beneficiary] = getBonusPercentage(amountInUSDCents);
+    }
+
+    ///Continue validating the purchase.
+    super._preValidatePurchase(_beneficiary, _weiAmount);
+  }
+
+  ///@notice This function is automatically called when a contribution request passes all validations.
+  ///@dev Overridden to keep track of the bonuses.
+  ///@param _beneficiary The contributor who wishes to purchase the VRH tokens.
+  ///@param _tokenAmount The amount of tokens wished to purchase.
+  function _processPurchase(address _beneficiary, uint256 _tokenAmount) internal {
+    ///amountInUSDCents is set on _preValidatePurchase
+    uint256 bonus = calculateBonus(_tokenAmount, assignedBonusRates[_beneficiary]);
+
+    ///Ensure that the sale does not exceed allocation.
+    require(totalTokensSold.add(_tokenAmount).add(bonus) <= totalSaleAllocation);
+
+    ///Assign bonuses so that they can be later withdrawn.
+    assignBonus(_beneficiary, bonus);
+
+    ///Update the sum of tokens sold during the private sale.
+    totalTokensSold = totalTokensSold.add(_tokenAmount).add(bonus);
+
+    ///Continue processing the purchase.
+    super._processPurchase(_beneficiary, _tokenAmount);
+  }
+
+  ///@notice Calculates bonus.
+  ///@param _tokenAmount The total amount in VRH tokens.
+  ///@param _percentage bonus percentage.
+  function calculateBonus(uint256 _tokenAmount, uint256 _percentage) public pure returns (uint256) {
+    return _tokenAmount.mul(_percentage).div(100);
+  }
+
+  ///@notice Sets the bonus structure.
+  ///The bonus limits must be in decreasing order.
+  function setBonuses(uint[] _bonusLimits, uint[] _bonusPercentages) public onlyAdmin {
+    require(_bonusLimits.length == _bonusPercentages.length);
+    require(_bonusPercentages.length == 3);
+    for(uint8 i=0;i<_bonusLimits.length;i++) {
+      bonusLimits[i] = _bonusLimits[i];
+      bonusPercentages[i] = _bonusPercentages[i];
+    }
+  }
+
+
+  ///@notice Gets the bonus applicable for the supplied dollar cent value.
+  function getBonusPercentage(uint _cents) view public returns(uint256) {
+    for(uint8 i=0;i<bonusLimits.length;i++) {
+      if(_cents >= bonusLimits[i]) {
+        return bonusPercentages[i];
       }
-    } else {
-      return 0;
     }
   }
 
-  function finalize() public onlyOwner {
-    require(paused);
-    require(!finalized);
-    surplusTokens = cap - tokensMinted;
-    ledToken.mint(ledMultiSig, surplusTokens);
-    ledToken.transferControl(owner);
+  ///@notice Converts the amount of Ether (wei) or amount of any token having 18 decimal place divisible
+  ///to cent value based on the cent price supplied.
+  function convertToCents(uint256 _tokenAmount, uint256 _priceInCents, uint256 _decimals) public pure returns (uint256) {
+    return _tokenAmount.mul(_priceInCents).div(10**_decimals);
+  }
+
+  ///@notice Calculates the number of VRH tokens for the supplied wei value.
+  ///@param _weiAmount The total amount of Ether in wei value.
+  function _getTokenAmount(uint256 _weiAmount) internal view returns (uint256) {
+    return _weiAmount.mul(etherPriceInCents).div(tokenPriceInCents);
+  }
+
+  ///@dev Used only for test, drop this function before deployment.
+  ///@param _weiAmount The total amount of Ether in wei value.
+  function getTokenAmountForWei(uint256 _weiAmount) external view returns (uint256) {
+    return _getTokenAmount(_weiAmount);
+  }
+
+  ///@notice Recalculates and/or reassigns the total tokens allocated for the private sale.
+  function increaseTokenSaleAllocation() public whenNotPaused onlyAdmin {
+    ///Check the allowance of this contract to spend.
+    uint256 allowance = token.allowance(msg.sender, this);
+
+    ///Get the current allocation.
+    uint256 current = totalSaleAllocation;
+
+    ///Update the total token allocation for the private sale.
+    totalSaleAllocation = totalSaleAllocation.add(allowance);
+
+    ///Transfer (receive) the allocated VRH tokens.
+    require(token.transferFrom(msg.sender, this, allowance));
+
+    emit TokensAllocatedForSale(totalSaleAllocation, current);
+  }
+
+
+  ///@notice Enables the admins to withdraw Binance coin
+  ///or any ERC20 token accidentally sent to this contract.
+  function withdrawToken(address _token) external onlyAdmin {
+    bool isVRH = _token == address(token);
+    ERC20 erc20 = ERC20(_token);
+
+    uint256 balance = erc20.balanceOf(this);
+
+    //This stops admins from stealing the allocated bonus of the investors.
+    ///The bonus VRH tokens should remain in this contract.
+    if(isVRH) {
+      balance = balance.sub(getRemainingBonus());
+      changeClosingTime(now);
+    }
+
+    require(erc20.transfer(msg.sender, balance));
+
+    emit ERC20Withdrawn(_token, balance);
+  }
+
+
+  ///@dev Must be called after crowdsale ends, to do some extra finalization work.
+  function finalizeCrowdsale() public onlyAdmin {
+    require(!isFinalized);
+    require(hasClosed());
+
+    uint256 unsold = token.balanceOf(this).sub(bonusProvided);
+
+    if(unsold > 0) {
+      require(token.transfer(msg.sender, unsold));
+    }
+
+    isFinalized = true;
 
     emit Finalized();
-
-    finalized = true;
   }
 
-  function getInfo() public view returns(uint256, uint256, string, bool,  uint256, uint256, uint256, 
-  bool, uint256, uint256){
-    uint256 decimals = 18;
-    string memory symbol = "LED";
-    bool transfersEnabled = ledToken.transfersEnabled();
-    return (
-      TOTAL_TOKENCAP, // Tokencap with the decimal point in place. should be 100.000.000
-      decimals, // Decimals
-      symbol,
-      transfersEnabled,
-      contributors,
-      totalWeiRaised,
-      tokenCap, // Tokencap for the first sale with the decimal point in place.
-      started,
-      startTime, // Start time and end time in Unix timestamp format with a length of 10 numbers.
-      endTime
-    );
-  }
-  
-  function getInfoLevels() public view returns(uint256, uint256, uint256, uint256, uint256, uint256, 
-  uint256, uint256, uint256, uint256){
-    return (
-      PRESALE_LEVEL_1, // Amount of ether needed per bonus level
-      PRESALE_LEVEL_2,
-      PRESALE_LEVEL_3,
-      PRESALE_LEVEL_4,
-      PRESALE_LEVEL_5,
-      PRESALE_PERCENTAGE_1, // Bonus percentage per bonus level
-      PRESALE_PERCENTAGE_2,
-      PRESALE_PERCENTAGE_3,
-      PRESALE_PERCENTAGE_4,
-      PRESALE_PERCENTAGE_5
-    );
+  ///@notice Signifies whether or not the private sale has ended.
+  ///@return Returns true if the private sale has ended.
+  function hasClosed() public view returns (bool) {
+    return (totalTokensSold >= totalSaleAllocation) || super.hasClosed();
   }
 
-}
-
-/**
- * @title PrivateSale
- * PrivateSale allows investors to make token purchases and assigns them tokens based
-
- * on a token per ETH rate. Funds collected are forwarded to a wallet as they arrive.
- */
-contract PrivateSale is Crowdsale {
-
-  uint256 public tokenCap = PRIVATESALE_TOKENCAP;
-  uint256 public cap = tokenCap * DECIMALS_MULTIPLIER;
-  uint256 public weiCap = tokenCap * PRIVATESALE_BASE_PRICE_IN_WEI;
-
-  constructor(address _tokenAddress, uint256 _startTime, uint256 _endTime) public {
-    
-
-    startTime = _startTime;
-    endTime = _endTime;
-    ledToken = LedTokenInterface(_tokenAddress);
-
-    assert(_tokenAddress != 0x0);
-    assert(_startTime > 0);
-    assert(_endTime > _startTime);
+  ///@dev Reverts the finalization logic.
+  ///Use finalizeCrowdsale instead.
+  function finalization() internal {
+    revert();
   }
 
-    /**
-   * High level token purchase function
-   */
-  function() public payable {
-    buyTokens(msg.sender);
+  ///@notice Stops the crowdsale contract from sending ethers.
+  function _forwardFunds() internal {
+    //Nothing to do here.
   }
 
-  /**
-   * Low level token purchase function
-   * @param _beneficiary will receive the tokens.
-   */
-  function buyTokens(address _beneficiary) public payable whenNotPaused whenNotFinalized {
-    require(_beneficiary != 0x0);
-    require(validPurchase());
+  ///@notice Enables the admins to withdraw Ethers present in this contract.
+  ///@param _amount Amount of Ether in wei value to withdraw.
+  function withdrawFunds(uint256 _amount) external whenNotPaused onlyAdmin {
+    require(_amount <= address(this).balance);
 
+    msg.sender.transfer(_amount);
 
-    uint256 weiAmount = msg.value;
-    require(weiAmount >= MIN_PURCHASE_OTHERSALES && weiAmount <= MAX_PURCHASE);
-    uint256 priceInWei = PRIVATESALE_BASE_PRICE_IN_WEI;
-    totalWeiRaised = totalWeiRaised.add(weiAmount);
-
-    uint256 tokens = weiAmount.mul(DECIMALS_MULTIPLIER).div(priceInWei);
-    tokensMinted = tokensMinted.add(tokens);
-    require(tokensMinted < cap);
-
-    contributors = contributors.add(1);
-
-    ledToken.mint(_beneficiary, tokens);
-    emit TokenPurchase(msg.sender, _beneficiary, weiAmount, tokens);
-    forwardFunds();
+    emit FundsWithdrawn(msg.sender, _amount);
   }
 
-  function finalize() public onlyOwner {
-    require(paused);
-    require(!finalized);
-    surplusTokens = cap - tokensMinted;
-    ledToken.mint(ledMultiSig, surplusTokens);
-    ledToken.transferControl(owner);
+  ///@notice Adjusts the closing time of the crowdsale.
+  ///@param _closingTime The timestamp when the crowdsale is closed.
+  function changeClosingTime(uint256 _closingTime) public whenNotPaused onlyAdmin {
+    emit ClosingTimeChanged(_closingTime, closingTime);
 
-    emit Finalized();
-
-    finalized = true;
+    closingTime = _closingTime;
   }
 
-  function getInfo() public view returns(uint256, uint256, string, bool,  uint256, uint256, uint256, 
-  bool, uint256, uint256){
-    uint256 decimals = 18;
-    string memory symbol = "LED";
-    bool transfersEnabled = ledToken.transfersEnabled();
-    return (
-      TOTAL_TOKENCAP, // Tokencap with the decimal point in place. should be 100.000.000
-      decimals, // Decimals
-      symbol,
-      transfersEnabled,
-      contributors,
-      totalWeiRaised,
-      tokenCap, // Tokencap for the first sale with the decimal point in place.
-      started,
-      startTime, // Start time and end time in Unix timestamp format with a length of 10 numbers.
-      endTime
-    );
+  function getRemainingTokensForSale() public view returns(uint256) {
+    return totalSaleAllocation.sub(totalTokensSold);
   }
-
-}
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
-contract TokenFactory {
-
-    function createCloneToken(
-        address _parentToken,
-        uint _snapshotBlock,
-        string _tokenName,
-        string _tokenSymbol
-        ) public returns (LedToken) {
-
-        LedToken newToken = new LedToken(
-            this,
-            _parentToken,
-            _snapshotBlock,
-            _tokenName,
-            _tokenSymbol
-        );
-
-        newToken.transferControl(msg.sender);
-        return newToken;
-    }
-}
-
-contract TokenFactoryInterface {
-
-    function createCloneToken(
-        address _parentToken,
-        uint _snapshotBlock,
-        string _tokenName,
-        string _tokenSymbol
-      ) public returns (LedToken newToken);
-}
-
-/**
- * @title Tokensale
- * Tokensale allows investors to make token purchases and assigns them tokens based
-
- * on a token per ETH rate. Funds collected are forwarded to a wallet as they arrive.
- */
-contract TokenSale is Crowdsale {
-
-  uint256 public tokenCap = ICO_TOKENCAP;
-  uint256 public cap = tokenCap * DECIMALS_MULTIPLIER;
-  uint256 public weiCap = tokenCap * ICO_BASE_PRICE_IN_WEI;
-
-  uint256 public allocatedTokens;
-
-  constructor(address _tokenAddress, uint256 _startTime, uint256 _endTime) public {
-    
-
-    startTime = _startTime;
-    endTime = _endTime;
-    ledToken = LedTokenInterface(_tokenAddress);
-
-    assert(_tokenAddress != 0x0);
-    assert(_startTime > 0);
-    assert(_endTime > _startTime);
-  }
-
-    /**
-   * High level token purchase function
-   */
-  function() public payable {
-    buyTokens(msg.sender);
-  }
-
-  /**
-   * Low level token purchase function
-   * @param _beneficiary will receive the tokens.
-   */
-  function buyTokens(address _beneficiary) public payable whenNotPaused whenNotFinalized {
-    require(_beneficiary != 0x0);
-    require(validPurchase());
-
-    uint256 weiAmount = msg.value;
-    require(weiAmount >= MIN_PURCHASE_OTHERSALES && weiAmount <= MAX_PURCHASE);
-    uint256 priceInWei = ICO_BASE_PRICE_IN_WEI;
-    totalWeiRaised = totalWeiRaised.add(weiAmount);
-
-    uint256 bonusPercentage = determineBonus(weiAmount);
-    uint256 bonusTokens;
-
-    uint256 initialTokens = weiAmount.mul(DECIMALS_MULTIPLIER).div(priceInWei);
-    if(bonusPercentage>0){
-      uint256 initialDivided = initialTokens.div(100);
-      bonusTokens = initialDivided.mul(bonusPercentage);
-    } else {
-      bonusTokens = 0;
-    }
-    uint256 tokens = initialTokens.add(bonusTokens);
-    tokensMinted = tokensMinted.add(tokens);
-    require(tokensMinted < cap);
-
-    contributors = contributors.add(1);
-
-    ledToken.mint(_beneficiary, tokens);
-    emit TokenPurchase(msg.sender, _beneficiary, weiAmount, tokens);
-    forwardFunds();
-  }
-
-  function determineBonus(uint256 _wei) public view returns (uint256) {
-    if(_wei > ICO_LEVEL_1) {
-      if(_wei > ICO_LEVEL_2) {
-        if(_wei > ICO_LEVEL_3) {
-          if(_wei > ICO_LEVEL_4) {
-            if(_wei > ICO_LEVEL_5) {
-              return ICO_PERCENTAGE_5;
-            } else {
-              return ICO_PERCENTAGE_4;
-            }
-          } else {
-            return ICO_PERCENTAGE_3;
-          }
-        } else {
-          return ICO_PERCENTAGE_2;
-        }
-      } else {
-        return ICO_PERCENTAGE_1;
-      }
-    } else {
-      return 0;
-    }
-  }
-
-  function allocateLedTokens() public onlyOwner whenNotFinalized {
-    require(!ledTokensAllocated);
-    allocatedTokens = LEDTEAM_TOKENS.mul(DECIMALS_MULTIPLIER);
-    ledToken.mint(ledMultiSig, allocatedTokens);
-    ledTokensAllocated = true;
-  }
-
-  function finalize() public onlyOwner {
-    require(paused);
-    require(ledTokensAllocated);
-
-    surplusTokens = cap - tokensMinted;
-    ledToken.mint(ledMultiSig, surplusTokens);
-
-    ledToken.finishMinting();
-    ledToken.enableTransfers(true);
-    emit Finalized();
-
-    finalized = true;
-  }
-
-  function getInfo() public view returns(uint256, uint256, string, bool,  uint256, uint256, uint256, 
-  bool, uint256, uint256){
-    uint256 decimals = 18;
-    string memory symbol = "LED";
-    bool transfersEnabled = ledToken.transfersEnabled();
-    return (
-      TOTAL_TOKENCAP, // Tokencap with the decimal point in place. should be 100.000.000
-      decimals, // Decimals
-      symbol,
-      transfersEnabled,
-      contributors,
-      totalWeiRaised,
-      tokenCap, // Tokencap for the first sale with the decimal point in place.
-      started,
-      startTime, // Start time and end time in Unix timestamp format with a length of 10 numbers.
-      endTime
-    );
-  }
-  
-  function getInfoLevels() public view returns(uint256, uint256, uint256, uint256, uint256, uint256, 
-  uint256, uint256, uint256, uint256){
-    return (
-      ICO_LEVEL_1, // Amount of ether needed per bonus level
-      ICO_LEVEL_2,
-      ICO_LEVEL_3,
-      ICO_LEVEL_4,
-      ICO_LEVEL_5,
-      ICO_PERCENTAGE_1, // Bonus percentage per bonus level
-      ICO_PERCENTAGE_2,
-      ICO_PERCENTAGE_3,
-      ICO_PERCENTAGE_4,
-      ICO_PERCENTAGE_5
-    );
-  }
-
 }
