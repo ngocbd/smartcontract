@@ -1,138 +1,150 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0x794e75431945d3d0c19281afbf2d595a2080b5a3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0x8ce1ad989b37bd24c4775771c37e02c035512a01
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.23;
 
-contract owned {
+/**
+ * Math operations with safety checks
+ */
+contract SafeMath {
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a * b;
+        require(a == 0 || c / a == b);
+        return c;
+    }
+
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        require(b > 0);
+        uint256 c = a / b;
+        require(a == b * c + a % b);
+        return c;
+    }
+
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        require(b <= a);
+        return a - b;
+    }
+
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        require(c>=a && c>=b);
+        return c;
+    }
+  }
+
+contract MyToken is SafeMath{   
     address public owner;
-
-    constructor() public {
-        owner = msg.sender;
-    }
-
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
-    }
-
-    function transferOwnership(address newOwner) public onlyOwner {
-        owner = newOwner;
-    }
-}
-
-contract tokenRecipient {
-    function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public;
-}
-
-contract MyToken is owned {
-    /* Public variables of the token */
+    uint8 public decimals = 18;
+    uint256 public totalSupply;
     string public name;
     string public symbol;
-    uint8 public decimals;
-    uint256 public totalSupply;
-
-    /* This creates an array with all balances */
+     /* This creates an array with all balances */
     mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
+    mapping (address => uint256) public freezeOf;
 
+    //events
     /* This generates a public event on the blockchain that will notify clients */
     event Transfer(address indexed from, address indexed to, uint256 value);
 
     /* This notifies clients about the amount burnt */
     event Burn(address indexed from, uint256 value);
+	
+	/* This notifies clients about the amount frozen */
+    event Freeze(address indexed from, uint256 value);
+	
+	/* This notifies clients about the amount unfrozen */
+    event Unfreeze(address indexed from, uint256 value);
 
-    mapping (address => bool) public frozenAccount;
-    event FrozenFunds(address target, bool frozen);
-
-    function freezeAccount(address target, bool freeze) public onlyOwner {
-        frozenAccount[target] = freeze;
-        emit FrozenFunds(target, freeze);
-    }
-
-    /* Initializes contract with initial supply tokens to the creator of the contract */
     constructor(
-        uint256 initialSupply,
-        string tokenName,
-        uint8 decimalUnits,
-        string tokenSymbol,
-        address centralMinter
-        ) public {
-        if (centralMinter != 0) owner = centralMinter;      // ?????
-        balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
-        totalSupply = initialSupply;                        // Update total supply
-        name = tokenName;                                   // Set the name for display purposes
-        symbol = tokenSymbol;                               // Set the symbol for display purposes
-        decimals = decimalUnits;                            // Amount of decimals for display purposes
+        uint256 initSupply, 
+        string tokenName, 
+        string tokenSymbol, 
+        uint8 decimalUnits) public {
+        owner = msg.sender;
+        totalSupply = initSupply;
+        name = tokenName;
+        symbol = tokenSymbol;
+        decimals = decimalUnits;  
+        balanceOf[msg.sender] = totalSupply;
+        emit Transfer(address(0), msg.sender, totalSupply);
     }
 
-    /* Internal transfer, only can be called by this contract */
-    function _transfer(address _from, address _to, uint _value) internal {
-        require (_to != 0x0);                               // Prevent transfer to 0x0 address. Use burn() instead
-        require (balanceOf[_from] >= _value);                // Check if the sender has enough
-        require (balanceOf[_to] + _value > balanceOf[_to]); // Check for overflows
-        require(!frozenAccount[_from]);
-        balanceOf[_from] -= _value;                         // Subtract from the sender
-        balanceOf[_to] += _value;                            // Add the same to the recipient
-        emit Transfer(_from, _to, _value);
+    // public functions
+    /// @return total amount of tokens
+    function totalSupply() public view returns (uint256){
+        return totalSupply;
     }
 
-    /// @notice Send `_value` tokens to `_to` from your account
+    /// @param _owner The address from which the balance will be retrieved
+    /// @return The balance
+    function balanceOf(address _owner) public view returns (uint256) {
+        return balanceOf[_owner];
+    }
+    
+    /// @param _owner The address from which the freeze amount will be retrieved
+    /// @return The freeze amount
+    function freezeOf(address _owner) public view returns (uint256) {
+        return freezeOf[_owner];
+    }
+
+    /* Send coins */
+    /* This generates a public event on the blockchain that will notify clients */
+    /// @notice send `_value` token to `_to` from `msg.sender`
     /// @param _to The address of the recipient
-    /// @param _value the amount to send
+    /// @param _value The amount of token to be transferred
     function transfer(address _to, uint256 _value) public {
-        _transfer(msg.sender, _to, _value);
+        require(_to != 0x0);                                // Prevent transfer to 0x0 address.
+        require(_value > 0);                                // Check send amount is greater than 0.
+        require(balanceOf[msg.sender] >= _value);           // Check balance of the sender is enough
+        require(balanceOf[_to] + _value > balanceOf[_to]);  // Check for overflow
+        balanceOf[msg.sender] = SafeMath.sub(balanceOf[msg.sender], _value);// Subtract _value amount from the sender
+        balanceOf[_to] = SafeMath.add(balanceOf[_to], _value);// Add the same amount to the recipient
+        emit Transfer(msg.sender, _to, _value);// Notify anyone listening that this transfer took place
     }
 
-    /// @notice Send `_value` tokens to `_to` in behalf of `_from`
-    /// @param _from The address of the sender
-    /// @param _to The address of the recipient
-    /// @param _value the amount to send
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        require (_value < allowance[_from][msg.sender]);     // Check allowance
-        allowance[_from][msg.sender] -= _value;
-        _transfer(_from, _to, _value);
-        return true;
-    }
-
-    /// @notice Allows `_spender` to spend no more than `_value` tokens in your behalf
-    /// @param _spender The address authorized to spend
-    /// @param _value the max amount they can spend
-    function approve(address _spender, uint256 _value) public
-        returns (bool success) {
-        allowance[msg.sender][_spender] = _value;
-        return true;
-    }
-
-    /// @notice Allows `_spender` to spend no more than `_value` tokens in your behalf, and then ping the contract about it
-    /// @param _spender The address authorized to spend
-    /// @param _value the max amount they can spend
-    /// @param _extraData some extra information to send to the approved contract
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) public
-        returns (bool success) {
-        tokenRecipient spender = tokenRecipient(_spender);
-        if (approve(_spender, _value)) {
-            spender.receiveApproval(msg.sender, _value, this, _extraData);
-            return true;
-        }
-    }
-
-    /// @notice Remove `_value` tokens from the system irreversibly
-    /// @param _value the amount of money to burn
-    function burn(uint256 _value) public returns (bool success) {
-        require (balanceOf[msg.sender] > _value);            // Check if the sender has enough
-        balanceOf[msg.sender] -= _value;                      // Subtract from the sender
-        totalSupply -= _value;                                // Updates totalSupply
+    /* Burn coins */
+    /// @notice burn `_value` token of owner
+    /// @param _value The amount of token to be burned
+    function burn(uint256 _value) public {
+        require(owner == msg.sender);                //Check owner
+        require(balanceOf[msg.sender] >= _value);    // Check if the sender has enough
+        require(_value > 0);                         //Check _value is valid
+        balanceOf[msg.sender] = SafeMath.sub(balanceOf[msg.sender], _value);    // Subtract from the owner
+        totalSupply = SafeMath.sub(totalSupply,_value);                         // Updates totalSupply
         emit Burn(msg.sender, _value);
-        return true;
+    }
+	
+    /// @notice freeze `_value` token of '_addr' address
+    /// @param _addr The address to be freezed
+    /// @param _value The amount of token to be freezed
+	function freeze(address _addr, uint256 _value) public {
+        require(owner == msg.sender);                //Check owner
+        require(balanceOf[_addr] >= _value);         // Check if the sender has enough
+		require(_value > 0);                         //Check _value is valid
+        balanceOf[_addr] = SafeMath.sub(balanceOf[_addr], _value);              // Subtract _value amount from balance of _addr address
+        freezeOf[_addr] = SafeMath.add(freezeOf[_addr], _value);                // Add the same amount to freeze of _addr address
+        emit Freeze(_addr, _value);
+    }
+	
+    /// @notice unfreeze `_value` token of '_addr' address
+    /// @param _addr The address to be unfreezed
+    /// @param _value The amount of token to be unfreezed
+	function unfreeze(address _addr, uint256 _value) public {
+        require(owner == msg.sender);                //Check owner
+        require(freezeOf[_addr] >= _value);          // Check if the sender has enough
+		require(_value > 0);                         //Check _value is valid
+        freezeOf[_addr] = SafeMath.sub(freezeOf[_addr], _value);                // Subtract _value amount from freeze of _addr address
+		balanceOf[_addr] = SafeMath.add(balanceOf[_addr], _value);              // Add the same amount to balance of _addr address
+        emit Unfreeze(_addr, _value);
     }
 
-    function burnFrom(address _from, uint256 _value) public returns (bool success) {
-        require(balanceOf[_from] >= _value);                // Check if the targeted balance is enough
-        require(_value <= allowance[_from][msg.sender]);    // Check allowance
-        balanceOf[_from] -= _value;                         // Subtract from the targeted balance
-        allowance[_from][msg.sender] -= _value;             // Subtract from the sender's allowance
-        totalSupply -= _value;                              // Update totalSupply
-        emit Burn(_from, _value);
-        return true;
+    // transfer balance to owner
+	function withdrawEther(uint256 amount) public {
+		require(owner == msg.sender);
+		owner.transfer(amount);
+	}
+	
+	// can accept ether
+	function() payable public {
     }
 }
