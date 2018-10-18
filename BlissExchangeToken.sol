@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BlissExchangeToken at 0x54bfd2c33b252f6c959688bb1ef2169a96dcee8f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BlissExchangeToken at 0xd3e525c18a10252b3c6b1d82451a0d4585d27a9c
 */
 pragma solidity ^0.4.18;
 
@@ -76,10 +76,10 @@ contract BlissExchangeToken is ERC20 {
     mapping (address => mapping (address => uint256)) allowed;    
 
     string public constant name = "Bliss Exchange Token";
-    string public constant symbol = "BLISS";
+    string public constant symbol = "BLISSX";
     uint public constant decimals = 8;
     
-    uint256 public totalSupply = 10000000000e8;
+    uint256 public totalSupply = 20000000000e8;
     uint256 public totalDistributed = 0;        
     uint256 public tokensPerEth = 25000000e8;
     uint256 public constant minContribution = 1 ether / 100; // 0.01 Eth
