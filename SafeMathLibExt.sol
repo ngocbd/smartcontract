@@ -1,10 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafeMathLibExt at 0x8D7e3B6915Afc4632E3085188BA0d41C84E9C6dE
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafeMathLibExt at 0x6AB94895aDF378e12B40160ED582fdd539C8Cb75
 */
+// Created using Token Wizard https://github.com/poanetwork/token-wizard by POA Network 
 /**
-  * This smart contract code is Copyright 2018 BitFinance Ltd.
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
  *
- * Licensed under the Apache License, version 2.0: https://github.com/BitFinance/ico/blob/master/LICENSE.txt
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
  */
 
 pragma solidity ^0.4.6;
