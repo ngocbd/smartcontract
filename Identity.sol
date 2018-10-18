@@ -1,531 +1,303 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Identity at 0x7c8d97c7c47d9c2d8ad269561f440b8ce53071a9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Identity at 0x47a87cbb16e1b340c14e795969daaba004e6f9c2
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.22;
 
-// File: openzeppelin-solidity/contracts/ownership/Ownable.sol
+contract ERC725 {
 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
+    uint256 public constant MANAGEMENT_KEY = 1;
+    uint256 public constant ACTION_KEY = 2;
+    uint256 public constant CLAIM_SIGNER_KEY = 3;
+    uint256 public constant ENCRYPTION_KEY = 4;
 
+    event KeyAdded(bytes32 indexed key, uint256 indexed purpose, uint256 indexed keyType);
+    event KeyRemoved(bytes32 indexed key, uint256 indexed purpose, uint256 indexed keyType);
+    event ExecutionRequested(uint256 indexed executionId, address indexed to, uint256 indexed value, bytes data);
+    event Executed(uint256 indexed executionId, address indexed to, uint256 indexed value, bytes data);
+    event Approved(uint256 indexed executionId, bool approved);
 
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-}
-
-// File: openzeppelin-solidity/contracts/lifecycle/Pausable.sol
-
-/**
- * @title Pausable
- * @dev Base contract which allows children to implement an emergency stop mechanism.
- */
-contract Pausable is Ownable {
-  event Pause();
-  event Unpause();
-
-  bool public paused = false;
-
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is not paused.
-   */
-  modifier whenNotPaused() {
-    require(!paused);
-    _;
-  }
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is paused.
-   */
-  modifier whenPaused() {
-    require(paused);
-    _;
-  }
-
-  /**
-   * @dev called by the owner to pause, triggers stopped state
-   */
-  function pause() onlyOwner whenNotPaused public {
-    paused = true;
-    emit Pause();
-  }
-
-  /**
-   * @dev called by the owner to unpause, returns to normal state
-   */
-  function unpause() onlyOwner whenPaused public {
-    paused = false;
-    emit Unpause();
-  }
-}
-
-// File: openzeppelin-solidity/contracts/math/SafeMath.sol
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    if (a == 0) {
-      return 0;
+    struct Key {
+        uint256[] purpose; //e.g., MANAGEMENT_KEY = 1, ACTION_KEY = 2, etc.
+        uint256 keyType; // e.g. 1 = ECDSA, 2 = RSA, etc.
+        bytes32 key;
     }
-    c = a * b;
-    assert(c / a == b);
-    return c;
-  }
 
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    // uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return a / b;
-  }
-
-  /**
-  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    c = a + b;
-    assert(c >= a);
-    return c;
-  }
+    function getKey(bytes32 _key) public constant returns(uint256[] purpose, uint256 keyType, bytes32 key);
+    function getKeyPurpose(bytes32 _key) public constant returns(uint256[] purpose);
+    function getKeysByPurpose(uint256 _purpose) public constant returns(bytes32[] keys);
+    function addKey(bytes32 _key, uint256 _purpose, uint256 _keyType) public returns (bool success);
+    function removeKey(bytes32 _key, uint256 _purpose) public returns (bool success);
+    function execute(address _to, uint256 _value, bytes _data) public returns (uint256 executionId);
+    function approve(uint256 _id, bool _approve) public returns (bool success);
 }
 
-// File: openzeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol
 
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
 contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
+    function balanceOf(address _who) public constant returns (uint256);
+    function transfer(address _to, uint256 _value) public returns (bool);
 }
 
-// File: openzeppelin-solidity/contracts/token/ERC20/BasicToken.sol
+contract Identity is ERC725 {
 
-/**
- * @title Basic token
- * @dev Basic version of StandardToken, with no allowances.
- */
-contract BasicToken is ERC20Basic {
-  using SafeMath for uint256;
+    uint256 constant LOGIN_KEY = 10;
+    uint256 constant FUNDS_MANAGEMENT = 11;
 
-  mapping(address => uint256) balances;
+    uint256 executionNonce;
 
-  uint256 totalSupply_;
-
-  /**
-  * @dev total number of tokens in existence
-  */
-  function totalSupply() public view returns (uint256) {
-    return totalSupply_;
-  }
-
-  /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
-  function transfer(address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[msg.sender]);
-
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    emit Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-  /**
-  * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of.
-  * @return An uint256 representing the amount owned by the passed address.
-  */
-  function balanceOf(address _owner) public view returns (uint256) {
-    return balances[_owner];
-  }
-
-}
-
-// File: openzeppelin-solidity/contracts/token/ERC20/ERC20.sol
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-// File: openzeppelin-solidity/contracts/token/ERC20/StandardToken.sol
-
-/**
- * @title Standard ERC20 token
- *
- * @dev Implementation of the basic standard token.
- * @dev https://github.com/ethereum/EIPs/issues/20
- * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
- */
-contract StandardToken is ERC20, BasicToken {
-
-  mapping (address => mapping (address => uint256)) internal allowed;
-
-
-  /**
-   * @dev Transfer tokens from one address to another
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amount of tokens to be transferred
-   */
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[_from]);
-    require(_value <= allowed[_from][msg.sender]);
-
-    balances[_from] = balances[_from].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    emit Transfer(_from, _to, _value);
-    return true;
-  }
-
-  /**
-   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   *
-   * Beware that changing an allowance with this method brings the risk that someone may use both the old
-   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
-   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
-   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-   * @param _spender The address which will spend the funds.
-   * @param _value The amount of tokens to be spent.
-   */
-  function approve(address _spender, uint256 _value) public returns (bool) {
-    allowed[msg.sender][_spender] = _value;
-    emit Approval(msg.sender, _spender, _value);
-    return true;
-  }
-
-  /**
-   * @dev Function to check the amount of tokens that an owner allowed to a spender.
-   * @param _owner address The address which owns the funds.
-   * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifying the amount of tokens still available for the spender.
-   */
-  function allowance(address _owner, address _spender) public view returns (uint256) {
-    return allowed[_owner][_spender];
-  }
-
-  /**
-   * @dev Increase the amount of tokens that an owner allowed to a spender.
-   *
-   * approve should be called when allowed[_spender] == 0. To increment
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   * @param _spender The address which will spend the funds.
-   * @param _addedValue The amount of tokens to increase the allowance by.
-   */
-  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
-    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
-
-  /**
-   * @dev Decrease the amount of tokens that an owner allowed to a spender.
-   *
-   * approve should be called when allowed[_spender] == 0. To decrement
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   * @param _spender The address which will spend the funds.
-   * @param _subtractedValue The amount of tokens to decrease the allowance by.
-   */
-  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
-    uint oldValue = allowed[msg.sender][_spender];
-    if (_subtractedValue > oldValue) {
-      allowed[msg.sender][_spender] = 0;
-    } else {
-      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    struct Execution {
+        address to;
+        uint256 value;
+        bytes data;
+        bool approved;
+        bool executed;
     }
-    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
 
-}
+    mapping (bytes32 => Key) keys;
+    mapping (uint256 => bytes32[]) keysByPurpose;
+    mapping (uint256 => Execution) executions;
 
-// File: contracts/OwnedPausableToken.sol
+    event ExecutionFailed(uint256 indexed executionId, address indexed to, uint256 indexed value, bytes data);
 
-/**
- * @title Pausable token that allows transfers by owner while paused
- * @dev StandardToken modified with pausable transfers.
- **/
-contract OwnedPausableToken is StandardToken, Pausable {
+    modifier onlyManagement() {
+        require(keyHasPurpose(keccak256(msg.sender), MANAGEMENT_KEY), "Sender does not have management key");
+        _;
+    }
 
-  /**
-   * @dev Modifier to make a function callable only when the contract is not paused or the caller is the owner
-   */
-  modifier whenNotPausedOrIsOwner() {
-    require(!paused || msg.sender == owner);
-    _;
-  }
+    modifier onlyAction() {
+        require(keyHasPurpose(keccak256(msg.sender), ACTION_KEY), "Sender does not have action key");
+        _;
+    }
 
-  function transfer(address _to, uint256 _value) public whenNotPausedOrIsOwner returns (bool) {
-    return super.transfer(_to, _value);
-  }
+    modifier onlyFundsManagement() {
+        require(keyHasPurpose(keccak256(msg.sender), FUNDS_MANAGEMENT), "Sender does not have funds key");
+        _;
+    }
 
-  function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool) {
-    return super.transferFrom(_from, _to, _value);
-  }
+    constructor() public {
+        bytes32 _key = keccak256(msg.sender);
+        keys[_key].key = _key;
+        keys[_key].purpose = [MANAGEMENT_KEY];
+        keys[_key].keyType = 1;
+        keysByPurpose[MANAGEMENT_KEY].push(_key);
+        emit KeyAdded(_key, MANAGEMENT_KEY, 1);
+    }
 
-  function approve(address _spender, uint256 _value) public whenNotPaused returns (bool) {
-    return super.approve(_spender, _value);
-  }
+    function getKey(bytes32 _key)
+        public
+        view
+        returns(uint256[] purpose, uint256 keyType, bytes32 key)
+    {
+        return (keys[_key].purpose, keys[_key].keyType, keys[_key].key);
+    }
 
-  function increaseApproval(address _spender, uint _addedValue) public whenNotPaused returns (bool success) {
-    return super.increaseApproval(_spender, _addedValue);
-  }
+    function getKeyPurpose(bytes32 _key)
+        public
+        view
+        returns(uint256[] purpose)
+    {
+        return (keys[_key].purpose);
+    }
 
-  function decreaseApproval(address _spender, uint _subtractedValue) public whenNotPaused returns (bool success) {
-    return super.decreaseApproval(_spender, _subtractedValue);
-  }
-}
+    function getKeysByPurpose(uint256 _purpose)
+        public
+        view
+        returns(bytes32[] _keys)
+    {
+        return keysByPurpose[_purpose];
+    }
 
-// File: contracts/interfaces/IDAVToken.sol
+    function addKey(bytes32 _key, uint256 _purpose, uint256 _type)
+        public
+        onlyManagement
+        returns (bool success)
+    {
+        if (keyHasPurpose(_key, _purpose)) {
+            return true;
+        }
 
-contract IDAVToken is ERC20 {
+        keys[_key].key = _key;
+        keys[_key].purpose.push(_purpose);
+        keys[_key].keyType = _type;
 
-  function name() public view returns (string) {}
-  function symbol() public view returns (string) {}
-  function decimals() public view returns (uint8) {}
-  function increaseApproval(address _spender, uint _addedValue) public returns (bool success);
-  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool success);
+        keysByPurpose[_purpose].push(_key);
 
-  function owner() public view returns (address) {}
-  function transferOwnership(address newOwner) public;
+        emit KeyAdded(_key, _purpose, _type);
 
-  function burn(uint256 _value) public;
+        return true;
+    }
 
-  function pauseCutoffTime() public view returns (uint256) {}
-  function paused() public view returns (bool) {}
-  function pause() public;
-  function unpause() public;
-  function setPauseCutoffTime(uint256 _pauseCutoffTime) public;
+    function approve(uint256 _id, bool _approve)
+        public
+        onlyAction
+        returns (bool success)
+    {
+        emit Approved(_id, _approve);
 
-}
+        if (_approve == true) {
+            executions[_id].approved = true;
+            success = executions[_id].to.call(executions[_id].data, 0);
+            if (success) {
+                executions[_id].executed = true;
+                emit Executed(
+                    _id,
+                    executions[_id].to,
+                    executions[_id].value,
+                    executions[_id].data
+                );
+            } else {
+                emit ExecutionFailed(
+                    _id,
+                    executions[_id].to,
+                    executions[_id].value,
+                    executions[_id].data
+                );
+            }
+            return success;
+        } else {
+            executions[_id].approved = false;
+        }
+        return true;
+    }
 
-// File: openzeppelin-solidity/contracts/token/ERC20/BurnableToken.sol
+    function execute(address _to, uint256 _value, bytes _data)
+        public
+        returns (uint256 executionId)
+    {
+        require(!executions[executionNonce].executed, "Already executed");
+        executions[executionNonce].to = _to;
+        executions[executionNonce].value = _value;
+        executions[executionNonce].data = _data;
 
-/**
- * @title Burnable Token
- * @dev Token that can be irreversibly burned (destroyed).
- */
-contract BurnableToken is BasicToken {
+        emit ExecutionRequested(executionNonce, _to, _value, _data);
 
-  event Burn(address indexed burner, uint256 value);
+        if (keyHasPurpose(keccak256(msg.sender), ACTION_KEY)) {
+            approve(executionNonce, true);
+        }
 
-  /**
-   * @dev Burns a specific amount of tokens.
-   * @param _value The amount of token to be burned.
-   */
-  function burn(uint256 _value) public {
-    _burn(msg.sender, _value);
-  }
+        executionNonce++;
+        return executionNonce-1;
+    }
 
-  function _burn(address _who, uint256 _value) internal {
-    require(_value <= balances[_who]);
-    // no need to require value <= totalSupply, since that would imply the
-    // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+    function removeKey(bytes32 _key, uint256 _purpose)
+        public
+        onlyManagement
+        returns (bool success)
+    {
+        require(keys[_key].key == _key, "No such key");
 
-    balances[_who] = balances[_who].sub(_value);
-    totalSupply_ = totalSupply_.sub(_value);
-    emit Burn(_who, _value);
-    emit Transfer(_who, address(0), _value);
-  }
-}
+        if (!keyHasPurpose(_key, _purpose)) {
+            return false;
+        }
 
-// File: contracts/DAVToken.sol
+        uint256 arrayLength = keys[_key].purpose.length;
+        int index = -1;
+        for (uint i = 0; i < arrayLength; i++) {
+            if (keys[_key].purpose[i] == _purpose) {
+                index = int(i);
+                break;
+            }
+        }
 
-/**
- * @title DAV Token
- * @dev ERC20 token
- */
-contract DAVToken is IDAVToken, BurnableToken, OwnedPausableToken {
+        if (index != -1) {
+            keys[_key].purpose[uint(index)] = keys[_key].purpose[arrayLength - 1];
+            delete keys[_key].purpose[arrayLength - 1];
+            keys[_key].purpose.length--;
+        }
 
-  // Token constants
-  string public name = 'DAV Token';
-  string public symbol = 'DAV';
-  uint8 public decimals = 18;
+        uint256 purposesLen = keysByPurpose[_purpose].length;
+        for (uint j = 0; j < purposesLen; j++) {
+            if (keysByPurpose[_purpose][j] == _key) {
+                keysByPurpose[_purpose][j] = keysByPurpose[_purpose][purposesLen - 1];
+                delete keysByPurpose[_purpose][purposesLen - 1];
+                keysByPurpose[_purpose].length--;
+                break;
+            }
+        }
 
-  // Time after which pause can no longer be called
-  uint256 public pauseCutoffTime;
+        emit KeyRemoved(_key, _purpose, keys[_key].keyType);
 
-  /**
-   * @notice DAVToken constructor
-   * Runs once on initial contract creation. Sets initial supply and balances.
-   */
-  constructor(uint256 _initialSupply) public {
-    totalSupply_ = _initialSupply;
-    balances[msg.sender] = totalSupply_;
-  }
+        return true;
+    }
 
-  /**
-   * Set the cutoff time after which the token can no longer be paused
-   * Cannot be in the past. Can only be set once.
-   *
-   * @param _pauseCutoffTime Time for pause cutoff.
-   */
-  function setPauseCutoffTime(uint256 _pauseCutoffTime) onlyOwner public {
-    // Make sure time is not in the past
-    // solium-disable-next-line security/no-block-members
-    require(_pauseCutoffTime >= block.timestamp);
-    // Make sure cutoff time hasn't been set already
-    require(pauseCutoffTime == 0);
-    // Set the cutoff time
-    pauseCutoffTime = _pauseCutoffTime;
-  }
+    function keyHasPurpose(bytes32 _key, uint256 _purpose)
+        public
+        view
+        returns(bool result)
+    {
+        if (keys[_key].key == 0) return false;
+        uint256 arrayLength = keys[_key].purpose.length;
+        for (uint i = 0; i < arrayLength; i++) {
+            if (keys[_key].purpose[i] == _purpose) {
+                return true;
+            }
+        }
+        return false;
+    }
 
-  /**
-   * @dev called by the owner to pause, triggers stopped state
-   */
-  function pause() onlyOwner whenNotPaused public {
-    // Make sure pause cut off time isn't set or if it is, it's in the future
-    // solium-disable-next-line security/no-block-members
-    require(pauseCutoffTime == 0 || pauseCutoffTime >= block.timestamp);
-    paused = true;
-    emit Pause();
-  }
+   /**
+     * Send all ether to msg.sender
+     * Requires FUNDS_MANAGEMENT purpose for msg.sender
+     */
+    function withdraw() public onlyFundsManagement {
+        msg.sender.transfer(address(this).balance);
+    }
 
-}
+    /**
+     * Transfer ether to _account
+     * @param _amount amount to transfer in wei
+     * @param _account recepient
+     * Requires FUNDS_MANAGEMENT purpose for msg.sender
+     */
+    function transferEth(uint _amount, address _account) public onlyFundsManagement {
+        require(_amount <= address(this).balance, "Amount should be less than total balance of the contract");
+        require(_account != address(0), "must be valid address");
+        _account.transfer(_amount);
+    }
 
-// File: contracts/Identity.sol
+    /**
+     * Returns contract eth balance
+     */
+    function getBalance() public view returns(uint)  {
+        return address(this).balance;
+    }
 
-/**
- * @title Identity
- */
-contract Identity {
+    /**
+     * Returns ERC20 token balance for _token
+     * @param _token token address
+     */
+    function getTokenBalance(address _token) public view returns (uint) {
+        return ERC20Basic(_token).balanceOf(this);
+    }
 
-  struct DAVIdentity {
-    address wallet;
-  }
+    /**
+     * Send all tokens for _token to msg.sender
+     * @param _token ERC20 contract address
+     * Requires FUNDS_MANAGEMENT purpose for msg.sender
+     */
+    function withdrawTokens(address _token) public onlyFundsManagement {
+        require(_token != address(0));
+        ERC20Basic token = ERC20Basic(_token);
+        uint balance = token.balanceOf(this);
+        // token returns true on successful transfer
+        assert(token.transfer(msg.sender, balance));
+    }
 
-  mapping (address => DAVIdentity) private identities;
+    /**
+     * Send tokens for _token to _to
+     * @param _token ERC20 contract address
+     * @param _to recepient
+     * @param _amount amount in 
+     * Requires FUNDS_MANAGEMENT purpose for msg.sender
+     */
+    function transferTokens(address _token, address _to, uint _amount) public onlyFundsManagement {
+        require(_token != address(0));
+        require(_to != address(0));
+        ERC20Basic token = ERC20Basic(_token);
+        uint balance = token.balanceOf(this);
+        require(_amount <= balance);
+        assert(token.transfer(_to, _amount));
+    }
 
-  DAVToken private token;
+    function () public payable {}
 
-  // Prefix to added to messages signed by web3
-  bytes28 private constant ETH_SIGNED_MESSAGE_PREFIX = '\x19Ethereum Signed Message:\n32';
-  bytes25 private constant DAV_REGISTRATION_REQUEST = 'DAV Identity Registration';
-
-  /**
-   * @dev Constructor
-   *
-   * @param _davTokenContract address of the DAVToken contract
-   */
-  function Identity(DAVToken _davTokenContract) public {
-    token = _davTokenContract;
-  }
-
-  function register(address _id, uint8 _v, bytes32 _r, bytes32 _s) public {
-    // Make sure id isn't registered already
-    require(
-      identities[_id].wallet == 0x0
-    );
-    // Generate message hash
-    bytes32 prefixedHash = keccak256(ETH_SIGNED_MESSAGE_PREFIX, keccak256(DAV_REGISTRATION_REQUEST));
-    // Verify message signature
-    require(
-      ecrecover(prefixedHash, _v, _r, _s) == _id
-    );
-
-    // Register in identities mapping
-    identities[_id] = DAVIdentity({
-      wallet: msg.sender
-    });
-  }
-
-  function registerSimple() public {
-    // Make sure id isn't registered already
-    require(
-      identities[msg.sender].wallet == 0x0
-    );
-
-    // Register in identities mapping
-    identities[msg.sender] = DAVIdentity({
-      wallet: msg.sender
-    });
-  }
-
-  function getBalance(address _id) public view returns (uint256 balance) {
-    return token.balanceOf(identities[_id].wallet);
-  }
-
-  function verifyOwnership(address _id, address _wallet) public view returns (bool verified) {
-    return identities[_id].wallet == _wallet;
-  }
-
-  // Check identity registration status
-  function isRegistered(address _id) public view returns (bool) {
-    return identities[_id].wallet != 0x0;
-  }
-
-  // Get identity wallet
-  function getIdentityWallet(address _id) public view returns (address) {
-    return identities[_id].wallet;
-  }
 }
