@@ -1,9 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CullCoinCrowdsale at 0xd94660fb33467948a40a170c82de581eb9a9594f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CullCoinCrowdsale at 0x94744327edeb0345f5bce470d80cf8fe2a6b3634
 */
 pragma solidity ^0.4.24;
-// 0.4.24+commit.e67f0147.Emscripten.clang
-// optimisation enabled
 
 /**
 CullCoin.io 
@@ -520,7 +518,7 @@ contract ERC20Basic {
  * @title ERC20 interface
  * @dev see https://github.com/ethereum/EIPs/issues/20
  */
-contract ERC20 is ERC20Basic {
+contract ERC20 is ERC20Basic, Ownable, Crowdsale {  // AB Ownable, Crowdsale
   function allowance(address _owner, address _spender)
     public view returns (uint256);
 
@@ -533,6 +531,7 @@ contract ERC20 is ERC20Basic {
     address indexed spender,
     uint256 value
   );
+  
 }
 
 //SafeERC20.sol // openzeppelin-solidity
@@ -753,7 +752,7 @@ contract StandardToken is ERC20, BasicToken {
  * @dev Simple ERC20 Token example, with mintable token creation
  * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
  */
-contract MintableToken is StandardToken, Ownable {
+contract MintableToken is StandardToken { // AB removed ownable
   event Mint(address indexed to, uint256 amount);
   event MintFinished();
 
@@ -1088,6 +1087,7 @@ contract CullCoinToken is MintableToken {
       decimals = _decimals; 
       owner = msg.sender; 
   }
+ 
 }
 
 //CullCoinCrowdsale // AB
@@ -1112,6 +1112,13 @@ contract CullCoinCrowdsale is  TimedCrowdsale, MintedCrowdsale, WhitelistedCrowd
     public
     Crowdsale(_rate,_wallet, _token, _presaleEnds, _bonus1Ends, _bonus2Ends, _bonus3Ends)
     TimedCrowdsale(_openingTime, _closingTime)
-    WhitelistedCrowdsale() {
+    WhitelistedCrowdsale()
+    {
+    }
+    
+    //AB ethereum.stackexchange.com/questions/34184/transfer-ownership-of-a-token-contract
+    function transferTokenOwnership(address _newOwner) public onlyOwner {
+    require(msg.sender == owner); 
+    token.transferOwnership(_newOwner);
     }
 }
