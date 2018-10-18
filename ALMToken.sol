@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ALMToken at 0x3e2ac221625b8e232ee8c3af97d5e8608c3fc58c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ALMToken at 0x3065a624ecdfee7def83ca9a895b1cbee3a56922
 */
 pragma solidity ^0.4.24;
 
@@ -396,5 +396,4 @@ contract ALMToken is MintableToken {
     string public constant name = "Almee Token";
     string public constant symbol = "ALM";
     uint8 public constant decimals = 18;
-
 }
