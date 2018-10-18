@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MortgageManager at 0x0bdaf0d7eb72cac0e0c8defcbe83ccc06c66a602
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MortgageManager at 0x74ce62f642d491f87c2c6119dd6cc12a05434c87
 */
 pragma solidity ^0.4.24;
 
@@ -209,16 +209,18 @@ library SafeMath {
 
 
 contract SafeWithdraw is Ownable {
-    /**
-        @dev Withdraws tokens from the contract.
-
-        @param token Token to withdraw
-        @param to Destination of the tokens
-        @param amountOrId Amount/ID to withdraw 
-    */
     function withdrawTokens(Token token, address to, uint256 amountOrId) external onlyOwner returns (bool) {
         require(to != address(0));
         return token.transfer(to, amountOrId);
+    }
+    
+    function withdrawErc721(ERC721Base token, address to, uint256 amountOrId) external onlyOwner returns (bool) {
+        require(to != address(0));
+        token.transferFrom(this, to, amountOrId);
+    }
+    
+    function withdrawEth(address to, uint256 amount) external onlyOwner returns (bool) {
+        return to.send(amount);
     }
 }
 
@@ -237,16 +239,6 @@ contract TokenConverter {
     function convert(Token _fromToken, Token _toToken, uint256 _fromAmount, uint256 _minReturn) external payable returns (uint256 amount);
 }
 
-
-
-interface IERC721Receiver {
-    function onERC721Received(
-        address _oldOwner,
-        uint256 _tokenId,
-        bytes   _userData
-    ) external returns (bytes4);
-}
-
 contract ERC721Base {
     using SafeMath for uint256;
 
@@ -257,6 +249,9 @@ contract ERC721Base {
     mapping(address => mapping(address => bool)) private _operators;
     mapping(uint256 => address) private _approval;
     mapping(uint256 => uint256) private _indexOfAsset;
+
+    bytes4 internal constant ERC721_RECEIVED = 0x150b7a02;
+    bytes4 internal constant ERC721_RECEIVED_LEGACY = 0xf0b9e5ba;
 
     event Transfer(address indexed _from, address indexed _to, uint256 _tokenId);
     event Approval(address indexed _owner, address indexed _approved, uint256 _tokenId);
@@ -353,7 +348,7 @@ contract ERC721Base {
     }
     function _isAuthorized(address operator, uint256 assetId) internal view returns (bool)
     {
-        require(operator != 0, "Operator can't be 0");
+        require(operator != 0, "Operator can't be 0x0");
         address owner = _ownerOf(assetId);
         if (operator == owner) {
             return true;
@@ -389,8 +384,8 @@ contract ERC721Base {
      */
     function approve(address operator, uint256 assetId) external {
         address holder = _ownerOf(assetId);
-        require(msg.sender == holder || _isApprovedForAll(msg.sender, holder));
-        require(operator != holder);
+        require(msg.sender == holder || _isApprovedForAll(msg.sender, holder), "msg.sender Is not approved");
+        require(operator != holder, "The operator can't be the holder");
         if (_getApprovedAddress(assetId) != operator) {
             _approval[assetId] = operator;
             emit Approval(holder, operator, assetId);
@@ -480,17 +475,17 @@ contract ERC721Base {
     //
 
     modifier onlyHolder(uint256 assetId) {
-        require(_ownerOf(assetId) == msg.sender, "Not holder");
+        require(_ownerOf(assetId) == msg.sender, "msg.sender is not the holder");
         _;
     }
 
     modifier onlyAuthorized(uint256 assetId) {
-        require(_isAuthorized(msg.sender, assetId), "Not authorized");
+        require(_isAuthorized(msg.sender, assetId), "msg.sender Not authorized");
         _;
     }
 
     modifier isCurrentOwner(address from, uint256 assetId) {
-        require(_ownerOf(assetId) == from, "Not current owner");
+        require(_ownerOf(assetId) == from, "from Is not the current owner");
         _;
     }
 
@@ -552,8 +547,8 @@ contract ERC721Base {
         bytes userData,
         bool doCheck
     )
-        isCurrentOwner(from, assetId)
         internal
+        isCurrentOwner(from, assetId)
     {
         address holder = _holderOf[assetId];
         _removeAssetFrom(holder, assetId);
@@ -561,13 +556,37 @@ contract ERC721Base {
         _addAssetTo(to, assetId);
 
         if (doCheck && _isContract(to)) {
-            // Equals to bytes4(keccak256("onERC721Received(address,uint256,bytes)"))
-            bytes4 ERC721_RECEIVED = bytes4(0xf0b9e5ba);
-            require(
-                IERC721Receiver(to).onERC721Received(
-                    holder, assetId, userData
-                ) == ERC721_RECEIVED
-            , "Contract onERC721Received failed");
+            // Call dest contract
+            uint256 success;
+            bytes32 result;
+            // Perform check with the new safe call
+            // onERC721Received(address,address,uint256,bytes)
+            (success, result) = _noThrowCall(
+                to,
+                abi.encodeWithSelector(
+                    ERC721_RECEIVED,
+                    msg.sender,
+                    holder,
+                    assetId,
+                    userData
+                )
+            );
+
+            if (success != 1 || result != ERC721_RECEIVED) {
+                // Try legacy safe call
+                // onERC721Received(address,uint256,bytes)
+                (success, result) = _noThrowCall(
+                    to,
+                    abi.encodeWithSelector(
+                        ERC721_RECEIVED_LEGACY,
+                        holder,
+                        assetId,
+                        userData
+                    )
+                );
+
+                require(success == 1 && result == ERC721_RECEIVED_LEGACY, "Token rejected by contract");
+            }
         }
 
         emit Transfer(holder, to, assetId);
@@ -582,7 +601,6 @@ contract ERC721Base {
      * @param    _interfaceID The interface identifier, as specified in ERC-165
      */
     function supportsInterface(bytes4 _interfaceID) external pure returns (bool) {
-
         if (_interfaceID == 0xffffffff) {
             return false;
         }
@@ -597,6 +615,27 @@ contract ERC721Base {
         uint size;
         assembly { size := extcodesize(addr) }
         return size > 0;
+    }
+
+    function _noThrowCall(
+        address _contract,
+        bytes _data
+    ) internal returns (uint256 success, bytes32 result) {
+        assembly {
+            let x := mload(0x40)
+
+            success := call(
+                            gas,                  // Send all gas
+                            _contract,            // To addr
+                            0,                    // Send ETH
+                            add(0x20, _data),     // Input is data past the first 32 bytes
+                            mload(_data),         // Input size is the lenght of data
+                            x,                    // Store the ouput on x
+                            0x20                  // Output is a single bytes32, has 32 bytes
+                        )
+
+            result := mload(x)
+        }
     }
 }
 
@@ -790,7 +829,7 @@ contract MortgageManager is Cosigner, ERC721Base, SafeWithdraw, BytesUtils {
         require((loanAmount + deposit) >= ((landCost / 10) * 11), "Not enought total amount");
 
         // Pull the deposit and lock the tokens
-        require(mana.transferFrom(msg.sender, this, deposit), "Error pulling mana");
+        _tokenTransferFrom(mana, msg.sender, this, deposit);
 
         // Create the liability
         id = mortgages.push(Mortgage({
@@ -979,6 +1018,13 @@ contract MortgageManager is Cosigner, ERC721Base, SafeWithdraw, BytesUtils {
         return true;
     }
 
+    function _tokenTransferFrom(Token token, address from, address to, uint256 amount) internal {
+        require(token.balanceOf(from) >= amount, "From balance is not enough");
+        require(token.allowance(from, address(this)) >= amount, "Allowance is not enough");
+        require(token.transferFrom(from, to, amount), "Transfer failed");
+    }
+
+
     /**
         @notice Defines a custom logic that determines if a loan is defaulted or not.
 
@@ -993,24 +1039,14 @@ contract MortgageManager is Cosigner, ERC721Base, SafeWithdraw, BytesUtils {
     }
 
     /**
-        @dev An alternative version of the ERC721 callback, required by a bug in the parcels contract
-    */
-    function onERC721Received(uint256 _tokenId, address, bytes) external returns (bytes4) {
-        if (msg.sender == address(land) && flagReceiveLand == _tokenId) {
-            flagReceiveLand = 0;
-            return bytes4(keccak256("onERC721Received(address,uint256,bytes)"));
-        }
-    }
-
-    /**
         @notice Callback used to accept the ERC721 parcel tokens
 
         @dev Only accepts tokens if flag is set to tokenId, resets the flag when called
     */
-    function onERC721Received(address, uint256 _tokenId, bytes) external returns (bytes4) {
+    function onERC721Received(address, address, uint256 _tokenId, bytes) external returns (bytes4) {
         if (msg.sender == address(land) && flagReceiveLand == _tokenId) {
             flagReceiveLand = 0;
-            return bytes4(keccak256("onERC721Received(address,uint256,bytes)"));
+            return ERC721_RECEIVED;
         }
     }
 
