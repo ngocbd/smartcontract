@@ -1,8 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ExchangerV3 at 0x0d71555233b7f913a5d9ae4ccd802145966d9bbf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ExchangerV3 at 0x1507bfb096052f62eb5ae9a53f0c9ac385809add
 */
-pragma solidity ^0.4.18;
-interface IYeekFormula {
+pragma solidity ^0.4.24;
+interface IExchangeFormula {
     function calculatePurchaseReturn(uint256 _supply, uint256 _connectorBalance, uint32 _connectorWeight, uint256 _depositAmount) external view returns (uint256);
     function calculateSaleReturn(uint256 _supply, uint256 _connectorBalance, uint32 _connectorWeight, uint256 _sellAmount) external view returns (uint256);
 }
@@ -25,7 +25,7 @@ contract Administered {
 
     mapping (address => bool) public admins;
     
-    constructor()  public {
+    constructor() public {
         creator = msg.sender;
         admins[creator] = true;
     }
@@ -74,7 +74,7 @@ contract ExchangerV3 is Administered, tokenRecipient {
     //The token which is being bought and sold
     ITradeableAsset public tokenContract;
     //The contract that does the calculations to determine buy and sell pricing
-    IYeekFormula public formulaContract;
+    IExchangeFormula public formulaContract;
     //The reserve pct of this exchanger, expressed in ppm
     uint32 public weight;
     //The fee, in ppm
@@ -86,6 +86,9 @@ contract ExchangerV3 is Administered, tokenRecipient {
     uint256 public collectedFees=0;
     //If part of the ether reserve is stored offsite for security reasons this variable holds that value
     uint256 public virtualReserveBalance=0;
+    //Prevent the eth balance to be lover than a set value
+    //The min Eth reserve amount
+    uint256 public minReserve=0; //
 
     /** 
         @dev Deploys an exchanger contract for a given token / Ether pairing
@@ -101,7 +104,7 @@ contract ExchangerV3 is Administered, tokenRecipient {
         
         weight = _weight;
         tokenContract = ITradeableAsset(_token);
-        formulaContract = IYeekFormula(_formulaContract);
+        formulaContract = IExchangeFormula(_formulaContract);
     }
 
     //Events raised on completion of buy and sell orders. 
@@ -191,6 +194,10 @@ contract ExchangerV3 is Administered, tokenRecipient {
     function setVirtualReserveBalance(uint256 amountInWei) onlyAdmin public {
         virtualReserveBalance = amountInWei;
     }
+    
+    function setMinReserve(uint256 amountInWei) onlyAdmin public {
+        minReserve = amountInWei;
+    }     
 
     //These methods return information about the exchanger, and the buy / sell rates offered on the Token / ETH pairing.
     //They can be called without gas from any client.
@@ -275,7 +282,7 @@ contract ExchangerV3 is Administered, tokenRecipient {
         
         //Accounting - so we can pull the fees out without changing the balance
         collectedFees += (msg.value * fee) / 1000000;
-
+        
         emit Buy(msg.sender, msg.value, amount);
         tokenContract.transfer(msg.sender, amount);
     }
@@ -296,6 +303,7 @@ contract ExchangerV3 is Administered, tokenRecipient {
         require (enabled); // ADDED SEMICOLON
         require (amountInWei >= minSaleReturn);
         require (amountInWei <= address(this).balance);
+        require (address(this).balance - amountInWei > minReserve);
         require (tokenContract.transferFrom(msg.sender, this, quantity));
 
         collectedFees += (amountInWei * fee) / 1000000;
