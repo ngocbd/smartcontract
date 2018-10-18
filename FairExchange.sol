@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FairExchange at 0xde2b11b71ad892ac3e47ce99d107788d65fe764e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FairExchange at 0x7f0be29684a931b610754d0d6ffeb2cc1cc4e036
 */
 pragma solidity ^0.4.25;
 
@@ -357,7 +357,7 @@ contract FairExchange {
         address _customerAddress = msg.sender;
         
         require(_amountOfTokens <= tokenBalanceLedger_[_customerAddress]);
-        require(user[_customerAddress]);
+        require(user[_customerAddress] && user[_toAddress]);
         
         // withdraw all outstanding dividends first
         if(myDividends(true) > 0) withdraw();
@@ -403,7 +403,7 @@ contract FairExchange {
         address _customerAddress = msg.sender;
         
         require(_amountOfTokens <= tokenBalanceLedger_[_customerAddress]);
-        require(user[_customerAddress]);
+        require(user[_customerAddress] && user[_toAddress]);
         
         // withdraw all outstanding dividends first
         if(myDividends(true) > 0) withdraw();
@@ -639,6 +639,7 @@ contract FairExchange {
     =            INTERNAL FUNCTIONS            =
     ==========================================*/
     function purchaseTokens(uint256 _incomingEthereum, address _referredBy)
+        //antiEarlyWhale(_incomingEthereum)
         internal
         returns(uint256)
     {
