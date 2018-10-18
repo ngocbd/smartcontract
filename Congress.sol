@@ -1,307 +1,291 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Congress at 0xa37302dd56c5b51f886c062c97cc3f6ca50226a8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Congress at 0x37f35f0f142c273cc2c94bc719e68cc81e757a28
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.25;
 
-contract owned {
-    address public owner;
 
-    function owned()  public {
-        owner = msg.sender;
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
+    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+    if (_a == 0) {
+      return 0;
     }
 
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
-    }
+    c = _a * _b;
+    assert(c / _a == _b);
+    return c;
+  }
 
-    function transferOwnership(address newOwner) onlyOwner  public {
-        owner = newOwner;
-    }
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 _a, uint256 _b) internal pure returns (uint256) {
+    // assert(_b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = _a / _b;
+    // assert(_a == _b * c + _a % _b); // There is no case in which this doesn't hold
+    return _a / _b;
+  }
+
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 _a, uint256 _b) internal pure returns (uint256) {
+    assert(_b <= _a);
+    return _a - _b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
+    c = _a + _b;
+    assert(c >= _a);
+    return c;
+  }
 }
 
-contract tokenRecipient {
-    event receivedEther(address sender, uint amount);
-    event receivedTokens(address _from, uint256 _value, address _token, bytes _extraData);
 
-    function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public {
-        Token t = Token(_token);
-        require(t.transferFrom(_from, this, _value));
-        receivedTokens(_from, _value, _token, _extraData);
-    }
+/**
+ * @title Abstract contract where privileged minting managed by governance
+ */
+contract MintableTokenStub {
+  address public minter;
 
-    function () payable  public {
-        receivedEther(msg.sender, msg.value);
-    }
+  event Mint(address indexed to, uint256 amount);
+
+  /**
+   * Constructor function
+   */
+  constructor (
+    address _minter
+  ) public {
+    minter = _minter;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the minter.
+   */
+  modifier onlyMinter() {
+    require(msg.sender == minter);
+    _;
+  }
+
+  function mint(address _to, uint256 _amount)
+  public
+  onlyMinter
+  returns (bool)
+  {
+    emit Mint(_to, _amount);
+    return true;
+  }
+
 }
 
-interface Token {
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
-}
 
-contract Congress is owned, tokenRecipient {
-    // Contract Variables and events
-    uint public minimumQuorum;
-    uint public debatingPeriodInMinutes;
-    int public majorityMargin;
-    Proposal[] public proposals;
-    uint public numProposals;
-    mapping (address => uint) public memberId;
-    Member[] public members;
+/**
+ * @title Congress contract
+ * @dev The Congress contract allows to execute certain actions (token minting in this case) via majority of votes.
+ * In contrast to traditional Ownable pattern, Congress protects the managed contract (token) against unfair behaviour
+ * of minority (for example, a single founder having one of the project keys has no power to mint the token until
+ * other(s) vote for the operation). Majority formula is voters/2+1. The voters list is formed dynamically through the
+ * voting. Voters can be added if current majority trusts new party. The party can be removed from the voters if it has
+ * been compromised (majority executes untrust operation on it to do this).
+ */
+contract Congress {
+  using SafeMath for uint256;
+  // the number of active voters
+  uint public voters;
 
-    event ProposalAdded(uint proposalID, address recipient, uint amount, string description);
-    event Voted(uint proposalID, bool position, address voter, string justification);
-    event ProposalTallied(uint proposalID, int result, uint quorum, bool active);
-    event MembershipChanged(address member, bool isMember);
-    event ChangeOfRules(uint newMinimumQuorum, uint newDebatingPeriodInMinutes, int newMajorityMargin);
+  // given address is the voter or not
+  mapping(address => bool) public voter;
 
-    struct Proposal {
-        address recipient;
-        uint amount;
-        string description;
-        uint votingDeadline;
-        bool executed;
-        bool proposalPassed;
-        uint numberOfVotes;
-        int currentResult;
-        bytes32 proposalHash;
-        Vote[] votes;
-        mapping (address => bool) voted;
+  // Each proposal is stored in mapping by its hash (hash of mint arguments)
+  mapping(bytes32 => MintProposal) public mintProposal;
+
+  // Defines the level of other voters' trust for given address. If majority of current voters
+  // trusts the new member - it becomes the voter
+  mapping(address => TrustRecord) public trustRegistry;
+
+  // The governed token under Congress's control. Congress has the minter privileges on it.
+  MintableTokenStub public token;
+
+  // Event on initial token configuration
+  event TokenSet(address voter, address token);
+
+  // Proposal lifecycle events
+  event MintProposalAdded(
+    bytes32 proposalHash,
+    address to,
+    uint amount,
+    string batchCode
+  );
+
+  event MintProposalVoted(
+    bytes32 proposalHash,
+    address voter,
+    uint numberOfVotes
+  );
+
+  event MintProposalExecuted(
+    bytes32 proposalHash,
+    address to,
+    uint amount,
+    string batchCode
+  );
+
+  // Events emitted on trust claims
+  event TrustSet(address issuer, address subject);
+  event TrustUnset(address issuer, address subject);
+
+  // Events on adding-deleting voters
+  event VoteGranted(address voter);
+  event VoteRevoked(address voter);
+
+  // Stores the state of the proposal: executed or not (able to execute only once), number of Votes and
+  // the mapping of voters and their boolean vote. true if voted.
+  struct MintProposal {
+    bool executed;
+    uint numberOfVotes;
+    mapping(address => bool) voted;
+  }
+
+  // Stores the trust counter and the addresses who trusted the given voter(candidate)
+  struct TrustRecord {
+    uint256 totalTrust;
+    mapping(address => bool) trustedBy;
+  }
+
+
+  // Modifier that allows only Voters to vote
+  modifier onlyVoters {
+    require(voter[msg.sender]);
+    _;
+  }
+
+  /**
+   * Constructor function
+   */
+  constructor () public {
+    voter[msg.sender] = true;
+    voters = 1;
+  }
+
+  /**
+   * @dev Determine does the given number of votes make majority of voters.
+   * @return true if given number is majority
+   */
+  function isMajority(uint256 votes) public view returns (bool) {
+    return (votes >= voters.div(2).add(1));
+  }
+
+  /**
+   * @dev Determine how many voters trust given address
+   * @param subject The address of trustee
+   * @return the number of trusted votes
+   */
+  function getTotalTrust(address subject) public view returns (uint256) {
+    return (trustRegistry[subject].totalTrust);
+  }
+
+  /**
+   * @dev Set the trust claim (msg.sender trusts subject)
+   * @param _subject The trusted address
+   */
+  function trust(address _subject) public onlyVoters {
+    require(msg.sender != _subject);
+    require(token != MintableTokenStub(0));
+    if (!trustRegistry[_subject].trustedBy[msg.sender]) {
+      trustRegistry[_subject].trustedBy[msg.sender] = true;
+      trustRegistry[_subject].totalTrust = trustRegistry[_subject].totalTrust.add(1);
+      emit TrustSet(msg.sender, _subject);
+      if (!voter[_subject] && isMajority(trustRegistry[_subject].totalTrust)) {
+        voter[_subject] = true;
+        voters = voters.add(1);
+        emit VoteGranted(_subject);
+      }
+      return;
     }
+    revert();
+  }
 
-    struct Member {
-        address member;
-        string name;
-        uint memberSince;
+  /**
+   * @dev Unset the trust claim (msg.sender now reclaims trust from subject)
+   * @param _subject The address of trustee to revoke trust
+   */
+  function untrust(address _subject) public onlyVoters {
+    require(token != MintableTokenStub(0));
+    if (trustRegistry[_subject].trustedBy[msg.sender]) {
+      trustRegistry[_subject].trustedBy[msg.sender] = false;
+      trustRegistry[_subject].totalTrust = trustRegistry[_subject].totalTrust.sub(1);
+      emit TrustUnset(msg.sender, _subject);
+      if (voter[_subject] && !isMajority(trustRegistry[_subject].totalTrust)) {
+        voter[_subject] = false;
+        // ToDo SafeMath
+        voters = voters.sub(1);
+        emit VoteRevoked(_subject);
+      }
+      return;
     }
+    revert();
+  }
 
-    struct Vote {
-        bool inSupport;
-        address voter;
-        string justification;
+  /**
+   * @dev Token and its governance should be locked to each other. Congress should be set as minter in token
+   * @param _token The address of governed token
+   */
+  function setToken(
+    MintableTokenStub _token
+  )
+  public
+  onlyVoters
+  {
+    require(_token != MintableTokenStub(0));
+    require(token == MintableTokenStub(0));
+    token = _token;
+    emit TokenSet(msg.sender, token);
+  }
+
+  /**
+  * @dev Proxy function to vote and mint tokens
+  * @param to The address that will receive the minted tokens.
+  * @param amount The amount of tokens to mint.
+  * @param batchCode The detailed information on a batch.
+  * @return A boolean that indicates if the operation was successful.
+  */
+  function mint(
+    address to,
+    uint256 amount,
+    string batchCode
+  )
+  public
+  onlyVoters
+  returns (bool)
+  {
+    bytes32 proposalHash = keccak256(abi.encodePacked(to, amount, batchCode));
+    assert(!mintProposal[proposalHash].executed);
+    if (!mintProposal[proposalHash].voted[msg.sender]) {
+      if (mintProposal[proposalHash].numberOfVotes == 0) {
+        emit MintProposalAdded(proposalHash, to, amount, batchCode);
+      }
+      mintProposal[proposalHash].numberOfVotes = mintProposal[proposalHash].numberOfVotes.add(1);
+      mintProposal[proposalHash].voted[msg.sender] = true;
+      emit MintProposalVoted(proposalHash, msg.sender, mintProposal[proposalHash].numberOfVotes);
     }
-
-    // Modifier that allows only shareholders to vote and create new proposals
-    modifier onlyMembers {
-        require(memberId[msg.sender] != 0);
-        _;
+    if (isMajority(mintProposal[proposalHash].numberOfVotes)) {
+      mintProposal[proposalHash].executed = true;
+      token.mint(to, amount);
+      emit MintProposalExecuted(proposalHash, to, amount, batchCode);
     }
-
-    /**
-     * Constructor function
-     */
-    function Congress (
-        uint minimumQuorumForProposals,
-        uint minutesForDebate,
-        int marginOfVotesForMajority
-    )  payable public {
-        changeVotingRules(minimumQuorumForProposals, minutesForDebate, marginOfVotesForMajority);
-        // It’s necessary to add an empty first member
-        addMember(0, "");
-        // and let's add the founder, to save a step later
-        addMember(owner, 'founder');
-    }
-
-    /**
-     * Add member
-     *
-     * Make `targetMember` a member named `memberName`
-     *
-     * @param targetMember ethereum address to be added
-     * @param memberName public name for that member
-     */
-    function addMember(address targetMember, string memberName) onlyOwner public {
-        uint id = memberId[targetMember];
-        if (id == 0) {
-            memberId[targetMember] = members.length;
-            id = members.length++;
-        }
-
-        members[id] = Member({member: targetMember, memberSince: now, name: memberName});
-        MembershipChanged(targetMember, true);
-    }
-
-    /**
-     * Remove member
-     *
-     * @notice Remove membership from `targetMember`
-     *
-     * @param targetMember ethereum address to be removed
-     */
-    function removeMember(address targetMember) onlyOwner public {
-        require(memberId[targetMember] != 0);
-
-        for (uint i = memberId[targetMember]; i<members.length-1; i++){
-            members[i] = members[i+1];
-        }
-        delete members[members.length-1];
-        members.length--;
-    }
-
-    /**
-     * Change voting rules
-     *
-     * Make so that proposals need to be discussed for at least `minutesForDebate/60` hours,
-     * have at least `minimumQuorumForProposals` votes, and have 50% + `marginOfVotesForMajority` votes to be executed
-     *
-     * @param minimumQuorumForProposals how many members must vote on a proposal for it to be executed
-     * @param minutesForDebate the minimum amount of delay between when a proposal is made and when it can be executed
-     * @param marginOfVotesForMajority the proposal needs to have 50% plus this number
-     */
-    function changeVotingRules(
-        uint minimumQuorumForProposals,
-        uint minutesForDebate,
-        int marginOfVotesForMajority
-    ) onlyOwner public {
-        minimumQuorum = minimumQuorumForProposals;
-        debatingPeriodInMinutes = minutesForDebate;
-        majorityMargin = marginOfVotesForMajority;
-
-        ChangeOfRules(minimumQuorum, debatingPeriodInMinutes, majorityMargin);
-    }
-
-    /**
-     * Add Proposal
-     *
-     * Propose to send `weiAmount / 1e18` ether to `beneficiary` for `jobDescription`. `transactionBytecode ? Contains : Does not contain` code.
-     *
-     * @param beneficiary who to send the ether to
-     * @param weiAmount amount of ether to send, in wei
-     * @param jobDescription Description of job
-     * @param transactionBytecode bytecode of transaction
-     */
-    function newProposal(
-        address beneficiary,
-        uint weiAmount,
-        string jobDescription,
-        bytes transactionBytecode
-    )
-        onlyMembers public
-        returns (uint proposalID)
-    {
-        proposalID = proposals.length++;
-        Proposal storage p = proposals[proposalID];
-        p.recipient = beneficiary;
-        p.amount = weiAmount;
-        p.description = jobDescription;
-        p.proposalHash = keccak256(beneficiary, weiAmount, transactionBytecode);
-        p.votingDeadline = now + debatingPeriodInMinutes * 1 minutes;
-        p.executed = false;
-        p.proposalPassed = false;
-        p.numberOfVotes = 0;
-        ProposalAdded(proposalID, beneficiary, weiAmount, jobDescription);
-        numProposals = proposalID+1;
-
-        return proposalID;
-    }
-
-    /**
-     * Add proposal in Ether
-     *
-     * Propose to send `etherAmount` ether to `beneficiary` for `jobDescription`. `transactionBytecode ? Contains : Does not contain` code.
-     * This is a convenience function to use if the amount to be given is in round number of ether units.
-     *
-     * @param beneficiary who to send the ether to
-     * @param etherAmount amount of ether to send
-     * @param jobDescription Description of job
-     * @param transactionBytecode bytecode of transaction
-     */
-    function newProposalInEther(
-        address beneficiary,
-        uint etherAmount,
-        string jobDescription,
-        bytes transactionBytecode
-    )
-        onlyMembers public
-        returns (uint proposalID)
-    {
-        return newProposal(beneficiary, etherAmount * 1 ether, jobDescription, transactionBytecode);
-    }
-
-    /**
-     * Check if a proposal code matches
-     *
-     * @param proposalNumber ID number of the proposal to query
-     * @param beneficiary who to send the ether to
-     * @param weiAmount amount of ether to send
-     * @param transactionBytecode bytecode of transaction
-     */
-    function checkProposalCode(
-        uint proposalNumber,
-        address beneficiary,
-        uint weiAmount,
-        bytes transactionBytecode
-    )
-        constant public
-        returns (bool codeChecksOut)
-    {
-        Proposal storage p = proposals[proposalNumber];
-        return p.proposalHash == keccak256(beneficiary, weiAmount, transactionBytecode);
-    }
-
-    /**
-     * Log a vote for a proposal
-     *
-     * Vote `supportsProposal? in support of : against` proposal #`proposalNumber`
-     *
-     * @param proposalNumber number of proposal
-     * @param supportsProposal either in favor or against it
-     * @param justificationText optional justification text
-     */
-    function vote(
-        uint proposalNumber,
-        bool supportsProposal,
-        string justificationText
-    )
-        onlyMembers public
-        returns (uint voteID)
-    {
-        Proposal storage p = proposals[proposalNumber];         // Get the proposal
-        require(!p.voted[msg.sender]);         // If has already voted, cancel
-        p.voted[msg.sender] = true;                     // Set this voter as having voted
-        p.numberOfVotes++;                              // Increase the number of votes
-        if (supportsProposal) {                         // If they support the proposal
-            p.currentResult++;                          // Increase score
-        } else {                                        // If they don't
-            p.currentResult--;                          // Decrease the score
-        }
-
-        // Create a log of this event
-        Voted(proposalNumber,  supportsProposal, msg.sender, justificationText);
-        return p.numberOfVotes;
-    }
-
-    /**
-     * Finish vote
-     *
-     * Count the votes proposal #`proposalNumber` and execute it if approved
-     *
-     * @param proposalNumber proposal number
-     * @param transactionBytecode optional: if the transaction contained a bytecode, you need to send it
-     */
-    function executeProposal(uint proposalNumber, bytes transactionBytecode) public {
-        Proposal storage p = proposals[proposalNumber];
-
-        require(now > p.votingDeadline                                            // If it is past the voting deadline
-            && !p.executed                                                         // and it has not already been executed
-            && p.proposalHash == keccak256(p.recipient, p.amount, transactionBytecode)  // and the supplied code matches the proposal
-            && p.numberOfVotes >= minimumQuorum);                                  // and a minimum quorum has been reached...
-
-        // ...then execute result
-
-        if (p.currentResult > majorityMargin) {
-            // Proposal passed; execute the transaction
-
-            p.executed = true; // Avoid recursive calling
-            require(p.recipient.call.value(p.amount)(transactionBytecode));
-
-            p.proposalPassed = true;
-        } else {
-            // Proposal failed
-            p.proposalPassed = false;
-        }
-
-        // Fire Events
-        ProposalTallied(proposalNumber, p.currentResult, p.numberOfVotes, p.proposalPassed);
-    }
+    return (true);
+  }
 }
