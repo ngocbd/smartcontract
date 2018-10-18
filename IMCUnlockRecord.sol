@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IMCUnlockRecord at 0x07a450ffe1a4066d1829b2515b26775f4d505bf8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IMCUnlockRecord at 0xd25adb7e51e1f275c9007dc22b16916ae4849f58
 */
 pragma solidity ^0.4.24;
 
@@ -48,12 +48,24 @@ contract IMCUnlockRecord is Owned{
         string fileFormat; // ?????????
         uint stripLen; // ?????????
     }
+
+    // ?????
+    address public executorAddress;
     
     // ????
     mapping(uint => RecordInfo) public unlockRecord;
     
     constructor() public{
-
+        // ????????
+        executorAddress = msg.sender;
+    }
+    
+    /**
+     * ??executorAddress???owner????
+     * @param _addr address ??
+     */
+    function modifyExecutorAddr(address _addr) public onlyOwner {
+        executorAddress = _addr;
     }
     
      
@@ -66,10 +78,11 @@ contract IMCUnlockRecord is Owned{
      * @param _stripLen uint ?????????
      * @return success ????
      */
-    function unlockRecordAdd(uint _date, bytes32 _hash, string _data, string _fileFormat, uint _stripLen) public onlyOwner returns (bool) {
-        
+    function unlockRecordAdd(uint _date, bytes32 _hash, string _data, string _fileFormat, uint _stripLen) public returns (bool) {
+        // ?????Owner??????????
+        require(msg.sender == executorAddress);
         // ??????
-        require(!(unlockRecord[_date].date > 0));
+        require(unlockRecord[_date].date != _date);
 
         // ??????
         unlockRecord[_date] = RecordInfo(_date, _hash, _data, _fileFormat, _stripLen);
