@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReservedTokensFinalizeAgent at 0xC5e6695258f2A9C51eD572d5E1B051b6914CCAAf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReservedTokensFinalizeAgent at 0x590F9f119432b544C72deAA1d7E854428C90aBd3
 */
 // Created using Token Wizard https://github.com/poanetwork/token-wizard by POA Network 
 pragma solidity ^0.4.11;
@@ -501,8 +501,11 @@ contract CrowdsaleExt is Haltable {
   /**
    * Don't expect to just send in money and get tokens.
    */
-  function() payable {
+  /*function() payable {
     throw;
+  }*/
+  function () external payable {
+    invest(msg.sender);
   }
 
   /**
@@ -1454,9 +1457,15 @@ contract CrowdsaleTokenExt is ReleasableToken, MintableTokenExt, UpgradeableToke
   string public symbol;
 
   uint public decimals;
-
+  
   /* Minimum ammount of tokens every buyer can buy. */
   uint public minCap;
+
+  mapping(address => uint256) public steps;
+  mapping(address => uint256) public starts;
+  mapping(address => uint256) public durations;
+  mapping(address => uint256) public amounts;
+  mapping(address => bool) public locked;
 
   /**
    * Construct the token.
@@ -1548,6 +1557,49 @@ contract CrowdsaleTokenExt is ReleasableToken, MintableTokenExt, UpgradeableToke
     ClaimedTokens(_token, owner, balance);
   }
 
+  function transfer(address _to, uint _value) public returns (bool success) {
+    require(balances[msg.sender] - timeLockedBalanceOf(msg.sender) >= _value);
+
+    balances[msg.sender] = safeSub(balances[msg.sender], _value);
+    balances[_to] = safeAdd(balances[_to], _value);
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
+  function transferFrom(address _from, address _to, uint _value) public returns (bool success) {
+    require(balances[msg.sender] - timeLockedBalanceOf(msg.sender) >= _value);
+
+    uint _allowance = allowed[_from][msg.sender];
+
+    balances[_to] = safeAdd(balances[_to], _value);
+    balances[_from] = safeSub(balances[_from], _value);
+    allowed[_from][msg.sender] = safeSub(_allowance, _value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
+
+  function timeLockedBalanceOf(address _addr) public constant returns (uint256) {
+    if (locked[_addr] == false) {
+      return 0;
+    }
+    uint256 _start = starts[_addr];
+    uint256 _amount = amounts[_addr];
+    uint256 _duration = durations[_addr];
+    uint256 _step = steps[_addr];
+    if (block.timestamp < _start) {
+      return _amount;
+    } else if (block.timestamp >= safeAdd(_start, _duration)) {
+      return 0;
+    } else {
+      return safeSub(_amount, safeMul(safeDiv(_amount, safeDiv(_duration, _step)), safeDiv(safeSub(block.timestamp, _start), _step) + 1));
+    }
+  }
+  function setTimeLock(address _to, uint256 step, uint256 start, uint256 duration, uint amount) public onlyOwner {
+    steps[_to] = step;
+    starts[_to] = start;
+    durations[_to] = duration;
+    amounts[_to] = amount;
+    locked[_to] = true;
+  } 
 }
 
 
