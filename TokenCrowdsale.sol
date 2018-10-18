@@ -1,44 +1,19 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenCrowdsale at 0x1d4f65aa1aea481692671aef59937ce5574c3d71
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenCrowdsale at 0x80056d8381e5eb1f9149c1cbdbc4d00183187de6
 */
-pragma solidity 0.4.24;
+pragma solidity 0.4.21;
 
-// File: openzeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol
-
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * See https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address _who) public view returns (uint256);
-  function transfer(address _to, uint256 _value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
+interface TokenToken {
+    function pause() public;
+    function unpause() public;
+    function mint(address _to, uint256 _amount) public returns (bool);
+    function balanceOf(address who) public view returns (uint256);
+    function transfer(address to, uint256 value) public returns (bool);
+    function getTotalSupply() public view returns(uint);
+    function finishMinting() public returns (bool);
 }
 
-// File: openzeppelin-solidity/contracts/token/ERC20/ERC20.sol
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address _owner, address _spender)
-    public view returns (uint256);
-
-  function transferFrom(address _from, address _to, uint256 _value)
-    public returns (bool);
-
-  function approve(address _spender, uint256 _value) public returns (bool);
-  event Approval(
-    address indexed owner,
-    address indexed spender,
-    uint256 value
-  );
-}
-
-// File: openzeppelin-solidity/contracts/ownership/Ownable.sol
+// File: zeppelin-solidity/contracts/ownership/Ownable.sol
 
 /**
  * @title Ownable
@@ -46,826 +21,542 @@ contract ERC20 is ERC20Basic {
  * functions, this simplifies the implementation of "user permissions".
  */
 contract Ownable {
-  address public owner;
+    address public owner;
 
 
-  event OwnershipRenounced(address indexed previousOwner);
-  event OwnershipTransferred(
-    address indexed previousOwner,
-    address indexed newOwner
-  );
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
 
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  constructor() public {
-    owner = msg.sender;
-  }
+    /**
+     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+     * account.
+     */
+    function Ownable() public {
+        owner = msg.sender;
+    }
 
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
 
-  /**
-   * @dev Allows the current owner to relinquish control of the contract.
-   * @notice Renouncing to ownership will leave the contract without an owner.
-   * It will not be possible to call the functions with the `onlyOwner`
-   * modifier anymore.
-   */
-  function renounceOwnership() public onlyOwner {
-    emit OwnershipRenounced(owner);
-    owner = address(0);
-  }
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
 
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param _newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address _newOwner) public onlyOwner {
-    _transferOwnership(_newOwner);
-  }
 
-  /**
-   * @dev Transfers control of the contract to a newOwner.
-   * @param _newOwner The address to transfer ownership to.
-   */
-  function _transferOwnership(address _newOwner) internal {
-    require(_newOwner != address(0));
-    emit OwnershipTransferred(owner, _newOwner);
-    owner = _newOwner;
-  }
-}
-
-// File: openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol
-
-/**
- * @title SafeERC20
- * @dev Wrappers around ERC20 operations that throw on failure.
- * To use this library you can add a `using SafeERC20 for ERC20;` statement to your contract,
- * which allows you to call the safe operations as `token.safeTransfer(...)`, etc.
- */
-library SafeERC20 {
-  function safeTransfer(
-    ERC20Basic _token,
-    address _to,
-    uint256 _value
-  )
-    internal
-  {
-    require(_token.transfer(_to, _value));
-  }
-
-  function safeTransferFrom(
-    ERC20 _token,
-    address _from,
-    address _to,
-    uint256 _value
-  )
-    internal
-  {
-    require(_token.transferFrom(_from, _to, _value));
-  }
-
-  function safeApprove(
-    ERC20 _token,
-    address _spender,
-    uint256 _value
-  )
-    internal
-  {
-    require(_token.approve(_spender, _value));
-  }
-}
-
-// File: openzeppelin-solidity/contracts/ownership/CanReclaimToken.sol
-
-/**
- * @title Contracts that should be able to recover tokens
- * @author SylTi
- * @dev This allow a contract to recover any ERC20 token received in a contract by transferring the balance to the contract owner.
- * This will prevent any accidental loss of tokens.
- */
-contract CanReclaimToken is Ownable {
-  using SafeERC20 for ERC20Basic;
-
-  /**
-   * @dev Reclaim all ERC20Basic compatible tokens
-   * @param _token ERC20Basic The address of the token contract
-   */
-  function reclaimToken(ERC20Basic _token) external onlyOwner {
-    uint256 balance = _token.balanceOf(this);
-    _token.safeTransfer(owner, balance);
-  }
+    /**
+     * @dev Allows the current owner to transfer control of the contract to a newOwner.
+     * @param newOwner The address to transfer ownership to.
+     */
+    function transferOwnership(address newOwner) public onlyOwner {
+        require(newOwner != address(0));
+        OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+    }
 
 }
 
-// File: openzeppelin-solidity/contracts/ownership/HasNoTokens.sol
-
-/**
- * @title Contracts that should not own Tokens
- * @author Remco Bloemen <remco@2?.com>
- * @dev This blocks incoming ERC223 tokens to prevent accidental loss of tokens.
- * Should tokens (any ERC20Basic compatible) end up in the contract, it allows the
- * owner to reclaim the tokens.
- */
-contract HasNoTokens is CanReclaimToken {
-
- /**
-  * @dev Reject all ERC223 compatible tokens
-  * @param _from address The address that is transferring the tokens
-  * @param _value uint256 the amount of the specified token
-  * @param _data Bytes The data passed from the caller.
-  */
-  function tokenFallback(
-    address _from,
-    uint256 _value,
-    bytes _data
-  )
-    external
-    pure
-  {
-    _from;
-    _value;
-    _data;
-    revert();
-  }
-
-}
-
-// File: openzeppelin-solidity/contracts/ownership/HasNoContracts.sol
-
-/**
- * @title Contracts that should not own Contracts
- * @author Remco Bloemen <remco@2?.com>
- * @dev Should contracts (anything Ownable) end up being owned by this contract, it allows the owner
- * of this contract to reclaim ownership of the contracts.
- */
-contract HasNoContracts is Ownable {
-
-  /**
-   * @dev Reclaim ownership of Ownable contracts
-   * @param _contractAddr The address of the Ownable to be reclaimed.
-   */
-  function reclaimContract(address _contractAddr) external onlyOwner {
-    Ownable contractInst = Ownable(_contractAddr);
-    contractInst.transferOwnership(owner);
-  }
-}
-
-// File: openzeppelin-solidity/contracts/math/SafeMath.sol
+// File: zeppelin-solidity/contracts/math/SafeMath.sol
 
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
-    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
-    // benefit is lost if 'b' is also tested.
-    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
-    if (_a == 0) {
-      return 0;
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (a == 0) {
+            return 0;
+        }
+        uint256 c = a * b;
+        assert(c / a == b);
+        return c;
     }
 
-    c = _a * _b;
-    assert(c / _a == _b);
-    return c;
-  }
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return c;
+    }
 
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 _a, uint256 _b) internal pure returns (uint256) {
-    // assert(_b > 0); // Solidity automatically throws when dividing by 0
-    // uint256 c = _a / _b;
-    // assert(_a == _b * c + _a % _b); // There is no case in which this doesn't hold
-    return _a / _b;
-  }
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
 
-  /**
-  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 _a, uint256 _b) internal pure returns (uint256) {
-    assert(_b <= _a);
-    return _a - _b;
-  }
-
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
-    c = _a + _b;
-    assert(c >= _a);
-    return c;
-  }
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
 }
 
-// File: openzeppelin-solidity/contracts/crowdsale/Crowdsale.sol
+// File: zeppelin-solidity/contracts/lifecycle/Pausable.sol
+
+/**
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
+ */
+contract Pausable is Ownable {
+    event Pause();
+    event Unpause();
+
+    bool public paused = false;
+
+
+    /**
+     * @dev Modifier to make a function callable only when the contract is not paused.
+     */
+    modifier whenNotPaused() {
+        require(!paused);
+        _;
+    }
+
+    /**
+     * @dev Modifier to make a function callable only when the contract is paused.
+     */
+    modifier whenPaused() {
+        require(paused);
+        _;
+    }
+
+    /**
+     * @dev called by the owner to pause, triggers stopped state
+     */
+    function pause() onlyOwner whenNotPaused public {
+        paused = true;
+        Pause();
+    }
+
+    /**
+     * @dev called by the owner to unpause, returns to normal state
+     */
+    function unpause() onlyOwner whenPaused public {
+        paused = false;
+        Unpause();
+    }
+}
+
+// File: contracts/TeamAndAdvisorsAllocation.sol
+
+/**
+ * @title Team and Advisors Token Allocation contract
+ */
+
+contract TeamAndAdvisorsAllocation is Ownable {
+    using SafeMath for uint;
+
+    uint256 public unlockedAt;
+    uint256 public canSelfDestruct;
+    uint256 public tokensCreated;
+    uint256 public allocatedTokens;
+    uint256 private totalTeamAndAdvisorsAllocation = 4000000e18; // 4 mm
+
+    mapping (address => uint256) public teamAndAdvisorsAllocations;
+
+    TokenToken public token;
+
+    /**
+     * @dev constructor function that sets owner and token for the TeamAndAdvisorsAllocation contract
+     * @param _token Token contract address for TokenToken
+     */
+    function TeamAndAdvisorsAllocation(address _token) public {
+        token = TokenToken(_token);
+        unlockedAt = now.add(3 days);
+        canSelfDestruct = now.add(4 days);
+    }
+
+    /**
+     * @dev Adds founders' token allocation
+     * @param teamOrAdvisorsAddress Address of a founder
+     * @param allocationValue Number of tokens allocated to a founder
+     * @return true if address is correctly added
+     */
+    function addTeamAndAdvisorsAllocation(address teamOrAdvisorsAddress, uint256 allocationValue)
+    external
+    onlyOwner
+    returns(bool)
+    {
+        assert(teamAndAdvisorsAllocations[teamOrAdvisorsAddress] == 0); // can only add once.
+
+        allocatedTokens = allocatedTokens.add(allocationValue);
+        require(allocatedTokens <= totalTeamAndAdvisorsAllocation);
+
+        teamAndAdvisorsAllocations[teamOrAdvisorsAddress] = allocationValue;
+        return true;
+    }
+
+    /**
+     * @dev Allow company to unlock allocated tokens by transferring them whitelisted addresses.
+     * Need to be called by each address
+     */
+    function unlock() external {
+        assert(now >= unlockedAt);
+
+        // During first unlock attempt fetch total number of locked tokens.
+        if (tokensCreated == 0) {
+            tokensCreated = token.balanceOf(this);
+        }
+
+        uint256 transferAllocation = teamAndAdvisorsAllocations[msg.sender];
+        teamAndAdvisorsAllocations[msg.sender] = 0;
+
+        // Will fail if allocation (and therefore toTransfer) is 0.
+        require(token.transfer(msg.sender, transferAllocation));
+    }
+
+    /**
+     * @dev allow for selfdestruct possibility and sending funds to owner
+     */
+    function kill() public onlyOwner {
+        assert(now >= canSelfDestruct);
+        uint256 balance = token.balanceOf(this);
+
+        if (balance > 0) {
+            token.transfer(owner, balance);
+        }
+
+        selfdestruct(owner);
+    }
+}
+
+// File: contracts/Whitelist.sol
+
+contract Whitelist is Ownable {
+    mapping(address => bool) public allowedAddresses;
+
+    event WhitelistUpdated(uint256 timestamp, string operation, address indexed member);
+
+    function addToWhitelist(address[] _addresses) public onlyOwner {
+        for (uint256 i = 0; i < _addresses.length; i++) {
+            allowedAddresses[_addresses[i]] = true;
+            WhitelistUpdated(now, "Added", _addresses[i]);
+        }
+    }
+
+    function removeFromWhitelist(address[] _addresses) public onlyOwner {
+        for (uint256 i = 0; i < _addresses.length; i++) {
+            allowedAddresses[_addresses[i]] = false;
+            WhitelistUpdated(now, "Removed", _addresses[i]);
+        }
+    }
+
+    function isWhitelisted(address _address) public view returns (bool) {
+        return allowedAddresses[_address];
+    }
+}
+
+// File: zeppelin-solidity/contracts/crowdsale/TokenCrowdsale.sol
 
 /**
  * @title Crowdsale
- * @dev Crowdsale is a base contract for managing a token crowdsale,
- * allowing investors to purchase tokens with ether. This contract implements
- * such functionality in its most fundamental form and can be extended to provide additional
- * functionality and/or custom behavior.
- * The external interface represents the basic interface for purchasing tokens, and conform
- * the base architecture for crowdsales. They are *not* intended to be modified / overridden.
- * The internal interface conforms the extensible and modifiable surface of crowdsales. Override
- * the methods to add functionality. Consider using 'super' where appropriate to concatenate
- * behavior.
+ * @dev Crowdsale is a base contract for managing a token crowdsale.
+ * Crowdsales have a start and end timestamps, where investors can make
+ * token purchases and the crowdsale will assign them tokens based
+ * on a token per ETH rate. Funds collected are forwarded to a wallet
+ * as they arrive.
  */
 contract Crowdsale {
-  using SafeMath for uint256;
-  using SafeERC20 for ERC20;
+    using SafeMath for uint256;
 
-  // The token being sold
-  ERC20 public token;
+    // start and end timestamps where investments are allowed (both inclusive)
+    uint256 public startTime;
+    uint256 public endTime;
 
-  // Address where funds are collected
-  address public wallet;
+    // address where funds are collected
+    address public wallet;
 
-  // How many token units a buyer gets per wei.
-  // The rate is the conversion between wei and the smallest and indivisible token unit.
-  // So, if you are using a rate of 1 with a DetailedERC20 token with 3 decimals called TOK
-  // 1 wei will give you 1 unit, or 0.001 TOK.
-  uint256 public rate;
+    // how many token units a buyer gets per wei
+    uint256 public rate;
 
-  // Amount of wei raised
-  uint256 public weiRaised;
+    // amount of raised money in wei
+    uint256 public weiRaised;
 
-  /**
-   * Event for token purchase logging
-   * @param purchaser who paid for the tokens
-   * @param beneficiary who got the tokens
-   * @param value weis paid for purchase
-   * @param amount amount of tokens purchased
-   */
-  event TokenPurchase(
-    address indexed purchaser,
-    address indexed beneficiary,
-    uint256 value,
-    uint256 amount
-  );
+    // token contract to be set
+    TokenToken public token;
 
-  /**
-   * @param _rate Number of token units a buyer gets per wei
-   * @param _wallet Address where collected funds will be forwarded to
-   * @param _token Address of the token being sold
-   */
-  constructor(uint256 _rate, address _wallet, ERC20 _token) public {
-    require(_rate > 0);
-    require(_wallet != address(0));
-    require(_token != address(0));
+    /**
+     * event for token purchase logging
+     * @param purchaser who paid for the tokens
+     * @param beneficiary who got the tokens
+     * @param value weis paid for purchase
+     * @param amount amount of tokens purchased
+     */
+    event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
 
-    rate = _rate;
-    wallet = _wallet;
-    token = _token;
-  }
 
-  // -----------------------------------------
-  // Crowdsale external interface
-  // -----------------------------------------
+    function Crowdsale(uint256 _startTime, uint256 _endTime, uint256 _rate, address _wallet) public {
+        require(_startTime >= now);
+        require(_endTime > _startTime);
+        require(_rate > 0);
+        require(_wallet != address(0));
 
-  /**
-   * @dev fallback function ***DO NOT OVERRIDE***
-   */
-  function () external payable {
-    buyTokens(msg.sender);
-  }
-
-  /**
-   * @dev low level token purchase ***DO NOT OVERRIDE***
-   * @param _beneficiary Address performing the token purchase
-   */
-  function buyTokens(address _beneficiary) public payable {
-
-    uint256 weiAmount = msg.value;
-    _preValidatePurchase(_beneficiary, weiAmount);
-
-    // calculate token amount to be created
-    uint256 tokens = _getTokenAmount(weiAmount);
-
-    // update state
-    weiRaised = weiRaised.add(weiAmount);
-
-    _processPurchase(_beneficiary, tokens);
-    emit TokenPurchase(
-      msg.sender,
-      _beneficiary,
-      weiAmount,
-      tokens
-    );
-
-    _updatePurchasingState(_beneficiary, weiAmount);
-
-    _forwardFunds();
-    _postValidatePurchase(_beneficiary, weiAmount);
-  }
-
-  // -----------------------------------------
-  // Internal interface (extensible)
-  // -----------------------------------------
-
-  /**
-   * @dev Validation of an incoming purchase. Use require statements to revert state when conditions are not met. Use `super` in contracts that inherit from Crowdsale to extend their validations.
-   * Example from CappedCrowdsale.sol's _preValidatePurchase method: 
-   *   super._preValidatePurchase(_beneficiary, _weiAmount);
-   *   require(weiRaised.add(_weiAmount) <= cap);
-   * @param _beneficiary Address performing the token purchase
-   * @param _weiAmount Value in wei involved in the purchase
-   */
-  function _preValidatePurchase(
-    address _beneficiary,
-    uint256 _weiAmount
-  )
-    internal
-  {
-    require(_beneficiary != address(0));
-    require(_weiAmount != 0);
-  }
-
-  /**
-   * @dev Validation of an executed purchase. Observe state and use revert statements to undo rollback when valid conditions are not met.
-   * @param _beneficiary Address performing the token purchase
-   * @param _weiAmount Value in wei involved in the purchase
-   */
-  function _postValidatePurchase(
-    address _beneficiary,
-    uint256 _weiAmount
-  )
-    internal
-  {
-    // optional override
-  }
-
-  /**
-   * @dev Source of tokens. Override this method to modify the way in which the crowdsale ultimately gets and sends its tokens.
-   * @param _beneficiary Address performing the token purchase
-   * @param _tokenAmount Number of tokens to be emitted
-   */
-  function _deliverTokens(
-    address _beneficiary,
-    uint256 _tokenAmount
-  )
-    internal
-  {
-    token.safeTransfer(_beneficiary, _tokenAmount);
-  }
-
-  /**
-   * @dev Executed when a purchase has been validated and is ready to be executed. Not necessarily emits/sends tokens.
-   * @param _beneficiary Address receiving the tokens
-   * @param _tokenAmount Number of tokens to be purchased
-   */
-  function _processPurchase(
-    address _beneficiary,
-    uint256 _tokenAmount
-  )
-    internal
-  {
-    _deliverTokens(_beneficiary, _tokenAmount);
-  }
-
-  /**
-   * @dev Override for extensions that require an internal state to check for validity (current user contributions, etc.)
-   * @param _beneficiary Address receiving the tokens
-   * @param _weiAmount Value in wei involved in the purchase
-   */
-  function _updatePurchasingState(
-    address _beneficiary,
-    uint256 _weiAmount
-  )
-    internal
-  {
-    // optional override
-  }
-
-  /**
-   * @dev Override to extend the way in which ether is converted to tokens.
-   * @param _weiAmount Value in wei to be converted into tokens
-   * @return Number of tokens that can be purchased with the specified _weiAmount
-   */
-  function _getTokenAmount(uint256 _weiAmount)
-    internal view returns (uint256)
-  {
-    return _weiAmount.mul(rate);
-  }
-
-  /**
-   * @dev Determines how ETH is stored/forwarded on purchases.
-   */
-  function _forwardFunds() internal {
-    wallet.transfer(msg.value);
-  }
-}
-
-// File: openzeppelin-solidity/contracts/crowdsale/validation/IndividuallyCappedCrowdsale.sol
-
-/**
- * @title IndividuallyCappedCrowdsale
- * @dev Crowdsale with per-user caps.
- */
-contract IndividuallyCappedCrowdsale is Ownable, Crowdsale {
-  using SafeMath for uint256;
-
-  mapping(address => uint256) public contributions;
-  mapping(address => uint256) public caps;
-
-  /**
-   * @dev Sets a specific user's maximum contribution.
-   * @param _beneficiary Address to be capped
-   * @param _cap Wei limit for individual contribution
-   */
-  function setUserCap(address _beneficiary, uint256 _cap) external onlyOwner {
-    caps[_beneficiary] = _cap;
-  }
-
-  /**
-   * @dev Sets a group of users' maximum contribution.
-   * @param _beneficiaries List of addresses to be capped
-   * @param _cap Wei limit for individual contribution
-   */
-  function setGroupCap(
-    address[] _beneficiaries,
-    uint256 _cap
-  )
-    external
-    onlyOwner
-  {
-    for (uint256 i = 0; i < _beneficiaries.length; i++) {
-      caps[_beneficiaries[i]] = _cap;
+        startTime = _startTime;
+        endTime = _endTime;
+        rate = _rate;
+        wallet = _wallet;
     }
-  }
 
-  /**
-   * @dev Returns the cap of a specific user.
-   * @param _beneficiary Address whose cap is to be checked
-   * @return Current cap for individual user
-   */
-  function getUserCap(address _beneficiary) public view returns (uint256) {
-    return caps[_beneficiary];
-  }
+    // fallback function can be used to buy tokens
+    function () external payable {
+        buyTokens(msg.sender);
+    }
 
-  /**
-   * @dev Returns the amount contributed so far by a sepecific user.
-   * @param _beneficiary Address of contributor
-   * @return User contribution so far
-   */
-  function getUserContribution(address _beneficiary)
-    public view returns (uint256)
-  {
-    return contributions[_beneficiary];
-  }
+    // low level token purchase function
+    function buyTokens(address beneficiary) public payable {
+        require(beneficiary != address(0));
+        require(validPurchase());
 
-  /**
-   * @dev Extend parent behavior requiring purchase to respect the user's funding cap.
-   * @param _beneficiary Token purchaser
-   * @param _weiAmount Amount of wei contributed
-   */
-  function _preValidatePurchase(
-    address _beneficiary,
-    uint256 _weiAmount
-  )
-    internal
-  {
-    super._preValidatePurchase(_beneficiary, _weiAmount);
-    require(contributions[_beneficiary].add(_weiAmount) <= caps[_beneficiary]);
-  }
+        uint256 weiAmount = msg.value;
 
-  /**
-   * @dev Extend parent behavior to update user contributions
-   * @param _beneficiary Token purchaser
-   * @param _weiAmount Amount of wei contributed
-   */
-  function _updatePurchasingState(
-    address _beneficiary,
-    uint256 _weiAmount
-  )
-    internal
-  {
-    super._updatePurchasingState(_beneficiary, _weiAmount);
-    contributions[_beneficiary] = contributions[_beneficiary].add(_weiAmount);
-  }
+        // calculate token amount to be created
+        uint256 tokens = weiAmount.mul(rate);
+
+        // update state
+        weiRaised = weiRaised.add(weiAmount);
+
+        token.mint(beneficiary, tokens);
+        TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
+
+        forwardFunds();
+    }
+
+    // send ether to the fund collection wallet
+    // override to create custom fund forwarding mechanisms
+    function forwardFunds() internal {
+        wallet.transfer(msg.value);
+    }
+
+    // @return true if the transaction can buy tokens
+    function validPurchase() internal view returns (bool) {
+        bool withinPeriod = now >= startTime && now <= endTime;
+        bool nonZeroPurchase = msg.value != 0;
+        return withinPeriod && nonZeroPurchase;
+    }
+
+    // @return true if crowdsale event has ended
+    function hasEnded() public view returns (bool) {
+        return now > endTime;
+    }
+
 
 }
 
-// File: openzeppelin-solidity/contracts/crowdsale/validation/CappedCrowdsale.sol
+// File: zeppelin-solidity/contracts/crowdsale/FinalizableCrowdsale.sol
 
 /**
- * @title CappedCrowdsale
- * @dev Crowdsale with a limit for total contributions.
+ * @title FinalizableCrowdsale
+ * @dev Extension of Crowdsale where an owner can do extra work
+ * after finishing.
  */
-contract CappedCrowdsale is Crowdsale {
-  using SafeMath for uint256;
+contract FinalizableCrowdsale is Crowdsale, Ownable {
+    using SafeMath for uint256;
 
-  uint256 public cap;
+    bool public isFinalized = false;
 
-  /**
-   * @dev Constructor, takes maximum amount of wei accepted in the crowdsale.
-   * @param _cap Max amount of wei to be contributed
-   */
-  constructor(uint256 _cap) public {
-    require(_cap > 0);
-    cap = _cap;
-  }
+    event Finalized();
 
-  /**
-   * @dev Checks whether the cap has been reached.
-   * @return Whether the cap was reached
-   */
-  function capReached() public view returns (bool) {
-    return weiRaised >= cap;
-  }
+    /**
+     * @dev Must be called after crowdsale ends, to do some extra finalization
+     * work. Calls the contract's finalization function.
+     */
+    function finalize() onlyOwner public {
+        require(!isFinalized);
+        require(hasEnded());
 
-  /**
-   * @dev Extend parent behavior requiring purchase to respect the funding cap.
-   * @param _beneficiary Token purchaser
-   * @param _weiAmount Amount of wei contributed
-   */
-  function _preValidatePurchase(
-    address _beneficiary,
-    uint256 _weiAmount
-  )
-    internal
-  {
-    super._preValidatePurchase(_beneficiary, _weiAmount);
-    require(weiRaised.add(_weiAmount) <= cap);
-  }
+        finalization();
+        Finalized();
 
-}
+        isFinalized = true;
+    }
 
-// File: openzeppelin-solidity/contracts/crowdsale/validation/TimedCrowdsale.sol
-
-/**
- * @title TimedCrowdsale
- * @dev Crowdsale accepting contributions only within a time frame.
- */
-contract TimedCrowdsale is Crowdsale {
-  using SafeMath for uint256;
-
-  uint256 public openingTime;
-  uint256 public closingTime;
-
-  /**
-   * @dev Reverts if not in crowdsale time range.
-   */
-  modifier onlyWhileOpen {
-    // solium-disable-next-line security/no-block-members
-    require(block.timestamp >= openingTime && block.timestamp <= closingTime);
-    _;
-  }
-
-  /**
-   * @dev Constructor, takes crowdsale opening and closing times.
-   * @param _openingTime Crowdsale opening time
-   * @param _closingTime Crowdsale closing time
-   */
-  constructor(uint256 _openingTime, uint256 _closingTime) public {
-    // solium-disable-next-line security/no-block-members
-    require(_openingTime >= block.timestamp);
-    require(_closingTime >= _openingTime);
-
-    openingTime = _openingTime;
-    closingTime = _closingTime;
-  }
-
-  /**
-   * @dev Checks whether the period in which the crowdsale is open has already elapsed.
-   * @return Whether crowdsale period has elapsed
-   */
-  function hasClosed() public view returns (bool) {
-    // solium-disable-next-line security/no-block-members
-    return block.timestamp > closingTime;
-  }
-
-  /**
-   * @dev Extend parent behavior requiring to be within contributing period
-   * @param _beneficiary Token purchaser
-   * @param _weiAmount Amount of wei contributed
-   */
-  function _preValidatePurchase(
-    address _beneficiary,
-    uint256 _weiAmount
-  )
-    internal
-    onlyWhileOpen
-  {
-    super._preValidatePurchase(_beneficiary, _weiAmount);
-  }
-
-}
-
-// File: openzeppelin-solidity/contracts/crowdsale/emission/AllowanceCrowdsale.sol
-
-/**
- * @title AllowanceCrowdsale
- * @dev Extension of Crowdsale where tokens are held by a wallet, which approves an allowance to the crowdsale.
- */
-contract AllowanceCrowdsale is Crowdsale {
-  using SafeMath for uint256;
-  using SafeERC20 for ERC20;
-
-  address public tokenWallet;
-
-  /**
-   * @dev Constructor, takes token wallet address.
-   * @param _tokenWallet Address holding the tokens, which has approved allowance to the crowdsale
-   */
-  constructor(address _tokenWallet) public {
-    require(_tokenWallet != address(0));
-    tokenWallet = _tokenWallet;
-  }
-
-  /**
-   * @dev Checks the amount of tokens left in the allowance.
-   * @return Amount of tokens left in the allowance
-   */
-  function remainingTokens() public view returns (uint256) {
-    return token.allowance(tokenWallet, this);
-  }
-
-  /**
-   * @dev Overrides parent behavior by transferring tokens from wallet.
-   * @param _beneficiary Token purchaser
-   * @param _tokenAmount Amount of tokens purchased
-   */
-  function _deliverTokens(
-    address _beneficiary,
-    uint256 _tokenAmount
-  )
-    internal
-  {
-    token.safeTransferFrom(tokenWallet, _beneficiary, _tokenAmount);
-  }
-}
-
-// File: contracts/crowdsale/distribution/PostDeliveryCrowdsale.sol
-
-/**
- * @title PostDeliveryCrowdsale
- * @dev Crowdsale that locks tokens from withdrawal until it ends.
- */
-contract PostDeliveryCrowdsale is TimedCrowdsale {
-  using SafeMath for uint256;
-
-  mapping(address => uint256) public balances;
-
-  /// @dev Withdraw tokens only after crowdsale ends.
-  function withdrawTokens() public {
-    _withdrawTokens(msg.sender);
-  }
-
-  /**
-   * @dev Withdraw tokens only after crowdsale ends.
-   * @param _beneficiary Token purchaser
-   */
-  function _withdrawTokens(address _beneficiary) internal {
-    require(hasClosed(), "Crowdsale not closed.");
-    uint256 amount = balances[_beneficiary];
-    require(amount > 0, "Beneficiary has zero balance.");
-    balances[_beneficiary] = 0;
-    _deliverTokens(_beneficiary, amount);
-  }
-
-  /**
-   * @dev Overrides parent by storing balances instead of issuing tokens right away.
-   * @param _beneficiary Token purchaser
-   * @param _tokenAmount Amount of tokens purchased
-   */
-  function _processPurchase(
-    address _beneficiary,
-    uint256 _tokenAmount
-  )
-    internal
-  {
-    balances[_beneficiary] = balances[_beneficiary].add(_tokenAmount);
-  }
-
+    /**
+     * @dev Can be overridden to add finalization logic. The overriding function
+     * should call super.finalization() to ensure the chain of finalization is
+     * executed entirely.
+     */
+    function finalization() internal {
+    }
 }
 
 // File: contracts/TokenCrowdsale.sol
 
 /**
- * @title TokenCrowdsale
- * @dev This is a ERC20 token crowdsale that will sell tokens util
- * the cap is reached, time expired or the allowance is spent.
+ * @title Token Crowdsale contract - crowdsale contract for the Token tokens.
  */
-// solium-disable-next-line
-contract TokenCrowdsale
-  is
-    HasNoTokens,
-    HasNoContracts,
-    TimedCrowdsale,
-    CappedCrowdsale,
-    IndividuallyCappedCrowdsale,
-    PostDeliveryCrowdsale,
-    AllowanceCrowdsale
-{
 
-  // When withdrawals open
-  uint256 public withdrawTime;
+contract TokenCrowdsale is FinalizableCrowdsale, Pausable {
+    uint256 constant public REWARD_SHARE =                   4500000e18; // 4.5 mm
+    uint256 constant public NON_VESTED_TEAM_ADVISORS_SHARE = 37500000e18; //  37.5 mm
+    uint256 constant public PRE_CROWDSALE_CAP =              500000e18; //  0.5 mm
+    uint256 constant public PUBLIC_CROWDSALE_CAP =           7500000e18; // 7.5 mm
+    uint256 constant public TOTAL_TOKENS_FOR_CROWDSALE = PRE_CROWDSALE_CAP + PUBLIC_CROWDSALE_CAP;
+    uint256 constant public TOTAL_TOKENS_SUPPLY =            50000000e18; // 50 mm
+    uint256 constant public PERSONAL_CAP =                   2500000e18; //   2.5 mm
 
-  // Amount of tokens sold
-  uint256 public tokensSold;
+    address public rewardWallet;
+    address public teamAndAdvisorsAllocation;
 
-  // Amount of tokens delivered
-  uint256 public tokensDelivered;
+    // remainderPurchaser and remainderTokens info saved in the contract
+    // used for reference for contract owner to send refund if any to last purchaser after end of crowdsale
+    address public remainderPurchaser;
+    uint256 public remainderAmount;
 
-  constructor(
-    uint256 _rate,
-    address _wallet,
-    ERC20 _token,
-    address _tokenWallet,
-    uint256 _cap,
-    uint256 _openingTime,
-    uint256 _closingTime,
-    uint256 _withdrawTime
-  )
+    mapping (address => uint256) public trackBuyersPurchases;
+
+    // external contracts
+    Whitelist public whitelist;
+
+    event PrivateInvestorTokenPurchase(address indexed investor, uint256 tokensPurchased);
+    event TokenRateChanged(uint256 previousRate, uint256 newRate);
+
+    /**
+     * @dev Contract constructor function
+     * @param _startTime The timestamp of the beginning of the crowdsale
+     * @param _endTime Timestamp when the crowdsale will finish
+     * @param _whitelist contract containing the whitelisted addresses
+     * @param _rate The token rate per ETH
+     * @param _wallet Multisig wallet that will hold the crowdsale funds.
+     * @param _rewardWallet wallet that will hold tokens bounty and rewards campaign
+     */
+    function TokenCrowdsale
+    (
+        uint256 _startTime,
+        uint256 _endTime,
+        address _whitelist,
+        uint256 _rate,
+        address _wallet,
+        address _rewardWallet
+    )
     public
-    Crowdsale(_rate, _wallet, _token)
-    TimedCrowdsale(_openingTime, _closingTime)
-    CappedCrowdsale(_cap)
-    AllowanceCrowdsale(_tokenWallet)
-  {
-    require(_withdrawTime >= _closingTime, "Withdrawals should open after crowdsale closes.");
-    withdrawTime = _withdrawTime;
-  }
+    FinalizableCrowdsale()
+    Crowdsale(_startTime, _endTime, _rate, _wallet)
+    {
 
-  /**
-   * @dev Checks whether the period in which the crowdsale is open
-   * has already elapsed or cap was reached.
-   * @return Whether crowdsale has ended
-   */
-  function hasEnded() public view returns (bool) {
-    return hasClosed() || capReached();
-  }
+        require(_whitelist != address(0) && _wallet != address(0) && _rewardWallet != address(0));
+        whitelist = Whitelist(_whitelist);
+        rewardWallet = _rewardWallet;
 
-  /**
-   * @dev Withdraw tokens only after crowdsale ends.
-   * @param _beneficiary Token purchaser
-   */
-  function withdrawTokens(address _beneficiary) public {
-    _withdrawTokens(_beneficiary);
-  }
-
-  /**
-   * @dev Withdraw tokens only after crowdsale ends.
-   * @param _beneficiaries List of token purchasers
-   */
-  function withdrawTokens(address[] _beneficiaries) public {
-    for (uint32 i = 0; i < _beneficiaries.length; i ++) {
-      _withdrawTokens(_beneficiaries[i]);
     }
-  }
 
-  /**
-   * @dev We use this function to store the total amount of tokens sold
-   * @param _beneficiary Token purchaser
-   * @param _tokenAmount Amount of tokens purchased
-   */
-  function _processPurchase(
-    address _beneficiary,
-    uint256 _tokenAmount
-  )
-    internal
-  {
-    super._processPurchase(_beneficiary, _tokenAmount);
-    tokensSold = tokensSold.add(_tokenAmount);
-  }
+    function setTokenContractAddress(address _token) onlyOwner {
+        token = TokenToken(_token);
+    }
 
-  /**
-   * @dev We use this function to store the total amount of tokens delivered
-   * @param _beneficiary Address performing the token purchase
-   * @param _tokenAmount Number of tokens to be emitted
-   */
-  function _deliverTokens(
-    address _beneficiary,
-    uint256 _tokenAmount
-  )
-    internal
-  {
-    super._deliverTokens(_beneficiary, _tokenAmount);
-    tokensDelivered = tokensDelivered.add(_tokenAmount);
-  }
+    modifier whitelisted(address beneficiary) {
+        require(whitelist.isWhitelisted(beneficiary));
+        _;
+    }
 
-  /**
-   * @dev Withdraw tokens only after crowdsale ends.
-   * @param _beneficiary Token purchaser
-   */
-  function _withdrawTokens(address _beneficiary) internal {
-    // solium-disable-next-line security/no-block-members
-    require(block.timestamp > withdrawTime, "Withdrawals not open.");
-    super._withdrawTokens(_beneficiary);
-  }
+    /**
+     * @dev change crowdsale rate
+     * @param newRate Figure that corresponds to the new rate per token
+     */
+    function setRate(uint256 newRate) external onlyOwner {
+        require(newRate != 0);
 
+        TokenRateChanged(rate, newRate);
+        rate = newRate;
+    }
+
+    /**
+     * @dev Mint tokens for pre crowdsale putchases before crowdsale starts
+     * @param investorsAddress Purchaser's address
+     * @param tokensPurchased Tokens purchased during pre crowdsale
+     */
+    function mintTokenForPreCrowdsale(address investorsAddress, uint256 tokensPurchased)
+    external
+    onlyOwner
+    {
+        require(now < startTime && investorsAddress != address(0));
+        require(token.getTotalSupply().add(tokensPurchased) <= PRE_CROWDSALE_CAP);
+
+        token.mint(investorsAddress, tokensPurchased);
+        PrivateInvestorTokenPurchase(investorsAddress, tokensPurchased);
+    }
+
+    /**
+     * @dev Set the address which should receive the vested team tokens share on finalization
+     * @param _teamAndAdvisorsAllocation address of team and advisor allocation contract
+     */
+    function setTeamWalletAddress(address _teamAndAdvisorsAllocation) public onlyOwner {
+        require(_teamAndAdvisorsAllocation != address(0x0));
+        teamAndAdvisorsAllocation = _teamAndAdvisorsAllocation;
+    }
+
+
+    /**
+     * @dev payable function that allow token purchases
+     * @param beneficiary Address of the purchaser
+     */
+    function buyTokens(address beneficiary)
+    public
+    whenNotPaused
+    whitelisted(beneficiary)
+    payable
+    {
+        require(beneficiary != address(0));
+        require(msg.sender == beneficiary);
+        require(validPurchase() && token.getTotalSupply() < TOTAL_TOKENS_FOR_CROWDSALE);
+
+        uint256 weiAmount = msg.value;
+
+        // calculate token amount to be created
+        uint256 tokens = weiAmount.mul(rate);
+
+        require(trackBuyersPurchases[msg.sender].add(tokens) <= PERSONAL_CAP);
+
+        trackBuyersPurchases[beneficiary] = trackBuyersPurchases[beneficiary].add(tokens);
+
+        //remainder logic
+        if (token.getTotalSupply().add(tokens) > TOTAL_TOKENS_FOR_CROWDSALE) {
+            tokens = TOTAL_TOKENS_FOR_CROWDSALE.sub(token.getTotalSupply());
+            weiAmount = tokens.div(rate);
+
+            // save info so as to refund purchaser after crowdsale's end
+            remainderPurchaser = msg.sender;
+            remainderAmount = msg.value.sub(weiAmount);
+        }
+
+        // update state
+        weiRaised = weiRaised.add(weiAmount);
+
+        token.mint(beneficiary, tokens);
+        TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
+
+        forwardFunds();
+    }
+
+    // overriding Crowdsale#hasEnded to add cap logic
+    // @return true if crowdsale event has ended
+    function hasEnded() public view returns (bool) {
+        if (token.getTotalSupply() == TOTAL_TOKENS_FOR_CROWDSALE) {
+            return true;
+        }
+
+        return super.hasEnded();
+    }
+
+    /**
+     * @dev finalizes crowdsale
+     */
+    function finalization() internal {
+        // This must have been set manually prior to finalize().
+        require(teamAndAdvisorsAllocation != address(0x0));
+
+        // final minting
+        token.mint(teamAndAdvisorsAllocation, NON_VESTED_TEAM_ADVISORS_SHARE);
+        token.mint(rewardWallet, REWARD_SHARE);
+
+        if (TOTAL_TOKENS_SUPPLY > token.getTotalSupply()) {
+            uint256 remainingTokens = TOTAL_TOKENS_SUPPLY.sub(token.getTotalSupply());
+
+            token.mint(wallet, remainingTokens);
+        }
+
+        token.finishMinting();
+        TokenToken(token).unpause();
+        super.finalization();
+    }
 }
