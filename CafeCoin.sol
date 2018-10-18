@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CafeCoin at 0x0e46249fdb7c04339b3ad9e88c313beee031fe52
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CafeCoin at 0x135807039892233c17dc5a318a4d3e451b73fe3a
 */
 pragma solidity ^0.4.24;
 
@@ -424,8 +424,8 @@ contract MintableToken is StandardToken, Ownable {
 
 contract CafeCoin is MintableToken {
 
-  string public constant name = "CafeCoin";
-  string public constant symbol = "CAFECOIN";
+  string public constant name = "CCPAY";
+  string public constant symbol = "CCPAY";
   uint8 public constant decimals = 18;
 
 
