@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RasthenToken at 0xc8e73d3709d939bf186cfb83a92d24c464cb0056
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RasthenToken at 0xca23b94642503ce46d6e9997eec51b48fd23be72
 */
 pragma solidity ^0.4.18;
 
@@ -75,13 +75,13 @@ contract RasthenToken is ERC20 {
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;    
 
-    string public constant name = "Rasthen Token";
-    string public constant symbol = "RASTHEN";
+    string public constant name = "DeltaChain Token";
+    string public constant symbol = "DELTA";
     uint public constant decimals = 8;
     
-    uint256 public totalSupply = 20000000000e8;
+    uint256 public totalSupply = 25000000000e8;
     uint256 public totalDistributed = 0;        
-    uint256 public tokensPerEth = 200000000e8;
+    uint256 public tokensPerEth = 250000000e8;
     uint256 public constant minContribution = 1 ether / 100; // 0.01 Ether
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
