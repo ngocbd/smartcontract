@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirdropS at 0xdffa4609a403ef2480d19484548d3da3ab46e71c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirdropS at 0x05776a599cafab65f32bd4e03ed84245bfd3c92e
 */
 pragma solidity ^0.4.24;
 
@@ -407,11 +407,6 @@ contract MintableToken is StandardToken, Ownable {
 
 
 
-
-
-
-
-
 contract FinalizableCrowdsale is Crowdsale, Ownable {
   using SafeMath for uint256;
 
@@ -491,10 +486,6 @@ contract RefundVault is Ownable {
 
 
 
-
-
-
-
 contract Pausable is Ownable {
   event Pause();
   event Unpause();
@@ -561,12 +552,6 @@ contract PausableToken is StandardToken, Pausable {
 
 
 
-
-
-
-
-
-
 contract TokenRecipient {
 
     function tokenFallback(address sender, uint256 _value, bytes _extraData) returns (bool) {}
@@ -581,7 +566,7 @@ contract AirdropS is MintableToken, BurnableToken, PausableToken {
 
     string public constant name = "AirdropS";
     string public constant symbol = "AIRS";
-    uint8 public constant decimals = 6;
+    uint8 public constant decimals =6 ;
 
 
     function AirdropS() {
