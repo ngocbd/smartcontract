@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xf5bd215378a2cc4288d5415924ca7d18263dad75
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x961e93c8f56776474284d84476d8528a16223e07
 */
 pragma solidity ^0.4.25;
 
@@ -398,7 +398,6 @@ contract Token is PausableToken, MintableToken {
         totalSupply = initialSupply;
         balances[tokenOwner] = initialSupply;
         emit Mint(tokenOwner, initialSupply);
-        emit Transfer(0x0, tokenOwner, initialSupply);
     }
 
     /**
