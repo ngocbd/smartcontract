@@ -1,11 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Adam at 0xce083f30f3bf4f5f546931e3d910daf54498ae5a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Adam at 0x8d64d18c756bb16d091a9b3d19a8c1b6d16eb99d
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
 // 'Adam' token contract
 //
+// Deployed to : 0xB785384459824cc42ca58945cBbD3E2908e0D629
 // Symbol      : Adam
 // Name        : Adam Token
 // Total supply: 10000000000000000000000000000
@@ -119,8 +120,8 @@ contract Adam is ERC20Interface, Owned, SafeMath {
         name = "Adam Token";
         decimals = 18;
         _totalSupply = 10000000000000000000000000000;
-    
-        
+        balances[0xB785384459824cc42ca58945cBbD3E2908e0D629] = _totalSupply;
+        Transfer(address(0), 0xB785384459824cc42ca58945cBbD3E2908e0D629, _totalSupply);
     }
 
 
