@@ -1,9 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintHelper at 0xeabe48908503b7efb090f35595fb8d1a4d55bd66
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintHelper at 0xd79477c9b101cd4a0ad785b5a273af5e59ba918d
 */
 pragma solidity ^0.4.18;
-
-
 
 library SafeMath {
 
@@ -124,7 +122,7 @@ contract MintHelper is Ownable {
     uint public minterFeePercent;
 
 
-    function MintHelper(address mToken, address pWallet, address mWallet)
+    constructor(address mToken, address pWallet, address mWallet)
     {
       mintableToken = mToken;
       payoutsWallet = pWallet;
