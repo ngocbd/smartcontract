@@ -1,138 +1,373 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoCoin at 0x21974f1f094b8118859aea880cba60bf8b75c094
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Cryptocoin at 0x0e5d8cf7fedc38c4716eb7e2a55a1f040313deb2
 */
-contract Token {
+pragma solidity 0.4.25;
 
-    /// @return total amount of tokens
-    function totalSupply() constant returns (uint256 supply) {}
 
-    /// @param _owner The address from which the balance will be retrieved
-    /// @return The balance
-    function balanceOf(address _owner) constant returns (uint256 balance) {}
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that revert on error
+ */
+library SafeMath {
 
-    /// @notice send `_value` token to `_to` from `msg.sender`
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transfer(address _to, uint256 _value) returns (bool success) {}
+  /**
+  * @dev Multiplies two numbers, reverts on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    // Gas optimization: this is cheaper than requiring 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+    if (a == 0) {
+      return 0;
+    }
 
-    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
-    /// @param _from The address of the sender
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
+    uint256 c = a * b;
+    require(c / a == b);
 
-    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @param _value The amount of wei to be approved for transfer
-    /// @return Whether the approval was successful or not
-    function approve(address _spender, uint256 _value) returns (bool success) {}
+    return c;
+  }
 
-    /// @param _owner The address of the account owning tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @return Amount of remaining tokens allowed to spent
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
+  /**
+  * @dev Integer division of two numbers truncating the quotient, reverts on division by zero.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    require(b > 0); // Solidity only automatically asserts when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
 
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-    
+    return c;
+  }
+
+  /**
+  * @dev Subtracts two numbers, reverts on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    require(b <= a);
+    uint256 c = a - b;
+
+    return c;
+  }
+
+  /**
+  * @dev Adds two numbers, reverts on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    require(c >= a);
+
+    return c;
+  }
+
+  /**
+  * @dev Divides two numbers and returns the remainder (unsigned integer modulo),
+  * reverts when dividing by zero.
+  */
+  function mod(uint256 a, uint256 b) internal pure returns (uint256) {
+    require(b != 0);
+    return a % b;
+  }
 }
 
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+interface IERC20 {
+  function totalSupply() external view returns (uint256);
 
+  function balanceOf(address who) external view returns (uint256);
 
-contract StandardToken is Token {
+  function allowance(address owner, address spender)
+    external view returns (uint256);
 
-    function transfer(address _to, uint256 _value) returns (bool success) {
-        //Default assumes totalSupply can't be over max (2^256 - 1).
-        //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
-        //Replace the if with this one instead.
-        //if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-        if (balances[msg.sender] >= _value && _value > 0) {
-            balances[msg.sender] -= _value;
-            balances[_to] += _value;
-            Transfer(msg.sender, _to, _value);
-            return true;
-        } else { return false; }
-    }
+  function transfer(address to, uint256 value) external returns (bool);
 
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        //same as above. Replace this line with the following if you want to protect against wrapping uints.
-        //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
-            balances[_to] += _value;
-            balances[_from] -= _value;
-            allowed[_from][msg.sender] -= _value;
-            Transfer(_from, _to, _value);
-            return true;
-        } else { return false; }
-    }
+  function approve(address spender, uint256 value)
+    external returns (bool);
 
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-        return balances[_owner];
-    }
+  function transferFrom(address from, address to, uint256 value)
+    external returns (bool);
 
-    function approve(address _spender, uint256 _value) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
+  event Transfer(
+    address indexed from,
+    address indexed to,
+    uint256 value
+  );
 
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-      return allowed[_owner][_spender];
-    }
-
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
-    uint256 public totalSupply;
+  event Approval(
+    address indexed owner,
+    address indexed spender,
+    uint256 value
+  );
 }
 
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md
+ * Originally based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
+contract ERC20 is IERC20 {
+  using SafeMath for uint256;
 
-//name this contract whatever you'd like
-contract CryptoCoin is StandardToken {
+  mapping (address => uint256) internal _balances;
 
-    function () {
-        //if ether is sent to this address, send it back.
-        throw;
-    }
+  mapping (address => mapping (address => uint256)) private _allowed;
 
-    /* Public variables of the token */
+  uint256 internal _totalSupply;
 
-    /*
-    NOTE:
-    The following variables are OPTIONAL vanities. One does not have to include them.
-    They allow one to customise the token contract & in no way influences the core functionality.
-    Some wallets/interfaces might not even bother to look at this information.
-    */
-    string public name;                   //fancy name: eg Simon Bucks
-    uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
-    string public symbol;                 //An identifier: eg SBX
-    string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
+  /**
+  * @dev Total number of tokens in existence
+  */
+  function totalSupply() public view returns (uint256) {
+    return _totalSupply;
+  }
 
-//
-// CHANGE THESE VALUES FOR YOUR TOKEN
-//
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param owner The address to query the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address owner) public view returns (uint256) {
+    return _balances[owner];
+  }
 
-//make sure this function name matches the contract name above. So if you're token is called TutorialToken, make sure the //contract name above is also TutorialToken instead of ERC20Token
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param owner address The address which owns the funds.
+   * @param spender address The address which will spend the funds.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
+   */
+  function allowance(
+    address owner,
+    address spender
+   )
+    public
+    view
+    returns (uint256)
+  {
+    return _allowed[owner][spender];
+  }
 
-    function CryptoCoin(
-        ) {
-        balances[msg.sender] = 50000000000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 50000000000000000;                        // Update total supply (100000 for example)
-        name = "CryptoCoin";                                   // Set the name for display purposes
-        decimals = 8;                            // Amount of decimals for display purposes
-        symbol = "CCO";                               // Set the symbol for display purposes
-    }
+  /**
+  * @dev Transfer token for a specified address
+  * @param to The address to transfer to.
+  * @param value The amount to be transferred.
+  */
+  function transfer(address to, uint256 value) public returns (bool) {
+    require(value <= _balances[msg.sender]);
+    require(to != address(0));
 
-    /* Approves and then calls the receiving contract */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+    _balances[msg.sender] = _balances[msg.sender].sub(value);
+    _balances[to] = _balances[to].add(value);
+    emit Transfer(msg.sender, to, value);
+    return true;
+  }
 
-        //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
-        //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
-        //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
-        if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
-        return true;
-    }
+  /**
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   * Beware that changing an allowance with this method brings the risk that someone may use both the old
+   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   * @param spender The address which will spend the funds.
+   * @param value The amount of tokens to be spent.
+   */
+  function approve(address spender, uint256 value) public returns (bool) {
+    require(spender != address(0));
+
+    _allowed[msg.sender][spender] = value;
+    emit Approval(msg.sender, spender, value);
+    return true;
+  }
+
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param from address The address which you want to send tokens from
+   * @param to address The address which you want to transfer to
+   * @param value uint256 the amount of tokens to be transferred
+   */
+  function transferFrom(
+    address from,
+    address to,
+    uint256 value
+  )
+    public
+    returns (bool)
+  {
+    require(value <= _balances[from]);
+    require(value <= _allowed[from][msg.sender]);
+    require(to != address(0));
+
+    _balances[from] = _balances[from].sub(value);
+    _balances[to] = _balances[to].add(value);
+    _allowed[from][msg.sender] = _allowed[from][msg.sender].sub(value);
+    emit Transfer(from, to, value);
+    return true;
+  }
+
+  /**
+   * @dev Increase the amount of tokens that an owner allowed to a spender.
+   * approve should be called when allowed_[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param spender The address which will spend the funds.
+   * @param addedValue The amount of tokens to increase the allowance by.
+   */
+  function increaseAllowance(
+    address spender,
+    uint256 addedValue
+  )
+    public
+    returns (bool)
+  {
+    require(spender != address(0));
+
+    _allowed[msg.sender][spender] = (
+      _allowed[msg.sender][spender].add(addedValue));
+    emit Approval(msg.sender, spender, _allowed[msg.sender][spender]);
+    return true;
+  }
+
+  /**
+   * @dev Decrease the amount of tokens that an owner allowed to a spender.
+   * approve should be called when allowed_[_spender] == 0. To decrement
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param spender The address which will spend the funds.
+   * @param subtractedValue The amount of tokens to decrease the allowance by.
+   */
+  function decreaseAllowance(
+    address spender,
+    uint256 subtractedValue
+  )
+    public
+    returns (bool)
+  {
+    require(spender != address(0));
+
+    _allowed[msg.sender][spender] = (
+      _allowed[msg.sender][spender].sub(subtractedValue));
+    emit Approval(msg.sender, spender, _allowed[msg.sender][spender]);
+    return true;
+  }
+
+}
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  constructor() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+}
+
+contract Claimable is Ownable {
+  address public pendingOwner;
+
+  /**
+   * @dev Modifier throws if called by any account other than the pendingOwner.
+   */
+  modifier onlyPendingOwner() {
+    require(msg.sender == pendingOwner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to set the pendingOwner address.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner public {
+    pendingOwner = newOwner;
+  }
+
+  /**
+   * @dev Allows the pendingOwner address to finalize the transfer.
+   */
+  function claimOwnership() onlyPendingOwner public {
+    emit OwnershipTransferred(owner, pendingOwner);
+    owner = pendingOwner;
+    pendingOwner = address(0);
+  }
+}
+
+contract Cryptocoin is ERC20, Claimable {
+  using SafeMath for uint256;
+
+  string  public name;
+  string  public symbol;
+  uint8   public decimals;
+  address public accICO;
+
+  constructor (
+      address _accICO, 
+      uint256 _initialSupply)
+  public 
+  {
+      require(_accICO         != address(0));//audit recommendation
+      require(_initialSupply  > 0);
+      name           = "Cryptocoin";
+      symbol         = "CCIN";
+      decimals       = 18;
+      accICO         = _accICO;
+      _totalSupply   = _initialSupply * (10 ** uint256(decimals));
+      //Initial token distribution
+      _balances[_accICO]         = totalSupply();
+      emit Transfer(address(0), _accICO, totalSupply());
+  }
+
+  
+  function burn(uint256 amount) external {
+    require(amount <= _balances[msg.sender]);
+
+    _totalSupply = _totalSupply.sub(amount);
+    _balances[msg.sender] = _balances[msg.sender].sub(amount);
+    emit Transfer(msg.sender, address(0), amount);
+  }
+
+  function() public { } //Audit recommendation
+
+
+  //Owner can claim any tokens that transfered
+  //to this contract address
+  function reclaimToken(ERC20 token) external onlyOwner {
+      require(address(token) != address(0));
+      uint256 balance = token.balanceOf(address(this));
+      token.transfer(owner, balance);
+      
+  }
+
+  //***************************************************************
+  // ERC20 part of this contract based on best practices of
+  // https://github.com/OpenZeppelin/zeppelin-solidity
+  // Adapted and amended by IBERGroup, email:maxsizmobile@iber.group; 
+  //     Telegram: https://t.me/msmobile
+  //               https://t.me/alexamuek
+  // Code released under the MIT License(see git root).
+  ////**************************************************************
 }
