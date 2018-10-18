@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiBuyer at 0xee52d73202bdd9d3a87c8ec001ad27c0d6502e33
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiBuyer at 0x819ae35e142d86401bf2de6622eb6ffe8dd89b9c
 */
 pragma solidity ^0.4.24;
 
@@ -122,108 +122,6 @@ library SafeMath {
     assert(c >= _a);
     return c;
   }
-}
-
-// File: contracts/ext/CheckedERC20.sol
-
-library CheckedERC20 {
-    using SafeMath for uint;
-
-    function isContract(address addr) internal view returns(bool result) {
-        // solium-disable-next-line security/no-inline-assembly
-        assembly {
-            result := gt(extcodesize(addr), 0)
-        }
-    }
-
-    function handleReturnBool() internal pure returns(bool result) {
-        // solium-disable-next-line security/no-inline-assembly
-        assembly {
-            switch returndatasize()
-            case 0 { // not a std erc20
-                result := 1
-            }
-            case 32 { // std erc20
-                returndatacopy(0, 0, 32)
-                result := mload(0)
-            }
-            default { // anything else, should revert for safety
-                revert(0, 0)
-            }
-        }
-    }
-
-    function handleReturnBytes32() internal pure returns(bytes32 result) {
-        // solium-disable-next-line security/no-inline-assembly
-        assembly {
-            if eq(returndatasize(), 32) { // not a std erc20
-                returndatacopy(0, 0, 32)
-                result := mload(0)
-            }
-            if gt(returndatasize(), 32) { // std erc20
-                returndatacopy(0, 64, 32)
-                result := mload(0)
-            }
-            if lt(returndatasize(), 32) { // anything else, should revert for safety
-                revert(0, 0)
-            }
-        }
-    }
-
-    function asmTransfer(address _token, address _to, uint256 _value) internal returns(bool) {
-        require(isContract(_token));
-        // solium-disable-next-line security/no-low-level-calls
-        require(_token.call(bytes4(keccak256("transfer(address,uint256)")), _to, _value));
-        return handleReturnBool();
-    }
-
-    function asmTransferFrom(address _token, address _from, address _to, uint256 _value) internal returns(bool) {
-        require(isContract(_token));
-        // solium-disable-next-line security/no-low-level-calls
-        require(_token.call(bytes4(keccak256("transferFrom(address,address,uint256)")), _from, _to, _value));
-        return handleReturnBool();
-    }
-
-    function asmApprove(address _token, address _spender, uint256 _value) internal returns(bool) {
-        require(isContract(_token));
-        // solium-disable-next-line security/no-low-level-calls
-        require(_token.call(bytes4(keccak256("approve(address,uint256)")), _spender, _value));
-        return handleReturnBool();
-    }
-
-    //
-
-    function checkedTransfer(ERC20 _token, address _to, uint256 _value) internal {
-        if (_value > 0) {
-            uint256 balance = _token.balanceOf(this);
-            asmTransfer(_token, _to, _value);
-            require(_token.balanceOf(this) == balance.sub(_value), "checkedTransfer: Final balance didn't match");
-        }
-    }
-
-    function checkedTransferFrom(ERC20 _token, address _from, address _to, uint256 _value) internal {
-        if (_value > 0) {
-            uint256 toBalance = _token.balanceOf(_to);
-            asmTransferFrom(_token, _from, _to, _value);
-            require(_token.balanceOf(_to) == toBalance.add(_value), "checkedTransfer: Final balance didn't match");
-        }
-    }
-
-    //
-
-    function asmName(address _token) internal view returns(bytes32) {
-        require(isContract(_token));
-        // solium-disable-next-line security/no-low-level-calls
-        require(_token.call(bytes4(keccak256("name()"))));
-        return handleReturnBytes32();
-    }
-
-    function asmSymbol(address _token) internal view returns(bytes32) {
-        require(isContract(_token));
-        // solium-disable-next-line security/no-low-level-calls
-        require(_token.call(bytes4(keccak256("symbol()"))));
-        return handleReturnBytes32();
-    }
 }
 
 // File: openzeppelin-solidity/contracts/ownership/Ownable.sol
@@ -351,6 +249,108 @@ contract CanReclaimToken is Ownable {
     _token.safeTransfer(owner, balance);
   }
 
+}
+
+// File: contracts/ext/CheckedERC20.sol
+
+library CheckedERC20 {
+    using SafeMath for uint;
+
+    function isContract(address addr) internal view returns(bool result) {
+        // solium-disable-next-line security/no-inline-assembly
+        assembly {
+            result := gt(extcodesize(addr), 0)
+        }
+    }
+
+    function handleReturnBool() internal pure returns(bool result) {
+        // solium-disable-next-line security/no-inline-assembly
+        assembly {
+            switch returndatasize()
+            case 0 { // not a std erc20
+                result := 1
+            }
+            case 32 { // std erc20
+                returndatacopy(0, 0, 32)
+                result := mload(0)
+            }
+            default { // anything else, should revert for safety
+                revert(0, 0)
+            }
+        }
+    }
+
+    function handleReturnBytes32() internal pure returns(bytes32 result) {
+        // solium-disable-next-line security/no-inline-assembly
+        assembly {
+            if eq(returndatasize(), 32) { // not a std erc20
+                returndatacopy(0, 0, 32)
+                result := mload(0)
+            }
+            if gt(returndatasize(), 32) { // std erc20
+                returndatacopy(0, 64, 32)
+                result := mload(0)
+            }
+            if lt(returndatasize(), 32) { // anything else, should revert for safety
+                revert(0, 0)
+            }
+        }
+    }
+
+    function asmTransfer(address _token, address _to, uint256 _value) internal returns(bool) {
+        require(isContract(_token));
+        // solium-disable-next-line security/no-low-level-calls
+        require(_token.call(bytes4(keccak256("transfer(address,uint256)")), _to, _value));
+        return handleReturnBool();
+    }
+
+    function asmTransferFrom(address _token, address _from, address _to, uint256 _value) internal returns(bool) {
+        require(isContract(_token));
+        // solium-disable-next-line security/no-low-level-calls
+        require(_token.call(bytes4(keccak256("transferFrom(address,address,uint256)")), _from, _to, _value));
+        return handleReturnBool();
+    }
+
+    function asmApprove(address _token, address _spender, uint256 _value) internal returns(bool) {
+        require(isContract(_token));
+        // solium-disable-next-line security/no-low-level-calls
+        require(_token.call(bytes4(keccak256("approve(address,uint256)")), _spender, _value));
+        return handleReturnBool();
+    }
+
+    //
+
+    function checkedTransfer(ERC20 _token, address _to, uint256 _value) internal {
+        if (_value > 0) {
+            uint256 balance = _token.balanceOf(this);
+            asmTransfer(_token, _to, _value);
+            require(_token.balanceOf(this) == balance.sub(_value), "checkedTransfer: Final balance didn't match");
+        }
+    }
+
+    function checkedTransferFrom(ERC20 _token, address _from, address _to, uint256 _value) internal {
+        if (_value > 0) {
+            uint256 toBalance = _token.balanceOf(_to);
+            asmTransferFrom(_token, _from, _to, _value);
+            require(_token.balanceOf(_to) == toBalance.add(_value), "checkedTransfer: Final balance didn't match");
+        }
+    }
+
+    //
+
+    function asmName(address _token) internal view returns(bytes32) {
+        require(isContract(_token));
+        // solium-disable-next-line security/no-low-level-calls
+        require(_token.call(bytes4(keccak256("name()"))));
+        return handleReturnBytes32();
+    }
+
+    function asmSymbol(address _token) internal view returns(bytes32) {
+        require(isContract(_token));
+        // solium-disable-next-line security/no-low-level-calls
+        require(_token.call(bytes4(keccak256("symbol()"))));
+        return handleReturnBytes32();
+    }
 }
 
 // File: contracts/registry/MultiChanger.sol
@@ -574,8 +574,6 @@ contract MultiChanger is CanReclaimToken {
 // File: contracts/registry/MultiBuyer.sol
 
 contract MultiBuyer is MultiChanger {
-    using CheckedERC20 for ERC20;
-
     function buy(
         IMultiToken _mtkn,
         uint256 _minimumReturn,
@@ -671,7 +669,7 @@ contract MultiBuyer is MultiChanger {
 
             if (_throughToken != address(0) && _values[i] == 0) {
                 if (_throughToken.allowance(this, _exchanges[i]) == 0) {
-                    _throughToken.asmApprove(_exchanges[i], uint256(-1));
+                    _throughToken.approve(_exchanges[i], uint256(-1));
                 }
                 require(_exchanges[i].call(data), "buy: exchange arbitrary call failed");
             } else {
@@ -684,7 +682,7 @@ contract MultiBuyer is MultiChanger {
         for (i = _mtkn.tokensCount(); i > 0; i--) {
             ERC20 token = _mtkn.tokens(i - 1);
             if (token.allowance(this, _mtkn) == 0) {
-                token.asmApprove(_mtkn, uint256(-1));
+                token.approve(_mtkn, uint256(-1));
             }
 
             uint256 amount = j.mul(token.balanceOf(this)).div(token.balanceOf(_mtkn));
@@ -699,7 +697,7 @@ contract MultiBuyer is MultiChanger {
             msg.sender.transfer(address(this).balance);
         }
         if (_throughToken != address(0) && _throughToken.balanceOf(this) > 0) {
-            _throughToken.asmTransfer(msg.sender, _throughToken.balanceOf(this));
+            _throughToken.transfer(msg.sender, _throughToken.balanceOf(this));
         }
     }
 }
