@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EvaCurrency at 0x4643f2a2e868d4110b8122b50b505fc4975ce68c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EvaCurrency at 0x00b0e9b94ea02fb416ad9836395033bb538d42ce
 */
 pragma solidity ^0.4.23;
 
