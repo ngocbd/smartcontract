@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract X2invest at 0x56bfead31c2c6a3bdeb0891fab022c0b90ea43f1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract X2invest at 0xf574e8610b8932da98186b38c54d9e6c393e1429
 */
 pragma solidity 0.4 .25;
 
@@ -55,9 +55,9 @@ contract X2invest {
     //percentage deducted to the advertising fund
     uint projectPercent = 8;
     //percent for a charitable foundation
-    uint public charityPercent = 1;
+    uint charityPercent = 1;
     //time through which you can take dividends
-    uint public chargingTime = 1 hours;
+    uint chargingTime = 1 hours;
     //start persent 0.25% per hour
     uint public startPercent = 250;
     uint public lowPersent = 300;
@@ -67,8 +67,8 @@ contract X2invest {
     uint public stepLow = 1000 ether;
     uint public stepMiddle = 2500 ether;
     uint public stepHigh = 5000 ether;
-    uint public countOfInvestors = 0;
-    uint public countOfCharity = 0;
+    uint countOfInvestors = 0;
+    uint countOfCharity = 0;
 
     modifier isIssetUser() {
         require(userDeposit[msg.sender] > 0, "Deposit not found");
