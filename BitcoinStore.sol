@@ -1,7 +1,30 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitcoinStore at 0xe63e3ebfeeb37bda9b29ec62c27c7d065e65a055
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitcoinStore at 0x4f81c0794d79e036022fb8dc97866604d4f9aef1
 */
 pragma solidity ^0.4.11;
+
+contract SafeMath {
+  function safeMul(uint a, uint b) internal returns (uint) {
+    uint c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function safeSub(uint a, uint b) internal returns (uint) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function safeAdd(uint a, uint b) internal returns (uint) {
+    uint c = a + b;
+    assert(c>=a && c>=b);
+    return c;
+  }
+
+  function assert(bool assertion) internal {
+    if (!assertion) throw;
+  }
+}
 
 contract Ownable {
   address public owner;
@@ -54,31 +77,23 @@ contract ERC20 is ERC20Basic {
 }
 
 
-contract BitcoinStore is Ownable {
+contract BitcoinStore is Ownable, SafeMath {
 
   address constant public Bitcoin_address = 0xB6eD7644C69416d67B522e20bC294A9a9B405B31;
-  uint tokenPrice = 35e14; // 0.0035 eth starting price
-
-  function getBalance()
-  public
-  view
-  returns (uint)
-  {
-      return ERC20Basic(Bitcoin_address).balanceOf(this);
-  }
+  uint token_price = 35e14; // 0.0035 eth starting price 
 
   function getPrice()
   public
   view
   returns (uint)
   {
-      return tokenPrice;
+      return token_price;
   }
 
-  function updatePrice(uint newPrice)
+  function update_price(uint new_price)
   onlyOwner
   {
-      tokenPrice = newPrice;
+      token_price = new_price;
   }
 
   function send(address _tokenAddr, address dest, uint value)
@@ -87,16 +102,25 @@ contract BitcoinStore is Ownable {
       ERC20(_tokenAddr).transfer(dest, value);
   }
 
+  function multisend(address _tokenAddr, address[] dests, uint[] values)
+  onlyOwner
+  returns (uint) {
+      uint i = 0;
+      while (i < dests.length) {
+         ERC20(_tokenAddr).transfer(dests[i], values[i]);
+         i += 1;
+      }
+      return(i);
+  }
+
   /* fallback function for when ether is sent to the contract */
   function () external payable {
-      uint buytokens = msg.value / tokenPrice;
-      require(getBalance() >= buytokens);
+      uint buytokens = msg.value / token_price;
       ERC20(Bitcoin_address).transfer(msg.sender, buytokens);
   }
 
   function buy() public payable {
-      uint buytokens = msg.value / tokenPrice;
-      require(getBalance() >= buytokens);
+      uint buytokens = msg.value / token_price;
       ERC20(Bitcoin_address).transfer(msg.sender, buytokens);
   }
 
