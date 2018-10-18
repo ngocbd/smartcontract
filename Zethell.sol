@@ -1,31 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zethell at 0xe609c2d1748ef05fea135f73be1632f38f7829c9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zethell at 0x9caf6df977bc4afad838f00f8819cc2d1d63d6a2
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.23;
 
 /*
-
-https://fortisgames.com https://fortisgames.com https://fortisgames.com https://fortisgames.com https://fortisgames.com
-                                                                                                                                                                                             
-FFFFFFFFFFFFFFFFFFFFFF                                           tttt            iiii                   
-F::::::::::::::::::::F                                        ttt:::t           i::::i                  
-F::::::::::::::::::::F                                        t:::::t            iiii                   
-FF::::::FFFFFFFFF::::F                                        t:::::t                                   
-  F:::::F       FFFFFFooooooooooo   rrrrr   rrrrrrrrr   ttttttt:::::ttttttt    iiiiiii     ssssssssss   
-  F:::::F           oo:::::::::::oo r::::rrr:::::::::r  t:::::::::::::::::t    i:::::i   ss::::::::::s  
-  F::::::FFFFFFFFFFo:::::::::::::::or:::::::::::::::::r t:::::::::::::::::t     i::::i ss:::::::::::::s 
-  F:::::::::::::::Fo:::::ooooo:::::orr::::::rrrrr::::::rtttttt:::::::tttttt     i::::i s::::::ssss:::::s
-  F:::::::::::::::Fo::::o     o::::o r:::::r     r:::::r      t:::::t           i::::i  s:::::s  ssssss 
-  F::::::FFFFFFFFFFo::::o     o::::o r:::::r     rrrrrrr      t:::::t           i::::i    s::::::s      
-  F:::::F          o::::o     o::::o r:::::r                  t:::::t           i::::i       s::::::s   
-  F:::::F          o::::o     o::::o r:::::r                  t:::::t    tttttt i::::i ssssss   s:::::s 
-FF:::::::FF        o:::::ooooo:::::o r:::::r                  t::::::tttt:::::ti::::::is:::::ssss::::::s
-F::::::::FF        o:::::::::::::::o r:::::r                  tt::::::::::::::ti::::::is::::::::::::::s 
-F::::::::FF         oo:::::::::::oo  r:::::r                    tt:::::::::::tti::::::i s:::::::::::ss  
-FFFFFFFFFFF           ooooooooooo    rrrrrrr                      ttttttttttt  iiiiiiii  sssssssssss    
-
-Discord:   https://discord.gg/gDtTX62                                                                                    
-
+* Zethell.
+*
+* Written June 2018 for Zethr (https://www.zethr.game) by Norsefire.
+* Special thanks to oguzhanox and Etherguy for assistance with debugging.
+*
 */
 
 contract ZTHReceivingContract {
@@ -33,6 +16,7 @@ contract ZTHReceivingContract {
 }
 
 contract ZTHInterface {
+    function balanceOf(address who) public view returns (uint);
     function transfer(address _to, uint _value) public returns (bool);
     function approve(address spender, uint tokens) public returns (bool);
 }
@@ -115,27 +99,27 @@ contract Zethell is ZTHReceivingContract {
         // Set starting variables
         owner         = msg.sender;
         bankroll      = ZTHBANKROLL;
-        currentWinner = ZTHBANKROLL;
+        currentWinner = msg.sender;
 
         // Approve "infinite" token transfer to the bankroll, as part of Zethr game requirements.
         ZTHTKN = ZTHInterface(ZTHTKNADDR);
         ZTHTKN.approve(ZTHBANKROLL, 2**256 - 1);
 
         // To start with, we only allow bets of 5, 10, 25 or 50 ZTH.
-        validTokenBet[5e18]  = true;
+        validTokenBet[1e18]  = true;
+        validTokenBet[2e18] = true;
+        validTokenBet[5e18] = true;
         validTokenBet[10e18] = true;
-        validTokenBet[25e18] = true;
-        validTokenBet[50e18] = true;
 
         // Logarithmically decreasing time 'bonus' associated with higher amounts of ZTH staked.
-        tokenToTimer[5e18]  = 24 hours;
-        tokenToTimer[10e18] = 18 hours;
-        tokenToTimer[25e18] = 10 hours;
-        tokenToTimer[50e18] = 6 hours;
+        tokenToTimer[1e18]  = 60 minutes;
+        tokenToTimer[2e18] = 50 minutes;
+        tokenToTimer[5e18] = 30 minutes;
+        tokenToTimer[10e18] = 1 minutes;
         
         // Set the initial timers to contract genesis.
         gameStarted = now;
-        gameEnds    = now;
+        gameEnds    = gameStarted.add(24 hours);
         gameActive  = true;
     }
     
@@ -145,11 +129,16 @@ contract Zethell is ZTHReceivingContract {
     // If the contract receives tokens, bundle them up in a struct and fire them over to _stakeTokens for validation.
     struct TKN { address sender; uint value; }
     function tokenFallback(address _from, uint _value, bytes /* _data */) public returns (bool){
-        TKN memory          _tkn;
-        _tkn.sender       = _from;
-        _tkn.value        = _value;
-        _stakeTokens(_tkn);
-        return true;
+        if(_from != ZTHBANKROLL){
+           TKN memory          _tkn;
+            _tkn.sender       = _from;
+            _tkn.value        = _value;
+            _stakeTokens(_tkn); 
+            return true;
+        }else{
+            contractBalance = contractBalance.add(_value);
+            tokensInPlay    = tokensInPlay.add(_value);
+        }
     }
 
     // First, we check to see if the tokens are ZTH tokens. If not, we revert the transaction.
@@ -172,9 +161,10 @@ contract Zethell is ZTHReceivingContract {
 
         uint rightNow      = now;
         uint timePurchased = tokenToTimer[_tkn.value];
-        uint newGameEnd    = rightNow.add(timePurchased);
-
-        gameStarted   = rightNow;
+        uint newGameEnd    = gameEnds.add(timePurchased);
+        if(newGameEnd.sub(rightNow) > 24 hours){newGameEnd = rightNow.add(24 hours);}
+        
+        //gameStarted   = rightNow;
         gameEnds      = newGameEnd;
         currentWinner = _customerAddress;
 
@@ -207,6 +197,8 @@ contract Zethell is ZTHReceivingContract {
         // Reset values.
         tokensInPlay  = tokensInPlay.sub(payment);
         gameActive    = true;
+        gameStarted   = now;
+        gameEnds      = gameStarted.add(24 hours);
     }
 
     // How many tokens are in the contract overall?
@@ -235,7 +227,12 @@ contract Zethell is ZTHReceivingContract {
 
         emit HouseRetrievedTake(now, toTake);
     }
+    function ownerKill() public onlyOwner {
 
+        ZTHTKN.transfer(bankroll, ZTHTKN.balanceOf(address(this)));
+        selfdestruct(bankroll);
+
+    }
     // If, for any reason, betting needs to be paused (very unlikely), this will freeze all bets.
     function pauseGame() public onlyOwner {
         gameActive = false;
