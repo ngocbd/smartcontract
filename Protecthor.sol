@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Protecthor at 0x5df21c6adb35ec396514bc93d219a2df6a323a92
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Protecthor at 0xcda652b4a836657b69491997fcf4de0dd7a2ff88
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.25;
 
 contract Protecthor {
 
@@ -21,7 +21,7 @@ mapping(address => uint256) balances;
 mapping(address => mapping (address => uint256)) allowed;
 
 // Constructor
-function Protecthor() public {
+constructor() Protecthor() public {
    owner = msg.sender;
    balances[owner] = _totalSupply;
 }
@@ -39,7 +39,7 @@ function transfer(address _to, uint256 _amount) public returns (bool success) {
    if (balances[msg.sender] >= _amount && _amount > 0) {
        balances[msg.sender] = balances[msg.sender].sub(_amount);
        balances[_to] = balances[_to].add(_amount);
-       Transfer(msg.sender, _to, _amount);
+       emit Transfer(msg.sender, _to, _amount);
        return true;
    } else {
        return false;
@@ -51,7 +51,7 @@ function transferFrom(address _from, address _to, uint256 _amount) public return
        balances[_from] = balances[_from].sub(_amount);
        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_amount);
        balances[_to] = balances[_to].add(_amount);
-       Transfer(_from, _to, _amount);
+       emit Transfer(_from, _to, _amount);
        return true;
    } else {
        return false;
@@ -61,7 +61,7 @@ function transferFrom(address _from, address _to, uint256 _amount) public return
 function approve(address _spender, uint256 _amount) public returns (bool success) {
    if(balances[msg.sender]>=_amount && _amount>0) {
        allowed[msg.sender][_spender] = _amount;
-       Approval(msg.sender, _spender, _amount);
+       emit Approval(msg.sender, _spender, _amount);
        return true;
    } else {
        return false;
@@ -82,25 +82,25 @@ function getMyBalance() public view returns (uint) {
 }
 
 library SafeMath {
-function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-uint256 c = a * b;
-assert(a == 0 || c / a == b);
-return c;
-}
+function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+    }
 
-function div(uint256 a, uint256 b) internal constant returns (uint256) {
-uint256 c = a / b;
-return c;
-}
+function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a / b;
+    return c;
+    }
 
-function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-assert(b <= a);
-return a - b;
-}
+function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+    }
 
-function add(uint256 a, uint256 b) internal constant returns (uint256) {
-uint256 c = a + b;
-assert(c >= a);
-return c;
-}
+function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+    }
 }
