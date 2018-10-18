@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x5b9fc64b81769a3ab635ea46633ae132225f0214
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0xefd6e1f5f57e1ebd08d2c9a8b9ae40ed330a1891
 */
 pragma solidity ^0.4.16;
 
 contract owned {
     address public owner;
 
-    constructor() public {
+    function owned() public {
         owner = msg.sender;
     }
 
@@ -36,9 +36,6 @@ contract TokenERC20 {
 
     // This generates a public event on the blockchain that will notify clients
     event Transfer(address indexed from, address indexed to, uint256 value);
-    
-    // This generates a public event on the blockchain that will notify clients
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
     // This notifies clients about the amount burnt
     event Burn(address indexed from, uint256 value);
@@ -48,7 +45,7 @@ contract TokenERC20 {
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    constructor(
+    function TokenERC20(
         uint256 initialSupply,
         string tokenName,
         string tokenSymbol
@@ -120,7 +117,6 @@ contract TokenERC20 {
     function approve(address _spender, uint256 _value) public
         returns (bool success) {
         allowance[msg.sender][_spender] = _value;
-        emit Approval(msg.sender, _spender, _value);
         return true;
     }
 
@@ -192,7 +188,7 @@ contract MyAdvancedToken is owned, TokenERC20 {
     event FrozenFunds(address target, bool frozen);
 
     /* Initializes contract with initial supply tokens to the creator of the contract */
-    constructor(
+    function MyAdvancedToken(
         uint256 initialSupply,
         string tokenName,
         string tokenSymbol
