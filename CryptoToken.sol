@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoToken at 0x922a5B2143c53E179020bf49037a1b0a3c644Cb4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoToken at 0x992C683e2A139b947D62c087500a3c6a933C6574
 */
 contract CryptoToken {
     /* Public variables of the token */
@@ -18,9 +18,9 @@ contract CryptoToken {
     /* Initializes contract with initial supply tokens to the creator of the contract */
     function CryptoToken() {
 
-         initialSupply = 50000000000;
+         initialSupply = 500000000;
          name ="CryptoToken";
-        decimals = 2;
+        decimals = 18;
          symbol = "CLC";
         
         balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
