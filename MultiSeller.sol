@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSeller at 0x12863901098aa24fa81f1ab952a449f6c8211afc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSeller at 0xb51a8beac2eb256274ac6cf3cca1629f2f0f6b3c
 */
 pragma solidity ^0.4.24;
 
@@ -313,6 +313,12 @@ contract MultiSeller is CanReclaimToken {
         _mtkn.unbundle(this, _amount);
 
         for (uint i = 0; i < _exchanges.length; i++) {
+            ERC20 token = _mtkn.tokens(i);
+            if (_exchanges[i] == 0) {
+                token.transfer(_for, token.balanceOf(this));
+                continue;
+            }
+
             bytes memory data = new bytes(_datasIndexes[i + 1] - _datasIndexes[i]);
             for (uint j = _datasIndexes[i]; j < _datasIndexes[i + 1]; j++) {
                 data[j - _datasIndexes[i]] = _datas[j];
@@ -326,11 +332,6 @@ contract MultiSeller is CanReclaimToken {
                     _throughToken.approve(_exchanges[i], uint256(-1));
                 }
             } else {
-                ERC20 token = _mtkn.tokens(i);
-                if (_exchanges[i] == 0) {
-                    token.transfer(_for, token.balanceOf(this));
-                    continue;
-                }
                 token.approve(_exchanges[i], token.balanceOf(this));
             }
             require(_exchanges[i].call(data), "sell: exchange arbitrary call failed");
