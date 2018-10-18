@@ -1,108 +1,63 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyTestToken at 0x1E5165777542368fa870baD4DeAd1fccBDc592aD
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyTestToken at 0xf05c57b59d0c28537faaf3b37d71064a8cee3657
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.21;
+contract Token{
+    uint256 public totalSupply;
 
-
-/** test
-*/
- 
-contract SafeMath {
-  function mul(uint256 a, uint256 b) internal returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal returns (uint256) {
-    assert(b > 0);
-    uint256 c = a / b;
-    assert(a == b * c + a % b);
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal returns (uint256) {
-    uint256 c = a + b;
-    assert(c>=a && c>=b);
-    return c;
-  }
-
-  function assert(bool assertion) internal {
-    if (!assertion) {
-      throw;
-    }
-  }
-}
-
-contract Token {
-
-    function totalSupply() constant returns (uint256 supply) {}
-    function balanceOf(address _owner) constant returns (uint256 balance) {}
-    function transfer(address _to, uint256 _value) returns (bool success) {}
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
-    function approve(address _spender, uint256 _value) returns (bool success) {}
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
+    function balanceOf(address _owner) public constant returns (uint256 balance);
+    function transfer(address _to, uint256 _value) public returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+    function approve(address _spender, uint256 _value) public returns (bool success);
+    function allowance(address _owner, address _spender) public constant returns (uint256 remaining);
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
-contract RegularToken is Token, SafeMath {
+contract MyTestToken is Token {
 
-    function transfer(address _to, uint256 _value) returns (bool) {
-        require(balances[msg.sender] >= _value);
-        require(balances[_to] + _value >= balances[_to]);
-        balances[msg.sender] = sub(balances[msg.sender], _value);
-        balances[_to] = add(balances[_to], _value);
-        emit Transfer(msg.sender, _to, _value);
-        return true;
+    string public name = "MyTestToken";                   //??
+    uint8 public decimals = 18;               //??token?????????????????3?????0.001??.
+    string public symbol = "MTT";               //token??
+
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
+
+    function MyTestToken() public {
+        totalSupply = 7000000000 * (10 ** (uint256(decimals)));         // ??????
+        balances[msg.sender] = totalSupply; // ??token??????????????????????????????
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
-        require(balances[_from] >= _value);
-        require(balances[_to] + _value >= balances[_to]);
-        require(allowed[_from][msg.sender] >= _value);
-        balances[_from] = sub(balances[_from], _value);
-        balances[_to] = add(balances[_to], _value);
-        allowed[_from][msg.sender] = sub(allowed[_from][msg.sender], _value);
-        emit Transfer(_from, _to, _value);
+    function transfer(address _to, uint256 _value) public returns (bool success) {
+        //??totalSupply ??????? (2^256 - 1).
+        //??????????????token??????????????????
+        require(balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]);
+        require(_to != 0x0);
+        balances[msg.sender] -= _value;//???????????token??_value
+        balances[_to] += _value;//???????token??_value
+        emit Transfer(msg.sender, _to, _value);//????????
         return true;
     }
-
-    function balanceOf(address _owner) constant returns (uint256) {
+    function transferFrom(address _from, address _to, uint256 _value) public returns 
+    (bool success) {
+        require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value);
+        balances[_to] += _value;//??????token??_value
+        balances[_from] -= _value; //????_from??token??_value
+        allowed[_from][msg.sender] -= _value;//??????????_from????????_value
+        emit Transfer(_from, _to, _value);//????????
+        return true;
+    }
+    function balanceOf(address _owner) public constant returns (uint256 balance) {
         return balances[_owner];
     }
-
-    function approve(address _spender, uint256 _value) returns (bool) {
+    function approve(address _spender, uint256 _value) public returns (bool success)   
+    { 
         allowed[msg.sender][_spender] = _value;
         emit Approval(msg.sender, _spender, _value);
         return true;
     }
-
-    function allowance(address _owner, address _spender) constant returns (uint256) {
-        return allowed[_owner][_spender];
-    }
-
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
-    uint256 public totalSupply;
-}
-
-
-contract MyTestToken is RegularToken {
-
-    uint256 public totalSupply = 100*10**(18+8);
-    uint8 constant public decimals = 18;
-    string constant public name = "Mytest";
-    string constant public symbol = "MT";
-
-    function MyTestToken() {
-        balances[msg.sender] = totalSupply;
-        emit Transfer(address(0), msg.sender, totalSupply);
+    function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
+        return allowed[_owner][_spender];//??_spender?_owner????token?
     }
 }
