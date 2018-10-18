@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BIMGToken at 0xebb91b718173c2a1c0b7c75e2f676cbe7cdd18b7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BIMGToken at 0x4045253edc2986c1c4800c3ce0cf0f5fb3c683e5
 */
 pragma solidity ^0.4.11;
 
@@ -244,8 +244,8 @@ contract StandardToken is ERC20, BasicToken {
  */
 contract BIMGToken is StandardToken, Pausable {
 
-  string public constant name = "BIMG ??";
-  string public constant symbol = "BIMG ??";
+  string public constant name = "BIMG";
+  string public constant symbol = "BIMG";
   uint256 public constant decimals = 18;
   
   // lock
