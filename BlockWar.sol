@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BlockWar at 0x3333e9dff062022cb586172257da4e41f332cd67
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BlockWar at 0xd2720894f1d4b908c769464c00f8a1d020244661
 */
 pragma solidity ^0.4.24;
 
@@ -82,7 +82,7 @@ contract BlockWar {
 
     function BlockWar() public {
         owner = msg.sender;
-        gameStartTimestamp = 1535634000;  // set gameStartTimestamp
+        gameStartTimestamp = 1535605200;  // set gameStartTimestamp
     }
 
     function getBlockBuildFee(uint currentBlockNumber) public view returns(uint) {
