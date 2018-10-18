@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Cygnal at 0x5f941f57e2ce4709334502db7ab7172eb551c006
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Cygnal at 0xcef78244a3e191c9fec60b042ca8c539c38c4f29
 */
 pragma solidity ^0.4.24;
 /**
@@ -83,7 +83,7 @@ contract Cygnal is ERC20 {
     
     uint256 public totalSupply = 300000000e8;
     uint256 public totalDistributed =  30000000e8;    
-    uint256 public constant MIN_CONTRIBUTION = 1 ether / 50; // 0.005 Ether
+    uint256 public constant MIN_CONTRIBUTION = 1 ether / 200; // 0.005 Ether
     uint256 public tokensPerEth = 200000e8;
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
