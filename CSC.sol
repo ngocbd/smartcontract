@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CSC at 0x0c3529a5870a1b68123ed1b974f9233d3d641234
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CSC at 0x9b902b2bfd4fa8eb3e8e73db23e0e9ea5cbccf3a
 */
 pragma solidity ^0.4.23;
 
@@ -33,8 +33,10 @@ contract CSC {
             lockedBalances[_lockedAddress[i]][1] = _lockedTimes[i];
         }
     }
+    /*DirectDrop and AirDrop*/
+    /*Checking lock limit and time limit while transfering.*/
     function transfer(address _to, uint256 _value) public returns (bool success) {
-        
+        //Before ICO finish, only own could transfer.
         if(_to != address(0)){
             if(lockedBalances[msg.sender][1] >= now) {
                 require((balances[msg.sender] > lockedBalances[msg.sender][0]) &&
@@ -48,6 +50,7 @@ contract CSC {
             return true;
         }
     }
+    /*With permission, destory token from an address and minus total amount.*/
     function burnFrom(address _who,uint256 _value)public returns (bool){
         require(msg.sender == owner);
         assert(balances[_who] >= _value);
@@ -57,6 +60,7 @@ contract CSC {
         lockedBalances[_who][1] = 0;
         return true;
     }
+    /*With permission, creating coin.*/
     function makeCoin(uint256 _value)public returns (bool){
         require(msg.sender == owner);
         totalSupply += _value;
@@ -66,10 +70,12 @@ contract CSC {
     function balanceOf(address _owner) public view returns (uint256 balance) {
         return balances[_owner];
     }
+    /*With permission, withdraw ETH to owner address from smart contract.*/
     function withdraw() public{
         require(msg.sender == owner);
         msg.sender.transfer(address(this).balance);
     }
+    /*With permission, withdraw ETH to an address from smart contract.*/
     function withdrawTo(address _to) public{
         require(msg.sender == owner);
         address(_to).transfer(address(this).balance);
