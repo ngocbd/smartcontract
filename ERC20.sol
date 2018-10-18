@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20 at 0x01a31a47560f4490f91cd3f1905b02b7ddfedf3a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20 at 0x971afa812dce60ccc5f5ceabf69e4d7ec17a0ee4
 */
 pragma solidity ^0.4.25;
 
@@ -75,8 +75,8 @@ contract ERC20 is owned {
     
     using SafeMath for uint;
     // Public variables of the token
-    string public name = "Block Coin Bits";
-    string public symbol = "BLCB";
+    string public name = "Block Coin Bit";
+    string public symbol = "BCB";
     uint8 public decimals = 8;
     uint256 public totalSupply = 500000000000 * 10 ** uint256(decimals);
 
