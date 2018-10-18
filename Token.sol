@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract token at 0xf7dc9ea30e1b7984699311c439ea94f4e915e6ab
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract token at 0x2adb7e9c77fed062d90d864c661192ddd6ff9658
 */
 pragma solidity 0.4.15;
 
@@ -42,10 +42,10 @@ contract owned {
  */
 contract token {
     /* ???? */
-    string public name; //????
-    string public symbol; //??????'$'
+    string public name = "??"; //????
+    string public symbol = "HAHA"; //??????'$'
     uint8 public decimals = 18;  //????????????????0,??????????18?0
-    uint256 public totalSupply; //????
+    uint256 public totalSupply = 100000000000000; //????
 
     /*?????????*/
     mapping (address => uint256) public balanceOf;
