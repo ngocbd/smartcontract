@@ -1,156 +1,190 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BlockMobaToken at 0x8deceb28723a0dcb7c45b4d5934294bf44f7d8c0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BlockMobaToken at 0x2666f6a7873fac3160db60ca15fd911e7ff7394e
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.9;
 
-
-contract SafeMath {
-  function safeMul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
+ contract ContractReceiver {
+     
+    struct TKN {
+        address sender;
+        uint value;
+        bytes data;
+        bytes4 sig;
     }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-
-  function safeDiv(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b > 0);
-    uint256 c = a / b;
-    assert(a == b * c + a % b);
-    return c;
-  }
-
-  function safeSub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function safeAdd(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c>=a && c>=b);
-    return c;
-  }
-
+    
+    
+    function tokenFallback(address _from, uint _value, bytes _data) public pure {
+      TKN memory tkn;
+      tkn.sender = _from;
+      tkn.value = _value;
+      tkn.data = _data;
+      uint32 u = uint32(_data[3]) + (uint32(_data[2]) << 8) + (uint32(_data[1]) << 16) + (uint32(_data[0]) << 24);
+      tkn.sig = bytes4(u);
+      
+      /* tkn variable is analogue of msg variable of Ether transaction
+      *  tkn.sender is person who initiated this token transaction   (analogue of msg.sender)
+      *  tkn.value the number of tokens that were sent   (analogue of msg.value)
+      *  tkn.data is data of token transaction   (analogue of msg.data)
+      *  tkn.sig is 4 bytes signature of function
+      *  if data of token transaction is a function execution
+      */
+    }
 }
 
-contract BlockMobaToken is SafeMath {
-    address public owner;
-    string public name;
-    string public symbol;
-    uint public decimals;
-    uint256 public totalSupply;
+contract ERC223 {
+  uint public totalSupply;
+  function balanceOf(address who) public view returns (uint);
+  
+  function name() public view returns (string _name);
+  function symbol() public view returns (string _symbol);
+  function decimals() public view returns (uint8 _decimals);
+  function totalSupply() public view returns (uint256 _supply);
 
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
+  function transfer(address to, uint value) public returns (bool ok);
+  function transfer(address to, uint value, bytes data) public returns (bool ok);
+  function transfer(address to, uint value, bytes data, string custom_fallback) public returns (bool ok);
+  
+  event Transfer(address indexed from, address indexed to, uint value, bytes indexed data);
+}
 
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Burn(address indexed from, uint256 value);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-    
-    mapping (address => bool) public frozenAccount;
-    event FrozenFunds(address target, bool frozen);
+ /* https://github.com/LykkeCity/EthereumApiDotNetCore/blob/master/src/ContractBuilder/contracts/token/SafeMath.sol */
+contract SafeMath {
+    uint256 constant public MAX_UINT256 =
+    0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
 
-    bool lock = false;
-
-    constructor(
-        uint256 initialSupply,
-        string tokenName,
-        string tokenSymbol,
-        uint decimalUnits
-    ) public {
-        owner = msg.sender;
-        name = tokenName;
-        symbol = tokenSymbol; 
-        decimals = decimalUnits;
-        totalSupply = initialSupply * 10 ** uint256(decimals);
-        balanceOf[msg.sender] = totalSupply;
+    function safeAdd(uint256 x, uint256 y) pure internal returns (uint256 z) {
+        if (x > MAX_UINT256 - y) revert();
+        return x + y;
     }
 
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
+    function safeSub(uint256 x, uint256 y) pure internal returns (uint256 z) {
+        if (x < y) revert();
+        return x - y;
     }
 
-    modifier isLock {
-        require(!lock);
-        _;
+    function safeMul(uint256 x, uint256 y) pure internal returns (uint256 z) {
+        if (y == 0) return 0;
+        if (x > MAX_UINT256 / y) revert();
+        return x * y;
     }
-    
-    function setLock(bool _lock) onlyOwner public{
-        lock = _lock;
-    }
-
-    function transferOwnership(address newOwner) onlyOwner public {
-        if (newOwner != address(0)) {
-            owner = newOwner;
-        }
-    }
+}
  
+contract ERC223Token is ERC223, SafeMath {
 
-    function _transfer(address _from, address _to, uint _value) isLock internal {
-        require (_to != 0x0);
-        require (balanceOf[_from] >= _value);
-        require (balanceOf[_to] + _value > balanceOf[_to]);
-        require(!frozenAccount[_from]);
-        require(!frozenAccount[_to]);
-        balanceOf[_from] -= _value;
-        balanceOf[_to] += _value;
-        emit Transfer(_from, _to, _value);
-    }
-
-    function transfer(address _to, uint256 _value) public returns (bool success) {
-        _transfer(msg.sender, _to, _value);
+  mapping(address => uint) balances;
+  
+  string public name;
+  string public symbol;
+  uint8 public decimals;
+  uint256 public totalSupply;
+  
+  
+  // Function to access name of token .
+  function name() public view returns (string _name) {
+      return name;
+  }
+  // Function to access symbol of token .
+  function symbol() public view returns (string _symbol) {
+      return symbol;
+  }
+  // Function to access decimals of token .
+  function decimals() public view returns (uint8 _decimals) {
+      return decimals;
+  }
+  // Function to access total supply of tokens .
+  function totalSupply() public view returns (uint256 _totalSupply) {
+      return totalSupply;
+  }
+  
+  
+  // Function that is called when a user or another contract wants to transfer funds .
+  function transfer(address _to, uint _value, bytes _data, string _custom_fallback) public returns (bool success) {
+      
+    if(isContract(_to)) {
+        if (balanceOf(msg.sender) < _value) revert();
+        balances[msg.sender] = safeSub(balanceOf(msg.sender), _value);
+        balances[_to] = safeAdd(balanceOf(_to), _value);
+        assert(_to.call.value(0)(bytes4(keccak256(_custom_fallback)), msg.sender, _value, _data));
+        emit Transfer(msg.sender, _to, _value, _data);
         return true;
     }
+    else {
+        return transferToAddress(_to, _value, _data);
+    }
+}
+  
 
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        require(_value <= allowance[_from][msg.sender]);
-        allowance[_from][msg.sender] -= _value;
-        _transfer(_from, _to, _value);
-        return true;
+  // Function that is called when a user or another contract wants to transfer funds .
+  function transfer(address _to, uint _value, bytes _data) public returns (bool success) {
+      
+    if(isContract(_to)) {
+        return transferToContract(_to, _value, _data);
+    }
+    else {
+        return transferToAddress(_to, _value, _data);
+    }
+}
+  
+  // Standard function transfer similar to ERC20 transfer with no _data .
+  // Added due to backwards compatibility reasons .
+  function transfer(address _to, uint _value) public returns (bool success) {
+      
+    //standard function transfer similar to ERC20 transfer with no _data
+    //added due to backwards compatibility reasons
+    bytes memory empty;
+    if(isContract(_to)) {
+        return transferToContract(_to, _value, empty);
+    }
+    else {
+        return transferToAddress(_to, _value, empty);
+    }
+}
+
+  //assemble the given address bytecode. If bytecode exists then the _addr is a contract.
+  function isContract(address _addr) private view returns (bool is_contract) {
+      uint length;
+      assembly {
+            //retrieve the size of the code on target address, this needs assembly
+            length := extcodesize(_addr)
+      }
+      return (length>0);
     }
 
-    function approve(address _spender, uint256 _value) public returns (bool success) {
-        allowance[msg.sender][_spender] = _value;
-        emit Approval(msg.sender, _spender, _value);
-        return true;
-    }
+  //function that is called when transaction target is an address
+  function transferToAddress(address _to, uint _value, bytes _data) private returns (bool success) {
+    if (balanceOf(msg.sender) < _value) revert();
+    balances[msg.sender] = safeSub(balanceOf(msg.sender), _value);
+    balances[_to] = safeAdd(balanceOf(_to), _value);
+    emit Transfer(msg.sender, _to, _value, _data);
+    return true;
+  }
+  
+  //function that is called when transaction target is a contract
+  function transferToContract(address _to, uint _value, bytes _data) private returns (bool success) {
+    if (balanceOf(msg.sender) < _value) revert();
+    balances[msg.sender] = safeSub(balanceOf(msg.sender), _value);
+    balances[_to] = safeAdd(balanceOf(_to), _value);
+    ContractReceiver receiver = ContractReceiver(_to);
+    receiver.tokenFallback(msg.sender, _value, _data);
+    emit Transfer(msg.sender, _to, _value, _data);
+    return true;
+}
 
-    function burn(uint256 _value) onlyOwner public returns (bool success) {
-        require(balanceOf[msg.sender] >= _value);
-        balanceOf[msg.sender] -= _value;
-        totalSupply -= _value;
-        emit Burn(msg.sender, _value);
-        return true;
-    }
 
-    function burnFrom(address _from, uint256 _value) onlyOwner public returns (bool success) {
-        require(balanceOf[_from] >= _value); 
-        require(_value <= allowance[_from][msg.sender]); 
-        balanceOf[_from] -= _value;
-        allowance[_from][msg.sender] -= _value;
-        totalSupply -= _value;
-        emit Burn(_from, _value);
-        return true;
-    }
+  function balanceOf(address _owner) public view returns (uint balance) {
+    return balances[_owner];
+  }
+}
 
-    function mintToken(address target, uint256 mintedAmount) onlyOwner public {
-        uint256 _amount = mintedAmount * 10 ** uint256(decimals);
-        balanceOf[target] += _amount;
-        totalSupply += _amount;
-        emit Transfer(this, target, _amount);
-    }
+
+contract BlockMobaToken is ERC223Token {
     
-    function freezeAccount(address target, bool freeze) onlyOwner public {
-        frozenAccount[target] = freeze;
-        emit FrozenFunds(target, freeze);
-    }
-
-    function transferBatch(address[] _to, uint256 _value) public returns (bool success) {
-        for (uint i=0; i<_to.length; i++) {
-            _transfer(msg.sender, _to[i], _value);
-        }
-        return true;
-    }
+  constructor () public  {
+    uint256 initialSupply = 1000000000;
+    name = "BlockMobaToken";                                   // Set the name for display purposes
+    symbol = "MOBA";
+    decimals = 6;
+    totalSupply = initialSupply * 10 ** uint256(decimals);
+    balances[msg.sender] = totalSupply;
+  }
 }
