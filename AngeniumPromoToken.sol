@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AngeniumPromoToken at 0x590704e1bb7ca3b096852a60d6be2f2de16df691
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AngeniumPromoToken at 0xc1b779f738e625bb2900928b995837dd7caee0a3
 */
 pragma solidity ^0.4.24;
 
@@ -195,14 +195,14 @@ contract BasicToken is ERC20Basic {
     }
 
     function transfer(address _to, uint256 _value) public returns (bool) {
-		require(_to != address(0));
-		require(_value <= balances[msg.sender]);
-		
-		balances[msg.sender] = balances[msg.sender].sub(_value);
-		balances[_to] = balances[_to].add(_value);
-		emit Transfer(msg.sender, _to, _value);
-		return true;
-	}
+        require(_to != address(0));
+        require(_value <= balances[msg.sender]);
+
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        emit Transfer(msg.sender, _to, _value);
+        return true;
+    }
 
 
     /**
@@ -295,30 +295,26 @@ contract StandardToken is ERC20, BasicToken {
  */
 contract AngeniumPromoToken is StandardToken, Ownable {
 
-    address public backEndOperator = 0xe26032f45d83F6E897ab38bE63e0b638769eD18E;
+
     address public mainToken = 0xC5C02655BbD508545B4e32eC88Cef3Aa5e741D87;
 
     string public constant name = "Angenium Promo Token";
-    string public constant symbol = "ANGENIUM PROMO";
+    string public constant symbol = "ANG PROMO";
     uint8 public constant decimals = 18;
 
 
     uint256 public constant INITIAL_SUPPLY = 50000 * (10 ** uint256(decimals));
 
 
-    modifier backEnd() {
-        require(msg.sender == backEndOperator || msg.sender == owner);
-        _;
-    }
-
     constructor() public {
         totalSupply_ = INITIAL_SUPPLY;
+        balances[msg.sender] = INITIAL_SUPPLY;
     }
 
 
-    function multisend(address[] _owners) public backEnd {
+    function multisend(address[] _owners) public onlyOwner {
         for (uint256 i = 0; i < _owners.length; i++) {
-            emit Transfer(address(0), _owners[i], 1000000000000000000);
+            transfer(_owners[i], 1000000000000000000);
         }
     }
 
