@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CYRUS at 0xe9ce4238f1ee0e4882cb02da2938d26c631fe09c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Cyrus at 0x174817c1d5841c6d01e40da9b5fc0144ff4c0823
 */
 pragma solidity ^0.4.4;
 
@@ -56,7 +56,7 @@ contract StandardToken is Token {
     mapping (address => mapping (address => uint256)) allowed;
     uint256 public totalSupply;
 }
-contract CYRUS is StandardToken{
+contract Cyrus is StandardToken{
     function () {
         throw;
     }
@@ -65,7 +65,7 @@ contract CYRUS is StandardToken{
     uint8 public decimals;              
     string public symbol;                
     string public version = 'H1.0';
-    function FreeLove(
+    function Cyrus(
         ) {
         balances[msg.sender] = 1000000000000000;
         totalSupply = 1000000000000000;
