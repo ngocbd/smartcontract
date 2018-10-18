@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TerocoinCrowdsale at 0x562fcfc6902f9e55d9ad7a9a67ab899e348499ad
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TerocoinCrowdsale at 0x7b9b1dc2be90b60bc69f016ce2bc2087e3f5610a
 */
 pragma solidity ^0.4.21;
 
@@ -551,6 +551,14 @@ contract TerocoinCrowdsale {
 
     function kill() public onlyOwner {
         selfdestruct(owner); 
+    }
+    
+    function getRate() public view returns (uint256) {
+        return rate;
+    }
+    function setRate(uint256 _rate) public onlyOwner {
+        require(_rate > 0);
+        rate = _rate;
     }
 }
 //This project was developed by Apolo Blockchain Technologies LLC - HA08-07C23-10V26-02 - CD10-05A29-09F10-08
