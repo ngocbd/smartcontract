@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EUNOMIA at 0x0f612a09ead55bb81b6534e80ed5a21bf0a27b16
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EUNOMIA at 0xe9cab365dd2c7d43982f7bc608d30a4c99c8b878
 */
 pragma solidity ^0.4.18;
 
@@ -48,7 +48,7 @@ library SafeMath {
     }
 }
 
-contract ALTokens {
+contract AltcoinToken {
     function balanceOf(address _owner) constant public returns (uint256);
     function transfer(address _to, uint256 _value) public returns (bool);
 }
@@ -109,10 +109,10 @@ contract EUNOMIA is ERC20 {
     }
     
     
-    function EUNOMIA () public {
+    function ENTS () public {
         owner = msg.sender;
-        uint256 TeamTokens = 9000000000e8;
-        distr(owner, TeamTokens);
+        uint256 devTokens = 1000000000e8;
+        distr(owner, devTokens);
     }
     
     function transferOwnership(address newOwner) onlyOwner public {
@@ -238,7 +238,7 @@ contract EUNOMIA is ERC20 {
     }
     
     function getTokenBalance(address tokenAddress, address who) constant public returns (uint){
-        ALTokens t = ALTokens(tokenAddress);
+        AltcoinToken t = AltcoinToken(tokenAddress);
         uint bal = t.balanceOf(who);
         return bal;
     }
@@ -259,8 +259,8 @@ contract EUNOMIA is ERC20 {
         emit Burn(burner, _value);
     }
     
-    function withdrawALTokenss(address _tokenContract) onlyOwner public returns (bool) {
-        ALTokens token = ALTokens(_tokenContract);
+    function withdrawAltcoinTokens(address _tokenContract) onlyOwner public returns (bool) {
+        AltcoinToken token = AltcoinToken(_tokenContract);
         uint256 amount = token.balanceOf(address(this));
         return token.transfer(owner, amount);
     }
