@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20CrowdsaleToken at 0xa20f783ee0b59edada443e3c79e8eef634541985
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20CrowdsaleToken at 0x7e7d1afafc067ce47dfd329dcccfd97607fd8c01
 */
 pragma solidity ^0.4.23;
 
@@ -255,11 +255,11 @@ contract BurnableToken is StandardToken {
 
 contract Token is BurnableToken, Ownable {
 
-    string public constant name = "Crowd Funding Business Token";
-    string public constant symbol = "CBT";
+    string public constant name = "Crowdnext";
+    string public constant symbol = "CNXT";
     uint public constant decimals = 18;
     // there is no problem in using * here instead of .mul()
-    uint256 public constant initialSupply = 150000000 * (10 ** uint256(decimals));
+    uint256 public constant initialSupply = 100000000 * (10 ** uint256(decimals));
 
     // Constructors
     constructor () public {
