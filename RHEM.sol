@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RHEM at 0x4B6b3bd14059E9A189EE97Eba4a643F80F21881e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RHEM at 0x3ec54f89caff986c0b2685389f1b335a1bb16f85
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.24;
 
 /**
  * @title ERC20Interface
@@ -9,11 +9,13 @@ pragma solidity ^0.4.18;
  */
 contract ERC20Interface {
     uint256 public totalSupply;
+
     function balanceOf(address _owner) public view returns (uint256 balance);
     function transfer(address _to, uint256 _value) public returns (bool success);
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
     function approve(address _spender, uint256 _value) public returns (bool success);
     function allowance(address _owner, address _spender) public view returns (uint256 remaining);
+
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
@@ -27,10 +29,10 @@ contract Ownable {
     address public owner;
 
     /**
-     * @dev The Ownable constructor sets the original `owner` 
+     * @dev The Ownable constructor sets the original `owner`
      * of the contract to the sender account.
      */
-    function Ownable() public {
+    constructor() public {
         owner = msg.sender;
     }
 
@@ -61,55 +63,56 @@ contract RHEM is Ownable, ERC20Interface {
     string public constant name = "RHEM";
     uint8 public constant decimals = 18;
     uint256 public _unmintedTokens = 3000000000000*uint(10)**decimals;
-
     mapping(address => uint256) balances;
-    mapping (address => mapping (address => uint256)) internal allowed;
-    
+    mapping(address => mapping (address => uint256)) internal allowed;
+
     event Approval(address indexed owner, address indexed spender, uint256 value);
     event Transfer(address indexed from, address indexed to, uint256 value);
-      
+    event Burn(address indexed sender, uint256 value);
+    event Mint(address indexed sender, uint256 value);
+
     /**
      * @dev Gets the balance of the specified address
      * @param _owner The address to query the the balance of
      * @return An uint256 representing the amount owned by the passed address
      */
     function balanceOf(address _owner) public view returns (uint256 balance) {
-        return balances[_owner];
+        return (balances[_owner]);
     }
-    
+
     /**
      * @dev Transfer token to a specified address
      * @param _to The address to transfer to
      * @param _value The amount to be transferred
-     */  
+     */
     function transfer(address _to, uint256 _value) public returns (bool success) {
         require(_to != address(0));
         require(balances[msg.sender] >= _value);
         assert(balances[_to] + _value >= balances[_to]);
-   
+
         balances[msg.sender] -= _value;
         balances[_to] += _value;
-        Transfer(msg.sender, _to, _value);
+        emit Transfer(msg.sender, _to, _value);
+
         return true;
     }
 
-    
     /**
-     * @dev Transfer tokens from one address to another 
+     * @dev Transfer tokens from one address to another
      * @param _from The address which you want to send tokens from
      * @param _to The address which you want to transfer to
      * @param _value The amout of tokens to be transfered
-     */    
+     */
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
         require(_to != address(0));
         require(_value <= balances[_from]);
         require(_value <= allowed[_from][msg.sender]);
         assert(balances[_to] + _value >= balances[_to]);
-        
+
         balances[_from] = balances[_from] - _value;
         balances[_to] = balances[_to] + _value;
         allowed[_from][msg.sender] = allowed[_from][msg.sender] - _value;
-        Transfer(_from, _to, _value);
+        emit Transfer(_from, _to, _value);
         return true;
     }
 
@@ -120,10 +123,10 @@ contract RHEM is Ownable, ERC20Interface {
      */
     function approve(address _spender, uint256 _value) public returns (bool success) {
         allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+        emit Approval(msg.sender, _spender, _value);
         return true;
     }
-    
+
     /**
      * @dev Function to check the amount of tokens than an owner allowed to a spender
      * @param _owner The address which owns the funds
@@ -138,62 +141,68 @@ contract RHEM is Ownable, ERC20Interface {
      * @dev Mint RHEM tokens. No more than 3,000,000,000,000 RHEM can be minted
      * @param _target The address to which new tokens will be minted
      * @param _mintedAmount The amout of tokens to be minted
-     */    
-    function mintTokens(address _target, uint256 _mintedAmount) public onlyOwner returns (bool success){
+     */
+    function mint(address _target, uint256 _mintedAmount) public onlyOwner returns (bool success) {
         require(_mintedAmount <= _unmintedTokens);
         balances[_target] += _mintedAmount;
         _unmintedTokens -= _mintedAmount;
         totalSupply += _mintedAmount;
+        emit Mint(_target, _mintedAmount);
+
         return true;
     }
-    
+
     /**
      * @dev Mint RHEM tokens and aproves the passed address to spend the minted amount of tokens
      * No more than 3,000,000,000,000 RHEM can be minted
      * @param _target The address to which new tokens will be minted
      * @param _mintedAmount The amout of tokens to be minted
      * @param _spender The address which will spend minted funds
-     */ 
-    function mintTokensWithApproval(address _target, uint256 _mintedAmount, address _spender) public onlyOwner returns (bool success){
+     */
+    function mintWithApproval(address _target, uint256 _mintedAmount, address _spender) public onlyOwner returns (bool success) {
         require(_mintedAmount <= _unmintedTokens);
         balances[_target] += _mintedAmount;
         _unmintedTokens -= _mintedAmount;
         totalSupply += _mintedAmount;
         allowed[_target][_spender] += _mintedAmount;
+        emit Mint(_target, _mintedAmount);
+        emit Approval(_target, _spender, _mintedAmount);
+
         return true;
     }
-    
+
+    /**
+     * @dev function that burns an amount of the token of the sender
+     * @param _amount The amount that will be burnt.
+     */
+    function burn(uint256 _amount) public returns (uint256 balance) {
+        require(msg.sender != address(0));
+        require(_amount <= balances[msg.sender]);
+        totalSupply = totalSupply - _amount;
+        balances[msg.sender] = balances[msg.sender] - _amount;
+
+        emit Burn(msg.sender, _amount);
+
+        return balances[msg.sender];
+    }
+
     /**
      * @dev Decrease amount of RHEM tokens that can be minted
      * @param _burnedAmount The amount of unminted tokens to be burned
-     */ 
-    function burnUnmintedTokens(uint256 _burnedAmount) public onlyOwner returns (bool success){
+     */
+    function deductFromUnminted(uint256 _burnedAmount) public onlyOwner returns (bool success) {
         require(_burnedAmount <= _unmintedTokens);
         _unmintedTokens -= _burnedAmount;
+
         return true;
     }
-    
+
     /**
-     * @dev Transfer token back to owner
-     * @param _from the address transfer from
-     * @param _value The amount to be transferred
-     */  
-    function transferBack(address _from, uint256 _value) public onlyOwner returns (uint256 unmintedTokens) {
-        require(_from != address(0));
-        require(balances[_from] >= _value);
-        
-        _unmintedTokens += _value;
-        balances[_from] -= _value;  
-        Transfer(_from, msg.sender, _value);
-        return _unmintedTokens;
-    }
-    
-      /**
      * @dev Add to unminted
      * @param _value The amount to be add
-     */  
+     */
     function addToUnminted(uint256 _value) public onlyOwner returns (uint256 unmintedTokens) {
-        
+        require(_unmintedTokens + _value > _unmintedTokens);
         _unmintedTokens += _value;
 
         return _unmintedTokens;
