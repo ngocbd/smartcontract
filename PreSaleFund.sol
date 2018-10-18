@@ -1,74 +1,56 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreSaleFund at 0xd022969da8a1ace11e2974b3e7ee476c3f9f99c6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresaleFund at 0xf5b72a62d7575f3a03954d4d7de2a2701da16049
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.16;
 
+contract PresaleFund {
+    bool isClosed;
+    struct Deposit { address buyer; uint amount; }
+    uint refundDate;
+    address fiduciary = msg.sender;
+    Deposit[] Deposits;
+    mapping (address => uint) total;
 
-contract PreSaleFund
-{
-    address owner = msg.sender;
-
-    event CashMove(uint amount,bytes32 logMsg,address target,address currentOwner);
+    function() public payable { }
     
-    mapping(address => uint) investors;
-    
-    uint public MinInvestment = 0.1 ether;
-   
-    function loggedTransfer(uint amount, bytes32 logMsg, address target, address currentOwner) 
-    payable
+    function init(uint date)
     {
-       if(msg.sender != address(this))throw;
-       if(target.call.value(amount)())
-       {
-          CashMove(amount, logMsg, target, currentOwner);
-       }
+        refundDate = date;
     }
-    
-    function Invest() 
-    public 
-    payable 
-    {
-        if (msg.value > MinInvestment)
+
+    function deposit()
+    public payable {
+        if (msg.value >= 0.25 ether && !isClosed)
         {
-            investors[msg.sender] += msg.value;
+            Deposit newDeposit;
+            newDeposit.buyer = msg.sender;
+            newDeposit.amount = msg.value;
+            Deposits.push(newDeposit);
+            total[msg.sender] += msg.value;
+        }
+        if (this.balance >= 25 ether)
+        {
+            isClosed = true;
         }
     }
 
-    function Divest(uint amount) 
-    public 
-    {
-        if ( investors[msg.sender] > 0 && amount > 0)
+    function refund(uint amount)
+    public {
+        if (total[msg.sender] >= amount && amount > 0)
         {
-            this.loggedTransfer(amount, "", msg.sender, owner);
-            investors[msg.sender] -= amount;
+            if (now >= refundDate && isClosed==false)
+            {
+                msg.sender.transfer(amount);
+            }
         }
     }
     
-    function SetMin(uint min)
-    public
-    {
-        if(msg.sender==owner)
+    function close()
+    public {
+        if (msg.sender == fiduciary)
         {
-            MinInvestment = min;
+            msg.sender.transfer(this.balance);
+            isClosed = true;
         }
     }
-
-    function GetInvestedAmount() 
-    constant 
-    public 
-    returns(uint)
-    {
-        return investors[msg.sender];
-    }
-
-    function withdraw() 
-    public 
-    {
-        if(msg.sender==owner)
-        {
-            this.loggedTransfer(this.balance, "", msg.sender, owner);
-        }
-    }
-    
-    
 }
