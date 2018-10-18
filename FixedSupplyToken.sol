@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FixedSupplyToken at 0x6a7584cd753183d6722e977fc14bc715b32e9924
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FixedSupplyToken at 0x0e0a6c613ea16ae347cb98732e152530ae9bc7f2
 */
 pragma solidity ^0.4.24;
 
@@ -108,10 +108,10 @@ contract FixedSupplyToken is ERC20Interface, Owned {
     // Constructor
     // ------------------------------------------------------------------------
     constructor() public {
-        symbol = "WT";
-        name = "Welcome Token";
+        symbol = "NEWT";
+        name = "New Token";
         decimals = 18;
-        _totalSupply = 1000000000 * 10**uint(decimals);
+        _totalSupply = 800000000 * 10**uint(decimals);
         balances[owner] = _totalSupply;
         emit Transfer(address(0), owner, _totalSupply);
     }
