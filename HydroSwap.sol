@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HydroSwap at 0xd5f49a4bec5c1fcdefb2e46e60fc859fdbd05007
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HydroSwap at 0x0bb5867166aa38189b5bbf1ed64bb26079901b02
 */
 /*
 
@@ -22,7 +22,7 @@
 pragma solidity 0.4.24;
 
 contract ERC20 {
-    function transfer(address to, uint tokens) public returns (bool success);
+    function transfer(address to, uint tokens) public;
     function approve(address spender, uint tokens) public returns (bool success);
     function transferFrom(address from, address to, uint tokens) public returns (bool success);
 }
@@ -85,7 +85,7 @@ contract HydroSwap {
             WETH(wethAddress).withdraw(makerTokenAmount);
             msg.sender.transfer(makerTokenAmount);
         } else {
-            require(ERC20(makerTokenAddress).transfer(msg.sender, makerTokenAmount), "TOKEN_TRANSFER_ERROR");
+            ERC20(makerTokenAddress).transfer(msg.sender, makerTokenAmount);
         }
 
         emit LogSwapSuccess(id);
@@ -94,5 +94,5 @@ contract HydroSwap {
     }
 
     // Need payable fallback function to accept the WETH withdraw funds.
-    function() public payable {} 
+    function() public payable {}
 }
