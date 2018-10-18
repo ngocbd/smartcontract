@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StayBNB at 0x65a3f52cf0e0b5db5945b45abc2eacd8e3207142
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StayBNB at 0xe449178da0b414607a60adff708cc3c23d7b6687
 */
 pragma solidity ^0.4.16;
 
@@ -15,7 +15,7 @@ contract StayBNB {
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Burn(address indexed from, uint256 value);
 
-    constructor () public {
+    function IRideToken() public {
         totalSupply = 50000000000 * 10 ** uint256(decimals);
         balanceOf[msg.sender] = totalSupply;
         name = "StayBNB";
