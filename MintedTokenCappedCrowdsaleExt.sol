@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintedTokenCappedCrowdsaleExt at 0xd9cD77DD72A520BFD311782Cc89110312178A1Bc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintedTokenCappedCrowdsaleExt at 0x22622d0C254Ad9B6046911A744b0BDF815aaBe26
 */
 // Created using Token Wizard https://github.com/poanetwork/token-wizard by POA Network 
 // Temporarily have SafeMath here until all contracts have been migrated to SafeMathLib version from OpenZeppelin
@@ -506,8 +506,11 @@ contract CrowdsaleExt is Haltable {
   /**
    * Don't expect to just send in money and get tokens.
    */
-  function() payable {
+  /*function() payable {
     throw;
+  }*/
+  function () external payable {
+    invest(msg.sender);
   }
 
   /**
