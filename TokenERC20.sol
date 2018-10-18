@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xb88f7a24a8e34c7c474fd4cac422c6e53c0ecc46
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xbbc735121baf13e004a48c54353564dbda7ec313
 */
 pragma solidity ^0.4.16;
 
@@ -19,9 +19,6 @@ contract TokenERC20 {
 
     // This generates a public event on the blockchain that will notify clients
     event Transfer(address indexed from, address indexed to, uint256 value);
-    
-    // This generates a public event on the blockchain that will notify clients
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
     // This notifies clients about the amount burnt
     event Burn(address indexed from, uint256 value);
@@ -31,15 +28,11 @@ contract TokenERC20 {
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    function TokenERC20(
-        uint256 initialSupply,
-        string tokenName,
-        string tokenSymbol
-    ) public {
-        totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
+    function TokenERC20() public {
+        totalSupply = 500000000 * 10 ** uint256(decimals);  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
-        name = tokenName;                                   // Set the name for display purposes
-        symbol = tokenSymbol;                               // Set the symbol for display purposes
+        name = 'ISTAR CHAIN';                                   // Set the name for display purposes
+        symbol = 'ISTAR';                               // Set the symbol for display purposes
     }
 
     /**
@@ -71,9 +64,8 @@ contract TokenERC20 {
      * @param _to The address of the recipient
      * @param _value the amount to send
      */
-    function transfer(address _to, uint256 _value) public returns (bool success) {
+    function transfer(address _to, uint256 _value) public {
         _transfer(msg.sender, _to, _value);
-        return true;
     }
 
     /**
@@ -103,7 +95,6 @@ contract TokenERC20 {
     function approve(address _spender, uint256 _value) public
         returns (bool success) {
         allowance[msg.sender][_spender] = _value;
-        emit Approval(msg.sender, _spender, _value);
         return true;
     }
 
