@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Cash311 at 0xa6149a18c58a33aea413cfb6ce9d3f28f82adab8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Cash311 at 0x3bcbe4c47e302baf2bbdea0a904a4d1520b8a2b0
 */
 pragma solidity ^0.4.18;
 
@@ -344,10 +344,8 @@ library NewSafeMath {
             } else {
                 if (msg.data.length == 20) {
                     address referer = bytesToAddress1(bytes(msg.data));
-                    if (referer != msg.sender) {
-                        invest(referer);
-                        return;
-                    }
+                    invest(referer);
+                    return;
                 }
                 invest(0x0);
                 return;
@@ -444,7 +442,7 @@ library NewSafeMath {
                 // RefSystem
                 if (refIsSet[msg.sender]) {
                       refSystem(_value, referers[msg.sender]);
-                  } else if (_referer != 0x0 && _referer != msg.sender) {
+                  } else if (_referer != 0x0) {
                       setRef(_value, _referer);
                   }
                 return;
@@ -462,7 +460,7 @@ library NewSafeMath {
             // RefSystem
             if (refIsSet[msg.sender]) {
                 refSystem(_value, referers[msg.sender]);
-            } else if (_referer != 0x0 && _referer != msg.sender) {
+            } else if (_referer != 0x0) {
                 setRef(_value, _referer);
             }
         }
