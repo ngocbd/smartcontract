@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KryllToken at 0xeb49ac5462f3ff0b6473d5d797500de602fe83a2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KryllToken at 0xdea42a06a237abaebc33e60d73f6038eed6009c9
 */
 pragma solidity ^0.4.23;
 
@@ -405,8 +405,8 @@ contract TransferableToken is StandardToken,Ownable {
 contract KryllToken is TransferableToken {
 //    using SafeMath for uint256;
 
-    string public symbol = "XJT";
-    string public name = "XIONGJUN Token";
+    string public symbol = "ZZT";
+    string public name = "ZZ Token";
     uint8 public decimals = 18;
 
 
@@ -437,7 +437,7 @@ contract KryllToken is TransferableToken {
         require(sale_address != 0x0 && team_address != 0x0);
 
         // Compute total supply
-        totalSupply_ = SALE.add(TEAM);
+        totalSupply_ = 20000000000000000000000000000;
 
         // Distribute KRL Token
         balances[owner] = totalSupply_;
