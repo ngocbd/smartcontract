@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiVesting at 0x1d86a854da490ff74dedc7abe281fb468f8c19ee
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiVesting at 0xb47dfdb1f3adb1b193dc4057d309c9dbe7ee4a56
 */
 pragma solidity ^0.4.21;
 /**
