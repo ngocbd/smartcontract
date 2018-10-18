@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FomoDD at 0xb7951df8fec4e1adeb6f12c7af6ef480fd19f675
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FomoDD at 0x1b10beacc1fdc6c7bac5a2c8cc7198b046ed4c90
 */
 pragma solidity ^0.4.24;
 
@@ -114,7 +114,7 @@ contract FomoDD is modularFomoDD {
 	
     // TODO: check address
     BankInterfaceForForwarder constant private Bank = BankInterfaceForForwarder(0xfa1678C00299fB685794865eA5e20dB155a8C913);
-	PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xA5d855212A9475558ACf92338F6a1df44dFCE908);
+	PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xcB530be74c05a120F1fe6e490E45f1EE14c49157);
 
     address private admin = msg.sender;
     string constant public name = "FomoDD";
