@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZlotsMulti at 0x171e2637a76475c3b1f65a303c395635c22073fd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZlotsMulti at 0x9411186d7c6bf0cd965608433c3ed7005ee6026e
 */
 pragma solidity ^0.4.24;
 
@@ -308,7 +308,7 @@ contract ZlotsMulti is ZethrShell {
     // Init min bet (1 ZTH)
     ownerSetMinBet(1e18);
     
-    canMining = true;
+    canMining = false;
     miningProfit = 100;
     minBetMining = 1e18;
   }
@@ -386,7 +386,7 @@ contract ZlotsMulti is ZethrShell {
 
     // game mining
     if(canMining && spin.tokenValue >= minBetMining){
-        uint miningAmout = SafeMath.div(SafeMath.mul(spin.tokenValue, miningProfit) , 10000);
+        uint miningAmout = SafeMath.div(SafeMath.mul(_wagered, miningProfit) , 10000);
         RequestBankrollPayment(_tkn.sender, miningAmout, spin.divRate);
     }
 
@@ -702,7 +702,12 @@ contract ZlotsMulti is ZethrShell {
     setMaxProfit(33);
   }
 
-  // Only owner can set minBet   
+  // Only owner can set minBet
+  function ownerSetupBankrollInterface(address ZethrMainBankrollAddress) public
+  onlyOwner
+  {
+    setupBankrollInterface(ZethrMainBankrollAddress);
+  }  
   function ownerSetMinBet(uint newMinimumBet) 
     public
     onlyOwner
