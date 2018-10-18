@@ -1,21 +1,23 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BEXP at 0xeb47edc0587ed7cae9ca3593244bc42be1dedcab
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BEXP at 0x6e02a04879fc1699d14fa94080652b2b797dcd7f
 */
 contract BEXP {  
     /* This creates an array with all balances */  
     mapping (address => uint256) public balanceOf;  
       
-    string public name = "BitExpress";  
-    string public symbol = "BEXP";  
-    uint8 public decimals = 8;  
-    uint256 public totalSupply = 1000000000 * 10**decimals;
+    string public name;  
+    string public symbol;  
+    uint8 public decimals;  
       
     event Transfer(address indexed from, address indexed to, uint256 value);  
           
     /* Initializes contract with initial supply tokens to the creator of the contract */  
     function BEXP () public {  
-        balanceOf[msg.sender] = totalSupply ;             // Give the creator all initial tokens  
-        Transfer(0, msg.sender, balanceOf[msg.sender]);
+        decimals = 8;       // Amount of decimals for display purposes  
+        balanceOf[msg.sender] = 1000000000 * 10**decimals;             // Give the creator all initial tokens  
+        name = "BitExpress";                                  // Set the name for display purposes  
+        symbol = "BEXP";                               // Set the symbol for display purposes  
+        
     }  
           
     function transfer(address _to, uint256 _value) public {  
