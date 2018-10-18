@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sale1 at 0x4809636de40c44f212359388f0063b5e9a320458
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sale1 at 0xe5f3c6e105f5ebac07c7ee627988bc6efb389116
 */
 pragma solidity 0.4.24;
 
@@ -1169,18 +1169,18 @@ contract Sale1 is Whitelist {
     
     using SafeMath for uint256;
 
-    uint256 public maximumNonWhitelistAmount = 5000 * 50 ether; // in minimum units of rune
+    uint256 public maximumNonWhitelistAmount = 12500 * 50 ether; // in minimum units of rune
 
     // in minimum units of rune (1000 = 0.000000000000001000 RUNE per WEI)
     // note that this only works if the amount of rune per wei is more than 1
-    uint256 public runeToWeiRatio = 5000;
+    uint256 public runeToWeiRatio = 12500;
     bool public withdrawalsAllowed = false;
     bool public tokensWithdrawn = false;
     address public owner;
     address public proceedsAddress = 0xd46cac034f44ac93049f8f1109b6b74f79b3e5e6;
     RUNEToken public RuneToken = RUNEToken(0xdEE02D94be4929d26f67B64Ada7aCf1914007F10);
     Whitelist public WhitelistContract = Whitelist(0x395Eb47d46F7fFa7Dd4b27e1B64FC6F21d5CC4C7);
-    THORChain721 public ERC721Token = THORChain721(0x52A9700551128585f0d68B6D4D2FA322a2AeeE47);
+    THORChain721 public ERC721Token = THORChain721(0x953d066d809dc71b8809dafb8fb55b01bc23a6e0);
 
     uint256 public CollectibleIndex0 = 0;
     uint256 public CollectibleIndex1 = 1;
@@ -1189,12 +1189,12 @@ contract Sale1 is Whitelist {
     uint256 public CollectibleIndex4 = 4;
     uint256 public CollectibleIndex5 = 5;
 
-    uint public winAmount0 = 1666.666666666666666667 ether;
-    uint public winAmount1 = 3333.333333333333333333 ether;
-    uint public winAmount2 = 5000.0 ether;
-    uint public winAmount3 = 6666.666666666666666667 ether;
-    uint public winAmount4 = 8333.333333333333333333 ether;
-    uint public winAmount5 = 10000.0 ether;
+    uint public winAmount0 = 666.666666666666666667 ether;
+    uint public winAmount1 = 1333.333333333333333333 ether;
+    uint public winAmount2 = 2000.0 ether;
+    uint public winAmount3 = 2666.666666666666666667 ether;
+    uint public winAmount4 = 3333.333333333333333333 ether;
+    uint public winAmount5 = 4000.0 ether;
 
     mapping (uint256 => address) public collectibleAllocation;
     mapping (address => uint256) public runeAllocation;
