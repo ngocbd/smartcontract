@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthertoteToken at 0x42be9831fff77972c1d0e1ec0aa9bdb3caa04d47
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthertoteToken at 0x740a61ad4fb99af22fb42ca25f548640ae64911d
 */
 pragma solidity ^0.4.24;
 
-// 22.07.18
+// 02.09.18
 
 
 //*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/
@@ -143,12 +143,12 @@ contract EthertoteToken {
     // set the following values prior to deployment
     // --------------------------------------------------------------------
     
-        name = "Ethertote";                                   // Set the name
-        symbol = "TOTE";                                 // Set the symbol
+        name = "Ethertote";                                 // Set the name
+        symbol = "TOTE";                                    // Set the symbol
         decimals = 0;                                       // Set the decimals
         _totalSupply = 10000000 * 10**uint(decimals);       // 10,000,000 tokens
         
-        version = "Ethertote Token contract - version 1.0";
+        version = "Ethertote Token contract - version 1.1";
     
     //---------------------------------------------------------------------
 
