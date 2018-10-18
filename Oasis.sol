@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OASIS at 0x7fba842ce531d48deacd5a4f3f31ccfa349d528a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OASIS at 0x76d981673d898da150cf9f757899655c5706428a
 */
 pragma solidity ^0.4.24;
 
@@ -7,7 +7,7 @@ pragma solidity ^0.4.24;
 
 // @Project OASIS (OHAS)
 
-// @Creator TB_I with J
+// @Creator TB_I with JK
 
 // ----------------------------------------------------------------------------
 
