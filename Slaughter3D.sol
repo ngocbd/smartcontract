@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Slaughter3D at 0x479cbe1f6a7fa4d7e304ae983803c46e85ced870
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Slaughter3D at 0x3d490ec6940a3be86e0eb5f1a06b0c1271b81ba1
 */
 pragma solidity ^0.4.25;
 // expansion on original contract from dav's stronghands contract
@@ -64,48 +64,19 @@ contract Slaughter3D {
     event StageInvalidated(uint256 indexed stage);
     // UI view functions
     
-    
-    function previousstageloser()
+    function previousstagedata()
         public
         view
-        returns(address)
+        returns(address , address , string  ,address , string  )
     {
-        return (Loser[numberOfFinalizedStages]);
+        return (Loser[numberOfFinalizedStages],stages[numberOfFinalizedStages].slotXplayer[0],Vanity[stages[numberOfFinalizedStages].slotXplayer[0]],stages[numberOfFinalizedStages].slotXplayer[1],Vanity[stages[numberOfFinalizedStages].slotXplayer[1]]);
     }
-    function previousstageplayer1()
+    function currentstagedata()
         public
         view
-        returns(address)
+        returns( address , string  ,address , string  )
     {
-        return (stages[numberOfFinalizedStages].slotXplayer[0]);
-    }
-    function previousstageplayer2()
-        public
-        view
-        returns(address)
-    {
-        return (stages[numberOfFinalizedStages].slotXplayer[2]);
-    }
-    function currentstageplayer1()
-        public
-        view
-        returns( address )
-    {
-        return (stages[numberOfStages].slotXplayer[0]);
-    }
-    function currentstageplayer2()
-        public
-        view
-        returns( address )
-    {
-        return (stages[numberOfStages].slotXplayer[1]);
-    }
-    function playervanity(address theplayer)
-        public
-        view
-        returns( string )
-    {
-        return (Vanity[theplayer]);
+        return (stages[numberOfStages].slotXplayer[0],Vanity[stages[numberOfStages].slotXplayer[0]],stages[numberOfStages].slotXplayer[1],Vanity[stages[numberOfStages].slotXplayer[1]]);
     }
     function jackpotinfo()
         public
@@ -129,22 +100,14 @@ contract Slaughter3D {
         }
         return (check);
     }
-    
-    function nextonetogetpaid()
+    function Refundlineinfo()
         public
         view
-        returns(address)
+        returns(address , uint256 ,uint256 , uint256  , string )
     {
-        
-        return (RefundWaitingLine[NextInLine]);
-    }
-   function contractownsthismanyP3D()
-        public
-        view
-        returns(uint256)
-    {
-        
-        return (p3dContract.balanceOf(address(this)));
+        uint256 LengthUnpaidLine = NextAtLineEnd - NextInLine;
+        uint256 dividends = p3dContract.myDividends(true);
+        return (RefundWaitingLine[NextInLine],LengthUnpaidLine, dividends , Refundpot ,Vanity[RefundWaitingLine[NextInLine]]);
     }
     // expansion functions
     
