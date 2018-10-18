@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ledger at 0xefde0e5139628df14ee5e4119e668d58cbe24361
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ledger at 0x01805590991328db7f1ef0e8e4b071ad8f58c8ce
 */
 // Unattributed material copyright New Alchemy Limited, 2017. All rights reserved.
 pragma solidity >=0.4.10;
@@ -97,15 +97,17 @@ contract EventDefinitions {
 }
 
 contract Token is Finalizable, TokenReceivable, SafeMath, EventDefinitions, Pausable {
-	string constant public name = "Rights Token";
+	// Set these appropriately before you deploy
+	string constant public name = "eByte Token";
 	uint8 constant public decimals = 8;
-	string constant public symbol = "RTK";
+	string constant public symbol = "EBYTE";
 	Controller public controller;
 	string public motd;
 	event Motd(string message);
 
 	// functions below this line are onlyOwner
 
+	// set "message of the day"
 	function setMotd(string _m) onlyOwner {
 		motd = _m;
 		Motd(_m);
