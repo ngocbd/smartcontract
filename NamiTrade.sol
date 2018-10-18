@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NamiTrade at 0xd0d6b03cb90ec013c6a00ff60e30c3a350c1df94
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NamiTrade at 0x986c1568251e54d30e19fefc410d6e2e7a730d27
 */
 pragma solidity ^0.4.24;
 
@@ -925,7 +925,6 @@ contract NamiTrade{
         NamiAddr = _namiAddress;
         // init for migration
         balanceOf[_escrow] = 7850047931491270769372792;
-        totalSupply = 7850047931491270769372792;
     }
 
 
