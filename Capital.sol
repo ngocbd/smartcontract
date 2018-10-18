@@ -1,90 +1,164 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Capital at 0x0d70db256cae067326eb63c09583afddf75f117b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Capital at 0x0f2a1A06024f6d2ceb2aDf937732f9029CA97045
 */
-pragma solidity ^0.4.8;
-contract tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData); }
+//StrongCapital v1.2.2
+
+
+
+pragma solidity ^0.4.24;
+
 
 contract Capital {
-    /* Public variables of the token */
-    string public standard = 'Capital 0.1';
-    string public name;
-    string public symbol;
-    uint8 public decimals;
-    uint256 public totalSupply;
+  uint constant public CASH_BACK_PERCENT = 3;
+  uint constant public PROJECT_FEE_PERCENT = 20;
+  uint constant public PER_BLOCK = 48;
+  uint constant public MINIMUM_INVEST = 10000000000000000 wei;
+  uint public wave;
+  
+  address public owner;
+  address public admin;
+  address[] public addresses;
 
-    /* This creates an array with all balances */
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
+  bool public pause;
 
-    /* This generates a public event on the blockchain that will notify clients */
-    event Transfer(address indexed from, address indexed to, uint256 value);
+  mapping(address => Investor) public investors;
+  TheStrongest public boss;
+  
+  modifier onlyOwner {
+    require(owner == msg.sender);
+    _;
+  }
 
-    /* This notifies clients about the amount burnt */
-    event Burn(address indexed from, uint256 value);
+  struct Investor {
+    uint ID;
+    uint deposit;
+    uint depositCount;
+    uint blockNumber;
+    address referrer;
+  }
 
-    /* Initializes contract with initial supply tokens to the creator of the contract */
-    function Capital() {
-        balanceOf[msg.sender] =  100000000 * 1000000000000000000;              // Give the creator all initial tokens
-        totalSupply =  100000000 * 1000000000000000000;                        // Update total supply
-        name = "Capital";                                   // Set the name for display purposes
-        symbol = "CPC";                               // Set the symbol for display purposes
-        decimals = 18;                            // Amount of decimals for display purposes
+  struct TheStrongest {
+    address addr;
+    uint deposit;
+  }
+
+  constructor () public {
+    owner = msg.sender;
+    admin = msg.sender;
+    addresses.length = 1;
+    wave = 1;
+  }
+
+  function() payable public {
+    if(owner == msg.sender){
+      return;
     }
 
-    /* Send coins */
-    function transfer(address _to, uint256 _value) {
-        if (_to == 0x0) throw;                               // Prevent transfer to 0x0 address. Use burn() instead
-        if (balanceOf[msg.sender] < _value) throw;           // Check if the sender has enough
-        if (balanceOf[_to] + _value < balanceOf[_to]) throw; // Check for overflows
-        balanceOf[msg.sender] -= _value;                     // Subtract from the sender
-        balanceOf[_to] += _value;                            // Add the same to the recipient
-        Transfer(msg.sender, _to, _value);                   // Notify anyone listening that this transfer took place
+    require(pause == false);
+    require(msg.value == 0 || msg.value >= MINIMUM_INVEST);
+
+    Investor storage user = investors[msg.sender];
+    
+    if(user.ID == 0){
+      msg.sender.transfer(0 wei);
+      user.ID = addresses.push(msg.sender);
+
+      address referrer = bytesToAddress(msg.data);
+      if (investors[referrer].deposit > 0 && referrer != msg.sender) {
+        user.referrer = referrer;
+      }
     }
 
-    /* Allow another contract to spend some tokens in your behalf */
-    function approve(address _spender, uint256 _value)
-        returns (bool success) {
-        allowance[msg.sender][_spender] = _value;
-        return true;
+    if(user.deposit != 0) {
+      uint amount = getInvestorDividendsAmount(msg.sender);
+      if(address(this).balance < amount){
+        pause = true;
+        return;
+      }
+
+      msg.sender.transfer(amount);
     }
 
-    /* Approve and then communicate the approved contract in a single tx */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
-        returns (bool success) {
-        tokenRecipient spender = tokenRecipient(_spender);
-        if (approve(_spender, _value)) {
-            spender.receiveApproval(msg.sender, _value, this, _extraData);
-            return true;
+    admin.transfer(msg.value * PROJECT_FEE_PERCENT / 100);
+
+    user.deposit += msg.value;
+    user.depositCount += 1;
+    user.blockNumber = block.number;
+
+    uint bonusAmount = msg.value * CASH_BACK_PERCENT / 100;
+
+    if (user.referrer != 0x0) {
+      user.referrer.transfer(bonusAmount);
+      if (user.depositCount == 1) {
+        msg.sender.transfer(bonusAmount);
+      }
+    } else if (boss.addr > 0x0) {
+      if(msg.sender != boss.addr){
+        if(user.deposit < boss.deposit){
+          boss.addr.transfer(bonusAmount);
         }
+      }
     }
 
-    /* A contract attempts to get the coins */
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        if (_to == 0x0) throw;                                // Prevent transfer to 0x0 address. Use burn() instead
-        if (balanceOf[_from] < _value) throw;                 // Check if the sender has enough
-        if (balanceOf[_to] + _value < balanceOf[_to]) throw;  // Check for overflows
-        if (_value > allowance[_from][msg.sender]) throw;     // Check allowance
-        balanceOf[_from] -= _value;                           // Subtract from the sender
-        balanceOf[_to] += _value;                             // Add the same to the recipient
-        allowance[_from][msg.sender] -= _value;
-        Transfer(_from, _to, _value);
-        return true;
+    if(user.deposit > boss.deposit) {
+      boss = TheStrongest(msg.sender, user.deposit);
+    }
+  }
+
+  function getInvestorCount() public view returns (uint) {
+    return addresses.length - 1;
+  }
+
+  function getInvestorDividendsAmount(address addr) public view returns (uint) {
+    uint amount = ((investors[addr].deposit * ((block.number - investors[addr].blockNumber) * PER_BLOCK)) / 10000000);
+    return amount;
+  }
+
+  function Restart() private {
+    address addr;
+
+    for (uint256 i = addresses.length - 1; i > 0; i--) {
+      addr = addresses[i];
+      addresses.length -= 1;
+      delete investors[addr];
     }
 
-    function burn(uint256 _value) returns (bool success) {
-        if (balanceOf[msg.sender] < _value) throw;            // Check if the sender has enough
-        balanceOf[msg.sender] -= _value;                      // Subtract from the sender
-        totalSupply -= _value;                                // Updates totalSupply
-        Burn(msg.sender, _value);
-        return true;
+    pause = false;
+    wave += 1;
+
+    delete boss;
+  }
+
+  function payout() public {
+    if (pause) {
+      Restart();
+      return;
     }
 
-    function burnFrom(address _from, uint256 _value) returns (bool success) {
-        if (balanceOf[_from] < _value) throw;                // Check if the sender has enough
-        if (_value > allowance[_from][msg.sender]) throw;    // Check allowance
-        balanceOf[_from] -= _value;                          // Subtract from the sender
-        totalSupply -= _value;                               // Updates totalSupply
-        Burn(_from, _value);
-        return true;
+    uint amount;
+
+    for(uint256 i = addresses.length - 1; i >= 1; i--){
+      address addr = addresses[i];
+
+      amount = getInvestorDividendsAmount(addr);
+      investors[addr].blockNumber = block.number;
+
+      if (address(this).balance < amount) {
+        pause = true;
+        return;
+      }
+
+      addr.transfer(amount);
     }
+  }
+  
+  function transferOwnership(address addr) onlyOwner public {
+    owner = addr;
+  }
+
+  function bytesToAddress(bytes bys) private pure returns (address addr) {
+    assembly {
+      addr := mload(add(bys, 20))
+    }
+  }
 }
