@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Veetune at 0xf59c15ff37af61fd2723e74b767bc3a0329fbe0e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Veetune at 0x8d51836cf25dfa3129b7376fd99b8bc113bdda32
 */
 pragma solidity ^0.4.23;
 
@@ -344,6 +344,27 @@ contract Pausable is Ownable {
     }
 }
 
+/**
+ * @title TokenDestructible:
+ * @author Remco Bloemen <remco@2?.com>
+ * @dev Base contract that can be destroyed by owner. All funds in contract including
+ * listed tokens will be sent to the owner.
+ */
+contract TokenDestructible is Ownable {
+
+  constructor() public payable { }
+
+  /**
+   * @notice Terminate contract and refund to owner
+   * @notice The called token contracts could try to re-enter this contract. Only
+   supply token contracts you trust.
+   */
+  function destroy() public onlyOwner {
+
+    // Transfer Eth to owner and terminate contract
+    selfdestruct(owner);
+  }
+}
 
 /**
  * @title Pausable token
@@ -375,9 +396,9 @@ contract PausableToken is StandardToken, Pausable {
 
 /**
  * @title Veetune
- * @dev Veetune Token Smart Contract
+ * @dev VTN Smart Contract
  */
-contract Veetune is DetailedERC20, StandardToken, BurnableToken, PausableToken {
+contract Veetune is DetailedERC20, StandardToken, BurnableToken, PausableToken, TokenDestructible {
 
     /**
     * Init token by setting its total supply
@@ -388,7 +409,7 @@ contract Veetune is DetailedERC20, StandardToken, BurnableToken, PausableToken {
         uint256 totalSupply
     ) DetailedERC20(
         "Veetune",
-        "VET",
+        "VTN",
         8
     ) {
         totalSupply_ = totalSupply;
