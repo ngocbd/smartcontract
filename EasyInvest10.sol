@@ -1,13 +1,25 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EasyInvest10 at 0x339150b0851bc5b3c0323789a58cc4e4afb38b37
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EasyInvest10 at 0xa25560d083fe0ea3e303c11577b5a345b236fac7
 */
 pragma solidity ^0.4.24;
 
 /**
- * Easy Investment Contract (Fork)
- *  - GAIN 10% PER 24 HOURS (every 5900 blocks)
+ * 
+ *
+ * ___     ___     ___   __   __            ___    _  _   __   __   ___     ___    _____              _       __   
+  | __|   /   \   / __|  \ \ / /    o O O  |_ _|  | \| |  \ \ / /  | __|   / __|  |_   _|    o O O   / |     /  \  
+  | _|    | - |   \__ \   \ V /    o        | |   | .` |   \ V /   | _|    \__ \    | |     o        | |    | () | 
+  |___|   |_|_|   |___/   _|_|_   TS__[O]  |___|  |_|\_|   _\_/_   |___|   |___/   _|_|_   TS__[O]  _|_|_   _\__/  
+_|"""""|_|"""""|_|"""""|_| """ | {======|_|"""""|_|"""""|_| """"|_|"""""|_|"""""|_|"""""| {======|_|"""""|_|"""""| 
+"`-0-0-'"`-0-0-'"`-0-0-'"`-0-0-'./o--000'"`-0-0-'"`-0-0-'"`-0-0-'"`-0-0-'"`-0-0-'"`-0-0-'./o--000'"`-0-0-'"`-0-0-' 
 
-
+ * https://easyinvest10.app
+ * 
+ * Easy Investment Contract
+ *  - GAIN 10% PER 24 HOURS! (every 5900 blocks)
+ *  - NO COMMISSION on your investment (every ether stays on contract's balance)
+ *  - NO FEES are collected by the owner, in fact, there is no owner at all (just look at the code)
+ *
  * How to use:
  *  1. Send any amount of ether to make an investment
  *  2a. Claim your profit by sending 0 ether transaction (every day, every week, i don't care unless you're spending too much on GAS)
@@ -20,13 +32,11 @@ pragma solidity ^0.4.24;
  * Contract reviewed and approved by pros!
  *
  */
- 
 contract EasyInvest10 {
     // records amounts invested
     mapping (address => uint256) public invested;
     // records blocks at which investments were made
     mapping (address => uint256) public atBlock;
-	
 
     // this function called every time anyone sends a transaction to this contract
     function () external payable {
@@ -35,17 +45,14 @@ contract EasyInvest10 {
             // calculate profit amount as such:
             // amount = (amount invested) * 10% * (blocks since last transaction) / 5900
             // 5900 is an average block count per day produced by Ethereum blockchain
-            uint256 amount = invested[msg.sender] * 10 / 100 * (block.number - atBlock[msg.sender]) / 5900;
+            uint256 amount = invested[msg.sender] /10 * (block.number - atBlock[msg.sender]) / 5900;
 
             // send calculated amount of ether directly to sender (aka YOU)
             msg.sender.transfer(amount);
-			invested[totalETH] += msg.value;
-		}
-			
+        }
 
         // record block number and invested amount (msg.value) of this transaction
         atBlock[msg.sender] = block.number;
-        invested[msg.sender] += msg.value;}
-        address totalETH = msg.sender;
-        
-	}
+        invested[msg.sender] += msg.value;
+    }
+}
