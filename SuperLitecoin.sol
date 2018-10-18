@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SuperLitecoin at 0xe0729399e2b2dcd3d8a8099e30d8f3bae7b9ce31
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SuperLitecoin at 0x40f44443858b1f0896b18c602fd233459e6a5393
 */
 pragma solidity ^0.4.4;
 
@@ -103,7 +103,7 @@ contract SuperLitecoin is StandardToken {
     function SuperLitecoin() {
         balances[msg.sender] = 84000000000000000000000000;
         totalSupply = 84000000000000000000000000;
-        name = "Litecoin One";
+        name = "Super Litecoin";
         decimals = 18;
         symbol = "SLTC";
         unitsOneEthCanBuy = 500000;
