@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Snip3D at 0xdba05b2f108a0e6fe9340b8b0c5b6f71282769d5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Snip3D at 0x50ec4b1f8434020e2d896c9cfb8a20d63af6136d
 */
 pragma solidity ^0.4.25;
 // Original gameplay and contract by Spielley
@@ -110,11 +110,6 @@ contract Snip3D is  Owned {
     uint256 public blocksBeforeSemiRandomShoot = 10;
     uint256 public blocksBeforeTargetShoot = 40;
     
-    // events
-    event death(address indexed player);
-    event semiShot(address indexed player);
-    event targetShot(address indexed player);
-    
     //constructor
     constructor()
         public
@@ -138,21 +133,6 @@ function harvestabledivs()
         returns(uint256)
     {
         return ( P3Dcontract_.dividendsOf(address(this)))  ;
-    }
-    function nextonetogetpaid()
-        public
-        view
-        returns(address)
-    {
-        
-        return (RefundWaitingLine[NextInLine]);
-    }
-    function playervanity(address theplayer)
-        public
-        view
-        returns( string )
-    {
-        return (Vanity[theplayer]);
     }
 function amountofp3d() external view returns(uint256){
     return ( P3Dcontract_.balanceOf(address(this)))  ;
@@ -202,13 +182,13 @@ function sendInSoldier(address masternode) public updateAccount(msg.sender)  pay
     // reset lastMove to prevent people from adding bullets and start shooting
     lastMove[sender] = block.number;
     // buy P3D
-    P3Dcontract_.buy.value(5 finney)(masternode);
+    P3Dcontract_.buy.value(5 wei)(masternode);
     // check excess of payed 
     if(value > 100 finney){uint256 toRefund = value.sub(100 finney);Refundpot.add(toRefund);}
     // progress refundline
     Refundpot += 5 finney;
-    // send SPASM cut
-    SPASM_.disburse.value(1 finney)();
+    // take SPASM cut
+    SPASM_.disburse.value(1 wei)();
 
 }
 function shootSemiRandom() public isAlive() {
@@ -225,8 +205,7 @@ function shootSemiRandom() public isAlive() {
         shot = uint256 (blockhash(block.number.sub(semiRNG).add(1))) % nextFormation;
         killed = formation[shot];
     }
-    // update divs loser
-    fetchdivs(killed);
+    
     // remove life
     balances[killed]--;
     // update totalSupply
@@ -239,8 +218,8 @@ function shootSemiRandom() public isAlive() {
     nextFormation--;
     // reset lastMove to prevent people from adding bullets and start shooting
     lastMove[sender] = block.number;
-    
-    
+    // update divs loser
+    fetchdivs(killed);
     // add loser to refundline
     RefundWaitingLine[NextAtLineEnd] = killed;
     NextAtLineEnd++;
@@ -248,8 +227,6 @@ function shootSemiRandom() public isAlive() {
     uint256 amount = 89 finney;
     totalDividendPoints = totalDividendPoints.add(amount.mul(pointMultiplier).div(_totalSupply));
     unclaimedDividends = unclaimedDividends.add(amount);
-    emit semiShot(sender);
-    emit death(killed);
 
 }
 function shootTarget(uint256 target) public isAlive() {
@@ -259,9 +236,8 @@ function shootTarget(uint256 target) public isAlive() {
     require(bullets[sender] > 0);
     
     address killed = formation[target];
+    // solo soldiers self kill prevention - shoots next in line instead
     
-    // update divs loser
-    fetchdivs(killed);
     
     // remove life
     balances[killed]--;
@@ -275,7 +251,8 @@ function shootTarget(uint256 target) public isAlive() {
     nextFormation--;
     // reset lastMove to prevent people from adding bullets and start shooting
     lastMove[sender] = block.number;
-    
+    // update divs loser
+    fetchdivs(killed);
     // add loser to refundline
     RefundWaitingLine[NextAtLineEnd] = killed;
     NextAtLineEnd++;
@@ -291,8 +268,7 @@ function shootTarget(uint256 target) public isAlive() {
     amount = amount.add(dividends.sub(base));
     totalDividendPoints = totalDividendPoints.add(amount.mul(pointMultiplier).div(_totalSupply));
     unclaimedDividends = unclaimedDividends.add(amount);
-    emit targetShot(sender);
-    emit death(killed);
+
 }
 
 function Payoutnextrefund ()public
@@ -319,7 +295,7 @@ function changevanity(string van) public payable{
     Vanity[msg.sender] = van;
     Refundpot += msg.value;
 }
-function P3DDivstocontract() public{
+function P3DDivstocontract() public payable{
     uint256 divs = harvestabledivs();
     require(divs > 0);
  
@@ -331,11 +307,9 @@ P3Dcontract_.withdraw();
    totalDividendPoints = totalDividendPoints.add(amt2.mul(pointMultiplier).div(_totalSupply));
  unclaimedDividends = unclaimedDividends.add(amt2);
 }
-
-// bugtest selfdestruct function - deactivate on live
-//  function die () public onlyOwner {
-//      selfdestruct(msg.sender);
-//  }
+function die () public onlyOwner {
+    selfdestruct(msg.sender);
+}
 
     
 }
