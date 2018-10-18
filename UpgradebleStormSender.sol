@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UpgradebleStormSender at 0x7e16092bb28532f927298c3edcf31678d631d539
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UpgradebleStormSender at 0x5440ec4af8724872383b372179073b71f62ac7d4
 */
 // File: contracts/EternalStorage.sol
 
@@ -308,9 +308,9 @@ contract UpgradebleStormSender is OwnedUpgradeabilityStorage, Claimable {
     function initialize(address _owner) public {
         require(!initialized());
         setOwner(_owner);
-        setArrayLimit(200);
-        setDiscountStep(0.00005 ether);
-        setFee(0.005 ether);
+        setArrayLimit(150);
+        setDiscountStep(0.00001 ether);
+        setFee(0.0005 ether);
         boolStorage[keccak256("rs_multisender_initialized")] = true;
     }
 
