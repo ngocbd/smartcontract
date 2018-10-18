@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20CrowdsaleToken at 0x62bf50192b3ef428e24bc8d10f0c2a6eabe80e08
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20CrowdsaleToken at 0xa20f783ee0b59edada443e3c79e8eef634541985
 */
 pragma solidity ^0.4.23;
 
@@ -255,11 +255,11 @@ contract BurnableToken is StandardToken {
 
 contract Token is BurnableToken, Ownable {
 
-    string public constant name = "BITSIFU COIN";
-    string public constant symbol = "BSF";
+    string public constant name = "Crowd Funding Business Token";
+    string public constant symbol = "CBT";
     uint public constant decimals = 18;
     // there is no problem in using * here instead of .mul()
-    uint256 public constant initialSupply = 50000000 * (10 ** uint256(decimals));
+    uint256 public constant initialSupply = 150000000 * (10 ** uint256(decimals));
 
     // Constructors
     constructor () public {
