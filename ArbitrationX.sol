@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ArbitrationX at 0x5f8a93087C32DD3100A790953DD0436D3E70039c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ArbitrationX at 0x1DF927dB94417472b04Ee6605baff1b930B2CcDC
 */
 pragma solidity ^0.4.20;
 
@@ -233,7 +233,7 @@ contract TokenWithoutStart is Owned {
 
 }
 
-// File: contracts/ArchXArch2.sol
+// File: contracts/KvantorSet.sol
 
 // DEPLOYED BY JURY.ONLINE
 contract ICOContractX {
@@ -634,6 +634,7 @@ contract ICOCycle {
                 }
             }
         }
+        milestones[currentMilestone].startTime = now;
         currentMilestone +=1;
         //ethAfterCommission = payCommission();
     }
@@ -641,6 +642,8 @@ contract ICOCycle {
     // TO FINISH MILESTONE
     function finishMilestone(string _result) public onlyOperator {
         require(milestones[currentMilestone-1].finishTime == 0);
+        uint interval = now - milestones[currentMilestone-1].startTime;
+        require(interval > 1 weeks);
         milestones[currentMilestone-1].finishTime = now;
         milestones[currentMilestone-1].result = _result;
     }
@@ -691,21 +694,14 @@ contract ICOCycle {
     function isDisputing(address _investor) public view returns(bool) {
         return deals[_investor].disputing;
     }
-    // CHECK TO SEE IF INVESTOR IS IN WHITELIST (for debugging)
-    /* function isInWhitelist(uint _fundingRound, address _investor) public view returns(bool) {
-        return whitelist[_fundingRound][_investor];
-    } */
-    /* function commissionCheck() internal view returns(bool) {
-        for ( uint i=0 ; i < commissionEth.length ; i++ ) {
-            uint percentToBeReleased = milestones[i].etherAmount.mul(100).div(totalEther);
-            uint percentToPay = commissionEth[i] + commissionJot[i];
-            require(percentToPay <= percentToBeReleased);
-        }
-        return true;
-    } */
+    function investorExists(address _investor) public view returns(bool) {
+        if (deals[_investor].sumEther > 0) return true;
+        else return false;
+    }
+
 }
 
-contract ArbitrationX {
+contract ArbitrationX is Owned {
     address public operator;
     uint public quorum = 3;
     //uint public counter;
@@ -726,11 +722,16 @@ contract ArbitrationX {
     uint public disputeLength;
     mapping(address => mapping(address => bool)) public arbiterPool;
 
+    modifier only(address _allowed) {
+        require(msg.sender == _allowed);
+        _;
+    }
+
     constructor() public {
         operator = msg.sender;
     }
     // OPERATOR
-    function setArbiters(address _icoRoundAddress, address[] _arbiters) public {
+    function setArbiters(address _icoRoundAddress, address[] _arbiters) only(owner) public {
         for (uint i = 0; i < _arbiters.length ; i++) {
             arbiterPool[_icoRoundAddress][_arbiters[i]] = true;
         }
@@ -738,7 +739,7 @@ contract ArbitrationX {
     // ARBITER
     function vote(uint _disputeId, bool _voteForInvestor) public {
         require(disputes[_disputeId].pending == true);
-        /* require(arbiterPool[disputes[_disputeId].icoRoundAddress][msg.sender] == true); */
+        require(arbiterPool[disputes[_disputeId].icoRoundAddress][msg.sender] == true);
         require(disputes[_disputeId].voters[msg.sender] != true);
         if (_voteForInvestor == true) { disputes[_disputeId].votesForInvestor += 1; }
         else { disputes[_disputeId].votesForProject += 1; }
@@ -755,6 +756,7 @@ contract ArbitrationX {
         ICOCycle icoRound = ICOCycle(_icoRoundAddress);
         uint milestoneDispute = icoRound.currentMilestone();
         require(milestoneDispute > 0);
+        require(icoRound.investorExists(msg.sender) == true);
         disputes[disputeLength].milestone = milestoneDispute;
 
         disputes[disputeLength].icoRoundAddress = _icoRoundAddress;
@@ -783,26 +785,60 @@ contract Swapper {
     // for an ethToJot of 2,443.0336457941, Aug 21, 2018
     Token public token;
     uint public ethToJot = 2443;
-    address public myBal;
     address public owner;
-    uint public myJot;
-    uint public ujot;
+
     constructor(address _jotAddress) public {
         owner = msg.sender;
         token = Token(_jotAddress);
-        myBal = address(this);
-        /* myJot = token.balanceOf(myBal); */
     }
-    /* function() payable public { */
-        /* myBal = address(this); */
-        /* myJot = token.balanceOf(myBal); */
-        /* require(token.balanceOf(myBal) >= jot); */
-        /* require(token.transfer(msg.sender,jot)); */
 
     function swapMe() public payable {
         uint jot = msg.value * ethToJot;
-        myJot = token.balanceOf(myBal);
-        ujot = jot;
         require(token.transfer(owner,jot));
     }
+    // In the future, this contract would call a trusted Oracle
+    // instead of being set by its owner
+    function setEth(uint _newEth) public {
+        require(msg.sender == owner);
+        ethToJot = _newEth;
+    }
+
+}
+
+contract SwapperX {
+
+    Token public proxyToken;
+    Token public token;
+
+    address public owner;
+
+    struct Swap {
+        address _from;
+        uint _amount;
+    }
+
+    Swap[] public swaps;
+
+    constructor(address _tokenAddress, address _proxyTokenAddress) public {
+        owner = msg.sender;
+        token = Token(_tokenAddress);
+        proxyToken = Token(_proxyTokenAddress);
+    }
+
+    // SWAPS PROXY TOKENS FOR ICO TOKENS
+    function swapMe() public {
+        uint allowance = proxyToken.allowance(msg.sender,address(this));
+        require(token.balanceOf(address(this)) >= allowance);
+        require(token.transfer(msg.sender, allowance));
+        require(proxyToken.transferFrom(msg.sender,address(this),allowance));
+        swaps.push(Swap(msg.sender,allowance));
+    }
+
+    // REFUNDS TOKEN HOLDERS ALLOWANCE
+    function returnMe() public {
+        uint allowance = proxyToken.allowance(msg.sender,address(this));
+        require(proxyToken.transferFrom(msg.sender,address(this),allowance));
+        require(proxyToken.transfer(msg.sender, allowance));
+    }
+
 }
