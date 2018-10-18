@@ -1,40 +1,108 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthReceiver at 0xc1d73e148590b60ce9dd42d141f9b27bbad07879
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETHReceiver at 0x9e219ff16ce38e96072670ef9c6776ab74f7edb2
 */
-pragma solidity ^0.4.22;
+pragma solidity ^0.4.24;
 
-contract EthReceiver
-{
-    bool closed = false;
-    uint unlockTime = 43200;
-    address sender;
-    address receiver;
- 
-    function Put(address _receiver) public payable {
-        if ((!closed && msg.value > 0.5 ether) || sender == 0x0 ) {
-            sender = msg.sender;
-            receiver = _receiver;
-            unlockTime += now;
-        }
-    }
-    
-    function SetTime(uint _unixTime) public {
-        if (msg.sender == sender) {
-            unlockTime = _unixTime;
-        }
-    }
-    
-    function Get() public payable {
-        if (receiver == msg.sender && now >= unlockTime) {
-            msg.sender.transfer(address(this).balance);
-        }
-    }
-    
-    function Close() public {
-        if (sender == msg.sender) {
-           closed=true;
-        }
+// File: ../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
+    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+    if (_a == 0) {
+      return 0;
     }
 
-    function() public payable { }
+    c = _a * _b;
+    assert(c / _a == _b);
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 _a, uint256 _b) internal pure returns (uint256) {
+    // assert(_b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = _a / _b;
+    // assert(_a == _b * c + _a % _b); // There is no case in which this doesn't hold
+    return _a / _b;
+  }
+
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 _a, uint256 _b) internal pure returns (uint256) {
+    assert(_b <= _a);
+    return _a - _b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
+    c = _a + _b;
+    assert(c >= _a);
+    return c;
+  }
+}
+
+// File: contracts/ETHReceiver.sol
+
+contract ETHReceiver {
+    using SafeMath for *;
+
+    uint public balance_;
+    address public owner_;
+
+    event ReceivedValue(address indexed from, uint value);
+    event Withdraw(address indexed from, uint amount);
+    event ChangeOwner(address indexed from, address indexed to);
+
+    constructor ()
+        public
+    {
+        balance_ = 0;
+        owner_ = msg.sender;
+    }
+
+    modifier onlyOwner
+    {
+        require(msg.sender == owner_, "msg sender is not contract owner");
+        _;
+    }
+
+    function ()
+        public
+        payable
+    {
+        balance_ = (balance_).add(msg.value);
+        emit ReceivedValue(msg.sender, msg.value);
+    }
+
+    function transferTo (address _to, uint _amount)
+        public
+        onlyOwner()
+    {
+        _to.transfer(_amount);
+        balance_ = (balance_).sub(_amount);
+        emit Withdraw(_to, _amount);
+    }
+
+    function changeOwner (address _to)
+        public
+        onlyOwner()
+    {
+        assert(_to != address(0));
+        owner_ = _to;
+        emit ChangeOwner(msg.sender, _to);
+    }
 }
