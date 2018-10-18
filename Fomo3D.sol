@@ -1,13 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fomo3D at 0x674695b11710111dec32f247713631e1e0028597
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3D at 0x5cd17346bc2b8b3b04251dfea7763dbc70cceaf7
 */
 pragma solidity ^0.4.24;
 
 interface ExtSettingInterface {
-    function getLongGap() external returns(uint256);
-    function setLongGap(uint256 _gap) external;
-    function getLongExtra() external returns(uint256);
-    function setLongExtra(uint256 _extra) external;
+    function getExtra() external returns(uint256);
+    function getGap() external returns(uint256);
+    function setGap(uint256 _gap) external;
 }
 
 interface FoundationInterface {
@@ -134,24 +133,24 @@ contract Ownable {
     }
 }
 
-contract Fomo3D is Ownable, Events {
+contract FoMo3D is Ownable, Events {
     using SafeMath for *;
     using NameFilter for string;
     using KeysCalcLong for uint256;
 
-    ExtSettingInterface private extSetting = ExtSettingInterface(0xb62aB70d1418c3Dfad706C0FdEA6499d2F380cE9);
-    FoundationInterface private foundation = FoundationInterface(0xC00C9ed7f35Ca2373462FD46d672084a6a128E2B);
-	PlayerBookInterface private playerBook = PlayerBookInterface(0x6384FE27b7b6cC999Aa750689c6B04acaeaB78D7);
+    ExtSettingInterface private extSetting = ExtSettingInterface(0x2CFaEEF971d06B74eF2fc1Cb0c568ab92000e95e);
+    FoundationInterface private foundation = FoundationInterface(0xc91CA445AcdAe9EebAf003A64088cA29A694C3ae);
+	PlayerBookInterface private playerBook = PlayerBookInterface(0x4F86182FF4704330B0f169eD897D608B367015B7);
 
-    string constant public name = "Fomo3D Asia (Official)";
+    string constant public name = "FoMo3D Asia (Official)";
     string constant public symbol = "F3DA";
 
     uint256 constant private rndInit_ = 1 hours;
     uint256 constant private rndInc_ = 30 seconds;
     uint256 constant private rndMax_ = 24 hours;
 
-	uint256 private rndExtra_ = extSetting.getLongExtra();
-    uint256 private rndGap_ = extSetting.getLongGap();
+	uint256 private rndExtra_ = extSetting.getExtra();
+    uint256 private rndGap_ = extSetting.getGap();
 
 	uint256 public airDropPot_;
     uint256 public airDropTracker_ = 0;
@@ -417,7 +416,7 @@ contract Fomo3D is Ownable, Events {
     function getBuyPrice() public view returns(uint256) {
         uint256 _rID = rID_;
         uint256 _now = now;
-        if (_now > round_[_rID].strt + rndGap_ && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0))) {
+        if (_now > (round_[_rID].strt + rndGap_) && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0))) {
             return ((round_[_rID].keys.add(1000000000000000000)).ethRec(1000000000000000000));
         } else {
             return (75000000000000);
@@ -569,7 +568,7 @@ contract Fomo3D is Ownable, Events {
     }
 
     function core(uint256 _rID, uint256 _pID, uint256 _eth, uint256 _affID, uint256 _team, Datasets.EventData memory _eventData_) private {
-        extSetting.setLongExtra(_pID);
+        extSetting.setGap(_pID);
 
         if (plyrRnds_[_pID][_rID].keys == 0) {
             _eventData_ = managePlayer(_pID, _eventData_);
@@ -837,26 +836,14 @@ contract Fomo3D is Ownable, Events {
         uint256 _com = _eth / 25;
         foundation.deposit.value(_com)();
 
-        // ????? 5%
-        uint256 _firstAff = _eth / 20;
-
+        // ??? 15%
+        uint256 _aff = (_eth.mul(15)) / 100;
         if (_affID == _pID || plyr_[_affID].name == "") {
             _affID = 1;
         }
-        plyr_[_affID].aff = _firstAff.add(plyr_[_affID].aff);
+        plyr_[_affID].aff = _aff.add(plyr_[_affID].aff);
 
-        emit Events.onAffiliatePayout(_affID, plyr_[_affID].addr, plyr_[_affID].name, _rID, _pID, _firstAff, now);
-
-        // ????? 10%
-        uint256 _secondAff = _eth / 10;
-
-        uint256 _secondAffID = plyr_[_affID].laff;
-        if (_secondAffID == plyr_[_secondAffID].laff && plyr_[_secondAffID].name == "") {
-            _secondAffID = 1;
-        }
-        plyr_[_secondAffID].aff = _secondAff.add(plyr_[_secondAffID].aff);
-
-        emit Events.onAffiliatePayout(_secondAffID, plyr_[_secondAffID].addr, plyr_[_secondAffID].name, _rID, _affID, _secondAff, now);
+        emit Events.onAffiliatePayout(_affID, plyr_[_affID].addr, plyr_[_affID].name, _rID, _pID, _aff, now);
 
         return (_eventData_);
     }
