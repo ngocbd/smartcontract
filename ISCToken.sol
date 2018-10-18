@@ -1,320 +1,283 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ISCToken at 0xaf474bb656bcdaf29fad5bdaa59ffdcb34c0687d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IscToken at 0xe6b5201ACA93523908BeF1692Bb1929f65A466F2
 */
-/**
-  * SafeMath Libary
-  */
 pragma solidity ^0.4.24;
-contract SafeMath {
-    function safeAdd(uint256 a, uint256 b) internal pure returns(uint256)
-    {
-        uint256 c = a + b;
-        assert(c >= a);
+
+library SafeMath {
+
+    function mul(uint a, uint b) internal pure returns (uint) {
+        uint c = a * b;
+        require(a == 0 || c / a == b);
         return c;
     }
-    function safeSub(uint256 a, uint256 b) internal pure returns(uint256)
-    {
-        assert(b <= a);
+
+    function div(uint a, uint b) internal pure returns (uint) {
+        uint c = a / b;
+        return c;
+    }
+
+    function sub(uint a, uint b) internal pure returns (uint) {
+        require(b <= a);
         return a - b;
     }
-    function safeMul(uint256 a, uint256 b) internal pure returns(uint256)
-    {
-        if (a == 0) {
-        return 0;
-        }
-        uint256 c = a * b;
-        assert(c / a == b);
+
+    function add(uint a, uint b) internal pure returns (uint) {
+        uint c = a + b;
+        require(c >= a);
         return c;
     }
-    function safeDiv(uint256 a, uint256 b) internal pure returns(uint256)
-    {
-        uint256 c = a / b;
-        return c;
+
+    function max(uint a, uint b) internal pure returns (uint) {
+        return a >= b ? a : b;
     }
+
+    function min(uint a, uint b) internal pure returns (uint) {
+        return a < b ? a : b;
+    }
+
 }
 
-contract Ownable {
-    address public owner;
+// @title The Contract is EDR Standard Token Design.
+//
+// @Author: Tim Wars
+// @Date: 2018.8.3
+// @Seealso: ERC20
+//
+contract IscToken {
 
-    function Ownable() public {
-        owner = msg.sender;
+    // === Event ===
+    event Transfer(address indexed from, address indexed to, uint value);
+    event Approval(address indexed owner, address indexed spender, uint value);
+    event Burn(address indexed from, uint value);
+	event Owner(address indexed from, address indexed to);
+    event TransferEdrIn(address indexed from, uint value);
+    event TransferEdrOut(address indexed from, uint value);
+
+    // === Defined ===
+    using SafeMath for uint;
+
+    // --- Owner Section ---
+    address public owner;
+    bool public frozen = false; //
+
+    // --- ERC20 EDR Token Section ---
+    uint8 constant public decimals = 5;
+    uint public totalSupply = 1000 * 10 ** (8+uint256(decimals));  // ***** 1 * 100 Million
+    string constant public name = "ISChain Token";
+    string constant public symbol = "ISC";
+
+    mapping(address => uint) ownerance; // Owner Balance
+    mapping(address => mapping(address => uint)) public allowance; // Allower Balance
+
+    // --- EDR Token Section ---
+    address private EDRADDR  = 0x245580fc423Bd82Ab531d325De0Ba5ff8Ec79402;
+
+    uint public edrBalance; // Current EDR hold EDR balance
+    uint public totalCirculating; // Total EDR out circulating
+
+
+    // === Modifier ===
+    // --- Functional Section ---
+    modifier onlyPayloadSize(uint size) {
+      assert(msg.data.length == size + 4);
+      _;
     }
 
-    modifier onlyOwner {
+    // --- Owner Section ---
+    modifier isOwner() {
         require(msg.sender == owner);
         _;
     }
 
-    function transferOwnership(address newOwner) onlyOwner public {
-        owner = newOwner;
-    }
-}
-
-/**
- * @title Pausable
- * @dev Base contract which allows children to implement an emergency stop mechanism.
- */
-contract Pausable is Ownable {
-  event Pause();
-  event Unpause();
-
-  bool public paused = false;
-
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is not paused.
-   */
-  modifier whenNotPaused() {
-    require(!paused);
-    _;
-  }
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is paused.
-   */
-  modifier whenPaused() {
-    require(paused);
-    _;
-  }
-
-  /**
-   * @dev called by the owner to pause, triggers stopped state
-   */
-  function pause() onlyOwner whenNotPaused public {
-    paused = true;
-    emit Pause();
-  }
-
-  /**
-   * @dev called by the owner to unpause, returns to normal state
-   */
-  function unpause() onlyOwner whenPaused public {
-    paused = false;
-    emit Unpause();
-  }
-}
-
-contract EIP20Interface {
-    /* This is a slight change to the ERC20 base standard.
-    function totalSupply() constant returns (uint256 supply);
-    is replaced with:
-    uint256 public totalSupply;
-    This automatically creates a getter function for the totalSupply.
-    This is moved to the base contract since public getter functions are not
-    currently recognised as an implementation of the matching abstract
-    function by the compiler.
-    */
-    /// total amount of tokens
-    uint256 public totalSupply;
-    /// @param _owner The address from which the balance will be retrieved
-    /// @return The balance
-    function balanceOf(address _owner) public view returns (uint256 balance);
-    /// @notice send `_value` token to `_to` from `msg.sender`
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transfer(address _to, uint256 _value) public returns (bool success);
-    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
-    /// @param _from The address of the sender
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
-    /// @notice `msg.sender` approves `_spender` to spend `_value` tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @param _value The amount of tokens to be approved for transfer
-    /// @return Whether the approval was successful or not
-    function approve(address _spender, uint256 _value) public returns(bool success);
-    /// @param _owner The address of the account owning tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @return Amount of remaining tokens allowed to spent
-    function allowance(address _owner, address _spender) public view returns (uint256 remaining);
-    // solhint-disable-next-line no-simple-event-func-name
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender,uint256 _value);
-}
-
-
-contract ISCToken is EIP20Interface,Ownable,SafeMath,Pausable{
-    //// Constant token specific fields
-    string public constant name ="ISCToken";
-    string public constant symbol = "ISC";
-    uint8 public constant decimals = 18;
-    string  public version  = 'v0.1';
-    uint256 public constant initialSupply = 1010101010;
-    
-    mapping (address => uint256) public balances;
-    mapping (address => mapping (address => uint256)) public allowances;
-
-    //sum of buy
-    mapping (address => uint) public jail;
-
-    mapping (address => uint256) public updateTime;
-    
-    //Locked token
-    mapping (address => uint256) public LockedToken;
-
-    //set raise time
-    uint256 public finaliseTime;
-
-    //to receive eth from the contract
-    address public walletOwnerAddress;
-
-    //Tokens to 1 eth
-    uint256 public rate;
-
-    event WithDraw(address indexed _from, address indexed _to,uint256 _value);
-    event BuyToken(address indexed _from, address indexed _to, uint256 _value);
-
-    function ISCToken() public {
-        totalSupply = initialSupply*10**uint256(decimals);                        //  total supply
-        balances[msg.sender] = totalSupply;             // Give the creator all initial tokens
-        walletOwnerAddress = msg.sender;
-        rate = 10000;
-    }
-
-    modifier notFinalised() {
-        require(finaliseTime == 0);
+    modifier isNotFrozen() {
+        require(!frozen);
         _;
     }
 
-    function balanceOf(address _account) public view returns (uint) {
-        return balances[_account];
+    // --- ERC20 Section ---
+    modifier hasEnoughBalance(uint _amount) {
+        require(ownerance[msg.sender] >= _amount);
+        _;
     }
 
-    function _transfer(address _from, address _to, uint _value) internal whenNotPaused returns(bool) {
-        require(_to != address(0x0)&&_value>0);
-        require (canTransfer(_from, _value));
-        require(balances[_from] >= _value);
-        require(safeAdd(balances[_to],_value) > balances[_to]);
+    modifier overflowDetected(address _owner, uint _amount) {
+        require(ownerance[_owner] + _amount >= ownerance[_owner]);
+        _;
+    }
 
-        uint previousBalances = safeAdd(balances[_from],balances[_to]);
-        balances[_from] = safeSub(balances[_from],_value);
-        balances[_to] = safeAdd(balances[_to],_value);
-        emit Transfer(_from, _to, _value);
-        assert(safeAdd(balances[_from],balances[_to]) == previousBalances);
-        return true;
+    modifier hasAllowBalance(address _owner, address _allower, uint _amount) {
+        require(allowance[_owner][_allower] >= _amount);
+        _;
+    }
+
+    modifier isNotEmpty(address _addr, uint _value) {
+        require(_addr != address(0));
+        require(_value != 0);
+        _;
+    }
+
+    modifier isValidAddress {
+        assert(0x0 != msg.sender);
+        _;
+    }
+
+    // === Constructor ===
+    constructor() public {
+        owner = msg.sender;
+        ownerance[EDRADDR] = totalSupply;
+        edrBalance = totalSupply;
+        totalCirculating = 0;
+        emit Transfer(address(0), EDRADDR, totalSupply);
     }
 
 
-    function transfer(address _to, uint256 _value) public whenNotPaused returns (bool success){
-        return _transfer(msg.sender, _to, _value);
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool) {
-        require(_value <= allowances[_from][msg.sender]);
-        allowances[_from][msg.sender] = safeSub(allowances[_from][msg.sender],_value);
-        return _transfer(_from, _to, _value);
-    }
-
-    function approve(address _spender, uint256 _value) public returns (bool success) {
-        allowances[msg.sender][_spender] = _value;
+    // --- ERC20 Token Section ---
+    function approve(address _spender, uint _value)
+        isNotFrozen
+        isValidAddress
+        public returns (bool success)
+    {
+        require(_value == 0 || allowance[msg.sender][_spender] == 0); // must spend to 0 where pre approve balance.
+        allowance[msg.sender][_spender] = _value;
         emit Approval(msg.sender, _spender, _value);
         return true;
     }
 
-     function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
-        allowances[msg.sender][_spender] = safeAdd(allowances[msg.sender][_spender],_addedValue);
-        emit Approval(msg.sender, _spender, allowances[msg.sender][_spender]);
-        return true;
-  }
+    function transferFrom(address _from, address _to, uint _value)
+        isNotFrozen
+        isValidAddress
+        overflowDetected(_to, _value)
+        public returns (bool success)
+    {
+        require(ownerance[_from] >= _value);
+        require(allowance[_from][msg.sender] >= _value);
 
-    function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
-            uint oldValue = allowances[msg.sender][_spender];
-            if (_subtractedValue > oldValue) {
-              allowances[msg.sender][_spender] = 0;
-            } else {
-              allowances[msg.sender][_spender] = safeSub(oldValue,_subtractedValue);
+        ownerance[_to] = ownerance[_to].add(_value);
+        ownerance[_from] = ownerance[_from].sub(_value);
+        allowance[_from][msg.sender] = allowance[_from][msg.sender].sub(_value);
+        emit Transfer(_from, _to, _value);
+        return true;
+    }
+
+    function balanceOf(address _owner) public
+        constant returns (uint balance)
+    {
+        return ownerance[_owner];
+    }
+
+    function transfer(address _to, uint _value) public
+        isNotFrozen
+        isValidAddress
+        isNotEmpty(_to, _value)
+        hasEnoughBalance(_value)
+        overflowDetected(_to, _value)
+        onlyPayloadSize(2 * 32)
+        returns (bool success)
+    {
+        ownerance[msg.sender] = ownerance[msg.sender].sub(_value);
+        ownerance[_to] = ownerance[_to].add(_value);
+        emit Transfer(msg.sender, _to, _value);
+        if (msg.sender == EDRADDR) {
+            totalCirculating = totalCirculating.add(_value);
+            edrBalance = totalSupply - totalCirculating;
+            emit TransferEdrOut(_to, _value);
+        }
+        if (_to == EDRADDR) {
+            totalCirculating = totalCirculating.sub(_value);
+            edrBalance = totalSupply - totalCirculating;
+            emit TransferEdrIn(_to, _value);
+        }
+        return true;
+    }
+
+    // --- Owner Section ---
+    function transferOwner(address _newOwner)
+        isOwner
+        public returns (bool success)
+    {
+        if (_newOwner != address(0)) {
+            owner = _newOwner;
+            emit Owner(msg.sender, owner);
+        }
+        return true;
+    }
+
+    function freeze()
+        isOwner
+        public returns (bool success)
+    {
+        frozen = true;
+        return true;
+    }
+
+    function unfreeze()
+        isOwner
+        public returns (bool success)
+    {
+        frozen = false;
+        return true;
+    }
+
+    function burn(uint _value)
+        isNotFrozen
+        isValidAddress
+        hasEnoughBalance(_value)
+        public returns (bool success)
+    {
+        ownerance[msg.sender] = ownerance[msg.sender].sub(_value);
+        ownerance[0x0] = ownerance[0x0].add(_value);
+        totalSupply = totalSupply.sub(_value);
+        totalCirculating = totalCirculating.sub(_value);
+        emit Burn(msg.sender, _value);
+        return true;
+    }
+
+    // --- Extension Section ---
+    function transferMultiple(address[] _dests, uint[] _values)
+        isNotFrozen
+        isValidAddress
+        public returns (uint)
+    {
+        uint i = 0;
+        if (msg.sender == EDRADDR) {
+            while (i < _dests.length) {
+                require(ownerance[msg.sender] >= _values[i]);
+                ownerance[msg.sender] = ownerance[msg.sender].sub(_values[i]);
+                ownerance[_dests[i]] = ownerance[_dests[i]].add(_values[i]);
+                totalCirculating = totalCirculating.add(_values[i]);
+                emit Transfer(msg.sender, _dests[i], _values[i]);
+                emit TransferEdrOut(_dests[i], _values[i]);
+                i += 1;
             }
-            emit Approval(msg.sender, _spender, allowances[msg.sender][_spender]);
-            return true;
-    }
-
-    function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
-        return allowances[_owner][_spender];
-    }
- 
-    //close the raise
-    function setFinaliseTime() onlyOwner notFinalised public returns(bool){
-        finaliseTime = now;
-        rate = 0;
-        return true;
-    }
-     //close the raise
-    function Restart(uint256 newrate) onlyOwner public returns(bool){
-        finaliseTime = 0;
-         rate = newrate;
-        return true;
-    }
-
-    function setRate(uint256 newrate) onlyOwner notFinalised public returns(bool) {
-       rate = newrate;
-       return true;
-    }
-
-    function setWalletOwnerAddress(address _newaddress) onlyOwner public returns(bool) {
-       walletOwnerAddress = _newaddress;
-       return true;
-    }
-    //Withdraw eth form the contranct 
-    function withdraw(address _to) internal returns(bool){
-        require(_to.send(this.balance));
-        emit WithDraw(msg.sender,_to,this.balance);
-        return true;
-    }
-    
-    //Lock tokens
-    function canTransfer(address _from, uint256 _value) internal view returns (bool success) {
-        uint256 index;  
-        uint256 locked;
-        index = safeSub(now, updateTime[_from]) / 1 days;
-
-        if(index >= 160){
-            return true;
-        }
-        uint256 releasedtemp = safeMul(index,jail[_from])/200;
-        if(releasedtemp >= LockedToken[_from]){
-            return true;
-        }
-        locked = safeSub(LockedToken[_from],releasedtemp);
-        require(safeSub(balances[_from], _value) >= locked);
-        return true;
-    }
-
-    function _buyToken(address _to,uint256 _value)internal notFinalised whenNotPaused{
-        require(_to != address(0x0));
-
-        uint256 index;
-        uint256 locked;
-       
-        if(updateTime[_to] == 0){
-            locked = safeSub(_value,_value/5);
-            LockedToken[_to] = safeAdd(LockedToken[_to],locked);
-        }else{
-            index = safeSub(now,updateTime[_to])/1 days;
-
-            uint256 releasedtemp = safeMul(index,jail[_to])/200;
-            if(releasedtemp >= LockedToken[_to]){
-                LockedToken[_to] = 0;
-            }else{
-                LockedToken[_to] = safeSub(LockedToken[_to],releasedtemp);
+            edrBalance = totalSupply - totalCirculating;
+        } else {
+            while (i < _dests.length) {
+                require(ownerance[msg.sender] >= _values[i]);
+                ownerance[msg.sender] = ownerance[msg.sender].sub(_values[i]);
+                ownerance[_dests[i]] = ownerance[_dests[i]].add(_values[i]);
+                emit Transfer(msg.sender, _dests[i], _values[i]);
+                i += 1;
             }
-            locked = safeSub(_value,_value/5);
-            LockedToken[_to] = safeAdd(LockedToken[_to],locked);
         }
-
-        balances[_to] = safeAdd(balances[_to], _value);
-        jail[_to] = safeAdd(jail[_to], _value);
-        balances[walletOwnerAddress] = safeSub(balances[walletOwnerAddress],_value);
-        
-        updateTime[_to] = now;
-        withdraw(walletOwnerAddress);
-        emit BuyToken(msg.sender, _to, _value);
+        return(i);
     }
 
-    function() public payable{
-        require(msg.value >= 0.001 ether);
-        uint256 tokens = safeMul(msg.value,rate);
-        _buyToken(msg.sender,tokens);
+    // --- Edr Section ---
+    function transferEdrAddr(address _newEddr)
+        isOwner
+        isValidAddress
+        onlyPayloadSize(32)
+        public returns (bool success)
+    {
+        if (_newEddr != address(0)) {
+            address _oldaddr = EDRADDR;
+            ownerance[_newEddr] = ownerance[EDRADDR];
+            ownerance[EDRADDR] = 0;
+            EDRADDR = _newEddr;
+            emit Transfer(_oldaddr, EDRADDR, ownerance[_newEddr]);
+        }
+        return true;
     }
+
+
 }
