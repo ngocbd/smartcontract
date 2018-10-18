@@ -1,42 +1,103 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BatchTransfer at 0x58b4279f24455f78f604d1fce668f7ab2d23c658
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BatchTransfer at 0x1e6f116ca704277c97595316ac157eb6ed30290e
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.24;
 
-contract BatchTransfer {
-  address public owner;
-  uint256 public totalTransfer;
-  uint256 public totalAddresses;
-  uint256 public totalTransactions;
+/*
+    @title Provides support and utilities for contract ownership
+*/
+contract Ownable {
+    address public owner;
+    address public newOwner;
 
-  event Transfers(address indexed from, uint256 indexed value, uint256 indexed count);
-  
-  constructor() public {
-    owner = msg.sender;
-  }
+    event OwnerUpdate(address _prevOwner, address _newOwner);
 
-  modifier restricted() {
-    if (msg.sender == owner) _;
-  }
-
-  function batchTransfer(address[] _addresses) public payable {
-    require (msg.value > 0 && _addresses.length > 0);
-    totalTransfer += msg.value;
-    totalAddresses += _addresses.length;
-    totalTransactions++;
-    uint256 value = msg.value / _addresses.length;
-    for (uint i = 0; i < _addresses.length; i++) {
-      _addresses[i].transfer(value);
+    /*
+        @dev constructor
+    */
+    constructor(address _owner) public {
+        owner = _owner;
     }
-    emit Transfers(msg.sender,msg.value,_addresses.length);
-  }
 
-  function withdraw() public restricted {
-    address contractAddress = this;
-    owner.transfer(contractAddress.balance);
-  }
+    /*
+        @dev allows execution by the owner only
+    */
+    modifier ownerOnly {
+        require(msg.sender == owner);
+        _;
+    }
 
-  function () payable public {
-    msg.sender.transfer(msg.value);
-  }  
+    /*
+        @dev allows transferring the contract ownership
+        the new owner still needs to accept the transfer
+        can only be called by the contract owner
+
+        @param _newOwner    new contract owner
+    */
+    function transferOwnership(address _newOwner) public ownerOnly {
+        require(_newOwner != owner);
+        newOwner = _newOwner;
+    }
+
+    /*
+        @dev used by a new owner to accept an ownership transfer
+    */
+    function acceptOwnership() public {
+        require(msg.sender == newOwner);
+        emit OwnerUpdate(owner, newOwner);
+        owner = newOwner;
+        newOwner = address(0);
+    }
+}
+
+contract BatchTransfer is Ownable {
+
+    /*
+        @dev constructor
+
+    */
+    constructor () public Ownable(msg.sender) {}
+
+    function batchTransfer(address[] _destinations, uint256[] _amounts) 
+        public
+        ownerOnly()
+        {
+            require(_destinations.length == _amounts.length);
+
+            for (uint i = 0; i < _destinations.length; i++) {
+                if (_destinations[i] != 0x0) {
+                    _destinations[i].transfer(_amounts[i]);
+                }
+            }
+        }
+
+    function batchTransfer(address[] _destinations, uint256 _amount) 
+        public
+        ownerOnly()
+        {
+            require(_destinations.length > 0);
+
+            for (uint i = 0; i < _destinations.length; i++) {
+                if (_destinations[i] != 0x0) {
+                    _destinations[i].transfer(_amount);
+                }
+            }
+        }
+        
+    function transfer(address _destination, uint256 _amount)
+        public
+        ownerOnly()
+        {
+            require(_destination != 0x0 && _amount > 0);
+            _destination.transfer(_amount);
+        }
+
+    function transferAllToOwner()
+        public
+        ownerOnly()
+        {
+            address(this).transfer(address(this).balance);
+        }
+        
+    function() public payable { }
 }
