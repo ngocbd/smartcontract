@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafeERC20TimelockProd at 0x537ffa421d035f42cb5860cc21857df4521f4ec8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafeERC20TimelockProd at 0xb0a2373eb2af1e70e4351f20d4921f7b13a22038
 */
 pragma solidity ^0.4.24;
 
@@ -224,7 +224,7 @@ contract SafeERC20Timelock is ITimeMachine, Ownable {
   * @param _value array of amounts to unlock
   * @return result of operation: true if success
   */
-  function releaseForce(address _for, uint[] _timestamp, uint[] _value) onlyOwner external returns(bool) {
+  function releaseForce(address _for, uint[] _timestamp, uint[] _value) external returns(bool) {
     return release_(_for, _timestamp, _value);
   }
 
@@ -248,6 +248,6 @@ contract SafeERC20Timelock is ITimeMachine, Ownable {
 }
 
 contract SafeERC20TimelockProd is TimeMachineP, SafeERC20Timelock {
-  constructor (address _token) public SafeERC20Timelock(_token) {
+  constructor () public SafeERC20Timelock(0x45245bc59219eeaaf6cd3f382e078a461ff9de7b) {
   }
 }
