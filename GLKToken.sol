@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GLKToken at 0x3299a61ea881c2335593855fa1ea26bf412cfa89
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GLKToken at 0x9f012a76a64390cfb424e925e24f5515a3f0f780
 */
 pragma solidity ^0.4.16;
 
@@ -107,7 +107,7 @@ contract GLKToken is StandardToken {
         ) {
         balances[msg.sender] = 1000000000 * 1000000000000000000;   // Give the creator all initial tokens, 18 zero is 18 Decimals
         totalSupply = 1000000000 * 1000000000000000000;            // Update total supply, , 18 zero is 18 Decimals
-        name = "Geluk Global Macro Accelerated FundTicker";                                // Token Name
+        name = "Geluk Global Macro Accelerated Fund";                                // Token Name
         decimals = 18;                                      // Amount of decimals for display purposes
         symbol = "GLK";                                    // Token Symbol
     }
