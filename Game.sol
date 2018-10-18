@@ -1,22 +1,1203 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Game at 0x6ed680055bd5a04c194c954f71019ee90145001c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GAME at 0x9afa7e446e5393e50277af6baefa92b2bdf66850
 */
-pragma solidity ^0.4.24;
-// King of the Crypto Hill contract by Spielley
-// P3D contract designed by TEAM JUST and here integrated for dividend payout purpose, not active in testnet version.
-// See P3D proof of concept at : https://divgarden.dvx.me/
-// Or look at it's code at: https://etherscan.io/address/0xdaa282aba7f4aa757fac94024dfb89f8654582d3#code
-// any derivative of KOTCH is allowed if:
-// - 1% additional on payouts happen to original KOTCH contract creator's eth account: 0x0B0eFad4aE088a88fFDC50BCe5Fb63c6936b9220
-// - contracts are not designed or used to scam people or mallpractices
-// This game is intended for fun, Spielley is not liable for any bugs the contract may contain. 
-// Don't play with crypto you can't afford to lose
+pragma solidity ^0.4.20;
+
+contract OraclizeI {
+    address public cbAddress;
+    function query(uint _timestamp, string _datasource, string _arg) external payable returns (bytes32 _id);
+    function query_withGasLimit(uint _timestamp, string _datasource, string _arg, uint _gaslimit) external payable returns (bytes32 _id);
+    function query2(uint _timestamp, string _datasource, string _arg1, string _arg2) public payable returns (bytes32 _id);
+    function query2_withGasLimit(uint _timestamp, string _datasource, string _arg1, string _arg2, uint _gaslimit) external payable returns (bytes32 _id);
+    function queryN(uint _timestamp, string _datasource, bytes _argN) public payable returns (bytes32 _id);
+    function queryN_withGasLimit(uint _timestamp, string _datasource, bytes _argN, uint _gaslimit) external payable returns (bytes32 _id);
+    function getPrice(string _datasource) public returns (uint _dsprice);
+    function getPrice(string _datasource, uint gaslimit) public returns (uint _dsprice);
+    function setProofType(byte _proofType) external;
+    function setCustomGasPrice(uint _gasPrice) external;
+    function randomDS_getSessionPubKeyHash() external constant returns(bytes32);
+}
+
+contract OraclizeAddrResolverI {
+    function getAddress() public returns (address _addr);
+}
+
+/*
+Begin solidity-cborutils
+https://github.com/smartcontractkit/solidity-cborutils
+MIT License
+Copyright (c) 2018 SmartContract ChainLink, Ltd.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+ */
+
+library Buffer {
+    struct buffer {
+        bytes buf;
+        uint capacity;
+    }
+
+    function init(buffer memory buf, uint _capacity) internal pure {
+        uint capacity = _capacity;
+        if(capacity % 32 != 0) capacity += 32 - (capacity % 32);
+        // Allocate space for the buffer data
+        buf.capacity = capacity;
+        assembly {
+            let ptr := mload(0x40)
+            mstore(buf, ptr)
+            mstore(ptr, 0)
+            mstore(0x40, add(ptr, capacity))
+        }
+    }
+
+    function resize(buffer memory buf, uint capacity) private pure {
+        bytes memory oldbuf = buf.buf;
+        init(buf, capacity);
+        append(buf, oldbuf);
+    }
+
+    function max(uint a, uint b) private pure returns(uint) {
+        if(a > b) {
+            return a;
+        }
+        return b;
+    }
+
+    /**
+     * @dev Appends a byte array to the end of the buffer. Resizes if doing so
+     *      would exceed the capacity of the buffer.
+     * @param buf The buffer to append to.
+     * @param data The data to append.
+     * @return The original buffer.
+     */
+    function append(buffer memory buf, bytes data) internal pure returns(buffer memory) {
+        if(data.length + buf.buf.length > buf.capacity) {
+            resize(buf, max(buf.capacity, data.length) * 2);
+        }
+
+        uint dest;
+        uint src;
+        uint len = data.length;
+        assembly {
+            // Memory address of the buffer data
+            let bufptr := mload(buf)
+            // Length of existing buffer data
+            let buflen := mload(bufptr)
+            // Start address = buffer address + buffer length + sizeof(buffer length)
+            dest := add(add(bufptr, buflen), 32)
+            // Update buffer length
+            mstore(bufptr, add(buflen, mload(data)))
+            src := add(data, 32)
+        }
+
+        // Copy word-length chunks while possible
+        for(; len >= 32; len -= 32) {
+            assembly {
+                mstore(dest, mload(src))
+            }
+            dest += 32;
+            src += 32;
+        }
+
+        // Copy remaining bytes
+        uint mask = 256 ** (32 - len) - 1;
+        assembly {
+            let srcpart := and(mload(src), not(mask))
+            let destpart := and(mload(dest), mask)
+            mstore(dest, or(destpart, srcpart))
+        }
+
+        return buf;
+    }
+
+    /**
+     * @dev Appends a byte to the end of the buffer. Resizes if doing so would
+     * exceed the capacity of the buffer.
+     * @param buf The buffer to append to.
+     * @param data The data to append.
+     * @return The original buffer.
+     */
+    function append(buffer memory buf, uint8 data) internal pure {
+        if(buf.buf.length + 1 > buf.capacity) {
+            resize(buf, buf.capacity * 2);
+        }
+
+        assembly {
+            // Memory address of the buffer data
+            let bufptr := mload(buf)
+            // Length of existing buffer data
+            let buflen := mload(bufptr)
+            // Address = buffer address + buffer length + sizeof(buffer length)
+            let dest := add(add(bufptr, buflen), 32)
+            mstore8(dest, data)
+            // Update buffer length
+            mstore(bufptr, add(buflen, 1))
+        }
+    }
+
+    /**
+     * @dev Appends a byte to the end of the buffer. Resizes if doing so would
+     * exceed the capacity of the buffer.
+     * @param buf The buffer to append to.
+     * @param data The data to append.
+     * @return The original buffer.
+     */
+    function appendInt(buffer memory buf, uint data, uint len) internal pure returns(buffer memory) {
+        if(len + buf.buf.length > buf.capacity) {
+            resize(buf, max(buf.capacity, len) * 2);
+        }
+
+        uint mask = 256 ** len - 1;
+        assembly {
+            // Memory address of the buffer data
+            let bufptr := mload(buf)
+            // Length of existing buffer data
+            let buflen := mload(bufptr)
+            // Address = buffer address + buffer length + sizeof(buffer length) + len
+            let dest := add(add(bufptr, buflen), len)
+            mstore(dest, or(and(mload(dest), not(mask)), data))
+            // Update buffer length
+            mstore(bufptr, add(buflen, len))
+        }
+        return buf;
+    }
+}
+
+library CBOR {
+    using Buffer for Buffer.buffer;
+
+    uint8 private constant MAJOR_TYPE_INT = 0;
+    uint8 private constant MAJOR_TYPE_NEGATIVE_INT = 1;
+    uint8 private constant MAJOR_TYPE_BYTES = 2;
+    uint8 private constant MAJOR_TYPE_STRING = 3;
+    uint8 private constant MAJOR_TYPE_ARRAY = 4;
+    uint8 private constant MAJOR_TYPE_MAP = 5;
+    uint8 private constant MAJOR_TYPE_CONTENT_FREE = 7;
+
+    function encodeType(Buffer.buffer memory buf, uint8 major, uint value) private pure {
+        if(value <= 23) {
+            buf.append(uint8((major << 5) | value));
+        } else if(value <= 0xFF) {
+            buf.append(uint8((major << 5) | 24));
+            buf.appendInt(value, 1);
+        } else if(value <= 0xFFFF) {
+            buf.append(uint8((major << 5) | 25));
+            buf.appendInt(value, 2);
+        } else if(value <= 0xFFFFFFFF) {
+            buf.append(uint8((major << 5) | 26));
+            buf.appendInt(value, 4);
+        } else if(value <= 0xFFFFFFFFFFFFFFFF) {
+            buf.append(uint8((major << 5) | 27));
+            buf.appendInt(value, 8);
+        }
+    }
+
+    function encodeIndefiniteLengthType(Buffer.buffer memory buf, uint8 major) private pure {
+        buf.append(uint8((major << 5) | 31));
+    }
+
+    function encodeUInt(Buffer.buffer memory buf, uint value) internal pure {
+        encodeType(buf, MAJOR_TYPE_INT, value);
+    }
+
+    function encodeInt(Buffer.buffer memory buf, int value) internal pure {
+        if(value >= 0) {
+            encodeType(buf, MAJOR_TYPE_INT, uint(value));
+        } else {
+            encodeType(buf, MAJOR_TYPE_NEGATIVE_INT, uint(-1 - value));
+        }
+    }
+
+    function encodeBytes(Buffer.buffer memory buf, bytes value) internal pure {
+        encodeType(buf, MAJOR_TYPE_BYTES, value.length);
+        buf.append(value);
+    }
+
+    function encodeString(Buffer.buffer memory buf, string value) internal pure {
+        encodeType(buf, MAJOR_TYPE_STRING, bytes(value).length);
+        buf.append(bytes(value));
+    }
+
+    function startArray(Buffer.buffer memory buf) internal pure {
+        encodeIndefiniteLengthType(buf, MAJOR_TYPE_ARRAY);
+    }
+
+    function startMap(Buffer.buffer memory buf) internal pure {
+        encodeIndefiniteLengthType(buf, MAJOR_TYPE_MAP);
+    }
+
+    function endSequence(Buffer.buffer memory buf) internal pure {
+        encodeIndefiniteLengthType(buf, MAJOR_TYPE_CONTENT_FREE);
+    }
+}
+
+/*
+End solidity-cborutils
+ */
+
+contract usingOraclize {
+    uint constant day = 60*60*24;
+    uint constant week = 60*60*24*7;
+    uint constant month = 60*60*24*30;
+    byte constant proofType_NONE = 0x00;
+    byte constant proofType_TLSNotary = 0x10;
+    byte constant proofType_Ledger = 0x30;
+    byte constant proofType_Android = 0x40;
+    byte constant proofType_Native = 0xF0;
+    byte constant proofStorage_IPFS = 0x01;
+    uint8 constant networkID_auto = 0;
+    uint8 constant networkID_mainnet = 1;
+    uint8 constant networkID_testnet = 2;
+    uint8 constant networkID_morden = 2;
+    uint8 constant networkID_consensys = 161;
+
+    OraclizeAddrResolverI OAR;
+
+    OraclizeI oraclize;
+    modifier oraclizeAPI {
+        if((address(OAR)==0)||(getCodeSize(address(OAR))==0))
+            oraclize_setNetwork(networkID_auto);
+
+        if(address(oraclize) != OAR.getAddress())
+            oraclize = OraclizeI(OAR.getAddress());
+
+        _;
+    }
+    modifier coupon(string code){
+        oraclize = OraclizeI(OAR.getAddress());
+        _;
+    }
+
+    function oraclize_setNetwork(uint8 networkID) internal returns(bool){
+      return oraclize_setNetwork();
+      networkID; // silence the warning and remain backwards compatible
+    }
+    function oraclize_setNetwork() internal returns(bool){
+        if (getCodeSize(0x1d3B2638a7cC9f2CB3D298A3DA7a90B67E5506ed)>0){ //mainnet
+            OAR = OraclizeAddrResolverI(0x1d3B2638a7cC9f2CB3D298A3DA7a90B67E5506ed);
+            oraclize_setNetworkName("eth_mainnet");
+            return true;
+        }
+        if (getCodeSize(0xc03A2615D5efaf5F49F60B7BB6583eaec212fdf1)>0){ //ropsten testnet
+            OAR = OraclizeAddrResolverI(0xc03A2615D5efaf5F49F60B7BB6583eaec212fdf1);
+            oraclize_setNetworkName("eth_ropsten3");
+            return true;
+        }
+        if (getCodeSize(0xB7A07BcF2Ba2f2703b24C0691b5278999C59AC7e)>0){ //kovan testnet
+            OAR = OraclizeAddrResolverI(0xB7A07BcF2Ba2f2703b24C0691b5278999C59AC7e);
+            oraclize_setNetworkName("eth_kovan");
+            return true;
+        }
+        if (getCodeSize(0x146500cfd35B22E4A392Fe0aDc06De1a1368Ed48)>0){ //rinkeby testnet
+            OAR = OraclizeAddrResolverI(0x146500cfd35B22E4A392Fe0aDc06De1a1368Ed48);
+            oraclize_setNetworkName("eth_rinkeby");
+            return true;
+        }
+        if (getCodeSize(0x6f485C8BF6fc43eA212E93BBF8ce046C7f1cb475)>0){ //ethereum-bridge
+            OAR = OraclizeAddrResolverI(0x6f485C8BF6fc43eA212E93BBF8ce046C7f1cb475);
+            return true;
+        }
+        if (getCodeSize(0x20e12A1F859B3FeaE5Fb2A0A32C18F5a65555bBF)>0){ //ether.camp ide
+            OAR = OraclizeAddrResolverI(0x20e12A1F859B3FeaE5Fb2A0A32C18F5a65555bBF);
+            return true;
+        }
+        if (getCodeSize(0x51efaF4c8B3C9AfBD5aB9F4bbC82784Ab6ef8fAA)>0){ //browser-solidity
+            OAR = OraclizeAddrResolverI(0x51efaF4c8B3C9AfBD5aB9F4bbC82784Ab6ef8fAA);
+            return true;
+        }
+        return false;
+    }
+
+    function __callback(bytes32 myid, string result) public {
+        __callback(myid, result, new bytes(0));
+    }
+    function __callback(bytes32 myid, string result, bytes proof) public {
+      return;
+      myid; result; proof; // Silence compiler warnings
+    }
+
+    function oraclize_getPrice(string datasource) oraclizeAPI internal returns (uint){
+        return oraclize.getPrice(datasource);
+    }
+
+    function oraclize_getPrice(string datasource, uint gaslimit) oraclizeAPI internal returns (uint){
+        return oraclize.getPrice(datasource, gaslimit);
+    }
+
+    function oraclize_query(string datasource, string arg) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource);
+        if (price > 1 ether + tx.gasprice*200000) return 0; // unexpectedly high price
+        return oraclize.query.value(price)(0, datasource, arg);
+    }
+    function oraclize_query(uint timestamp, string datasource, string arg) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource);
+        if (price > 1 ether + tx.gasprice*200000) return 0; // unexpectedly high price
+        return oraclize.query.value(price)(timestamp, datasource, arg);
+    }
+    function oraclize_query(uint timestamp, string datasource, string arg, uint gaslimit) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource, gaslimit);
+        if (price > 1 ether + tx.gasprice*gaslimit) return 0; // unexpectedly high price
+        return oraclize.query_withGasLimit.value(price)(timestamp, datasource, arg, gaslimit);
+    }
+    function oraclize_query(string datasource, string arg, uint gaslimit) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource, gaslimit);
+        if (price > 1 ether + tx.gasprice*gaslimit) return 0; // unexpectedly high price
+        return oraclize.query_withGasLimit.value(price)(0, datasource, arg, gaslimit);
+    }
+    function oraclize_query(string datasource, string arg1, string arg2) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource);
+        if (price > 1 ether + tx.gasprice*200000) return 0; // unexpectedly high price
+        return oraclize.query2.value(price)(0, datasource, arg1, arg2);
+    }
+    function oraclize_query(uint timestamp, string datasource, string arg1, string arg2) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource);
+        if (price > 1 ether + tx.gasprice*200000) return 0; // unexpectedly high price
+        return oraclize.query2.value(price)(timestamp, datasource, arg1, arg2);
+    }
+    function oraclize_query(uint timestamp, string datasource, string arg1, string arg2, uint gaslimit) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource, gaslimit);
+        if (price > 1 ether + tx.gasprice*gaslimit) return 0; // unexpectedly high price
+        return oraclize.query2_withGasLimit.value(price)(timestamp, datasource, arg1, arg2, gaslimit);
+    }
+    function oraclize_query(string datasource, string arg1, string arg2, uint gaslimit) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource, gaslimit);
+        if (price > 1 ether + tx.gasprice*gaslimit) return 0; // unexpectedly high price
+        return oraclize.query2_withGasLimit.value(price)(0, datasource, arg1, arg2, gaslimit);
+    }
+    function oraclize_query(string datasource, string[] argN) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource);
+        if (price > 1 ether + tx.gasprice*200000) return 0; // unexpectedly high price
+        bytes memory args = stra2cbor(argN);
+        return oraclize.queryN.value(price)(0, datasource, args);
+    }
+    function oraclize_query(uint timestamp, string datasource, string[] argN) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource);
+        if (price > 1 ether + tx.gasprice*200000) return 0; // unexpectedly high price
+        bytes memory args = stra2cbor(argN);
+        return oraclize.queryN.value(price)(timestamp, datasource, args);
+    }
+    function oraclize_query(uint timestamp, string datasource, string[] argN, uint gaslimit) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource, gaslimit);
+        if (price > 1 ether + tx.gasprice*gaslimit) return 0; // unexpectedly high price
+        bytes memory args = stra2cbor(argN);
+        return oraclize.queryN_withGasLimit.value(price)(timestamp, datasource, args, gaslimit);
+    }
+    function oraclize_query(string datasource, string[] argN, uint gaslimit) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource, gaslimit);
+        if (price > 1 ether + tx.gasprice*gaslimit) return 0; // unexpectedly high price
+        bytes memory args = stra2cbor(argN);
+        return oraclize.queryN_withGasLimit.value(price)(0, datasource, args, gaslimit);
+    }
+    function oraclize_query(string datasource, string[1] args) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](1);
+        dynargs[0] = args[0];
+        return oraclize_query(datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, string[1] args) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](1);
+        dynargs[0] = args[0];
+        return oraclize_query(timestamp, datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, string[1] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](1);
+        dynargs[0] = args[0];
+        return oraclize_query(timestamp, datasource, dynargs, gaslimit);
+    }
+    function oraclize_query(string datasource, string[1] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](1);
+        dynargs[0] = args[0];
+        return oraclize_query(datasource, dynargs, gaslimit);
+    }
+
+    function oraclize_query(string datasource, string[2] args) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](2);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        return oraclize_query(datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, string[2] args) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](2);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        return oraclize_query(timestamp, datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, string[2] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](2);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        return oraclize_query(timestamp, datasource, dynargs, gaslimit);
+    }
+    function oraclize_query(string datasource, string[2] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](2);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        return oraclize_query(datasource, dynargs, gaslimit);
+    }
+    function oraclize_query(string datasource, string[3] args) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](3);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        return oraclize_query(datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, string[3] args) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](3);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        return oraclize_query(timestamp, datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, string[3] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](3);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        return oraclize_query(timestamp, datasource, dynargs, gaslimit);
+    }
+    function oraclize_query(string datasource, string[3] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](3);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        return oraclize_query(datasource, dynargs, gaslimit);
+    }
+
+    function oraclize_query(string datasource, string[4] args) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](4);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        dynargs[3] = args[3];
+        return oraclize_query(datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, string[4] args) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](4);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        dynargs[3] = args[3];
+        return oraclize_query(timestamp, datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, string[4] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](4);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        dynargs[3] = args[3];
+        return oraclize_query(timestamp, datasource, dynargs, gaslimit);
+    }
+    function oraclize_query(string datasource, string[4] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](4);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        dynargs[3] = args[3];
+        return oraclize_query(datasource, dynargs, gaslimit);
+    }
+    function oraclize_query(string datasource, string[5] args) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](5);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        dynargs[3] = args[3];
+        dynargs[4] = args[4];
+        return oraclize_query(datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, string[5] args) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](5);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        dynargs[3] = args[3];
+        dynargs[4] = args[4];
+        return oraclize_query(timestamp, datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, string[5] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](5);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        dynargs[3] = args[3];
+        dynargs[4] = args[4];
+        return oraclize_query(timestamp, datasource, dynargs, gaslimit);
+    }
+    function oraclize_query(string datasource, string[5] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        string[] memory dynargs = new string[](5);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        dynargs[3] = args[3];
+        dynargs[4] = args[4];
+        return oraclize_query(datasource, dynargs, gaslimit);
+    }
+    function oraclize_query(string datasource, bytes[] argN) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource);
+        if (price > 1 ether + tx.gasprice*200000) return 0; // unexpectedly high price
+        bytes memory args = ba2cbor(argN);
+        return oraclize.queryN.value(price)(0, datasource, args);
+    }
+    function oraclize_query(uint timestamp, string datasource, bytes[] argN) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource);
+        if (price > 1 ether + tx.gasprice*200000) return 0; // unexpectedly high price
+        bytes memory args = ba2cbor(argN);
+        return oraclize.queryN.value(price)(timestamp, datasource, args);
+    }
+    function oraclize_query(uint timestamp, string datasource, bytes[] argN, uint gaslimit) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource, gaslimit);
+        if (price > 1 ether + tx.gasprice*gaslimit) return 0; // unexpectedly high price
+        bytes memory args = ba2cbor(argN);
+        return oraclize.queryN_withGasLimit.value(price)(timestamp, datasource, args, gaslimit);
+    }
+    function oraclize_query(string datasource, bytes[] argN, uint gaslimit) oraclizeAPI internal returns (bytes32 id){
+        uint price = oraclize.getPrice(datasource, gaslimit);
+        if (price > 1 ether + tx.gasprice*gaslimit) return 0; // unexpectedly high price
+        bytes memory args = ba2cbor(argN);
+        return oraclize.queryN_withGasLimit.value(price)(0, datasource, args, gaslimit);
+    }
+    function oraclize_query(string datasource, bytes[1] args) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](1);
+        dynargs[0] = args[0];
+        return oraclize_query(datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, bytes[1] args) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](1);
+        dynargs[0] = args[0];
+        return oraclize_query(timestamp, datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, bytes[1] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](1);
+        dynargs[0] = args[0];
+        return oraclize_query(timestamp, datasource, dynargs, gaslimit);
+    }
+    function oraclize_query(string datasource, bytes[1] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](1);
+        dynargs[0] = args[0];
+        return oraclize_query(datasource, dynargs, gaslimit);
+    }
+
+    function oraclize_query(string datasource, bytes[2] args) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](2);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        return oraclize_query(datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, bytes[2] args) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](2);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        return oraclize_query(timestamp, datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, bytes[2] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](2);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        return oraclize_query(timestamp, datasource, dynargs, gaslimit);
+    }
+    function oraclize_query(string datasource, bytes[2] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](2);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        return oraclize_query(datasource, dynargs, gaslimit);
+    }
+    function oraclize_query(string datasource, bytes[3] args) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](3);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        return oraclize_query(datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, bytes[3] args) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](3);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        return oraclize_query(timestamp, datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, bytes[3] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](3);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        return oraclize_query(timestamp, datasource, dynargs, gaslimit);
+    }
+    function oraclize_query(string datasource, bytes[3] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](3);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        return oraclize_query(datasource, dynargs, gaslimit);
+    }
+
+    function oraclize_query(string datasource, bytes[4] args) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](4);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        dynargs[3] = args[3];
+        return oraclize_query(datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, bytes[4] args) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](4);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        dynargs[3] = args[3];
+        return oraclize_query(timestamp, datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, bytes[4] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](4);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        dynargs[3] = args[3];
+        return oraclize_query(timestamp, datasource, dynargs, gaslimit);
+    }
+    function oraclize_query(string datasource, bytes[4] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](4);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        dynargs[3] = args[3];
+        return oraclize_query(datasource, dynargs, gaslimit);
+    }
+    function oraclize_query(string datasource, bytes[5] args) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](5);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        dynargs[3] = args[3];
+        dynargs[4] = args[4];
+        return oraclize_query(datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, bytes[5] args) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](5);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        dynargs[3] = args[3];
+        dynargs[4] = args[4];
+        return oraclize_query(timestamp, datasource, dynargs);
+    }
+    function oraclize_query(uint timestamp, string datasource, bytes[5] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](5);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        dynargs[3] = args[3];
+        dynargs[4] = args[4];
+        return oraclize_query(timestamp, datasource, dynargs, gaslimit);
+    }
+    function oraclize_query(string datasource, bytes[5] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
+        bytes[] memory dynargs = new bytes[](5);
+        dynargs[0] = args[0];
+        dynargs[1] = args[1];
+        dynargs[2] = args[2];
+        dynargs[3] = args[3];
+        dynargs[4] = args[4];
+        return oraclize_query(datasource, dynargs, gaslimit);
+    }
+
+    function oraclize_cbAddress() oraclizeAPI internal returns (address){
+        return oraclize.cbAddress();
+    }
+    function oraclize_setProof(byte proofP) oraclizeAPI internal {
+        return oraclize.setProofType(proofP);
+    }
+    function oraclize_setCustomGasPrice(uint gasPrice) oraclizeAPI internal {
+        return oraclize.setCustomGasPrice(gasPrice);
+    }
+
+    function oraclize_randomDS_getSessionPubKeyHash() oraclizeAPI internal returns (bytes32){
+        return oraclize.randomDS_getSessionPubKeyHash();
+    }
+
+    function getCodeSize(address _addr) constant internal returns(uint _size) {
+        assembly {
+            _size := extcodesize(_addr)
+        }
+    }
+
+    function parseAddr(string _a) internal pure returns (address){
+        bytes memory tmp = bytes(_a);
+        uint160 iaddr = 0;
+        uint160 b1;
+        uint160 b2;
+        for (uint i=2; i<2+2*20; i+=2){
+            iaddr *= 256;
+            b1 = uint160(tmp[i]);
+            b2 = uint160(tmp[i+1]);
+            if ((b1 >= 97)&&(b1 <= 102)) b1 -= 87;
+            else if ((b1 >= 65)&&(b1 <= 70)) b1 -= 55;
+            else if ((b1 >= 48)&&(b1 <= 57)) b1 -= 48;
+            if ((b2 >= 97)&&(b2 <= 102)) b2 -= 87;
+            else if ((b2 >= 65)&&(b2 <= 70)) b2 -= 55;
+            else if ((b2 >= 48)&&(b2 <= 57)) b2 -= 48;
+            iaddr += (b1*16+b2);
+        }
+        return address(iaddr);
+    }
+
+    function strCompare(string _a, string _b) internal pure returns (int) {
+        bytes memory a = bytes(_a);
+        bytes memory b = bytes(_b);
+        uint minLength = a.length;
+        if (b.length < minLength) minLength = b.length;
+        for (uint i = 0; i < minLength; i ++)
+            if (a[i] < b[i])
+                return -1;
+            else if (a[i] > b[i])
+                return 1;
+        if (a.length < b.length)
+            return -1;
+        else if (a.length > b.length)
+            return 1;
+        else
+            return 0;
+    }
+
+    function indexOf(string _haystack, string _needle) internal pure returns (int) {
+        bytes memory h = bytes(_haystack);
+        bytes memory n = bytes(_needle);
+        if(h.length < 1 || n.length < 1 || (n.length > h.length))
+            return -1;
+        else if(h.length > (2**128 -1))
+            return -1;
+        else
+        {
+            uint subindex = 0;
+            for (uint i = 0; i < h.length; i ++)
+            {
+                if (h[i] == n[0])
+                {
+                    subindex = 1;
+                    while(subindex < n.length && (i + subindex) < h.length && h[i + subindex] == n[subindex])
+                    {
+                        subindex++;
+                    }
+                    if(subindex == n.length)
+                        return int(i);
+                }
+            }
+            return -1;
+        }
+    }
+
+    function strConcat(string _a, string _b, string _c, string _d, string _e) internal pure returns (string) {
+        bytes memory _ba = bytes(_a);
+        bytes memory _bb = bytes(_b);
+        bytes memory _bc = bytes(_c);
+        bytes memory _bd = bytes(_d);
+        bytes memory _be = bytes(_e);
+        string memory abcde = new string(_ba.length + _bb.length + _bc.length + _bd.length + _be.length);
+        bytes memory babcde = bytes(abcde);
+        uint k = 0;
+        for (uint i = 0; i < _ba.length; i++) babcde[k++] = _ba[i];
+        for (i = 0; i < _bb.length; i++) babcde[k++] = _bb[i];
+        for (i = 0; i < _bc.length; i++) babcde[k++] = _bc[i];
+        for (i = 0; i < _bd.length; i++) babcde[k++] = _bd[i];
+        for (i = 0; i < _be.length; i++) babcde[k++] = _be[i];
+        return string(babcde);
+    }
+
+    function strConcat(string _a, string _b, string _c, string _d) internal pure returns (string) {
+        return strConcat(_a, _b, _c, _d, "");
+    }
+
+    function strConcat(string _a, string _b, string _c) internal pure returns (string) {
+        return strConcat(_a, _b, _c, "", "");
+    }
+
+    function strConcat(string _a, string _b) internal pure returns (string) {
+        return strConcat(_a, _b, "", "", "");
+    }
+
+    // parseInt
+    function parseInt(string _a) internal pure returns (uint) {
+        return parseInt(_a, 0);
+    }
+
+    // parseInt(parseFloat*10^_b)
+    function parseInt(string _a, uint _b) internal pure returns (uint) {
+        bytes memory bresult = bytes(_a);
+        uint mint = 0;
+        bool decimals = false;
+        for (uint i=0; i<bresult.length; i++){
+            if ((bresult[i] >= 48)&&(bresult[i] <= 57)){
+                if (decimals){
+                   if (_b == 0) break;
+                    else _b--;
+                }
+                mint *= 10;
+                mint += uint(bresult[i]) - 48;
+            } else if (bresult[i] == 46) decimals = true;
+        }
+        if (_b > 0) mint *= 10**_b;
+        return mint;
+    }
+
+    function uint2str(uint i) internal pure returns (string){
+        if (i == 0) return "0";
+        uint j = i;
+        uint len;
+        while (j != 0){
+            len++;
+            j /= 10;
+        }
+        bytes memory bstr = new bytes(len);
+        uint k = len - 1;
+        while (i != 0){
+            bstr[k--] = byte(48 + i % 10);
+            i /= 10;
+        }
+        return string(bstr);
+    }
+
+    using CBOR for Buffer.buffer;
+    function stra2cbor(string[] arr) internal pure returns (bytes) {
+        safeMemoryCleaner();
+        Buffer.buffer memory buf;
+        Buffer.init(buf, 1024);
+        buf.startArray();
+        for (uint i = 0; i < arr.length; i++) {
+            buf.encodeString(arr[i]);
+        }
+        buf.endSequence();
+        return buf.buf;
+    }
+
+    function ba2cbor(bytes[] arr) internal pure returns (bytes) {
+        safeMemoryCleaner();
+        Buffer.buffer memory buf;
+        Buffer.init(buf, 1024);
+        buf.startArray();
+        for (uint i = 0; i < arr.length; i++) {
+            buf.encodeBytes(arr[i]);
+        }
+        buf.endSequence();
+        return buf.buf;
+    }
+
+    string oraclize_network_name;
+    function oraclize_setNetworkName(string _network_name) internal {
+        oraclize_network_name = _network_name;
+    }
+
+    function oraclize_getNetworkName() internal view returns (string) {
+        return oraclize_network_name;
+    }
+
+    function oraclize_newRandomDSQuery(uint _delay, uint _nbytes, uint _customGasLimit) internal returns (bytes32){
+        require((_nbytes > 0) && (_nbytes <= 32));
+        // Convert from seconds to ledger timer ticks
+        _delay *= 10;
+        bytes memory nbytes = new bytes(1);
+        nbytes[0] = byte(_nbytes);
+        bytes memory unonce = new bytes(32);
+        bytes memory sessionKeyHash = new bytes(32);
+        bytes32 sessionKeyHash_bytes32 = oraclize_randomDS_getSessionPubKeyHash();
+        assembly {
+            mstore(unonce, 0x20)
+            // the following variables can be relaxed
+            // check relaxed random contract under ethereum-examples repo
+            // for an idea on how to override and replace comit hash vars
+            mstore(add(unonce, 0x20), xor(blockhash(sub(number, 1)), xor(coinbase, timestamp)))
+            mstore(sessionKeyHash, 0x20)
+            mstore(add(sessionKeyHash, 0x20), sessionKeyHash_bytes32)
+        }
+        bytes memory delay = new bytes(32);
+        assembly {
+            mstore(add(delay, 0x20), _delay)
+        }
+
+        bytes memory delay_bytes8 = new bytes(8);
+        copyBytes(delay, 24, 8, delay_bytes8, 0);
+
+        bytes[4] memory args = [unonce, nbytes, sessionKeyHash, delay];
+        bytes32 queryId = oraclize_query("random", args, _customGasLimit);
+
+        bytes memory delay_bytes8_left = new bytes(8);
+
+        assembly {
+            let x := mload(add(delay_bytes8, 0x20))
+            mstore8(add(delay_bytes8_left, 0x27), div(x, 0x100000000000000000000000000000000000000000000000000000000000000))
+            mstore8(add(delay_bytes8_left, 0x26), div(x, 0x1000000000000000000000000000000000000000000000000000000000000))
+            mstore8(add(delay_bytes8_left, 0x25), div(x, 0x10000000000000000000000000000000000000000000000000000000000))
+            mstore8(add(delay_bytes8_left, 0x24), div(x, 0x100000000000000000000000000000000000000000000000000000000))
+            mstore8(add(delay_bytes8_left, 0x23), div(x, 0x1000000000000000000000000000000000000000000000000000000))
+            mstore8(add(delay_bytes8_left, 0x22), div(x, 0x10000000000000000000000000000000000000000000000000000))
+            mstore8(add(delay_bytes8_left, 0x21), div(x, 0x100000000000000000000000000000000000000000000000000))
+            mstore8(add(delay_bytes8_left, 0x20), div(x, 0x1000000000000000000000000000000000000000000000000))
+
+        }
+
+        oraclize_randomDS_setCommitment(queryId, keccak256(delay_bytes8_left, args[1], sha256(args[0]), args[2]));
+        return queryId;
+    }
+
+    function oraclize_randomDS_setCommitment(bytes32 queryId, bytes32 commitment) internal {
+        oraclize_randomDS_args[queryId] = commitment;
+    }
+
+    mapping(bytes32=>bytes32) oraclize_randomDS_args;
+    mapping(bytes32=>bool) oraclize_randomDS_sessionKeysHashVerified;
+
+    function verifySig(bytes32 tosignh, bytes dersig, bytes pubkey) internal returns (bool){
+        bool sigok;
+        address signer;
+
+        bytes32 sigr;
+        bytes32 sigs;
+
+        bytes memory sigr_ = new bytes(32);
+        uint offset = 4+(uint(dersig[3]) - 0x20);
+        sigr_ = copyBytes(dersig, offset, 32, sigr_, 0);
+        bytes memory sigs_ = new bytes(32);
+        offset += 32 + 2;
+        sigs_ = copyBytes(dersig, offset+(uint(dersig[offset-1]) - 0x20), 32, sigs_, 0);
+
+        assembly {
+            sigr := mload(add(sigr_, 32))
+            sigs := mload(add(sigs_, 32))
+        }
 
 
+        (sigok, signer) = safer_ecrecover(tosignh, 27, sigr, sigs);
+        if (address(keccak256(pubkey)) == signer) return true;
+        else {
+            (sigok, signer) = safer_ecrecover(tosignh, 28, sigr, sigs);
+            return (address(keccak256(pubkey)) == signer);
+        }
+    }
 
-// ----------------------------------------------------------------------------
-// Safe maths
-// ----------------------------------------------------------------------------
+    function oraclize_randomDS_proofVerify__sessionKeyValidity(bytes proof, uint sig2offset) internal returns (bool) {
+        bool sigok;
+
+        // Step 6: verify the attestation signature, APPKEY1 must sign the sessionKey from the correct ledger app (CODEHASH)
+        bytes memory sig2 = new bytes(uint(proof[sig2offset+1])+2);
+        copyBytes(proof, sig2offset, sig2.length, sig2, 0);
+
+        bytes memory appkey1_pubkey = new bytes(64);
+        copyBytes(proof, 3+1, 64, appkey1_pubkey, 0);
+
+        bytes memory tosign2 = new bytes(1+65+32);
+        tosign2[0] = byte(1); //role
+        copyBytes(proof, sig2offset-65, 65, tosign2, 1);
+        bytes memory CODEHASH = hex"fd94fa71bc0ba10d39d464d0d8f465efeef0a2764e3887fcc9df41ded20f505c";
+        copyBytes(CODEHASH, 0, 32, tosign2, 1+65);
+        sigok = verifySig(sha256(tosign2), sig2, appkey1_pubkey);
+
+        if (sigok == false) return false;
+
+
+        // Step 7: verify the APPKEY1 provenance (must be signed by Ledger)
+        bytes memory LEDGERKEY = hex"7fb956469c5c9b89840d55b43537e66a98dd4811ea0a27224272c2e5622911e8537a2f8e86a46baec82864e98dd01e9ccc2f8bc5dfc9cbe5a91a290498dd96e4";
+
+        bytes memory tosign3 = new bytes(1+65);
+        tosign3[0] = 0xFE;
+        copyBytes(proof, 3, 65, tosign3, 1);
+
+        bytes memory sig3 = new bytes(uint(proof[3+65+1])+2);
+        copyBytes(proof, 3+65, sig3.length, sig3, 0);
+
+        sigok = verifySig(sha256(tosign3), sig3, LEDGERKEY);
+
+        return sigok;
+    }
+
+    modifier oraclize_randomDS_proofVerify(bytes32 _queryId, string _result, bytes _proof) {
+        // Step 1: the prefix has to match 'LP\x01' (Ledger Proof version 1)
+        require((_proof[0] == "L") && (_proof[1] == "P") && (_proof[2] == 1));
+
+        bool proofVerified = oraclize_randomDS_proofVerify__main(_proof, _queryId, bytes(_result), oraclize_getNetworkName());
+        require(proofVerified);
+
+        _;
+    }
+
+    function oraclize_randomDS_proofVerify__returnCode(bytes32 _queryId, string _result, bytes _proof) internal returns (uint8){
+        // Step 1: the prefix has to match 'LP\x01' (Ledger Proof version 1)
+        if ((_proof[0] != "L")||(_proof[1] != "P")||(_proof[2] != 1)) return 1;
+
+        bool proofVerified = oraclize_randomDS_proofVerify__main(_proof, _queryId, bytes(_result), oraclize_getNetworkName());
+        if (proofVerified == false) return 2;
+
+        return 0;
+    }
+
+    function matchBytes32Prefix(bytes32 content, bytes prefix, uint n_random_bytes) internal pure returns (bool){
+        bool match_ = true;
+
+        require(prefix.length == n_random_bytes);
+
+        for (uint256 i=0; i< n_random_bytes; i++) {
+            if (content[i] != prefix[i]) match_ = false;
+        }
+
+        return match_;
+    }
+
+    function oraclize_randomDS_proofVerify__main(bytes proof, bytes32 queryId, bytes result, string context_name) internal returns (bool){
+
+        // Step 2: the unique keyhash has to match with the sha256 of (context name + queryId)
+        uint ledgerProofLength = 3+65+(uint(proof[3+65+1])+2)+32;
+        bytes memory keyhash = new bytes(32);
+        copyBytes(proof, ledgerProofLength, 32, keyhash, 0);
+        if (!(keccak256(keyhash) == keccak256(sha256(context_name, queryId)))) return false;
+
+        bytes memory sig1 = new bytes(uint(proof[ledgerProofLength+(32+8+1+32)+1])+2);
+        copyBytes(proof, ledgerProofLength+(32+8+1+32), sig1.length, sig1, 0);
+
+        // Step 3: we assume sig1 is valid (it will be verified during step 5) and we verify if 'result' is the prefix of sha256(sig1)
+        if (!matchBytes32Prefix(sha256(sig1), result, uint(proof[ledgerProofLength+32+8]))) return false;
+
+        // Step 4: commitment match verification, keccak256(delay, nbytes, unonce, sessionKeyHash) == commitment in storage.
+        // This is to verify that the computed args match with the ones specified in the query.
+        bytes memory commitmentSlice1 = new bytes(8+1+32);
+        copyBytes(proof, ledgerProofLength+32, 8+1+32, commitmentSlice1, 0);
+
+        bytes memory sessionPubkey = new bytes(64);
+        uint sig2offset = ledgerProofLength+32+(8+1+32)+sig1.length+65;
+        copyBytes(proof, sig2offset-64, 64, sessionPubkey, 0);
+
+        bytes32 sessionPubkeyHash = sha256(sessionPubkey);
+        if (oraclize_randomDS_args[queryId] == keccak256(commitmentSlice1, sessionPubkeyHash)){ //unonce, nbytes and sessionKeyHash match
+            delete oraclize_randomDS_args[queryId];
+        } else return false;
+
+
+        // Step 5: validity verification for sig1 (keyhash and args signed with the sessionKey)
+        bytes memory tosign1 = new bytes(32+8+1+32);
+        copyBytes(proof, ledgerProofLength, 32+8+1+32, tosign1, 0);
+        if (!verifySig(sha256(tosign1), sig1, sessionPubkey)) return false;
+
+        // verify if sessionPubkeyHash was verified already, if not.. let's do it!
+        if (oraclize_randomDS_sessionKeysHashVerified[sessionPubkeyHash] == false){
+            oraclize_randomDS_sessionKeysHashVerified[sessionPubkeyHash] = oraclize_randomDS_proofVerify__sessionKeyValidity(proof, sig2offset);
+        }
+
+        return oraclize_randomDS_sessionKeysHashVerified[sessionPubkeyHash];
+    }
+
+    // the following function has been written by Alex Beregszaszi (@axic), use it under the terms of the MIT license
+    function copyBytes(bytes from, uint fromOffset, uint length, bytes to, uint toOffset) internal pure returns (bytes) {
+        uint minLength = length + toOffset;
+
+        // Buffer too small
+        require(to.length >= minLength); // Should be a better way?
+
+        // NOTE: the offset 32 is added to skip the `size` field of both bytes variables
+        uint i = 32 + fromOffset;
+        uint j = 32 + toOffset;
+
+        while (i < (32 + fromOffset + length)) {
+            assembly {
+                let tmp := mload(add(from, i))
+                mstore(add(to, j), tmp)
+            }
+            i += 32;
+            j += 32;
+        }
+
+        return to;
+    }
+
+    // the following function has been written by Alex Beregszaszi (@axic), use it under the terms of the MIT license
+    // Duplicate Solidity's ecrecover, but catching the CALL return value
+    function safer_ecrecover(bytes32 hash, uint8 v, bytes32 r, bytes32 s) internal returns (bool, address) {
+        // We do our own memory management here. Solidity uses memory offset
+        // 0x40 to store the current end of memory. We write past it (as
+        // writes are memory extensions), but don't update the offset so
+        // Solidity will reuse it. The memory used here is only needed for
+        // this context.
+
+        // FIXME: inline assembly can't access return values
+        bool ret;
+        address addr;
+
+        assembly {
+            let size := mload(0x40)
+            mstore(size, hash)
+            mstore(add(size, 32), v)
+            mstore(add(size, 64), r)
+            mstore(add(size, 96), s)
+
+            // NOTE: we can reuse the request memory because we deal with
+            //       the return code
+            ret := call(3000, 1, 0, size, 128, size, 32)
+            addr := mload(size)
+        }
+
+        return (ret, addr);
+    }
+
+    // the following function has been written by Alex Beregszaszi (@axic), use it under the terms of the MIT license
+    function ecrecovery(bytes32 hash, bytes sig) internal returns (bool, address) {
+        bytes32 r;
+        bytes32 s;
+        uint8 v;
+
+        if (sig.length != 65)
+          return (false, 0);
+
+        // The signature format is a compact form of:
+        //   {bytes32 r}{bytes32 s}{uint8 v}
+        // Compact means, uint8 is not padded to 32 bytes.
+        assembly {
+            r := mload(add(sig, 32))
+            s := mload(add(sig, 64))
+
+            // Here we are loading the last 32 bytes. We exploit the fact that
+            // 'mload' will pad with zeroes if we overread.
+            // There is no 'mload8' to do this, but that would be nicer.
+            v := byte(0, mload(add(sig, 96)))
+
+            // Alternative solution:
+            // 'byte' is not working due to the Solidity parser, so lets
+            // use the second best option, 'and'
+            // v := and(mload(add(sig, 65)), 255)
+        }
+
+        // albeit non-transactional signatures are not specified by the YP, one would expect it
+        // to match the YP range of [27, 28]
+        //
+        // geth uses [0, 1] and some clients have followed. This might change, see:
+        //  https://github.com/ethereum/go-ethereum/issues/2053
+        if (v < 27)
+          v += 27;
+
+        if (v != 27 && v != 28)
+            return (false, 0);
+
+        return safer_ecrecover(hash, v, r, s);
+    }
+
+    function safeMemoryCleaner() internal pure {
+        assembly {
+            let fmem := mload(0x40)
+            codecopy(fmem, codesize, sub(msize, fmem))
+        }
+    }
+
+}
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                                                                                  //
+//                                       SAFE MATH LIBRARY                                          //
+//                                                                                                  //
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+
 library SafeMath {
     function add(uint a, uint b) internal pure returns (uint c) {
         c = a + b;
@@ -37,10 +1218,12 @@ library SafeMath {
 }
 
 
-// ----------------------------------------------------------------------------
-// ERC Token Standard #20 Interface
-// https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md
-// ----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                                                                                  //
+//                                       ERC20 INTERFACE                                            //
+//                                                                                                  //
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+
 contract ERC20Interface {
     function totalSupply() public constant returns (uint);
     function balanceOf(address tokenOwner) public constant returns (uint balance);
@@ -54,830 +1237,319 @@ contract ERC20Interface {
 }
 
 
-// ----------------------------------------------------------------------------
-// Contract function to receive approval and execute function in one call
-//
-// Borrowed from MiniMeToken
-// ----------------------------------------------------------------------------
-contract ApproveAndCallFallBack {
-    function receiveApproval(address from, uint256 tokens, address token, bytes data) public;
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                                                                                  //
+//                                      GAME EVENT INTERFACE                                        //
+//                                                                                                  //
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+
+contract GameEventInterface {
+    event BuyTickets(address game, address to, uint amount);
+    event Winner(address game, address to, uint prize, uint random_number, uint buyer_who_won);
+    event Jackpot(address game, address to, uint jackpot);
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                                                                                  //
+//                                    AWARD TOKEN INTERFACE                                         //
+//                                                                                                  //
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+
+contract AwardsTokensInterface {
+    function awardToken(address toAddress, uint amount) public;
+    function receiveFromGame() public payable;
+    function addGame(address gameAddress, uint amount) public;
 }
 
 
-// ----------------------------------------------------------------------------
-// Owned contract
-// ----------------------------------------------------------------------------
-contract Owned {
-    address public owner;
-    address public newOwner;
 
-    event OwnershipTransferred(address indexed _from, address indexed _to);
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                                                                                  //
+//                                       LOTTERY CONTRACT                                           //
+//                                                                                                  //
+//////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    constructor() public {
-        owner = 0x0B0eFad4aE088a88fFDC50BCe5Fb63c6936b9220;
-    }
-
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
-    }
-
-    function transferOwnership(address _newOwner) public onlyOwner {
-        newOwner = _newOwner;
-    }
-    function acceptOwnership() public {
-        require(msg.sender == newOwner);
-        emit OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
-        newOwner = address(0);
-    }
-}
-
-
-// ----------------------------------------------------------------------------
-// ERC20 Token, with the addition of symbol, name and decimals and a
-// fixed supply
-// ----------------------------------------------------------------------------
-contract FixedSupplyToken is ERC20Interface, Owned {
+contract GAME is GameEventInterface, usingOraclize {
     using SafeMath for uint;
+    
+    /////////////////////////----- VARIABLES -----////////////////////////////////////
+                                                                                    //
+    address public owner;                       //Owner of contract                 //
+    uint    public ticketPool;                  //tickets available                 //
+    uint    public ticketsBought;               //total tickets bought              //
+    uint    public buyerNumber;                 //index of buyer                    //
+    uint    public ticketPrice;                 //single ticket price               //
+    uint    public winnerPrize;                 //How much does winner get          //
+    uint    public jackpot;                     //Jackpot                           //
+    uint    public jackpotFactor;               //How many percent of the jackpot   //
+    uint    public jackpotCut;                  //How much to take to jackpot       //
+    uint    public jackpotChance;               //Chance to win the jackpot         //
+    uint    public tokenCut;                    //How much to send to token address //
+    AwardsTokensInterface     public token;     //Instance of token contract        //
+    AwardsTokensInterface     public bank;      //Instance of bank contract         //
+    AwardsTokensInterface     public bonus;     //Instance of BNS contract          //
+    mapping(uint => address)    buyers;         //buyers address                    //
+    mapping(uint => uint)       amounts;        //buyers amount of tickets bought   //
+                                                                                    //
+    uint public ledgerCount = 0;                                                    //
+                                                                                    //
+    //Modifier                                                                      //
+    modifier onlyOwner() {                                                          //
+        require(msg.sender == owner);                                               //
+        _;                                                                          //
+    }                                                                               //
+    //////////////////////////////////////////////////////////////////////////////////
 
-    string public symbol;
-    string public  name;
-    uint8 public decimals;
-    uint _totalSupply;
+    
+    /////////////////////////----- CONSTRUCTOR -----//////////////////////////////////
+                                                                                    //
+    function GAME(                                                                  //
+        uint _ticketPool,                                                           //
+        uint _ticketPrice,                                                          //
+        uint _winnerPrize,                                                          //
+        uint _jackpotFactor,                                                        //
+        uint _jackpotCut,                                                           //
+        uint _tokenCut,                                                             //
+        uint _jackpotChance,                                                        //
+        address _ICO,                                                               //
+        address _BONUS                                                              //
+        ) public {                                                                  //
+            require(1000000%_ticketPool == 0);                                      //
+            require(_ICO != address(0));                                            //
+            require(_BONUS != address(0));                                          //
+            require(_ticketPool.mul(_ticketPrice) > _winnerPrize.add(_jackpotCut).add(_tokenCut));
+                                                                                    //
+            ticketPool         = _ticketPool;                                       //
+            ticketPrice        = _ticketPrice.mul(1000000000000);                   //
+            winnerPrize        = _winnerPrize.mul(1000000000000);                   //
+            jackpotFactor      = _jackpotFactor;                                    //
+            jackpotCut         = _jackpotCut.mul(1000000000000);                    //
+            tokenCut           = _tokenCut.mul(1000000000000);                      //
+            jackpotChance      = _jackpotChance;                                    //
+            jackpot            = 0;                                                 //
+            ticketsBought      = 0;                                                 //
+            buyerNumber        = 0;                                                 //
+            bank               = AwardsTokensInterface(_ICO);                       //
+            bonus              = AwardsTokensInterface(_BONUS);                     //
+            token              = AwardsTokensInterface(_BONUS);                     //
+            owner              = msg.sender;                                        //
+                                                                                    //
+                                                                                    //
+            oraclize_setProof(proofType_Ledger);                                    // *
+            queueFunds = 0;                                                         // *
+            queueIndex = 0;                                                         // *
+            queueLength = 0;                                                        // *
+    }                                                                               //
+    //////////////////////////////////////////////////////////////////////////////////
+    
+    
+    
+    ///////////////////////////////  FILL FROM QUEUE    //////////////////////////////
+                                                                                    //
+    uint    public              queueIndex;                                         //
+    uint    public              queueLength;                                        //
+    mapping(uint => uint)       queueAmount;                                        //
+    mapping(uint => address)    queueAddress;                                       //
+    uint    public              queueFunds;                                         //
+                                                                                    //
+    function fillFromQueue() internal {                                             //
+        uint openTicketsLeft = ticketPool.sub(ticketsBought);                       //
+                                                                                    //
+        //pool can handle all tickets the buyer requests                            //
+        if(queueAmount[queueIndex] > 0){                                            //
+            if(queueAmount[queueIndex] <= openTicketsLeft){                         //
+                ticketsBought          = ticketsBought.add(queueAmount[queueIndex]);//
+                buyers[buyerNumber]    = queueAddress[queueIndex];                  //
+                amounts[buyerNumber]   = queueAmount[queueIndex];                   //
+                                                                                    //
+                queueFunds = queueFunds.sub(ticketPrice.mul(queueAmount[queueIndex]));
+                                                                                    //
+                BuyTickets(address(this), queueAddress[queueIndex], queueAmount[queueIndex]);
+                token.awardToken(queueAddress[queueIndex], queueAmount[queueIndex]);//
+                                                                                    //
+                if(ticketsBought >= ticketPool){                                    //
+                     token.awardToken(queueAddress[queueIndex], 1);                 //
+                }                                                                   //
+                                                                                    //
+                queueAmount[queueIndex] = 0;                                        //
+                buyerNumber++;                                                      //
+                queueIndex++;                                                       //
+            }                                                                       //
+            //THE BUYERS HAS MORE TICKETS THAN AVAILABLE                            //
+            else{                                                                   //
+                ticketsBought          = 25;                                        //
+                buyers[buyerNumber]    = queueAddress[queueIndex];                  //
+                amounts[buyerNumber]   = openTicketsLeft;                           //
+                queueAmount[queueIndex] = queueAmount[queueIndex].sub(openTicketsLeft);
+                                                                                    //
+                queueFunds = queueFunds.sub(ticketPrice.mul(openTicketsLeft));      //
+                                                                                    //
+                BuyTickets(address(this), queueAddress[queueIndex], openTicketsLeft); 
+                token.awardToken(queueAddress[queueIndex], openTicketsLeft);        //
+                                                                                    //
+                if(ticketsBought >= ticketPool){                                    //
+                     token.awardToken(queueAddress[queueIndex], 1);                 //
+                }                                                                   //
+                                                                                    //
+                buyerNumber++;                                                      //
+            }                                                                       //
+                                                                                    //
+            if(ticketsBought >= ticketPool){                                        //
+                jackpot = jackpot.add(jackpotCut);                                  //
+                                                                                    //
+                ledgerCount = 0;                                                    //
+                getRandom();                                                        //
+            }                                                                       //
+            else{                                                                   //
+                if(queueAmount[queueIndex] > 0){                                    //
+                    fillFromQueue();                                                //
+                }                                                                   //
+            }                                                                       //
+        }                                                                           //
+    }                                                                               //
+                                                                                    //
+    //////////////////////////////////////////////////////////////////////////////////
+    
+    
+    
+    /////////////////////////----- BUY TICKETS -----//////////////////////////////////
+                                                                                    //
+    function buyTicket(uint in_amount) public payable {                             //
+        //Allow to buy remaining if there less left than requested                  // *
+        uint amount = in_amount;                                                    // *
+        if(in_amount > ticketPool.sub(ticketsBought)){                              // *
+            amount = ticketPool.sub(ticketsBought);                                 // *
+            queueAmount[queueLength] = in_amount.sub(amount);                       // *
+            queueAddress[queueLength] = msg.sender;                                 // *
+            queueFunds = queueFunds.add((in_amount.sub(amount)).mul(ticketPrice));  // *
+            queueLength = queueLength.add(1);                                       // *
+        }                                                                           // *
+                                                                                    //
+        require(msg.value == (ticketPrice.mul(in_amount)));                         //       
+        require(amount <= ticketPool.sub(ticketsBought));                           //
+        require(in_amount > 0);                                                     //
+                                                                                    //
+        if(amount > 0){                                                             //
+            //update state                                                          //
+            ticketsBought          = ticketsBought.add(amount);                     //
+            buyers[buyerNumber]    = msg.sender;                                    //
+            amounts[buyerNumber]   = amount;                                        //
+            buyerNumber++;                                                          //
+                                                                                    //
+            //store event                                                           //
+            BuyTickets(address(this), msg.sender, amount);                          //
+                                                                                    //
+            //Check if a winner should be found                                     //
+            if(ticketsBought >= ticketPool){                                        //
+                jackpot = jackpot.add(jackpotCut);                                  //
+                token.awardToken(msg.sender, 1);                                    //
+                                                                                    //
+                ledgerCount = 0;                                                    //
+                                                                                    //
+                getRandom();                                                        //
+            }                                                                       //
+            token.awardToken(msg.sender, amount);                                   //
+        }                                                                           //
+    }                                                                               //
+    //////////////////////////////////////////////////////////////////////////////////
 
-    mapping(address => uint) balances;
-    mapping(address => mapping(address => uint)) allowed;
+
+    /////////////////////////----- LEDGER RANDOM  -----///////////////////////////////
+    event LedgerFailed(string status);                                              //
+                                                                                    //
+    function __callback(bytes32 _queryId, string _result, bytes _proof) public {    //
+        require (msg.sender == oraclize_cbAddress());                               //
+                                                                                    //
+        if(oraclize_randomDS_proofVerify__returnCode(_queryId, _result, _proof) == 0){
+            uint randomNumber = uint(keccak256(_result));                           //
+            startRaffle((randomNumber % 1000000)+1);                                //
+        }                                                                           //
+        else if (ledgerCount <= 2){                                                 //
+            LedgerFailed("Requesting new");                                         //
+            ledgerCount = ledgerCount.add(1);                                       //
+            getRandom();                                                            //
+        }                                                                           //
+        else {                                                                      //
+            LedgerFailed("Stopping");                                               //
+        }                                                                           //
+                                                                                    //
+    }                                                                               //
+                                                                                    //
+    function getRandom() internal {                                                 //
+        uint N = 7;                                                                 //
+        uint delay = 0;                                                             //
+        uint callbackGas = 250000;                                                  //
+                                                                                    //
+        if(queueAmount[queueIndex] > 0){                                            //
+            callbackGas = 500000;                                                   //
+        }                                                                           //
+                                                                                    //
+        bytes32 queryId = oraclize_newRandomDSQuery(delay, N, callbackGas);         //
+    }                                                                               //
+                                                                                    //
+    //////////////////////////////////////////////////////////////////////////////////
 
 
-    // ------------------------------------------------------------------------
-    // Constructor
-    // ------------------------------------------------------------------------
-    constructor() public {
-        symbol = "DOTCH";
-        name = "Diamond Of The Crypto Hill";
-        decimals = 0;
-        _totalSupply = 10000000000;
-        balances[this] = _totalSupply;
-        emit Transfer(address(0),this, _totalSupply);
+    /////////////////////////----- FIND WINNER -----//////////////////////////////////
+                                                                                    //
+                                                                                    //
+    function startRaffle(uint random) internal {                                    //
+        require(ticketsBought == ticketPool);                                       //
+        //Variables to find winner                                                  //
+        address winner  = owner;                                                    //
+        uint tempSum    = amounts[0];                                               //
+        uint count      = 0;                                                        //
+        uint windex     = (random % ticketPool).add(1);                             //
+                                                                                    //
+        //Loop throught ticket-buyers to find winner                                //
+        while(tempSum < windex){                                                    //
+            count++;                                                                //
+            tempSum = tempSum.add(amounts[count]);                                  //
+        }                                                                           //
+        //store winners address                                                     //
+        winner = buyers[count];                                                     //
+                                                                                    //
+        //Reset                                                                     //
+        buyerNumber     = 0;                                                        //
+        ticketsBought   = 0;                                                        //
+                                                                                    //
+        //Send jackpot to winner if the game has a jackpot and jackpot is relased   //
+        if (random <= ((jackpotChance.mul(1000000)).div(100)) && jackpotFactor > 0){//
+            Winner(address(this), winner, winnerPrize, random, count);              //
+            Jackpot(address(this), winner, (jackpot.mul(jackpotFactor)).div(100));  //
+            winner.transfer(winnerPrize.add((jackpot.mul(jackpotFactor)).div(100)));//
+            jackpot = jackpot.sub((jackpot.mul(jackpotFactor)).div(100));           //
+        }                                                                           //
+        else {                                                                      //
+            Winner(address(this), winner, winnerPrize, random, count);              //
+            winner.transfer(winnerPrize);                                           //
+        }                                                                           //
+                                                                                    //
+        //Send prize to winner and cut to contracts                                 //
+        bank.receiveFromGame.value(address(this).balance.sub((jackpot.add(tokenCut.add(queueFunds)))))();
+        bonus.receiveFromGame.value(tokenCut)();                                    //
+                                                                                    //
+        if(queueAmount[queueIndex] > 0){                                            // *
+            fillFromQueue();                                                        // *
+        }                                                                           // *
+    }                                                                               //
+    //////////////////////////////////////////////////////////////////////////////////
+    
+
+    ///////////////////////----- CONTROL FUNCTION -----///////////////////////////////
+                                                                                    //
+    //in case oraclize doesn't answer, force a roll                                 //
+    function forceRoll() public onlyOwner {                                         //
+        getRandom();                                                                //
+    }                                                                               //
+                                                                                    //
+    //Fail safe                                                                     //
+    function takeAll() public onlyOwner {                                           //
+        msg.sender.transfer(address(this).balance);                                 //
+    }                                                                               //
+    //////////////////////////////////////////////////////////////////////////////////
+    
+    function() public payable {
+        msg.sender.transfer(msg.value);
     }
-
-
-    // ------------------------------------------------------------------------
-    // Total supply
-    // ------------------------------------------------------------------------
-    function totalSupply() public view returns (uint) {
-        return _totalSupply.sub(balances[address(0)]);
-    }
-
-
-    // ------------------------------------------------------------------------
-    // Get the token balance for account `tokenOwner`
-    // ------------------------------------------------------------------------
-    function balanceOf(address tokenOwner) public view returns (uint balance) {
-        return balances[tokenOwner];
-    }
-
-
-    // ------------------------------------------------------------------------
-    // Transfer the balance from token owner's account to `to` account
-    // - Owner's account must have sufficient balance to transfer
-    // - 0 value transfers are allowed
-    // ------------------------------------------------------------------------
-    function transfer(address to, uint tokens) public returns (bool success) {
-        balances[msg.sender] = balances[msg.sender].sub(tokens);
-        balances[to] = balances[to].add(tokens);
-        emit Transfer(msg.sender, to, tokens);
-        return true;
-    }
-
-
-    // ------------------------------------------------------------------------
-    // Token owner can approve for `spender` to transferFrom(...) `tokens`
-    // from the token owner's account
-    //
-    // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
-    // recommends that there are no checks for the approval double-spend attack
-    // as this should be implemented in user interfaces 
-    // ------------------------------------------------------------------------
-    function approve(address spender, uint tokens) public returns (bool success) {
-        allowed[msg.sender][spender] = tokens;
-        emit Approval(msg.sender, spender, tokens);
-        return true;
-    }
-
-
-    // ------------------------------------------------------------------------
-    // Transfer `tokens` from the `from` account to the `to` account
-    // 
-    // The calling account must already have sufficient tokens approve(...)-d
-    // for spending from the `from` account and
-    // - From account must have sufficient balance to transfer
-    // - Spender must have sufficient allowance to transfer
-    // - 0 value transfers are allowed
-    // ------------------------------------------------------------------------
-    function transferFrom(address from, address to, uint tokens) public returns (bool success) {
-        balances[from] = balances[from].sub(tokens);
-        allowed[from][msg.sender] = allowed[from][msg.sender].sub(tokens);
-        balances[to] = balances[to].add(tokens);
-        emit Transfer(from, to, tokens);
-        return true;
-    }
-
-
-    // ------------------------------------------------------------------------
-    // Returns the amount of tokens approved by the owner that can be
-    // transferred to the spender's account
-    // ------------------------------------------------------------------------
-    function allowance(address tokenOwner, address spender) public view returns (uint remaining) {
-        return allowed[tokenOwner][spender];
-    }
-
-
-    // ------------------------------------------------------------------------
-    // Token owner can approve for `spender` to transferFrom(...) `tokens`
-    // from the token owner's account. The `spender` contract function
-    // `receiveApproval(...)` is then executed
-    // ------------------------------------------------------------------------
-    function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
-        allowed[msg.sender][spender] = tokens;
-        emit Approval(msg.sender, spender, tokens);
-        ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, this, data);
-        return true;
-    }
-
-
-
-
-
-    // ------------------------------------------------------------------------
-    // Owner can transfer out any accidentally sent ERC20 tokens
-    // ------------------------------------------------------------------------
-    function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
-        return ERC20Interface(tokenAddress).transfer(owner, tokens);
-    }
-}
-interface HourglassInterface  {
-    function() payable external;
-    function buy(address _playerAddress) payable external returns(uint256);
-    function sell(uint256 _amountOfTokens) external;
-    function reinvest() external;
-    function withdraw() external;
-    function exit() external;
-    function dividendsOf(address _playerAddress) external view returns(uint256);
-    function balanceOf(address _playerAddress) external view returns(uint256);
-    function transfer(address _toAddress, uint256 _amountOfTokens) external returns(bool);
-    function stakingRequirement() external view returns(uint256);
-}
-contract Game is FixedSupplyToken {
-    
-HourglassInterface constant P3Dcontract_ = HourglassInterface(0xB3775fB83F7D12A36E0475aBdD1FCA35c091efBe);    
-struct Village {
-    address owner;
-    uint defending;
-    uint lastcollect;
-    uint beginnerprotection;
-}
-struct Variables {
-    uint nextVillageId;
-    uint bpamount;
-    
-    uint totalsupplyGOTCH;
-    uint GOTCHatcontract;
-    uint previousethamount;
-    uint solsforhire;
-    uint solslastupdate;
-    uint soldierreplenishrate;
-    uint soldierprice;
-    uint lastblockpayout;
-    uint blocksbeforenewpay;
-    uint ATPO;
-    uint nextpayamount;
-    uint nextowneramount;
-    
-    
-}
-struct Ownables {
-    address hillowner;
-    uint soldiersdefendinghill; 
-    mapping(address => uint256) soldiers;
-    mapping(uint256 => Village) villages;
-    mapping(address => uint256)  GOTCH;
-    mapping(address => uint256)  redeemedvils;
-    bool ERCtradeactive;
-    uint roundlength;
-    
-}
-struct Marketoffer{
-    address placedby;
-    uint256 amountdotch;
-    uint256 wantsthisamtweiperdotch;
-}
-
-event villtakeover(address from, address to, uint villageint);
-event hilltakeover(address from, address to);
-event battle(address attacker, uint pointsattacker,  address defender, uint pointsdefender);
-event dotchsale( address seller,uint price,  address taker , uint256 amount);
-uint256 public ethforp3dbuy;
-uint256 public round;
-uint256 public nextmarketoffer;
-uint256 public nextroundlength = 10000000000000000000000;
-uint256 public nextroundtotalsupplyGOTCH = 10000;
-uint256 public nextroundGOTCHatcontract = 10000;
-uint256 public nextroundsolsforhire = 100;
-uint256 public nextroundsoldierreplenishrate = 50;
-uint256 public nextroundblocksbeforenewpay = 250;
-bool public divsforall;
-bool public nextroundERCtradeactive = true;
-mapping(uint256 => Variables) public roundvars;
-mapping(uint256 => Ownables) public roundownables; 
- mapping(address => uint256) public Redeemable;
- mapping(uint256 => Marketoffer) public marketplace;
-
-function harvestabledivs()
-        view
-        public
-        returns(uint256)
-    {
-        return ( P3Dcontract_.dividendsOf(address(this)))  ;
-    }
-
-function villageinfo(uint256 lookup)
-        view
-        public
-        returns(address owner, uint256 soldiersdefending,uint256 lastcollect,uint256 beginnersprotection)
-    {
-        return ( roundownables[round].villages[lookup].owner,roundownables[round].villages[lookup].defending,roundownables[round].villages[lookup].lastcollect,roundownables[round].villages[lookup].beginnerprotection)  ;
-    }
-function gotchinfo(address lookup)
-        view
-        public
-        returns(uint256 Gold)
-    {
-        return ( roundownables[round].GOTCH[lookup])  ;
-    }
-function soldiersinfo(address lookup)
-        view
-        public
-        returns(uint256 soldiers)
-    {
-        return ( roundownables[round].soldiers[lookup])  ;
-    } 
-function redeemablevilsinfo(address lookup)
-        view
-        public
-        returns(uint256 redeemedvils)
-    {
-        return ( roundownables[round].redeemedvils[lookup])  ;
-    }
-function playerinfo(address lookup)
-        view
-        public
-        returns(uint256 redeemedvils,uint256 redeemablevils , uint256 soldiers, uint256 GOTCH)
-    {
-        return ( 
-            roundownables[round].redeemedvils[lookup],
-            Redeemable[lookup],
-            roundownables[round].soldiers[lookup],
-            roundownables[round].GOTCH[lookup]
-            )  ;
-    } 
-uint256 private div;
-uint256 private ethtosend; 
- 
-function () external payable{} // needed to receive p3d divs
-
-constructor () public {
-    round++;
-    roundvars[round].totalsupplyGOTCH = 10000;
-       roundvars[round].GOTCHatcontract = 10000;
-       roundvars[round].solsforhire = 100;
-       roundvars[round].soldierreplenishrate = 50;
-       roundvars[round].solslastupdate = block.number;
-       updatesolbuyrate();
-       roundvars[round].lastblockpayout = block.number;
-       roundownables[round].hillowner = msg.sender;
-       roundvars[round].nextpayamount = 0;
-       roundvars[round].nextowneramount = 0;
-       roundvars[round].previousethamount = 0;
-       roundvars[round].blocksbeforenewpay = 250;
-       roundvars[round].bpamount = 30000;
-       roundownables[round].ERCtradeactive = true;
-       roundownables[round].roundlength = 10000000000000000000000;
-       divsforall = false;
-    }
-function hillpayout() internal  {
-    require(block.number > roundvars[round].lastblockpayout.add(roundvars[round].blocksbeforenewpay));
-    // new payout method
-    roundvars[round].lastblockpayout = roundvars[round].lastblockpayout.add(roundvars[round].blocksbeforenewpay);
-    ethforp3dbuy = ethforp3dbuy.add((address(this).balance.sub(ethforp3dbuy)).div(100));
-    owner.transfer((address(this).balance.sub(ethforp3dbuy)).div(100));
-    roundvars[round].ATPO = roundvars[round].ATPO.add((address(this).balance.sub(ethforp3dbuy)).div(2));
-    roundownables[round].hillowner.transfer((address(this).balance.sub(ethforp3dbuy)).div(2));
-
-}
-function attackhill(uint256 amtsoldiers) public payable returns(bool, uint){
-    require(msg.value >= 1 finney);
-    if(block.number > roundvars[round].lastblockpayout.add(roundvars[round].blocksbeforenewpay))
-    {
-    hillpayout();
-    }
-    
-    require(amtsoldiers <= roundownables[round].soldiers[msg.sender]);
-    require(amtsoldiers >= 1);
-    if(msg.sender == roundownables[round].hillowner)
-{
-   roundownables[round].soldiersdefendinghill = roundownables[round].soldiersdefendinghill.add(amtsoldiers);
-    roundownables[round].soldiers[msg.sender] = roundownables[round].soldiers[msg.sender].sub(amtsoldiers);
-    return (false, 0);
-}
-if(msg.sender != roundownables[round].hillowner)
-{
-   if(roundownables[round].soldiersdefendinghill < amtsoldiers)
-    {
-        emit hilltakeover(roundownables[round].hillowner,msg.sender);
-        emit battle(msg.sender,roundownables[round].soldiersdefendinghill,roundownables[round].hillowner,roundownables[round].soldiersdefendinghill);
-        roundownables[round].hillowner = msg.sender;
-        roundownables[round].soldiersdefendinghill = amtsoldiers.sub(roundownables[round].soldiersdefendinghill);
-        roundownables[round].soldiers[msg.sender] = roundownables[round].soldiers[msg.sender].sub(amtsoldiers);
-        return (true, roundownables[round].soldiersdefendinghill);
-    }
-    if(roundownables[round].soldiersdefendinghill >= amtsoldiers)
-    {
-        roundownables[round].soldiersdefendinghill = roundownables[round].soldiersdefendinghill.sub(amtsoldiers);
-        roundownables[round].soldiers[msg.sender] = roundownables[round].soldiers[msg.sender].sub(amtsoldiers);
-        emit battle(msg.sender,amtsoldiers,roundownables[round].hillowner,amtsoldiers);
-        return (false, amtsoldiers);
-    }
-}
-
-}
-function supporthill(uint256 amtsoldiers) public payable {
-    require(msg.value >= 1 finney);
-    require(roundownables[round].hillowner == msg.sender);
-    require(amtsoldiers <= roundownables[round].soldiers[msg.sender]);
-    require(amtsoldiers >= 1);
-   roundownables[round].soldiersdefendinghill = roundownables[round].soldiersdefendinghill.add(amtsoldiers);
-   roundownables[round].soldiers[msg.sender] = roundownables[round].soldiers[msg.sender].sub(amtsoldiers);  
-}
-
-function changetradestatus(bool active) public onlyOwner  {
-   //move all eth from contract to owners address
-   roundownables[round].ERCtradeactive = active;
-   
-}
-function setdivsforall(bool active) public onlyOwner  {
-   //move all eth from contract to owners address
-   divsforall = active;
-   
-}
-function changebeginnerprotection(uint256 blockcount) public onlyOwner  {
-   roundvars[round].bpamount = blockcount;
-}
-function changesoldierreplenishrate(uint256 rate) public onlyOwner  {
-   roundvars[round].soldierreplenishrate = rate;
-}
-function updatesolsforhire() internal  {
-   roundvars[round].solsforhire = roundvars[round].solsforhire.add((block.number.sub(roundvars[round].solslastupdate)).mul(roundvars[round].nextVillageId).mul(roundvars[round].soldierreplenishrate));
-   roundvars[round].solslastupdate = block.number;
-}
-function updatesolbuyrate() internal  {
-if(roundvars[round].solsforhire > roundvars[round].totalsupplyGOTCH)
-   {
-        roundvars[round].solsforhire = roundvars[round].totalsupplyGOTCH;
-   }
-   roundvars[round].soldierprice = roundvars[round].totalsupplyGOTCH.div(roundvars[round].solsforhire);
-   if(roundvars[round].soldierprice < 1)
-   {
-       roundvars[round].soldierprice = 1;
-   }
-}
-function buysoldiers(uint256 amount) public payable {
-    require(msg.value >= 1 finney);
-   updatesolsforhire();
-   updatesolbuyrate() ;
-   require(amount <= roundvars[round].solsforhire);
-   
-   roundownables[round].soldiers[msg.sender] = roundownables[round].soldiers[msg.sender].add(amount);
-   roundvars[round].solsforhire = roundvars[round].solsforhire.sub(amount);
-   roundownables[round].GOTCH[msg.sender] = roundownables[round].GOTCH[msg.sender].sub( amount.mul(roundvars[round].soldierprice));
-   roundvars[round].GOTCHatcontract = roundvars[round].GOTCHatcontract.add(amount.mul(roundvars[round].soldierprice));
-   
-}
-// found new villgage 
-function createvillage() public  payable  {
-    require(msg.value >= 10 finney);
-    if(block.number > roundvars[round].lastblockpayout.add(roundvars[round].blocksbeforenewpay))
-    {
-    hillpayout();
-    }
-    
-    roundownables[round].villages[roundvars[round].nextVillageId].owner = msg.sender;
-    
-   roundownables[round].villages[roundvars[round].nextVillageId].lastcollect = block.number;
-    roundownables[round].villages[roundvars[round].nextVillageId].beginnerprotection = block.number;
-    roundvars[round].nextVillageId ++;
-   
-    roundownables[round].villages[roundvars[round].nextVillageId].defending = roundvars[round].nextVillageId;
-    Redeemable[msg.sender]++;
-    roundownables[round].redeemedvils[msg.sender]++;
-}
-function batchcreatevillage(uint256 amt) public  payable  {
-    require(msg.value >= 10 finney * amt);
-    require(amt >= 1);
-    require(amt <= 40);
-    if(block.number > roundvars[round].lastblockpayout.add(roundvars[round].blocksbeforenewpay))
-    {
-    hillpayout();
-    }
-    for(uint i=0; i< amt; i++)
-        {
-    roundownables[round].villages[roundvars[round].nextVillageId].owner = msg.sender;
-   roundownables[round].villages[roundvars[round].nextVillageId].lastcollect = block.number;
-    roundownables[round].villages[roundvars[round].nextVillageId].beginnerprotection = block.number;
-    roundvars[round].nextVillageId ++;
-   
-    roundownables[round].villages[roundvars[round].nextVillageId].defending = roundvars[round].nextVillageId;
-        } 
-        Redeemable[msg.sender] = Redeemable[msg.sender].add(amt);
-        roundownables[round].redeemedvils[msg.sender] = roundownables[round].redeemedvils[msg.sender].add(amt);
-}
-function cheapredeemvillage() public  payable  {
-    require(msg.value >= 1 finney);
-    require(roundownables[round].redeemedvils[msg.sender] < Redeemable[msg.sender]);
-    roundownables[round].villages[roundvars[round].nextVillageId].owner = msg.sender;
-    roundownables[round].villages[roundvars[round].nextVillageId].lastcollect = block.number;
-    roundownables[round].villages[roundvars[round].nextVillageId].beginnerprotection = block.number;
-    roundvars[round].nextVillageId ++;
-    roundownables[round].villages[roundvars[round].nextVillageId].defending = roundvars[round].nextVillageId;
-    roundownables[round].redeemedvils[msg.sender]++;
-}
-function preregvills(address reg) public onlyOwner  {
-
-    roundownables[round].villages[roundvars[round].nextVillageId].owner = reg;
-    roundownables[round].villages[roundvars[round].nextVillageId].lastcollect = block.number;
-    roundownables[round].villages[roundvars[round].nextVillageId].beginnerprotection = block.number;
-    roundvars[round].nextVillageId ++;
-    roundownables[round].villages[roundvars[round].nextVillageId].defending = roundvars[round].nextVillageId;
-}
-function attack(uint256 village, uint256 amtsoldiers) public payable returns(bool, uint){
-    require(msg.value >= 1 finney);
-    if(block.number > roundvars[round].lastblockpayout + roundvars[round].blocksbeforenewpay)
-    {
-    hillpayout();
-    }
-   
-    uint bpcheck = roundownables[round].villages[village].beginnerprotection.add(roundvars[round].bpamount);
-    require(block.number > bpcheck);
-    require(roundownables[round].villages[village].owner != 0);// prevent from attacking a non-created village to create a village
-    require(amtsoldiers <= roundownables[round].soldiers[msg.sender]);
-    require(amtsoldiers >= 1);
-    
-if(msg.sender == roundownables[round].villages[village].owner)
-{
-    roundownables[round].villages[village].defending = roundownables[round].villages[village].defending.add(amtsoldiers);
-    roundownables[round].soldiers[msg.sender] = roundownables[round].soldiers[msg.sender].sub(amtsoldiers);
-    return (false, 0);
-}
-if(msg.sender != roundownables[round].villages[village].owner)
-{
-   if(roundownables[round].villages[village].defending < amtsoldiers)
-    {
-        emit battle(msg.sender,roundownables[round].villages[village].defending,roundownables[round].villages[village].owner,roundownables[round].villages[village].defending);
-        emit villtakeover(roundownables[round].villages[village].owner,msg.sender,village);
-        roundownables[round].villages[village].owner = msg.sender;
-        roundownables[round].villages[village].defending = amtsoldiers.sub(roundownables[round].villages[village].defending);
-        roundownables[round].soldiers[msg.sender] = roundownables[round].soldiers[msg.sender].sub(amtsoldiers);
-        collecttaxes(village);
-        return (true, roundownables[round].villages[village].defending);
-        
-    }
-    if(roundownables[round].villages[village].defending >= amtsoldiers)
-    {
-        emit battle(msg.sender,amtsoldiers,roundownables[round].villages[village].owner,amtsoldiers);
-        roundownables[round].villages[village].defending = roundownables[round].villages[village].defending.sub(amtsoldiers);
-        roundownables[round].soldiers[msg.sender] = roundownables[round].soldiers[msg.sender].sub(amtsoldiers);
-        return (false, amtsoldiers);
-    }
-}
-
-}
-function support(uint256 village, uint256 amtsoldiers) public payable {
-    require(msg.value >= 1 finney);
-    require(roundownables[round].villages[village].owner == msg.sender);
-    require(roundownables[round].villages[village].owner != 0);// prevent from supporting a non-created village to create a village
-    require(amtsoldiers <= roundownables[round].soldiers[msg.sender]);
-    require(amtsoldiers >= 1);
-    roundownables[round].villages[village].defending = roundownables[round].villages[village].defending.add(amtsoldiers);
-    roundownables[round].soldiers[msg.sender] = roundownables[round].soldiers[msg.sender].sub(amtsoldiers);  
-}
-function renewbeginnerprotection(uint256 village) public payable {
-    require(msg.value >= (roundvars[round].nextVillageId.sub(village)).mul(1 finney) );//
-    roundownables[round].villages[village].beginnerprotection = block.number;
-   
-}
-function batchcollecttaxes(uint256 a, uint256 b , uint256 c , uint256 d , uint256 e , uint256 f , uint256 g, uint256 h, uint256 i, uint256 j) public payable {// payed transaction
-    // a
-   require(msg.value >= 10 finney);
-   require(roundownables[round].villages[a].owner == msg.sender);
-   require(roundownables[round].villages[b].owner == msg.sender);
-   require(roundownables[round].villages[c].owner == msg.sender);
-   require(roundownables[round].villages[d].owner == msg.sender);
-   require(roundownables[round].villages[e].owner == msg.sender);
-   require(roundownables[round].villages[f].owner == msg.sender);
-   require(roundownables[round].villages[g].owner == msg.sender);
-   require(roundownables[round].villages[h].owner == msg.sender);
-   require(roundownables[round].villages[i].owner == msg.sender);
-   require(roundownables[round].villages[j].owner == msg.sender);
-    require(block.number >  roundownables[round].villages[a].lastcollect);
-    require(block.number >  roundownables[round].villages[b].lastcollect);
-    require(block.number >  roundownables[round].villages[c].lastcollect);
-    require(block.number >  roundownables[round].villages[d].lastcollect);
-    require(block.number >  roundownables[round].villages[e].lastcollect);
-    require(block.number >  roundownables[round].villages[f].lastcollect);
-    require(block.number >  roundownables[round].villages[g].lastcollect);
-    require(block.number >  roundownables[round].villages[h].lastcollect);
-    require(block.number >  roundownables[round].villages[i].lastcollect);
-    require(block.number >  roundownables[round].villages[j].lastcollect);
-    
-    uint256 test = (block.number.sub(roundownables[round].villages[a].lastcollect)).mul((roundvars[round].nextVillageId.sub(a)));
-    if(roundvars[round].GOTCHatcontract < test ) 
-    {
-     roundvars[round].GOTCHatcontract =  roundvars[round].GOTCHatcontract.add(test);
-     roundvars[round].totalsupplyGOTCH = roundvars[round].totalsupplyGOTCH.add(test);
-    }   
-   roundownables[round].GOTCH[msg.sender] = roundownables[round].GOTCH[msg.sender].add(test);
-    roundvars[round].GOTCHatcontract = roundvars[round].GOTCHatcontract.sub(test);
-    
-    roundownables[round].villages[a].lastcollect = block.number;
-    //b
-   
-    test = (block.number.sub(roundownables[round].villages[b].lastcollect)).mul((roundvars[round].nextVillageId.sub(b)));
-    if(roundvars[round].GOTCHatcontract < test ) 
-    {
-     roundvars[round].GOTCHatcontract =  roundvars[round].GOTCHatcontract.add(test);
-     roundvars[round].totalsupplyGOTCH = roundvars[round].totalsupplyGOTCH.add(test);
-    }   
-    roundownables[round].GOTCH[msg.sender] = roundownables[round].GOTCH[msg.sender].add(test);
-    roundvars[round].GOTCHatcontract = roundvars[round].GOTCHatcontract.sub(test);
-    
-    roundownables[round].villages[b].lastcollect = block.number;
-    //c
-   
-    test = (block.number.sub(roundownables[round].villages[c].lastcollect)).mul((roundvars[round].nextVillageId.sub(c)));
-    if(roundvars[round].GOTCHatcontract < test ) 
-    {
-     roundvars[round].GOTCHatcontract =  roundvars[round].GOTCHatcontract.add(test);
-     roundvars[round].totalsupplyGOTCH = roundvars[round].totalsupplyGOTCH.add(test);
-    }   
-    roundownables[round].GOTCH[msg.sender] = roundownables[round].GOTCH[msg.sender].add(test);
-    roundvars[round].GOTCHatcontract = roundvars[round].GOTCHatcontract.sub(test);
-    
-    roundownables[round].villages[c].lastcollect = block.number;
-    //j
-    
-    test = (block.number.sub(roundownables[round].villages[j].lastcollect)).mul((roundvars[round].nextVillageId.sub(j)));
-    if(roundvars[round].GOTCHatcontract < test ) 
-    {
-     roundvars[round].GOTCHatcontract =  roundvars[round].GOTCHatcontract.add(test);
-     roundvars[round].totalsupplyGOTCH = roundvars[round].totalsupplyGOTCH.add(test);
-    }   
-    roundownables[round].GOTCH[msg.sender] = roundownables[round].GOTCH[msg.sender].add(test);
-    roundvars[round].GOTCHatcontract = roundvars[round].GOTCHatcontract.sub(test);
-    
-    roundownables[round].villages[j].lastcollect = block.number;
-    //d
-    
-    test = (block.number.sub(roundownables[round].villages[d].lastcollect)).mul((roundvars[round].nextVillageId.sub(d)));
-    if(roundvars[round].GOTCHatcontract < test ) 
-    {
-     roundvars[round].GOTCHatcontract =  roundvars[round].GOTCHatcontract.add(test);
-     roundvars[round].totalsupplyGOTCH = roundvars[round].totalsupplyGOTCH.add(test);
-    }   
-    roundownables[round].GOTCH[msg.sender] = roundownables[round].GOTCH[msg.sender].add(test);
-    roundvars[round].GOTCHatcontract = roundvars[round].GOTCHatcontract.sub(test);
-    
-    roundownables[round].villages[d].lastcollect = block.number;
-    //e
-   
-    test = (block.number.sub(roundownables[round].villages[e].lastcollect)).mul((roundvars[round].nextVillageId.sub(e)));
-    if(roundvars[round].GOTCHatcontract < test ) 
-    {
-     roundvars[round].GOTCHatcontract =  roundvars[round].GOTCHatcontract.add(test);
-     roundvars[round].totalsupplyGOTCH = roundvars[round].totalsupplyGOTCH.add(test);
-    }   
-    roundownables[round].GOTCH[msg.sender] = roundownables[round].GOTCH[msg.sender].add(test);
-    roundvars[round].GOTCHatcontract = roundvars[round].GOTCHatcontract.sub(test);
-    
-    roundownables[round].villages[e].lastcollect = block.number;
-    //f
-    
-    test = (block.number.sub(roundownables[round].villages[f].lastcollect)).mul((roundvars[round].nextVillageId.sub(f)));
-    if(roundvars[round].GOTCHatcontract < test ) 
-    {
-     roundvars[round].GOTCHatcontract =  roundvars[round].GOTCHatcontract.add(test);
-     roundvars[round].totalsupplyGOTCH = roundvars[round].totalsupplyGOTCH.add(test);
-    }   
-    roundownables[round].GOTCH[msg.sender] = roundownables[round].GOTCH[msg.sender].add(test);
-    roundvars[round].GOTCHatcontract = roundvars[round].GOTCHatcontract.sub(test);
-    
-    roundownables[round].villages[f].lastcollect = block.number;
-    //g
-   
-    test = (block.number.sub(roundownables[round].villages[g].lastcollect)).mul((roundvars[round].nextVillageId.sub(g)));
-    if(roundvars[round].GOTCHatcontract < test ) 
-    {
-     roundvars[round].GOTCHatcontract =  roundvars[round].GOTCHatcontract.add(test);
-     roundvars[round].totalsupplyGOTCH = roundvars[round].totalsupplyGOTCH.add(test);
-    }   
-    roundownables[round].GOTCH[msg.sender] = roundownables[round].GOTCH[msg.sender].add(test);
-    roundvars[round].GOTCHatcontract = roundvars[round].GOTCHatcontract.sub(test);
-    
-    roundownables[round].villages[g].lastcollect = block.number;
-    //h
-    
-    test = (block.number.sub(roundownables[round].villages[h].lastcollect)).mul((roundvars[round].nextVillageId.sub(h)));
-    if(roundvars[round].GOTCHatcontract < test ) 
-    {
-     roundvars[round].GOTCHatcontract =  roundvars[round].GOTCHatcontract.add(test);
-     roundvars[round].totalsupplyGOTCH = roundvars[round].totalsupplyGOTCH.add(test);
-    }   
-    roundownables[round].GOTCH[msg.sender] = roundownables[round].GOTCH[msg.sender].add(test);
-    roundvars[round].GOTCHatcontract = roundvars[round].GOTCHatcontract.sub(test);
-    
-    roundownables[round].villages[h].lastcollect = block.number;
-    //i
-    
-    test = (block.number.sub(roundownables[round].villages[i].lastcollect)).mul((roundvars[round].nextVillageId.sub(i)));
-    if(roundvars[round].GOTCHatcontract < test ) 
-    {
-     roundvars[round].GOTCHatcontract =  roundvars[round].GOTCHatcontract.add(test);
-     roundvars[round].totalsupplyGOTCH = roundvars[round].totalsupplyGOTCH.add(test);
-    }   
-    roundownables[round].GOTCH[msg.sender] = roundownables[round].GOTCH[msg.sender].add(test);
-    roundvars[round].GOTCHatcontract = roundvars[round].GOTCHatcontract.sub(test);
-    
-    roundownables[round].villages[i].lastcollect = block.number;
-
-        
-}
-function collecttaxes(uint256 village) public payable returns (uint){// payed transaction
-    // 
-   require(msg.value >= 1 finney);
-    if(block.number > roundvars[round].lastblockpayout.add(roundvars[round].blocksbeforenewpay))
-    {
-    hillpayout();
-    }
-    
-    require(roundownables[round].villages[village].owner == msg.sender);
-    require(block.number >  roundownables[round].villages[village].lastcollect);
-    uint256 test = (block.number.sub(roundownables[round].villages[village].lastcollect)).mul((roundvars[round].nextVillageId.sub(village)));
-    if(roundvars[round].GOTCHatcontract < test ) 
-    {
-     roundvars[round].GOTCHatcontract =  roundvars[round].GOTCHatcontract.add(test);
-     roundvars[round].totalsupplyGOTCH = roundvars[round].totalsupplyGOTCH.add(test);
-    }   
-    roundownables[round].GOTCH[msg.sender] = roundownables[round].GOTCH[msg.sender].add(test);
-    roundvars[round].GOTCHatcontract = roundvars[round].GOTCHatcontract.sub(test);
-    
-    roundownables[round].villages[village].lastcollect = block.number;
-    // if contract doesnt have the amount, create new
-    return test;
-}
-function sellDOTCH(uint amt) payable public {
-    require(msg.value >= 1 finney);
-    require(roundownables[round].ERCtradeactive == true);
-    require(roundownables[round].GOTCH[this]>= amt.mul(10000));
-    require(balances[msg.sender] >=  amt);
-    require(amt >= 1);
-    balances[this] = balances[this].add(amt);
-    balances[msg.sender] = balances[msg.sender].sub(amt);
-    emit Transfer(msg.sender,this, amt);
-    roundownables[round].GOTCH[this] =  roundownables[round].GOTCH[this].sub(amt.mul(10000));
-    roundownables[round].GOTCH[msg.sender] =  roundownables[round].GOTCH[msg.sender].add(amt.mul(10000));
-}
-function buyDOTCH(uint amt) payable public {
-    require(msg.value >= 1 finney);
-    require(roundownables[round].ERCtradeactive == true);
-    require(balances[this]>= amt);
-    require(roundownables[round].GOTCH[msg.sender] >= amt.mul(10000));
-    require(amt >= 1);
-    balances[this] = balances[this].sub(amt);
-    balances[msg.sender] = balances[msg.sender].add(amt);
-    emit Transfer(this,msg.sender, amt);
-   roundownables[round].GOTCH[msg.sender] = roundownables[round].GOTCH[msg.sender].sub(amt.mul(10000));
-  roundownables[round].GOTCH[this] = roundownables[round].GOTCH[this].add(amt.mul(10000));
-}
-//p3d 
-
-function buyp3d(uint256 amt) internal{
-P3Dcontract_.buy.value(amt)(this);
-}
-function claimdivs() internal{
-P3Dcontract_.withdraw();
-}
-event onHarvest(
-        address customerAddress,
-        uint256 amount
-    );
-
-function Divs() public payable{
-    
-    require(msg.sender == roundownables[round].hillowner);
-    claimdivs();
-    msg.sender.transfer(div);
-    emit onHarvest(msg.sender,div);
-}
-function Divsforall() public payable{
-    
-    require(divsforall = true);
-    require(msg.value >= 1 finney);
-    div = harvestabledivs();
-    require(div > 0);
-    claimdivs();
-    msg.sender.transfer(div);
-    emit onHarvest(msg.sender,div);
-}
-function Expand() public {
-    buyp3d(ethforp3dbuy);
-    ethforp3dbuy = 0;
-}
-
-//marketplace functions
-function placeoffer(uint256 dotchamount, uint256 askingpriceinwei) payable public{
-    require(dotchamount > 0);
-    require(askingpriceinwei > 0);
-    require(balances[msg.sender] >=  dotchamount);
-    require(msg.value >= 1 finney);
-    balances[msg.sender] = balances[msg.sender].sub(dotchamount);
-    balances[this] = balances[this].add(dotchamount);
-    emit Transfer(msg.sender,this, dotchamount);
-    marketplace[nextmarketoffer].placedby = msg.sender;
-     marketplace[nextmarketoffer].amountdotch = dotchamount;
-      marketplace[nextmarketoffer].wantsthisamtweiperdotch = askingpriceinwei;
-      nextmarketoffer++;
-}
-function adddotchtooffer(uint256 ordernumber , uint256 dotchamount) public
-{
-    require(dotchamount > 0);
-    require(msg.sender == marketplace[ordernumber].placedby);
-    require(balances[msg.sender] >=  dotchamount);
- 
-    balances[msg.sender] = balances[msg.sender].sub(dotchamount);
-    balances[this] = balances[this].add(dotchamount);
-    emit Transfer(msg.sender,this, dotchamount);
-     marketplace[ordernumber].amountdotch = marketplace[ordernumber].amountdotch.add(dotchamount);
-}
-function removedotchtooffer(uint256 ordernumber , uint256 dotchamount) public
-{
-    require(dotchamount > 0);
-    require(msg.sender == marketplace[ordernumber].placedby);
-    require(balances[this] >=  dotchamount);
- 
-    balances[msg.sender] = balances[msg.sender].add(dotchamount);
-    balances[this] = balances[this].sub(dotchamount);
-    emit Transfer(this,msg.sender, dotchamount);
-     marketplace[ordernumber].amountdotch = marketplace[ordernumber].amountdotch.sub(dotchamount);
-}
-function offerchangeprice(uint256 ordernumber ,uint256 price ) public
-{
-    require(price > 0);
-    require(msg.sender == marketplace[ordernumber].placedby);
-     marketplace[ordernumber].wantsthisamtweiperdotch = price;
-}
-function takeoffer(uint256 ordernumber ,uint256 amtdotch ) public payable
-{
-    require(msg.value >= marketplace[ordernumber].wantsthisamtweiperdotch.mul(amtdotch));
-    require(amtdotch > 0);
-    require(marketplace[ordernumber].amountdotch >= amtdotch);
-    require(msg.sender != marketplace[ordernumber].placedby);
-    require(balances[this] >=  amtdotch);
-     marketplace[ordernumber].amountdotch = marketplace[ordernumber].amountdotch.sub(amtdotch);
-     balances[msg.sender] = balances[msg.sender].add(amtdotch);
-    balances[this] = balances[this].sub(amtdotch);
-    emit Transfer(this,msg.sender, amtdotch);
-    emit dotchsale(marketplace[ordernumber].placedby,marketplace[ordernumber].wantsthisamtweiperdotch, msg.sender, amtdotch);
-    marketplace[ordernumber].placedby.transfer(marketplace[ordernumber].wantsthisamtweiperdotch.mul(amtdotch));
-}
-// new round function
-function startnewround() public {
-    require(roundvars[round].ATPO > roundownables[round].roundlength);
-    round++;
-    roundvars[round].totalsupplyGOTCH = nextroundtotalsupplyGOTCH;
-       roundvars[round].GOTCHatcontract = nextroundtotalsupplyGOTCH;
-       roundvars[round].solsforhire = nextroundsolsforhire;
-       roundvars[round].soldierreplenishrate = nextroundsoldierreplenishrate;
-       roundvars[round].solslastupdate = block.number;
-       updatesolbuyrate();
-       roundvars[round].lastblockpayout = block.number;
-       roundownables[round].hillowner = msg.sender;
-       roundvars[round].nextpayamount = roundvars[round-1].nextpayamount;
-       roundvars[round].nextowneramount = roundvars[round-1].nextowneramount;
-       roundvars[round].previousethamount = roundvars[round-1].previousethamount;
-       roundvars[round].blocksbeforenewpay = nextroundblocksbeforenewpay;
-       roundownables[round].ERCtradeactive = nextroundERCtradeactive;
-       roundvars[round].bpamount = 30000;
-    
-}
-
 }
