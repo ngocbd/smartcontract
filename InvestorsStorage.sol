@@ -1,107 +1,155 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract InvestorsStorage at 0x15c7c30b980ef442d3c811a30346bf9dd8906137
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract InvestorsStorage at 0xffe90824aee2503b2890755624b8d8eeacef7f70
 */
-// v7
-
-/**
- * InvestorStorage.sol
- * Investor storage is used for storing all investments amounts of investors. It creates a list of investors and their investments in a big hash map.
- * So when the new investments is made by investor, InvestorStorage adds it to the list as new investment, while storing investors address and invested amount.
- * It also gives the ability to get particular investor from the list and to refund him if its needed.
- */
-
 pragma solidity ^0.4.23;
 
 /**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
+*
+* ETH CRYPTOCURRENCY DISTRIBUTION PROJECT
+* Web              - https://333eth.io
+* Twitter          - https://twitter.com/333eth_io
+* Telegram_channel - https://t.me/Ethereum333
+* EN  Telegram_chat: https://t.me/Ethereum333_chat_en
+* RU  Telegram_chat: https://t.me/Ethereum333_chat_ru
+* KOR Telegram_chat: https://t.me/Ethereum333_chat_kor
+* Email:             mailto:support(at sign)333eth.io
+* 
+*  - GAIN 3,33% PER 24 HOURS (every 5900 blocks)
+*  - Life-long payments
+*  - The revolutionary reliability
+*  - Minimal contribution 0.01 eth
+*  - Currency and payment - ETH
+*  - Contribution allocation schemes:
+*    -- 83% payments
+*    -- 17% Marketing + Operating Expenses
+*
+*   ---About the Project
+*  Blockchain-enabled smart contracts have opened a new era of trustless relationships without 
+*  intermediaries. This technology opens incredible financial possibilities. Our automated investment 
+*  distribution model is written into a smart contract, uploaded to the Ethereum blockchain and can be 
+*  freely accessed online. In order to insure our investors' complete security, full control over the 
+*  project has been transferred from the organizers to the smart contract: nobody can influence the 
+*  system's permanent autonomous functioning.
+* 
+* ---How to use:
+*  1. Send from ETH wallet to the smart contract address 0x311f71389e3DE68f7B2097Ad02c6aD7B2dDE4C71
+*     any amount from 0.01 ETH.
+*  2. Verify your transaction in the history of your application or etherscan.io, specifying the address 
+*     of your wallet.
+*  3a. Claim your profit by sending 0 ether transaction (every day, every week, i don't care unless you're 
+*      spending too much on GAS)
+*  OR
+*  3b. For reinvest, you need to first remove the accumulated percentage of charges (by sending 0 ether 
+*      transaction), and only after that, deposit the amount that you want to reinvest.
+*  
+* RECOMMENDED GAS LIMIT: 200000
+* RECOMMENDED GAS PRICE: https://ethgasstation.info/
+* You can check the payments on the etherscan.io site, in the "Internal Txns" tab of your wallet.
+*
+* ---It is not allowed to transfer from exchanges, only from your personal ETH wallet, for which you 
+* have private keys.
+* 
+* Contracts reviewed and approved by pros!
+* 
+* Main contract - Revolution. Scroll down to find it.
+*/
 
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
+contract InvestorsStorage {
+  struct investor {
+    uint keyIndex;
+    uint value;
+    uint paymentTime;
+    uint refBonus;
+  }
+  struct itmap {
+    mapping(address => investor) data;
+    address[] keys;
+  }
+  itmap private s;
+  address private owner;
+
+  modifier onlyOwner() {
+    require(msg.sender == owner, "access denied");
+    _;
+  }
+
   constructor() public {
     owner = msg.sender;
+    s.keys.length++;
   }
 
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
+  function insert(address addr, uint value) public onlyOwner returns (bool) {
+    uint keyIndex = s.data[addr].keyIndex;
+    if (keyIndex != 0) return false;
+    s.data[addr].value = value;
+    keyIndex = s.keys.length++;
+    s.data[addr].keyIndex = keyIndex;
+    s.keys[keyIndex] = addr;
+    return true;
   }
 
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-}
-
-/**
- * @title InvestorStorage
- * @dev Investor storage is used for storing all investments amounts of investors. It creates a list of investors and their investments in a big hash map.
- * So when the new investments is made by investor, InvestorStorage adds it to the list as new investment, while storing investors address and invested amount.
- * It also gives the ability to get particular investor from the list and to refund him if its needed.
- */
-contract InvestorsStorage is Ownable {
-
-  mapping (address => uint256) public investors; // map the invested amount
-  address[] public investorsList;
-  address authorized;
-
-  /**
-   * @dev Allows only presale or crowdsale
-   */
-  modifier isAuthorized() { // modifier that allows only presale or crowdsale
-    require(msg.sender==authorized);
-    _;
+  function investorFullInfo(address addr) public view returns(uint, uint, uint, uint) {
+    return (
+      s.data[addr].keyIndex,
+      s.data[addr].value,
+      s.data[addr].paymentTime,
+      s.data[addr].refBonus
+    );
   }
 
-  /**
-   * @dev Set authorized to given address - changes the authorization for presale or crowdsale
-   * @param _authorized Authorized address
-   */
-  function setAuthorized(address _authorized) onlyOwner public { // change the authorization for presale or crowdsale
-    authorized = _authorized;
+  function investorBaseInfo(address addr) public view returns(uint, uint, uint) {
+    return (
+      s.data[addr].value,
+      s.data[addr].paymentTime,
+      s.data[addr].refBonus
+    );
   }
 
-  /**
-   * @dev Add new investment to investors storage
-   * @param _investor Investors address
-   * @param _amount Investment amount
-   */
-  function newInvestment(address _investor, uint256 _amount) isAuthorized public { // add the invested amount to the map
-    if (investors[_investor] == 0) {
-      investorsList.push(_investor);
-    }
-    investors[_investor] += _amount;
+  function investorShortInfo(address addr) public view returns(uint, uint) {
+    return (
+      s.data[addr].value,
+      s.data[addr].refBonus
+    );
   }
 
-  /**
-   * @dev Get invested amount for given investor address
-   * @param _investor Investors address
-   */
-  function getInvestedAmount(address _investor) public view returns (uint256) { // return the invested amount
-    return investors[_investor];
+  function addRefBonus(address addr, uint refBonus) public onlyOwner returns (bool) {
+    if (s.data[addr].keyIndex == 0) return false;
+    s.data[addr].refBonus += refBonus;
+    return true;
   }
 
-  /**
-   * @dev Refund investment to the investor
-   * @param _investor Investors address
-   */
-  function investmentRefunded(address _investor) isAuthorized public { // set the invested amount to 0 after the refund
-    investors[_investor] = 0;
+  function addValue(address addr, uint value) public onlyOwner returns (bool) {
+    if (s.data[addr].keyIndex == 0) return false;
+    s.data[addr].value += value;
+    return true;
+  }
+
+  function setPaymentTime(address addr, uint paymentTime) public onlyOwner returns (bool) {
+    if (s.data[addr].keyIndex == 0) return false;
+    s.data[addr].paymentTime = paymentTime;
+    return true;
+  }
+
+  function setRefBonus(address addr, uint refBonus) public onlyOwner returns (bool) {
+    if (s.data[addr].keyIndex == 0) return false;
+    s.data[addr].refBonus = refBonus;
+    return true;
+  }
+
+  function keyFromIndex(uint i) public view returns (address) {
+    return s.keys[i];
+  }
+
+  function contains(address addr) public view returns (bool) {
+    return s.data[addr].keyIndex > 0;
+  }
+
+  function size() public view returns (uint) {
+    return s.keys.length;
+  }
+
+  function iterStart() public pure returns (uint) {
+    return 1;
   }
 }
