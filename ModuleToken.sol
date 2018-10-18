@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract moduleToken at 0x215f059fb73d2888a4ad9d4d268fd29fc00d3c74
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract moduleToken at 0xf251fbfc6c3c69e7ca7a9a43b98a89dc7eef32e8
 */
 pragma solidity ^0.4.16;
 contract moduleTokenInterface{
@@ -266,6 +266,7 @@ contract moduleToken is moduleTokenInterface {
     function createTransferAgreement(uint256 agreeMentId,
                                       uint256 transferEthInWei,
                                       address to) public {
+        require(msg.sender==tx.origin);
         require(adminOwners[msg.sender].isValid && 
         transferEthAgreementList[agreeMentId].magic!=123456789 && 
         transferEthAgreementList[agreeMentId].magic!=987654321);
@@ -280,6 +281,7 @@ contract moduleToken is moduleTokenInterface {
     }
 	
 	function disableTransferAgreement(uint256 agreeMentId) public {
+	    require(msg.sender==tx.origin);
 		require(transferEthAgreementList[agreeMentId].infoOwner==msg.sender &&
 			    transferEthAgreementList[agreeMentId].magic==123456789);
 		transferEthAgreementList[agreeMentId].isValid=false;
@@ -287,12 +289,13 @@ contract moduleToken is moduleTokenInterface {
 	}
 	
 	function sign(uint256 agreeMentId,address to,uint256 transferEthInWei) public payable{
+	    require(tx.origin==msg.sender);
 		require(transferEthAgreementList[agreeMentId].magic==123456789 &&
 		transferEthAgreementList[agreeMentId].isValid &&
 		transferEthAgreementList[agreeMentId].transferEthInWei==transferEthInWei &&
 		transferEthAgreementList[agreeMentId].to==to &&
 		adminOwners[msg.sender].isValid &&
-		!transferEthAgreementList[agreeMentId].signUsrList[msg.sender]&&
+		transferEthAgreementList[agreeMentId].signUsrList[msg.sender]!=true &&
 		adminUsrCount>=2
 		);
 		transferEthAgreementList[agreeMentId].signUsrList[msg.sender]=true;
@@ -319,6 +322,7 @@ contract moduleToken is moduleTokenInterface {
 					  string userName,
 					  string descInfo)public 
 	{
+		require(msg.sender==tx.origin);
 		needToAddAdminInfo memory info;
 		//????????owner????????
 		if(!adminOwners[msg.sender].isValid && owner!=msg.sender){
@@ -330,6 +334,7 @@ contract moduleToken is moduleTokenInterface {
 			revert();
 			return;
 		}
+		
 		//??????????????
 		if(adminOwners[usrAddr].isValid){
 			revert();
@@ -404,6 +409,12 @@ contract moduleToken is moduleTokenInterface {
 	}
 	mapping(address=>needDelFromAdminInfo) public needDelFromAdminInfoList;
 	function delAdminUsrs(address usrAddr) public {
+	    require(msg.sender==tx.origin);
+	    //????????owner????????
+		if(!adminOwners[msg.sender].isValid && owner!=msg.sender){
+			revert();
+			return;
+		}
 		needDelFromAdminInfo memory info;
 		//???????????
 		if(!adminOwners[usrAddr].isValid){
@@ -437,6 +448,7 @@ contract moduleToken is moduleTokenInterface {
 			needDelFromAdminInfoList[usrAddr]=info;
 			return;
 		}
+		
 		//?????????
 		
 		//???????????
@@ -496,6 +508,8 @@ contract moduleToken is moduleTokenInterface {
 		}
 		canRecvEthDirect=_canRecvEthDirect;
 	}
+	
+	//
 	
 	//????
     //??????eth?????
