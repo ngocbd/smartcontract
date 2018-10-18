@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BZxProxy at 0xa1e79fb78fadf0074d842358135c3710782dbe35
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BZxProxy at 0x7e65b937d576a56b34ddb8aa0c6534f198c36940
 */
 /**
  * Copyright 2017–2018, bZeroX, LLC. All Rights Reserved.
@@ -333,8 +333,8 @@ contract BZxProxy is BZxStorage, BZxProxiable {
     }
     
     function() 
-        payable 
         public
+        payable 
     {
         require(!targetIsPaused[msg.sig], "BZxProxy::Function temporarily paused");
 
