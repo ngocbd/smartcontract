@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sale1 at 0x210dcac3683d620925140a71a8c36f91c7ba8cf9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sale1 at 0x4809636de40c44f212359388f0063b5e9a320458
 */
 pragma solidity 0.4.24;
 
@@ -1169,11 +1169,11 @@ contract Sale1 is Whitelist {
     
     using SafeMath for uint256;
 
-    uint256 public maximumNonWhitelistAmount = 2500 * 50 ether; // in minimum units of rune
+    uint256 public maximumNonWhitelistAmount = 5000 * 50 ether; // in minimum units of rune
 
     // in minimum units of rune (1000 = 0.000000000000001000 RUNE per WEI)
     // note that this only works if the amount of rune per wei is more than 1
-    uint256 public runeToWeiRatio = 2500;
+    uint256 public runeToWeiRatio = 5000;
     bool public withdrawalsAllowed = false;
     bool public tokensWithdrawn = false;
     address public owner;
@@ -1189,12 +1189,12 @@ contract Sale1 is Whitelist {
     uint256 public CollectibleIndex4 = 4;
     uint256 public CollectibleIndex5 = 5;
 
-    uint public winAmount0 = 0.333333333333333333 ether;
-    uint public winAmount1 = 6666.666666666666666667 ether;
-    uint public winAmount2 = 10000.0 ether;
-    uint public winAmount3 = 13333.333333333333333333 ether;
-    uint public winAmount4 = 16666.666666666666666667 ether;
-    uint public winAmount5 = 20000.0 ether;
+    uint public winAmount0 = 1666.666666666666666667 ether;
+    uint public winAmount1 = 3333.333333333333333333 ether;
+    uint public winAmount2 = 5000.0 ether;
+    uint public winAmount3 = 6666.666666666666666667 ether;
+    uint public winAmount4 = 8333.333333333333333333 ether;
+    uint public winAmount5 = 10000.0 ether;
 
     mapping (uint256 => address) public collectibleAllocation;
     mapping (address => uint256) public runeAllocation;
@@ -1283,7 +1283,7 @@ contract Sale1 is Whitelist {
 
     function ownerWithdrawRune () public onlyOwner {
         tokensWithdrawn = true;
-        RuneToken.transfer(owner, RuneToken.balanceOf(this).sub(totalRunePurchased));
+        RuneToken.transfer(owner, RuneToken.balanceOf(this).sub(totalRunePurchased.sub(totalRuneWithdrawn)));
     }
 
     function allowWithdrawals () public onlyOwner {
