@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x241e9814187bf94d9e13a722daaea6c339327299
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x65b1e879d86f2b9cb2f93fbc456067522d78a639
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.4;
 
 contract Token {
 
@@ -38,8 +38,10 @@ contract Token {
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-
+    
 }
+
+
 
 contract StandardToken is Token {
 
@@ -117,11 +119,11 @@ contract ERC20Token is StandardToken {
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 100000000000000000000000; // Give the creator all initial tokens (100000 for example)
-        totalSupply = 20000000000000000000000000000;          // Update total supply (100000 for example)
-        name = "UseChain Token";             // Set the name for display purposes
-        decimals = 18;                                 // Amount of decimals for display purposes
-        symbol = "USE";                               // Set the symbol for display purposes
+        balances[msg.sender] = 1000000000000000000000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 1000000000000000000000000000;                        // Update total supply (100000 for example)
+        name = "Luck";                                   // Set the name for display purposes
+        decimals = 18;                            // Amount of decimals for display purposes
+        symbol = "LUCK";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
