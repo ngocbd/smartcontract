@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SCE at 0x886d52074f8125f82658a41212a618bc19f738d2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SCE at 0x8d2242b308e81c773ef3c1b1e78968fb670c1870
 */
 pragma solidity ^0.4.25;
 
@@ -19,6 +19,7 @@ contract SafeMath {
     if (!assertion) throw;
   }
 }
+// SCE
 contract SCE is SafeMath {
     // Public variables of the token
     string public name;
