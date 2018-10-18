@@ -1,15 +1,16 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Reternal at 0x0e288021dec21a037ce605d24025fc7a4f2a9def
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Reternal at 0x660c46a5650fb0619f603a2f4d73a1cdf8cd00d6
 */
 pragma solidity ^0.4.24;
 
 /**
- * ???????     ????????????????????????? ???????    ????        ???    ??????    ???     
- * ????????  ????????????????????????? ????????  ?????     ??? ???????? ???     
- * ????????  ??????              ???        ??????      ????????  ??????   ??? ???????? ???     
- * ????????  ??????              ???        ??????      ????????  ?????????? ???????? ???     
- * ???      ??? ????????         ???        ???????? ???      ??? ???   ?????? ???     ??? ????????
- * ???      ??? ????????         ???        ???????? ???      ??? ???      ????????      ???????????    
+ * 
+ * ??????? ???????????????????????????????? ????   ??? ?????? ???     
+ * ??????????????????????????????????????????????  ??????????????     
+ * ??????????????     ???   ??????  ?????????????? ??????????????   
+ * ??????????????     ???   ??????  ?????????????????????????????     
+ * ???  ???????????   ???   ???????????  ?????? ?????????  ???????????
+ * ???  ???????????   ???   ???????????  ??????  ????????  ???????????
  * 
  *  Contacts:
  * 
@@ -18,19 +19,18 @@ pragma solidity ^0.4.24;
  * 
  * - GAIN PER 24 HOURS:
  * 
- *     -- Individual balance < 1 Ether: 3.15%
- *     -- Individual balance >= 1 Ether: 3.25%
- *     -- Individual balance >= 4 Ether: 3.45%
- *     -- Individual balance >= 12 Ether: 3.65%
- *     -- Individual balance >= 50 Ether: 3.85%
- *     -- Individual balance >= 200 Ether: 4.15%
+ *     -- Individual balance < 1 Ether: 3.55%
+ *     -- Individual balance >= 1 Ether: 3.65%
+ *     -- Individual balance >= 4 Ether: 3.75%
+ *     -- Individual balance >= 12 Ether: 3.85%
+ *     -- Individual balance >= 50 Ether: 4%
  * 
- *     -- Contract balance < 500 Ether: 0%
- *     -- Contract balance >= 500 Ether: 0.10%
- *     -- Contract balance >= 1500 Ether: 0.20%
- *     -- Contract balance >= 2500 Ether: 0.30%
- *     -- Contract balance >= 7000 Ether: 0.45%
- *     -- Contract balance >= 15000 Ether: 0.65%
+ *     -- Contract balance < 200 Ether: 0%
+ *     -- Contract balance >= 200 Ether: 0.30%
+ *     -- Contract balance >= 500 Ether: 0.40%
+ *     -- Contract balance >= 900 Ether: 0.50%
+ *     -- Contract balance >= 1500 Ether: 0.65%
+ *     -- Contract balance >= 2000 Ether: 0.80%
  * 
  *  - Minimal contribution 0.01 eth
  *  - Contribution allocation schemes:
@@ -83,17 +83,16 @@ contract Reternal {
     bool ref_flag;
     
     // Investors' dividents increase goals due to a bank growth
-    uint bank1 = 5e20; // 500 eth
-    uint bank2 = 15e20; // 1500 eth
-    uint bank3 = 25e20; // 2500 eth
-    uint bank4 = 7e21; // 7000 eth
-    uint bank5 = 15e20; // 15000 eth
+    uint bank1 = 200e18; // 200 eth
+    uint bank2 = 500e18; // 500 eth
+    uint bank3 = 900e18; // 900 eth
+    uint bank4 = 1500e18; // 1500 eth
+    uint bank5 = 2000e18; // 2000 eth
     // Investors' dividents increase due to individual deposit amount
     uint dep1 = 1e18; // 1 ETH
     uint dep2 = 4e18; // 4 ETH
     uint dep3 = 12e18; // 12 ETH
     uint dep4 = 5e19; // 50 ETH
-    uint dep5 = 2e20; // 200 ETH
     
     event NewInvestor(address indexed investor, uint deposit, address referrer);
     event PayOffDividends(address indexed investor, uint value);
@@ -169,7 +168,7 @@ contract Reternal {
                     user.referrer = referrer;
                     
                     // Cashback only for the first deposit
-                    if (user.depositCount == 0) { // cashback only for the first deposit
+                    if (user.depositCount == 0) {
                         uint cashback = msg.value / 100;
                         if (msg.sender.send(cashback)) {
                             emit refPayout(msg.sender, cashback, referrer);
@@ -188,10 +187,9 @@ contract Reternal {
             payDividends();
         }
         
-        // 2% from a referral deposit transfer to a referrer
-        uint payReferrer = msg.value * 2 / 100; // 2% from referral deposit to referrer
+        // 2% from a referral deposit transfer to a referrer 
+        uint payReferrer = msg.value * 2 / 100; 
         
-        //
         if (user.referrer == defaultReferrer) {
             user.referrer.transfer(payReferrer);
         } else {
@@ -231,22 +229,22 @@ contract Reternal {
         uint totalBank5 = bank5;
         
         if(contractBalance < totalBank1){
-            return(0); // If bank lower than 500, whole procent doesnt add
+            return(0);
         }
         if(contractBalance >= totalBank1 && contractBalance < totalBank2){
-            return(10); // If bank amount more than or equal to 500 ETH, whole procent add 0.10%
+            return(30);
         }
         if(contractBalance >= totalBank2 && contractBalance < totalBank3){
-            return(20); // If bank amount more than or equal to 1500 ETH, whole procent add 0.10%
+            return(40);
         }
         if(contractBalance >= totalBank3 && contractBalance < totalBank4){
-            return(30); // If bank amount more than or equal to 2500 ETH, whole procent add 0.10%
+            return(50);
         }
         if(contractBalance >= totalBank4 && contractBalance < totalBank5){
-            return(45); // If bank amount more than or equal to 7000 ETH, whole procent add 0.15%
+            return(65);
         }
         if(contractBalance >= totalBank5){
-            return(65); // If bank amount more than or equal to 15000 ETH, whole procent add 0.20%
+            return(80);
         }
     }
 
@@ -258,25 +256,21 @@ contract Reternal {
         uint totalDeposit2 = dep2;
         uint totalDeposit3 = dep3;
         uint totalDeposit4 = dep4;
-        uint totalDeposit5 = dep5;
         
         if(userBalance < totalDeposit1){
-            return(315); // 3.15% by default, investor deposit lower than 1 ETH
+            return(355);
         }
         if(userBalance >= totalDeposit1 && userBalance < totalDeposit2){
-            return(325); // 3.25% Your Deposit more than or equal to 1 ETH
+            return(365);
         }
         if(userBalance >= totalDeposit2 && userBalance < totalDeposit3){
-            return(345); // 3.45% Your Deposit more than or equal to 4 ETH
+            return(375);
         }
         if(userBalance >= totalDeposit3 && userBalance < totalDeposit4){
-            return(360); // 3.60% Your Deposit more than or equal to 12 ETH  
+            return(385); 
         }
-        if(userBalance >= totalDeposit4 && userBalance < totalDeposit5){
-            return(385); // 3.85% Your Deposit more than or equal to 50 ETH
-        }
-        if(userBalance >= totalDeposit5){
-            return(415); // 4.15% Your Deposit more than or equal to 200 ETH
+        if(userBalance >= totalDeposit4){
+            return(400);
         }
     }
     
