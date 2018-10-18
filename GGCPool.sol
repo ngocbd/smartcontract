@@ -1,12 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GGCPool at 0xca75ace1f6bb613668c1d51206339818b128ba31
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GGCPool at 0xec9f83a4fcab61e7054b78a36ea27ffaeba41f80
 */
 pragma solidity ^0.4.24;
 
-// ----------------------------------------------------------------------------
-// ERC Token Standard #20 Interface
-// https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md
-// ----------------------------------------------------------------------------
 contract ERC20Interface {
     function totalSupply() public view returns (uint256);
     function balanceOf(address tokenOwner) public view returns (uint256 balance);
@@ -29,18 +25,10 @@ contract GGCPool{
     event Deposit(address indexed sender, uint value);
 
     bool public transContractLocked = true;
-    address public owner;
+    address public owner = msg.sender;
     address private ownerContract = address(0x0);
     mapping(address => bool) public allowContractList;
     mapping(address => bool) public blackList;
-    string public symbol;
-    string public  name;
-    
-    constructor() public {
-        symbol = "GGCPool";
-        name = "GramGold Coin Pool";
-        owner = msg.sender;
-    }
     
     function AssignGGCPoolOwner(address _ownerContract) 
     public 
@@ -154,14 +142,6 @@ contract GGCPool{
     {
         delete allowContractList[_addr];
         emit ListLog(_addr, 2, false);
-    }
-    
-    function changeName(string _name, string _symbol) 
-    public
-    onlyOwner
-    {
-        name = _name;
-        symbol = _symbol;
     }
 
     // ------------------------------------------------------------------------
