@@ -1,48 +1,48 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KryllToken at 0x464ebe77c293e473b48cfe96ddcf88fcf7bfdac0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KryllToken at 0xeb49ac5462f3ff0b6473d5d797500de602fe83a2
 */
 pragma solidity ^0.4.23;
 
-// File: zeppelin/contracts/ownership/Ownable.sol
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
+contract Migrations {
     address public owner;
+    uint public last_completed_migration;
 
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    modifier restricted() {
+        if (msg.sender == owner) _;
+    }
 
-    /**
-     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-     * account.
-     */
     constructor() public {
         owner = msg.sender;
     }
 
-    /**
-     * @dev Throws if called by any account other than the owner.
-     */
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
+    function setCompleted(uint completed) public restricted {
+        last_completed_migration = completed;
     }
 
-    /**
-     * @dev Allows the current owner to transfer control of the contract to a newOwner.
-     * @param newOwner The address to transfer ownership to.
-     */
-    function transferOwnership(address newOwner) public onlyOwner {
-        require(newOwner != address(0));
-        emit OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
+    function upgrade(address new_address) public restricted {
+        Migrations upgraded = Migrations(new_address);
+        upgraded.setCompleted(last_completed_migration);
     }
 }
 
-// File: zeppelin/contracts/math/SafeMath.sol
+
+contract ERC20Basic {
+    function totalSupply() public view returns (uint256);
+    function balanceOf(address who) public view returns (uint256);
+    function transfer(address to, uint256 value) public returns (bool);
+    event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+    function allowance(address owner, address spender) public view returns (uint256);
+    function transferFrom(address from, address to, uint256 value) public returns (bool);
+    function approve(address spender, uint256 value) public returns (bool);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+}
 
 /**
  * @title SafeMath
@@ -90,21 +90,6 @@ library SafeMath {
     }
 }
 
-// File: zeppelin/contracts/token/ERC20/ERC20Basic.sol
-
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-    function totalSupply() public view returns (uint256);
-    function balanceOf(address who) public view returns (uint256);
-    function transfer(address to, uint256 value) public returns (bool);
-    event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-// File: zeppelin/contracts/token/ERC20/BasicToken.sol
 
 /**
  * @title Basic token
@@ -151,20 +136,7 @@ contract BasicToken is ERC20Basic {
 
 }
 
-// File: zeppelin/contracts/token/ERC20/ERC20.sol
 
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-    function allowance(address owner, address spender) public view returns (uint256);
-    function transferFrom(address from, address to, uint256 value) public returns (bool);
-    function approve(address spender, uint256 value) public returns (bool);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-// File: zeppelin/contracts/token/ERC20/StandardToken.sol
 
 /**
  * @title Standard ERC20 token
@@ -261,39 +233,44 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-// File: contracts/TransferableToken.sol
+
 
 /**
-    Copyright (c) 2018 Cryptense SAS - Kryll.io
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+    address public owner;
 
-    Kryll.io / Transferable ERC20 token mechanism
-    Version 0.2
-    
-    Permission is hereby granted, free of charge, to any person obtaining a copy
-    of this software and associated documentation files (the "Software"), to deal
-    in the Software without restriction, including without limitation the rights
-    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-    copies of the Software, and to permit persons to whom the Software is
-    furnished to do so, subject to the following conditions:
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-    The above copyright notice and this permission notice shall be included in
-    all copies or substantial portions of the Software.
+    /**
+     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+     * account.
+     */
+    constructor() public {
+        owner = msg.sender;
+    }
 
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-    THE SOFTWARE.
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
 
-    based on the contracts of OpenZeppelin:
-    https://github.com/OpenZeppelin/zeppelin-solidity/tree/master/contracts
-**/
-
-pragma solidity ^0.4.23;
-
-
+    /**
+     * @dev Allows the current owner to transfer control of the contract to a newOwner.
+     * @param newOwner The address to transfer ownership to.
+     */
+    function transferOwnership(address newOwner) public onlyOwner {
+        require(newOwner != address(0));
+        emit OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+    }
+}
 
 
 /**
@@ -316,11 +293,11 @@ contract TransferableToken is StandardToken,Ownable {
     /**
         CONSTRUCTOR
     **/
-    
-    constructor() 
-        StandardToken() 
+
+    constructor()
+        StandardToken()
         Ownable()
-        public 
+        public
     {
         whitelisted[msg.sender] = true;
     }
@@ -351,10 +328,10 @@ contract TransferableToken is StandardToken,Ownable {
     modifier canTransfert() {
         if(!transferable){
             require (whitelisted[msg.sender]);
-        } 
+        }
         _;
    }
-   
+
     /**
         OWNER ONLY FUNCTIONS
     **/
@@ -423,78 +400,31 @@ contract TransferableToken is StandardToken,Ownable {
     }
 }
 
-// File: contracts/KryllToken.sol
-
-/**
-    Copyright (c) 2018 Cryptense SAS - Kryll.io
-
-    Kryll.io / KRL ERC20 Token Smart Contract    
-    Version 0.2
-
-    Permission is hereby granted, free of charge, to any person obtaining a copy
-    of this software and associated documentation files (the "Software"), to deal
-    in the Software without restriction, including without limitation the rights
-    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-    copies of the Software, and to permit persons to whom the Software is
-    furnished to do so, subject to the following conditions:
-
-    The above copyright notice and this permission notice shall be included in
-    all copies or substantial portions of the Software.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-    THE SOFTWARE.
-
-    based on the contracts of OpenZeppelin:
-    https://github.com/OpenZeppelin/zeppelin-solidity/tree/master/contracts
-**/
-
-pragma solidity ^0.4.23;
-
-
 
 
 contract KryllToken is TransferableToken {
 //    using SafeMath for uint256;
 
-    string public symbol = "KRL";
-    string public name = "Kryll.io Token";
+    string public symbol = "XJT";
+    string public name = "XIONGJUN Token";
     uint8 public decimals = 18;
-  
+
 
     uint256 constant internal DECIMAL_CASES    = (10 ** uint256(decimals));
-    uint256 constant public   SALE             =  17737348 * DECIMAL_CASES; // Token sale
-    uint256 constant public   TEAM             =   8640000 * DECIMAL_CASES; // TEAM (vested)
-    uint256 constant public   ADVISORS         =   2880000 * DECIMAL_CASES; // Advisors
-    uint256 constant public   SECURITY         =   4320000 * DECIMAL_CASES; // Security Reserve
-    uint256 constant public   PRESS_MARKETING  =   5040000 * DECIMAL_CASES; // Press release
-    uint256 constant public   USER_ACQUISITION =  10080000 * DECIMAL_CASES; // User Acquisition 
-    uint256 constant public   BOUNTY           =    720000 * DECIMAL_CASES; // Bounty (ICO & future)
+    uint256 constant public   SALE             =   10000000000 * DECIMAL_CASES; // Token sale
+    uint256 constant public   TEAM             =   10000000000 * DECIMAL_CASES; // TEAM (vested)
 
-    address public sale_address     = 0x29e9535AF275a9010862fCDf55Fe45CD5D24C775;
-    address public team_address     = 0xd32E4fb9e8191A97905Fb5Be9Aa27458cD0124C1;
-    address public advisors_address = 0x609f5a53189cAf4EeE25709901f43D98516114Da;
-    address public security_address = 0x2eA5917E227552253891C1860E6c6D0057386F62;
-    address public press_address    = 0xE9cAad0504F3e46b0ebc347F5bf591DBcB49756a;
-    address public user_acq_address = 0xACD80ad0f7beBe447ea0625B606Cf3DF206DafeF;
-    address public bounty_address   = 0x150658D45dc62E9EB246E82e552A3ec93d664985;
+
+    address public sale_address     = 0xb0155735Adce41593d6Bd672D3CE086f19261642;
+    address public team_address     = 0x6445a346ccB8f5620845C6dEF0D8F49356b01754;
     bool public initialDistributionDone = false;
 
     /**
     * @dev Setup the initial distribution addresses
     */
-    function reset(address _saleAddrss, address _teamAddrss, address _advisorsAddrss, address _securityAddrss, address _pressAddrss, address _usrAcqAddrss, address _bountyAddrss) public onlyOwner{
+    function reset(address _saleAddrss, address _teamAddrss) public onlyOwner{
         require(!initialDistributionDone);
         team_address = _teamAddrss;
-        advisors_address = _advisorsAddrss;
-        security_address = _securityAddrss;
-        press_address = _pressAddrss;
-        user_acq_address = _usrAcqAddrss;
-        bounty_address = _bountyAddrss;
         sale_address = _saleAddrss;
     }
 
@@ -504,21 +434,16 @@ contract KryllToken is TransferableToken {
     function distribute() public onlyOwner {
         // Initialisation check
         require(!initialDistributionDone);
-        require(sale_address != 0x0 && team_address != 0x0 && advisors_address != 0x0 && security_address != 0x0 && press_address != 0x0 && user_acq_address != 0 && bounty_address != 0x0);      
+        require(sale_address != 0x0 && team_address != 0x0);
 
-        // Compute total supply 
-        totalSupply_ = SALE.add(TEAM).add(ADVISORS).add(SECURITY).add(PRESS_MARKETING).add(USER_ACQUISITION).add(BOUNTY);
+        // Compute total supply
+        totalSupply_ = SALE.add(TEAM);
 
-        // Distribute KRL Token 
+        // Distribute KRL Token
         balances[owner] = totalSupply_;
         emit Transfer(0x0, owner, totalSupply_);
 
         transfer(team_address, TEAM);
-        transfer(advisors_address, ADVISORS);
-        transfer(security_address, SECURITY);
-        transfer(press_address, PRESS_MARKETING);
-        transfer(user_acq_address, USER_ACQUISITION);
-        transfer(bounty_address, BOUNTY);
         transfer(sale_address, SALE);
         initialDistributionDone = true;
         whitelist(sale_address); // Auto whitelist sale address
@@ -532,4 +457,105 @@ contract KryllToken is TransferableToken {
         name = _name;
     }
 
+}
+/**
+ * @title KryllVesting
+ * @dev A token holder contract that can release its token balance gradually like a
+ * typical vesting scheme, with a cliff and vesting period.
+ */
+contract KryllVesting is Ownable {
+    using SafeMath for uint256;
+
+    event Released(uint256 amount);
+
+    // beneficiary of tokens after they are released
+    address public beneficiary;
+    KryllToken public token;
+
+    uint256 public startTime;
+    uint256 public cliff;
+    uint256 public released;
+
+
+    uint256 constant public   VESTING_DURATION    =  345600; // 1 Year in second
+    uint256 constant public   CLIFF_DURATION      =   86400; // 3 months (90 days) in second
+
+
+    /**
+    * @dev Creates a vesting contract that vests its balance of any ERC20 token to the
+    * _beneficiary, gradually in a linear fashion. By then all of the balance will have vested.
+    * @param _beneficiary address of the beneficiary to whom vested tokens are transferred
+    * @param _token The token to be vested
+    */
+    function setup(address _beneficiary,address _token) public onlyOwner{
+        require(startTime == 0); // Vesting not started
+        require(_beneficiary != address(0));
+        // Basic init
+        changeBeneficiary(_beneficiary);
+        token = KryllToken(_token);
+    }
+
+    /**
+    * @notice Start the vesting process.
+    */
+    function start() public onlyOwner{
+        require(token != address(0));
+        require(startTime == 0); // Vesting not started
+        startTime = now;
+        cliff = startTime.add(CLIFF_DURATION);
+    }
+
+    /**
+    * @notice Is vesting started flag.
+    */
+    function isStarted() public view returns (bool) {
+        return (startTime > 0);
+    }
+
+
+    /**
+    * @notice Owner can change beneficiary address
+    */
+    function changeBeneficiary(address _beneficiary) public onlyOwner{
+        beneficiary = _beneficiary;
+    }
+
+
+    /**
+    * @notice Transfers vested tokens to beneficiary.
+    */
+    function release() public {
+        require(startTime != 0);
+        require(beneficiary != address(0));
+
+        uint256 unreleased = releasableAmount();
+        require(unreleased > 0);
+
+        released = released.add(unreleased);
+        token.transfer(beneficiary, unreleased);
+        emit Released(unreleased);
+    }
+
+    /**
+    * @dev Calculates the amount that has already vested but hasn't been released yet.
+    */
+    function releasableAmount() public view returns (uint256) {
+        return vestedAmount().sub(released);
+    }
+
+    /**
+    * @dev Calculates the amount that has already vested.
+    */
+    function vestedAmount() public view returns (uint256) {
+        uint256 currentBalance = token.balanceOf(this);
+        uint256 totalBalance = currentBalance.add(released);
+
+        if (now < cliff) {
+            return 0;
+        } else if (now >= startTime.add(VESTING_DURATION)) {
+            return totalBalance;
+        } else {
+            return totalBalance.mul(now.sub(startTime)).div(VESTING_DURATION);
+        }
+    }
 }
