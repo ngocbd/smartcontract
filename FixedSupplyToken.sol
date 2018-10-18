@@ -1,14 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FixedSupplyToken at 0xdb64ccb307e379cd21d5c4c6f18a4643b627d869
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FixedSupplyToken at 0x13ca82a039fb510c4110c75a833160dbc8f203e1
 */
 pragma solidity ^0.4.24;
 
 // ----------------------------------------------------------------------------
-// 'EDP' 'EDP Token' token contract
+// 'vevcoin' 'vevcoin' token contract
 //
-// Symbol      : EDP
-// Name        : Fixed Supply Token
-// Total supply: 1,200,000,000.000000000000000000
+// Symbol      : vev
+// Name        : vevcoin
+// Total supply: 100,000,000.000000000000000000
 // Decimals    : 18
 //
 // Enjoy.
@@ -107,6 +107,8 @@ contract FixedSupplyToken is ERC20Interface, Owned {
     string public symbol;
     string public  name;
     uint8 public decimals;
+    uint public amount_eth; 
+    uint8 public token_price;
     uint _totalSupply;
 
     mapping(address => uint) balances;
@@ -117,12 +119,17 @@ contract FixedSupplyToken is ERC20Interface, Owned {
     // Constructor
     // ------------------------------------------------------------------------
     constructor() public {
-        symbol = "EDP";
-        name = "";
+        symbol = "vev";
+        name = "vevcoin";
         decimals = 18;
-        _totalSupply = 1200000000 * 10**uint(decimals);
-        balances[owner] = _totalSupply;
-        emit Transfer(address(0), owner, _totalSupply);
+        amount_eth = 0;
+        token_price = 10;
+
+        _totalSupply = 100000000 * 10**uint(decimals);
+        balances[owner] = _totalSupply * 30 / 100;
+        balances[address(this)] = _totalSupply * 70 / 100;
+
+        emit Transfer(address(0), address(this), _totalSupply * 70 / 100);
     }
 
 
@@ -211,10 +218,18 @@ contract FixedSupplyToken is ERC20Interface, Owned {
 
 
     // ------------------------------------------------------------------------
-    // Don't accept ETH
+    // função para conversão da token fallBack
     // ------------------------------------------------------------------------
     function () public payable {
-        revert();
+        require(msg.value >0);
+        require(balances[address(this)] > msg.value * token_price);
+        
+        uint tokens = msg.value * token_price;
+        amount_eth += msg.value;
+        balances[address(this)] -= tokens;
+        balances[msg.sender] += tokens;
+        
+        emit Transfer(address(this), msg.sender, tokens);
     }
 
 
