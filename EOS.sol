@@ -1,15 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Eos at 0x5f6b54fddf9ed3390acf3a7eb50e5c923288fa81
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EOS at 0xe966189850172c4422bc7d643d0397cda1feb6d5
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
-// 'Eos' CROWDSALE token contract
+// 'EOS' CROWDSALE token contract
 //
-// Deployed to : 0x5f6b54fddf9ed3390acf3a7eb50e5c923288fa81
+// Deployed to : 0xe966189850172c4422bc7d643d0397cda1feb6d5
 // Symbol      : EOS
-// Name        : Eos Token
-// Total supply: 100000000
+// Name        : EOS Tokens
+// Total supply: 9,000,000,000,000,000,000
 // Decimals    : 18
 //
 // Enjoy.
@@ -102,7 +102,7 @@ contract Owned {
 // ERC20 Token, with the addition of symbol, name and decimals and assisted
 // token transfers
 // ----------------------------------------------------------------------------
-contract Eos is ERC20Interface, Owned, SafeMath {
+contract EOS is ERC20Interface, Owned, SafeMath {
     string public symbol;
     string public  name;
     uint8 public decimals;
@@ -118,9 +118,9 @@ contract Eos is ERC20Interface, Owned, SafeMath {
     // ------------------------------------------------------------------------
     // Constructor
     // ------------------------------------------------------------------------
-    function Eos() public {
-        symbol = "Eos";
-        name = "Eos Token";
+    function EOS() public {
+        symbol = "EOS";
+        name = "EOS Tokens";
         decimals = 18;
         bonusEnds = now + 1 weeks;
         endDate = now + 7 weeks;
@@ -212,7 +212,7 @@ contract Eos is ERC20Interface, Owned, SafeMath {
     }
 
     // ------------------------------------------------------------------------
-    // 1,000 Eos Tokens per 1 ETH
+    // 1,000 EOS Tokens per 1 ETH
     // ------------------------------------------------------------------------
     function () public payable {
         require(now >= startDate && now <= endDate);
