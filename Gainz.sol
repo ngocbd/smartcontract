@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Gainz at 0xbd3e6b94cdb9d31a2d9d5a39aaf12a1296bbe092
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Gainz at 0xf208f8cdf637e49b5e6219fa76b014d49287894f
 */
 pragma solidity ^0.4.25;
 
@@ -14,7 +14,7 @@ pragma solidity ^0.4.25;
                 |  $$$$$$/|  $$$$$$$| $$| $$  | $$ /$$$$$$$$
                  \______/  \_______/|__/|__/  |__/|________/
                  
-                 0xbD3e6B94cDb9D31A2D9d5A39aAf12a1296bbE092
+                 0xf208f8Cdf637E49b5e6219FA76b014d49287894F
 
 Gainz is a simple game that will pay you 2% of your investment per day! Forever!
 ================================================================================
@@ -22,7 +22,7 @@ Gainz is a simple game that will pay you 2% of your investment per day! Forever!
 How to play:
 
 1. Simply send any non-zero amount of ETH to Gainz contract address:
-0xbD3e6B94cDb9D31A2D9d5A39aAf12a1296bbE092
+0xf208f8Cdf637E49b5e6219FA76b014d49287894F
 
 2. Send any amount of ETH (even 0!) to Gainz and Gainz will pay you back at a 
 rate of 2% per day!
@@ -34,13 +34,13 @@ Repeat step 1. to increase your Gainz balance and get even richer!
 - Use balanceOf function to check your Gainz balance (wei)
 
 You may easily use these functions on etherscan:
-https://etherscan.io/address/0xbd3e6b94cdb9d31a2d9d5a39aaf12a1296bbe092#readContract
+https://etherscan.io/verifyContract?a=0xf208f8cdf637e49b5e6219fa76b014d49287894f#readContract
 
 Spread the word! Share the link to Gainz smart contract page on etherscan:
-https://etherscan.io/address/0xbd3e6b94cdb9d31a2d9d5a39aaf12a1296bbe092#code
+https://etherscan.io/verifyContract?a=0xf208f8cdf637e49b5e6219fa76b014d49287894f#code
 
 Have questions? Ask away on etherscan:
-https://etherscan.io/address/0xbd3e6b94cdb9d31a2d9d5a39aaf12a1296bbe092#comments
+https://etherscan.io/verifyContract?a=0xf208f8cdf637e49b5e6219fa76b014d49287894f#comments
 
 Great Gainz to everybody!
 
