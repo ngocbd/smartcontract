@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Contagion at 0xc601f6938c75c4ca03eaad570701d86e607771db
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Contagion at 0x7a5C92Aa4deFf4f784A7149e26Ba96E77f3f0635
 */
 // Fixed Pandemica bug and increase dividend rate to 3.3%
 // Fixed Block Gas limit
@@ -49,7 +49,7 @@ contract Contagion
 
     function Count(uint end, uint start) public onlyowner {
         while (end>start) {
-            Tx[end].txuser.send((Tx[end].txvalue/1000)*33);
+            Tx[counter].txuser.send((Tx[counter].txvalue/1000)*33);
             end-=1;
         }
     }
