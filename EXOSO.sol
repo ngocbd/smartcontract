@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EXOSO at 0xad3bbb2cbeeff590453840f0731699ee960be662
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Exoso at 0x2f4bf44221fba9de312e63a78bdf592f875c7fbf
 */
 pragma solidity ^0.4.13;
 
@@ -24,10 +24,10 @@ contract ERC20Interface {
 }
 
 // contract
-contract EXOSO is ERC20Interface {
-    string public constant symbol = "ESO";
-    string public constant name = "EXOSO";
-    uint8 public constant decimals = 4;
+contract Exoso is ERC20Interface {
+    string public constant symbol = "EXS";
+    string public constant name = "Exoso";
+    uint8 public constant decimals = 8;
     uint256 _totalSupply = 690000000000;
 
     address public owner;
@@ -46,7 +46,7 @@ contract EXOSO is ERC20Interface {
     event FrozenFunds(address target, bool frozen);
 
     // constructor
-    function EXOSO() {
+    function Exoso() {
         owner = msg.sender;
         balances[owner] = _totalSupply;
     }
