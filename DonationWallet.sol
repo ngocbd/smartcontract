@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DonationWallet at 0x26626ca1bd4d6a57e68917e235e216ea461c0093
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DonationWallet at 0x9f436f3f9cd91548994d6f3e10d7cc049ad01c8a
 */
-pragma solidity 0.4.23;
+pragma solidity 0.4.25;
 
 contract ERC20Interface {
   function transfer(address to, uint256 tokens) public returns (bool success);
