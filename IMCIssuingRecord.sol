@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IMCIssuingRecord at 0xcca0fde6a5c9941d4779c1c02c5c6c625756396a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IMCIssuingRecord at 0x6ad3ed9302e9a9a0c112989ba2e5408d25a9303f
 */
 pragma solidity ^0.4.24;
 
@@ -140,7 +140,7 @@ contract IMCToken is ERC20Interface, Owned {
     mapping(address => uint) balances;
     mapping(address => mapping(address => uint)) allowed;
 
-    address externalContractAddress;
+    address public externalContractAddress;
 
 
     /**
@@ -310,6 +310,7 @@ contract IMCToken is ERC20Interface, Owned {
     }
 }
 
+
 // ----------------------------------------------------------------------------
 // ??????
 // ----------------------------------------------------------------------------
@@ -323,7 +324,10 @@ contract IMCIssuingRecord is Owned{
     IMCToken public imcToken;
 
     // ??????
-    address platformAddr;
+    address public platformAddr;
+
+    // ?????
+    address public executorAddress;
 
     // Token??????
     struct RecordInfo {
@@ -356,6 +360,9 @@ contract IMCIssuingRecord is Owned{
 
         // ?????????
         platformAddr = _platformAddr;
+        
+        // ????????
+        executorAddress = msg.sender;
     }
     
     /**
@@ -364,6 +371,14 @@ contract IMCIssuingRecord is Owned{
      */
     function modifyPlatformAddr(address _addr) public onlyOwner {
         platformAddr = _addr;
+    }
+    
+    /**
+     * ??executorAddress???owner????
+     * @param _addr address ??
+     */
+    function modifyExecutorAddr(address _addr) public onlyOwner {
+        executorAddress = _addr;
     }
 
     /**
@@ -389,9 +404,11 @@ contract IMCIssuingRecord is Owned{
      * @param _stripLen uint ?????????
      * @return success ????
      */
-    function issuingRecordAdd(uint _date, bytes32 _hash, uint _depth, uint _userCount, uint _token, string _fileFormat, uint _stripLen) public onlyOwner returns (bool) {
+    function issuingRecordAdd(uint _date, bytes32 _hash, uint _depth, uint _userCount, uint _token, string _fileFormat, uint _stripLen) public returns (bool) {
+        // ?????Owner??????????
+        require(msg.sender == executorAddress);
         // ??????
-        require(!(issuingRecord[_date].date > 0));
+        require(issuingRecord[_date].date != _date);
 
         // ?????
         userCount = userCount.add(_userCount);
