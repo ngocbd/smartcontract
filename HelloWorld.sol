@@ -1,14 +1,18 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HelloWorld at 0x068057ed7e9e0d074ef6f39a68278a8e4a9f8e8b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Helloworld at 0x9b0239ece8deb64c5ca24e6159229b1a7b2bfd5c
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.24;
 
-contract HelloWorld {
-    function sayHello() public pure returns (string) {
-        return ("Hello World!");
+contract Helloworld {
+    string content;
+    
+    constructor()
+    public
+    {
+        content = 'aaa';
     }
-
-    function kill()  public {
-        selfdestruct(address(this));
+    
+    function getContent() constant public returns (string){
+        return content;
     }
 }
