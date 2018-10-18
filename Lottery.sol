@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lottery at 0xb540ff57b2221570dbac7e829613540277cecab1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lottery at 0x2873F3DfA8B9cDcDa9B619B0c3A62C2CD9DAf5C5
 */
 pragma solidity ^0.4.24;
 
@@ -114,12 +114,8 @@ library SafeMath {
 
 // File: contracts/Lottery.sol
 
-// import "./interface/QMGCoinInterface.sol";
-
 contract Lottery {
     using SafeMath for *;
-
-    // QMGCoinInterface constant private QMECoin = QMGCoinInterface(0x32140ee94f2a1C3232C91BE55f26ee89B8693546);
 
     address public owner_;
 
@@ -180,12 +176,11 @@ contract Lottery {
 
     uint[4] public teamNums_;
 
+    uint public keyPrice_ = 10000000000000000;
+
     event Transfer(address indexed from, address indexed to, uint value);
-    event RoundEnd(address indexed from, address indexed to, uint value);
-    event BuyAKeyWithEth(address indexed from, uint key, uint teamID);
-    event BuyAKeyWithBalance(address indexed from, uint key, uint teamID);
+    event BuyAKey(address indexed from, uint key, uint teamID);
     event WithdrawBalance(address indexed to, uint amount);
-    event AddToInvestmentBalance(uint amount);
     event AddReferrerBalance(address indexed to, uint amount);
     event AddTeamBonusBalance(address indexed to, uint amount);
     event AddPrizeBalance(address indexed to, uint amount);
@@ -200,15 +195,6 @@ contract Lottery {
         investmentBalance_ = 0;
 
         developerBalance_ = 0;
-
-        plyr_[0].addr = 0x1F8ADEA9E727d334d34BD757E59b8B9B466E7251;
-        plyr_[0].referrerID = 0;
-        plyr_[0].playedNum = 0;
-        plyr_[0].referralsNum = 0;
-        plyr_[0].teamBonus = 0;
-        plyr_[0].referralsBonus = 0;
-        plyr_[0].winPrize = 0;
-        plyr_[0].accountBalance = 0;
 
         pID_ = 1;
         teamNums_ = [0, 0, 0, 0];
@@ -239,7 +225,6 @@ contract Lottery {
         if (jackpotBalance_ > 10000000000000000000000) {
             jackpotBalance_ = (jackpotBalance_).sub(3000000000000000000000);
             investmentBalance_ = (investmentBalance_).add(3000000000000000000000);
-            emit AddToInvestmentBalance(3000000000000000000000);
         }
 
         delete teamNums_;
@@ -428,8 +413,7 @@ contract Lottery {
         public
         onlyOwner()
     {
-        require(_val > 10000000000000000, "Value must more than 0.01 eth");
-        require(investmentBalance_ >= _val, "No more balance left");
+        require((_val >= 10000000000000000) && (investmentBalance_ >= _val), "Value must more than 0.01 eth");
         pay(_to, _val);
         investmentBalance_ = (investmentBalance_).sub(_val);
     }
@@ -438,24 +422,30 @@ contract Lottery {
         public
         onlyOwner()
     {
-        require(_val > 10000000000000000, "Value must more than 0.01 eth");
-        require(developerBalance_ >= _val, "No more balance left");
+        require((_val >= 10000000000000000) && (developerBalance_ >= _val), "Value must more than 0.01 eth");
         pay(_to, _val);
         developerBalance_ = (developerBalance_).sub(_val);
+    }
+
+    function updateKeyPrice (uint _val)
+        public
+        onlyOwner()
+    {
+        require(_val > 0, "Value must more than 0 eth");
+        keyPrice_ = _val;
     }
 
     /* public functions */
 
     function buyAKeyWithDeposit(uint256 _key, address _referrer, uint256 _teamID)
-        public
+        external
         payable
         returns (bool)
     {
-        require(msg.value > 10000000000000000, "Value must more than 0.01 eth");
+        require(msg.value >= keyPrice_, "Value must more than 0.01 eth");
 
         if (roundEnded_) {
             pay(msg.sender, msg.value);
-            emit RoundEnd(address(this), msg.sender, msg.value);
             return(false);
         }
 
@@ -484,37 +474,34 @@ contract Lottery {
             topPlayers_[tpID_] = pID;
             tpID_ ++;
         }
-        emit BuyAKeyWithEth(msg.sender, _key, _teamID);
+        emit BuyAKey(msg.sender, _key, _teamID);
         return (true);
     }
 
     function buyAKeyWithAmount(uint256 _key, address _referrer, uint256 _teamID)
-        public
+        external
         payable
         returns (bool)
     {
         uint accBalance = getPlayerAccountBalance(msg.sender);
         if (roundEnded_) {
-            emit RoundEnd(address(this), msg.sender, msg.value);
             return(false);
         }
 
-        uint keyPrice = 10000000000000000;
+        require(accBalance >= keyPrice_, "Account left balance should more than 0.01 eth");
 
-        require(accBalance > keyPrice, "Account left balance should more than 0.01 eth");
+        subAccountBalance(msg.sender, keyPrice_);
 
-        subAccountBalance(msg.sender, keyPrice);
-
-        jackpotBalance_ = (jackpotBalance_).add((keyPrice).mul(jackpotSplit) / 100);
-        jackpotNextBalance_ = (jackpotNextBalance_).add((keyPrice).mul(nextJackpotSplit) / 100);
-        investmentBalance_ = (investmentBalance_).add((keyPrice).mul(investorDividendSplit) / 100);
-        developerBalance_ = (developerBalance_).add((keyPrice).mul(developerDividendSplit) / 100);
-        topBonus500Balance_ = (topBonus500Balance_).add((keyPrice).mul(bonus500Split) / 100);
+        jackpotBalance_ = (jackpotBalance_).add((keyPrice_).mul(jackpotSplit) / 100);
+        jackpotNextBalance_ = (jackpotNextBalance_).add((keyPrice_).mul(nextJackpotSplit) / 100);
+        investmentBalance_ = (investmentBalance_).add((keyPrice_).mul(investorDividendSplit) / 100);
+        developerBalance_ = (developerBalance_).add((keyPrice_).mul(developerDividendSplit) / 100);
+        topBonus500Balance_ = (topBonus500Balance_).add((keyPrice_).mul(bonus500Split) / 100);
 
         if (determinReferrer(_referrer)) {
-            addRefBalance(_referrer, (keyPrice).mul(referrerDividendSplit) / 100);
+            addRefBalance(_referrer, (keyPrice_).mul(referrerDividendSplit) / 100);
         } else {
-            developerBalance_ = (developerBalance_).add((keyPrice).mul(referrerDividendSplit) / 100);
+            developerBalance_ = (developerBalance_).add((keyPrice_).mul(referrerDividendSplit) / 100);
         }
 
         uint pID = updatePlayedNum(msg.sender, _referrer, _key);
@@ -530,7 +517,7 @@ contract Lottery {
             topPlayers_[tpID_] = pID;
             tpID_ ++;
         }
-        emit BuyAKeyWithBalance(msg.sender, _key, _teamID);
+        emit BuyAKey(msg.sender, _key, _teamID);
         return (true);
     }
 
@@ -556,6 +543,9 @@ contract Lottery {
     }
     function determinReferrer(address _addr) public view returns (bool)
     {
+        if (_addr == msg.sender) {
+            return false;
+        }
         uint256 pID = getPlayerID(_addr);
         uint256 playedNum = getPlayerPlayedTimes(pID);
         return (playedNum > 0);
