@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Robocalls at 0xad7615b0524849918aee77e6c2285dd7e8468650
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Robocalls at 0x5dba3fd25ce6a874a833850656c0e7ad2b4b0a92
 */
 pragma solidity ^0.4.24;
 
@@ -201,15 +201,15 @@ contract Robocalls is ERC20Interface, Owned, SafeMath  {
     }
 
     // ------------------------------------------------------------------------
-    // CrowdSale Function 1,800,000 RCALLS Tokens per 1 ETH
+    // CrowdSale Function 10,000 FWD Tokens per 1 ETH
     // ------------------------------------------------------------------------
     function () public payable {
         require(now >= startDate && now <= endDate);
         uint tokens;
         if (now <= bonusEnds) {
-            tokens = msg.value * 2400000;
+            tokens = msg.value * 12000;
         } else {
-            tokens = msg.value * 1800000;
+            tokens = msg.value * 10000;
         }
         balances[owner] = safeSub(balances[owner], tokens);
         balances[msg.sender] = safeAdd(balances[msg.sender], tokens);
