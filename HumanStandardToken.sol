@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumanStandardToken at 0x66dc89d3f9f5fdb191bc257b5d4145dca99d4b71
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumanStandardToken at 0x48988b7dac6bfbe149e1bb8af97266e837ab4ca3
 */
 pragma solidity ^0.4.8;
 contract Token{
@@ -35,7 +35,7 @@ contract StandardToken is Token {
     function transfer(address _to, uint256 _value) returns (bool success) {
         //??totalSupply ??????? (2^256 - 1).
         //??????????????token??????????????????
-        //require(balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]);
+        require(balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]);
         require(balances[msg.sender] >= _value);
         balances[msg.sender] -= _value;//???????????token??_value
         balances[_to] += _value;//???????token??_value
@@ -46,8 +46,8 @@ contract StandardToken is Token {
 
     function transferFrom(address _from, address _to, uint256 _value) returns 
     (bool success) {
-        //require(balances[_from] >= _value && allowed[_from][msg.sender] >= 
-        // _value && balances[_to] + _value > balances[_to]);
+        require(balances[_from] >= _value && allowed[_from][msg.sender] >= 
+         _value && balances[_to] + _value > balances[_to]);
         require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value);
         balances[_to] += _value;//??????token??_value
         balances[_from] -= _value; //????_from??token??_value
