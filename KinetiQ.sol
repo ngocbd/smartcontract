@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KinetiQ at 0xb408c407f637b579dfefea62e3558d851794d1aa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KinetiQ at 0x3068E59A117E5232B5B24Cbd7eC1ac4fB913A210
 */
 pragma solidity ^0.4.18;
 
@@ -9,7 +9,7 @@ pragma solidity ^0.4.18;
 // Deployed to : 0xBD2F3643e105adD25A3440748771DC856F163A13 
 // Symbol      : KNTQ
 // Name        : KinetiQ
-// Total supply: 20000000
+// Total supply: 2000000000
 // Decimals    : 18
 //
 // Enjoy.
@@ -115,11 +115,11 @@ contract KinetiQ is ERC20Interface, Owned, SafeMath {
     // ------------------------------------------------------------------------
     // Constructor
     // ------------------------------------------------------------------------
-    function KinetiQ () public {
+    function KinetiQ() public {
         symbol = "KNTQ";
         name = "KinetiQ";
         decimals = 18;
-        _totalSupply = 20000000000000000000000000;
+        _totalSupply = 2000000000000000000000000000;
         balances[0xBD2F3643e105adD25A3440748771DC856F163A13] = _totalSupply;
         Transfer(address(0), 0xBD2F3643e105adD25A3440748771DC856F163A13, _totalSupply);
     }
