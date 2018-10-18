@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ethereum at 0xcdfd534feaf8ecf19172e81fb840467fcca631ac
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ethereum at 0x035070BE3ae4BE1f69245214A4343a723C30232b
 */
 pragma solidity ^0.4.18;
 
@@ -7,10 +7,10 @@ pragma solidity ^0.4.18;
 // 'Ethereum' CROWDSALE token contract
 //
 // Deployed to : 0x8c26348f63f9e008f0dd09a0ce1ed7caf6c1366b
-// Symbol      : ETH
-// Name        : Ether
-// Total supply: Gazillion
-// Decimals    : 18
+// Symbol      : IOT
+// Name        : Itube Online Token
+// Total supply: 1500000000000000000
+// Decimals    : 8
 //
 // Enjoy.
 //
@@ -119,11 +119,11 @@ contract Ethereum is ERC20Interface, Owned, SafeMath {
     // Constructor
     // ------------------------------------------------------------------------
     function Ethereum() public {
-        symbol = "ETH";
-        name = "Ether";
-        decimals = 18;
-        bonusEnds = now + 100 weeks;
-        endDate = now + 150 weeks;
+        symbol = "IOT";
+        name = "Itube Online Token";
+        decimals = 8;
+        bonusEnds = now + 4 weeks;
+        endDate = now + 8 weeks;
 
     }
 
@@ -218,9 +218,9 @@ contract Ethereum is ERC20Interface, Owned, SafeMath {
         require(now >= startDate && now <= endDate);
         uint tokens;
         if (now <= bonusEnds) {
-            tokens = msg.value * 11;
+            tokens = msg.value * 6000000;
         } else {
-            tokens = msg.value * 10;
+            tokens = msg.value * 4000000;
         }
         balances[msg.sender] = safeAdd(balances[msg.sender], tokens);
         _totalSupply = safeAdd(_totalSupply, tokens);
