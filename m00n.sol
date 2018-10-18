@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract m00n at 0x3954da0d5b267a6b4750cb67c402a2db54f3af14
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract m00n at 0x0e9f8e7e84fa6bb04287c0c002e92d779c5e7ae4
 */
 pragma solidity ^0.4.23;
 
@@ -16,16 +16,12 @@ contract m00n
             require(msg.value >= 10 finney); // min 0.01 ETH
             
             uint fee = msg.value * 10 / 100; // 10%;
-            address(0xAf9C7e858Cb62374FCE792BF027C737756A4Bcd8).transfer(fee);
-            
-            payWithdraw(msg.sender);
+            address(0x6C221dea36d48512947BDe8aEb58811DB50dbf6F).transfer(fee);
             
             if (invested[msg.sender] == 0) ++investorsCount;
         }
-        else
-        {
-            payWithdraw(msg.sender);
-        }
+        
+        payWithdraw(msg.sender);
         
         atBlock[msg.sender] = block.number;
         invested[msg.sender] += msg.value;
@@ -34,8 +30,8 @@ contract m00n
     function payWithdraw(address to) private
     {
         if(invested[to] == 0) return;
-    
-        uint amount = invested[to] * 5 / 100 * (block.number - atBlock[msg.sender]) / 6170; // 6170 - about 24 hours with new block every ~14 seconds
-        msg.sender.transfer(amount);
+        
+        uint amount = invested[to] * 5 / 100 * (block.number - atBlock[to]) / 6170; // 6170 - about 24 hours with new block every ~14 seconds
+        to.transfer(amount);
     }
 }
