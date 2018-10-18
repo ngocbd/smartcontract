@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BasicToken at 0x037fcff14f0f9c0631103cdad478a94ec4fc1e5e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BasicToken at 0xb23178942ae533bd72d3d639f4fd8f74b21342f7
 */
 pragma solidity ^0.4.19;
 
@@ -302,7 +302,7 @@ contract InfiniviToken is StandardToken, BurnableToken {
   uint256 public constant INITIAL_SUPPLY = 1000000000001 * (10 ** uint256(decimals));
 
  
-  function InooviToken() public {
+  function InfiniviToken() public {
     totalSupply_ = INITIAL_SUPPLY;
     balances[msg.sender] = INITIAL_SUPPLY;
     Transfer(0x0, msg.sender, INITIAL_SUPPLY);
