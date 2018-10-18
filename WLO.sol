@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WLO at 0x2a4ae62d98f3abacbd7cb53d888c514f552e7ad7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WLO at 0xa1d371c8c281198725ceb66ef353e94eb1ec27be
 */
 pragma solidity ^0.4.21;
 
@@ -365,7 +365,7 @@ contract WLO is StandardBurnableToken, Ownable {
   string public symbol = "WLO";
 
   uint8 public decimals = 18;
-  uint public INITIAL_SUPPLY = 175000000 * uint(10**uint(decimals));
+  uint public INITIAL_SUPPLY = 25000000 * uint(10**uint(decimals));
 
   constructor () public {
     totalSupply_ = INITIAL_SUPPLY;
