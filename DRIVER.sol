@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DRIVER at 0xc9c615db4a6e074b85bf5454e23605df61c86ef2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DRIVER at 0x3858a058f5008a18f2571ff4832dbc8be713ed19
 */
 pragma solidity ^0.4.24;
 contract OWN 
@@ -56,13 +56,8 @@ library SafeMath {
     return c;
   }
 }
-contract ERC20 
+contract ZERC20 
 {
-    string  public constant name     = "DRIVER ETHEREUM";
-    string  public constant symbol   = "DRETH";
-    uint8   public constant decimals =  6;
-    uint256 public  totalSupply; //TOTAL 
-    
     event Approval(address indexed owner, address indexed spender, uint value);
     event Transfer(address indexed from, address indexed to, uint value);
     mapping (address => mapping(address => uint256)) public allowance;
@@ -91,10 +86,13 @@ contract ERC20
         _;
     }
 }
-contract DRIVER is OWN, ERC20
+contract DRIVER is OWN, ZERC20
 {
     using SafeMath for uint256;
-    
+    string  public constant name     = "DRIVER ETHEREUM";
+    string  public constant symbol   = "DRETH";
+    uint8   public constant decimals =  6;
+    uint256 public  totalSupply; //TOTAL 
     uint256 public   Price = 800000000; //INIT
     uint256 internal Minn  = 10000000000000000; //0.01 MIN
     uint256 internal Maxx  = 10000000000000000000; //10 MAX
