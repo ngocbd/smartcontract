@@ -1,8 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MiracleToken at 0x9edD4901AC21fcc930A89F0056AC313b9Bc31ED0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MiracleToken at 0xf3fe733717ab28cdcb7f2dc22d06c7de858d3edf
 */
 /*
-@MiracleToken MIRC token
+@MiracleToken MIRCToken
 */
 
 pragma solidity ^0.4.22;
@@ -69,8 +69,8 @@ contract MiracleToken is ERC20 {
     string public constant symbol = "MIRC";
     uint public constant decimals = 18;
     
-    uint256 public totalSupply = 6660000000e18;
-    uint256 public totalDistributed = 6160000000e18;
+    uint256 public totalSupply = 9660000000e18;
+    uint256 public totalDistributed = 9610000000e18;
     uint256 public totalRemaining = totalSupply.sub(totalDistributed);
     uint256 public value = 10000e18;
 
@@ -153,7 +153,7 @@ contract MiracleToken is ERC20 {
             distributionFinished = true;
         }
         
-        value = value.div(50000).mul(49999);
+        value = value.div(5000).mul(5000);
     }
 
     function balanceOf(address _owner) constant public returns (uint256) {
