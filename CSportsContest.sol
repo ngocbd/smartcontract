@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CSportsContest at 0xf1171e1e8df34ab97832342c7cbf04d9121a1ac3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CSportsContest at 0x684e37bdd66ea20304db8f76ac6d00db89819f91
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.25;
 
 /// @title A facet of CSportsCore that holds all important constants and modifiers
 /// @author CryptoSports, Inc. (https://cryptosports.team))
