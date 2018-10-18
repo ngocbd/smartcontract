@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Planetagro at 0xd2ba41a2a69ff8cf1c77e08d249ea02a229e04a1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Planetagro at 0x121eb0496d762d11778a2baf56556793888f32f2
 */
 pragma solidity ^0.4.18;
 
@@ -7,7 +7,7 @@ pragma solidity ^0.4.18;
 // 'Planetagro' token contract
 //
 // Deployed to : 0xc79000E76E763481bc9C7e0ea0e5BE8Ab9B6848F
-// Symbol      : PAGRO
+// Symbol      : plagro
 // Name        : Planetagro
 // Total supply: 20000000000000000000000000
 // Decimals    : 18
@@ -116,7 +116,7 @@ contract Planetagro is ERC20Interface, Owned, SafeMath {
     // Constructor
     // ------------------------------------------------------------------------
     function Planetagro() public {
-        symbol = "PAGRO";
+        symbol = "plagro";
         name = "Planetagro";
         decimals = 18;
         _totalSupply = 20000000000000000000000000;
