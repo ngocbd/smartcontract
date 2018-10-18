@@ -1,11 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintedTokenCappedCrowdsaleExt at 0x7b0C98d4bD3bDafdBC3CD444A4D222572dab34BD
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintedTokenCappedCrowdsaleExt at 0xc6D2Db0A6B7D7bc0861BFd1FEBC35EEEEd2a6c02
 */
-// Created using Token Wizard https://github.com/poanetwork/token-wizard by POA Network 
-// Temporarily have SafeMath here until all contracts have been migrated to SafeMathLib version from OpenZeppelin
-
 pragma solidity ^0.4.8;
-
 
 /**
  * Math operations with safety checks
@@ -111,25 +107,25 @@ contract Ownable {
 
 }
 /**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ * This smart contract code is Copyright 2018 BitFinance Ltd.
  *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ * Licensed under the Apache License, version 2.0: https://github.com/BitFinance/ico/blob/master/LICENSE.txt
  */
 
 
 
 /**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ * This smart contract code is Copyright 2018 BitFinance Ltd.
  *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ * Licensed under the Apache License, version 2.0: https://github.com/BitFinance/ico/blob/master/LICENSE.txt
  */
 
 
 
 /**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+* This smart contract code is Copyright 2018 BitFinance Ltd.
  *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ * Licensed under the Apache License, version 2.0: https://github.com/BitFinance/ico/blob/master/LICENSE.txt
  */
 
 
@@ -173,9 +169,9 @@ library SafeMathLibExt {
 }
 
 /**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+* This smart contract code is Copyright 2018 BitFinance Ltd.
  *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ * Licensed under the Apache License, version 2.0: https://github.com/BitFinance/ico/blob/master/LICENSE.txt
  */
 
 
@@ -222,9 +218,9 @@ contract Haltable is Ownable {
 }
 
 /**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ * This smart contract code is Copyright 2018 BitFinance Ltd.
  *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ * Licensed under the Apache License, version 2.0: https://github.com/BitFinance/ico/blob/master/LICENSE.txt
  */
 
 
@@ -276,9 +272,9 @@ contract PricingStrategy {
 }
 
 /**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+* This smart contract code is Copyright 2018 BitFinance Ltd.
  *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ * Licensed under the Apache License, version 2.0: https://github.com/BitFinance/ico/blob/master/LICENSE.txt
  */
 
 
@@ -312,9 +308,9 @@ contract FinalizeAgent {
 
 }
 /**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ * This smart contract code is Copyright 2018 BitFinance Ltd.
  *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ * Licensed under the Apache License, version 2.0: https://github.com/BitFinance/ico/blob/master/LICENSE.txt
  */
 
 
@@ -949,17 +945,17 @@ contract CrowdsaleExt is Haltable {
 }
 
 /**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ * This smart contract code is Copyright 2018 BitFinance Ltd.
  *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ * Licensed under the Apache License, version 2.0: https://github.com/BitFinance/ico/blob/master/LICENSE.txt
  */
 
 
 
 /**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+* This smart contract code is Copyright 2018 BitFinance Ltd.
  *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ * Licensed under the Apache License, version 2.0: https://github.com/BitFinance/ico/blob/master/LICENSE.txt
  */
 
 
@@ -971,9 +967,6 @@ contract CrowdsaleExt is Haltable {
 
 /**
  * Standard ERC20 token with Short Hand Attack and approve() race condition mitigation.
- *
- * Based on code by FirstBlood:
- * https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
  */
 contract StandardToken is ERC20, SafeMath {
 
