@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Exchange at 0x09011b803cc859bbda9751c742ec144de6b6c15b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Exchange at 0xF99881fDa3E24b16fA49b0d8359813b1e072a447
 */
 pragma solidity ^0.4.24;
 
@@ -62,7 +62,7 @@ contract Exchange {
         _;
     }
 
-    uint ACTIVATION_TIME = 1538694000;
+    uint ACTIVATION_TIME = 1539302400;
 
     // ensures that the first tokens in the contract will be equally distributed
     // meaning, no divine dump will be ever possible
@@ -143,11 +143,16 @@ contract Exchange {
     /*=====================================
     =            CONFIGURABLES            =
     =====================================*/
-    string public name = "Nasdaq";
+    string public name = "EXCHANGE";
     string public symbol = "SHARES";
     uint8 constant public decimals = 18;
-    uint8 constant internal dividendFee_ = 20; // 20% dividend fee on each buy and sell
-    uint8 constant internal fundFee_ = 5; // 5% to bond game
+
+    uint8 constant internal entryFee_ = 20; // 20% dividend fee on each buy
+    uint8 constant internal startExitFee_ = 40; // 40 % dividends for token selling
+    uint8 constant internal finalExitFee_ = 20; // 20% dividends for token selling after step
+    uint8 constant internal fundFee_ = 5; // 5% to stock game
+    uint256 constant internal exitFeeFallDuration_ = 30 days; //Exit fee falls over period of 30 days
+
     uint256 constant internal tokenPriceInitial_ = 0.00000001 ether;
     uint256 constant internal tokenPriceIncremental_ = 0.000000001 ether;
     uint256 constant internal magnitude = 2**64;
@@ -163,8 +168,8 @@ contract Exchange {
 
     // ambassador program
     mapping(address => bool) internal ambassadors_;
-    uint256 constant internal ambassadorMaxPurchase_ = 2.5 ether;
-    uint256 constant internal ambassadorQuota_ = 2.5 ether;
+    uint256 constant internal ambassadorMaxPurchase_ = 1 ether;
+    uint256 constant internal ambassadorQuota_ = 7 ether;
 
    /*================================
     =            DATASETS            =
@@ -186,8 +191,6 @@ contract Exchange {
     // To whitelist game contracts on the platform
     mapping(address => bool) public canAcceptTokens_; // contracts, which can accept the exchanges tokens
 
-    mapping(address => address) public stickyRef;
-
     /*=======================================
     =            PUBLIC FUNCTIONS            =
     =======================================*/
@@ -198,10 +201,16 @@ contract Exchange {
         public
     {
         // add administrators here
-        administrators[0x7191cbD8BBCacFE989aa60FB0bE85B47f922FE21] = true;
+        administrators[0x3db1e274bf36824cf655beddb92a90c04906e04b] = true;
 
         // add the ambassadors here - Tokens will be distributed to these addresses from main premine
-        ambassadors_[0x7191cbD8BBCacFE989aa60FB0bE85B47f922FE21] = true;
+        ambassadors_[0x3db1e274bf36824cf655beddb92a90c04906e04b] = true;
+        ambassadors_[0x7191cbd8bbcacfe989aa60fb0be85b47f922fe21] = true;
+        ambassadors_[0xEafE863757a2b2a2c5C3f71988b7D59329d09A78] = true;
+        ambassadors_[0x5138240E96360ad64010C27eB0c685A8b2eDE4F2] = true;
+        ambassadors_[0xC558895aE123BB02b3c33164FdeC34E9Fb66B660] = true;
+        ambassadors_[0x4ffE17a2A72bC7422CB176bC71c04EE6D87cE329] = true;
+        ambassadors_[0xEc31176d4df0509115abC8065A8a3F8275aafF2b] = true;
     }
 
 
@@ -215,7 +224,7 @@ contract Exchange {
     {
 
         require(tx.gasprice <= 0.05 szabo);
-        purchaseTokens(msg.value, _referredBy, false);
+        purchaseInternal(msg.value, _referredBy);
     }
 
     /**
@@ -228,7 +237,7 @@ contract Exchange {
     {
 
         require(tx.gasprice <= 0.05 szabo);
-        purchaseTokens(msg.value, 0x0, false);
+        purchaseInternal(msg.value, 0x0);
     }
 
     function updateFundAddress(address _newAddress)
@@ -248,12 +257,12 @@ contract Exchange {
         finalizedEthFundAddress = true;
     }
 
-    function payFund() payable public {
+    function payFund() payable onlyAdministrator() public {
         uint256 ethToPay = SafeMath.sub(totalEthFundCollected, totalEthFundRecieved);
         require(ethToPay > 0);
         totalEthFundRecieved = SafeMath.add(totalEthFundRecieved, ethToPay);
         if(!giveEthFundAddress.call.value(ethToPay).gas(400000)()) {
-           totalEthFundRecieved = SafeMath.sub(totalEthFundRecieved, ethToPay);
+          totalEthFundRecieved = SafeMath.sub(totalEthFundRecieved, ethToPay);
         }
     }
 
@@ -338,11 +347,8 @@ contract Exchange {
         uint256 _tokens = _amountOfTokens;
         uint256 _ethereum = tokensToEthereum_(_tokens);
 
-        uint256 _dividends = SafeMath.div(SafeMath.mul(_ethereum, dividendFee_), 100);
+        uint256 _dividends = SafeMath.div(SafeMath.mul(_ethereum, exitFee()), 100);
         uint256 _fundPayout = SafeMath.div(SafeMath.mul(_ethereum, fundFee_), 100);
-        uint256 _refPayout = _dividends / 3;
-        _dividends = SafeMath.sub(_dividends, _refPayout);
-        (_dividends,) = handleRef(stickyRef[msg.sender], _refPayout, _dividends, 0);
 
         // Take out dividends and then _fundPayout
         uint256 _taxedEthereum =  SafeMath.sub(SafeMath.sub(_ethereum, _dividends), _fundPayout);
@@ -577,7 +583,7 @@ contract Exchange {
             return tokenPriceInitial_ - tokenPriceIncremental_;
         } else {
             uint256 _ethereum = tokensToEthereum_(1e18);
-            uint256 _dividends = SafeMath.div(SafeMath.mul(_ethereum, dividendFee_), 100);
+            uint256 _dividends = SafeMath.div(SafeMath.mul(_ethereum, exitFee()), 100);
             uint256 _fundPayout = SafeMath.div(SafeMath.mul(_ethereum, fundFee_), 100);
             uint256 _taxedEthereum = SafeMath.sub(SafeMath.sub(_ethereum, _dividends), _fundPayout);
             return _taxedEthereum;
@@ -597,7 +603,7 @@ contract Exchange {
             return tokenPriceInitial_ + tokenPriceIncremental_;
         } else {
             uint256 _ethereum = tokensToEthereum_(1e18);
-            uint256 _dividends = SafeMath.div(SafeMath.mul(_ethereum, dividendFee_), 100);
+            uint256 _dividends = SafeMath.div(SafeMath.mul(_ethereum, entryFee_), 100);
             uint256 _fundPayout = SafeMath.div(SafeMath.mul(_ethereum, fundFee_), 100);
             uint256 _taxedEthereum =  SafeMath.add(SafeMath.add(_ethereum, _dividends), _fundPayout);
             return _taxedEthereum;
@@ -612,7 +618,7 @@ contract Exchange {
         view
         returns(uint256)
     {
-        uint256 _dividends = SafeMath.div(SafeMath.mul(_ethereumToSpend, dividendFee_), 100);
+        uint256 _dividends = SafeMath.div(SafeMath.mul(_ethereumToSpend, entryFee_), 100);
         uint256 _fundPayout = SafeMath.div(SafeMath.mul(_ethereumToSpend, fundFee_), 100);
         uint256 _taxedEthereum = SafeMath.sub(SafeMath.sub(_ethereumToSpend, _dividends), _fundPayout);
         uint256 _amountOfTokens = ethereumToTokens_(_taxedEthereum);
@@ -629,7 +635,7 @@ contract Exchange {
     {
         require(_tokensToSell <= tokenSupply_);
         uint256 _ethereum = tokensToEthereum_(_tokensToSell);
-        uint256 _dividends = SafeMath.div(SafeMath.mul(_ethereum, dividendFee_), 100);
+        uint256 _dividends = SafeMath.div(SafeMath.mul(_ethereum, exitFee()), 100);
         uint256 _fundPayout = SafeMath.div(SafeMath.mul(_ethereum, fundFee_), 100);
         uint256 _taxedEthereum = SafeMath.sub(SafeMath.sub(_ethereum, _dividends), _fundPayout);
         return _taxedEthereum;
@@ -645,18 +651,71 @@ contract Exchange {
         return SafeMath.sub(totalEthFundCollected, totalEthFundRecieved);
     }
 
+    /**
+     * Function for getting the current exitFee
+     */
+    function exitFee() public view returns (uint8) {
+        if ( now < ACTIVATION_TIME) {
+          return startExitFee_;
+        }
+        uint256 secondsPassed = now - ACTIVATION_TIME;
+        if (secondsPassed >= exitFeeFallDuration_) {
+            return finalExitFee_;
+        }
+        uint8 totalChange = startExitFee_ - finalExitFee_;
+        uint8 currentChange = uint8(totalChange * secondsPassed / exitFeeFallDuration_);
+        uint8 currentFee = startExitFee_- currentChange;
+        return currentFee;
+    }
 
     /*==========================================
     =            INTERNAL FUNCTIONS            =
     ==========================================*/
 
-    function handleRef(address _ref, uint _referralBonus, uint _currentDividends, uint _currentFee) internal returns (uint, uint){
-        uint _dividends = _currentDividends;
-        uint _fee = _currentFee;
-        address _referredBy = stickyRef[msg.sender];
-        if (_referredBy == address(0x0)){
-            _referredBy = _ref;
-        }
+    // Make sure we will send back excess if user sends more then 2 ether before 80 ETH in contract
+    function purchaseInternal(uint256 _incomingEthereum, address _referredBy)
+      notContract()// no contracts allowed
+      internal
+      returns(uint256) {
+
+      uint256 purchaseEthereum = _incomingEthereum;
+      uint256 excess;
+      if(purchaseEthereum > 2 ether) { // check if the transaction is over 2 ether
+          if (SafeMath.sub(address(this).balance, purchaseEthereum) <= 80 ether) { // if so check the contract is less then 80 ether
+              purchaseEthereum = 2 ether;
+              excess = SafeMath.sub(_incomingEthereum, purchaseEthereum);
+          }
+      }
+
+      purchaseTokens(purchaseEthereum, _referredBy, false);
+
+      if (excess > 0) {
+        msg.sender.transfer(excess);
+      }
+    }
+
+    function purchaseTokens(uint256 _incomingEthereum, address _referredBy, bool _isReinvest)
+        antiEarlyWhale(_incomingEthereum)
+        internal
+        returns(uint256)
+    {
+        // data setup
+        uint256 _undividedDividends = SafeMath.div(SafeMath.mul(_incomingEthereum, entryFee_), 100);
+        uint256 _referralBonus = SafeMath.div(_undividedDividends, 3);
+        uint256 _fundPayout = SafeMath.div(SafeMath.mul(_incomingEthereum, fundFee_), 100);
+        uint256 _dividends = SafeMath.sub(_undividedDividends, _referralBonus);
+        uint256 _taxedEthereum = SafeMath.sub(SafeMath.sub(_incomingEthereum, _undividedDividends), _fundPayout);
+        totalEthFundCollected = SafeMath.add(totalEthFundCollected, _fundPayout);
+
+        uint256 _amountOfTokens = ethereumToTokens_(_taxedEthereum);
+        uint256 _fee = _dividends * magnitude;
+
+        // no point in continuing execution if OP is a poor russian hacker
+        // prevents overflow in the case that the pyramid somehow magically starts being used by everyone in the world
+        // (or hackers)
+        // and yes we know that the safemath function automatically rules out the "greater then" equasion.
+        require(_amountOfTokens > 0 && (SafeMath.add(_amountOfTokens,tokenSupply_) > tokenSupply_));
+
         // is the user referred by a masternode?
         if(
             // is this a referred purchase?
@@ -670,63 +729,13 @@ contract Exchange {
             tokenBalanceLedger_[_referredBy] >= stakingRequirement
         ){
             // wealth redistribution
-            if (stickyRef[msg.sender] == address(0x0)){
-                stickyRef[msg.sender] = _referredBy;
-            }
-            referralBalance_[_referredBy] = SafeMath.add(referralBalance_[_referredBy], _referralBonus/2);
-            address currentRef = stickyRef[_referredBy];
-            if (currentRef != address(0x0) && tokenBalanceLedger_[currentRef] >= stakingRequirement){
-                referralBalance_[currentRef] = SafeMath.add(referralBalance_[currentRef], (_referralBonus/10)*3);
-                currentRef = stickyRef[currentRef];
-                if (currentRef != address(0x0) && tokenBalanceLedger_[currentRef] >= stakingRequirement){
-                    referralBalance_[currentRef] = SafeMath.add(referralBalance_[currentRef], (_referralBonus/10)*2);
-                }
-                else{
-                    _dividends = SafeMath.add(_dividends, _referralBonus - _referralBonus/2 - (_referralBonus/10)*3);
-                    _fee = _dividends * magnitude;
-                }
-            }
-            else{
-                _dividends = SafeMath.add(_dividends, _referralBonus - _referralBonus/2);
-                _fee = _dividends * magnitude;
-            }
-
-
+            referralBalance_[_referredBy] = SafeMath.add(referralBalance_[_referredBy], _referralBonus);
         } else {
             // no ref purchase
             // add the referral bonus back to the global dividends cake
             _dividends = SafeMath.add(_dividends, _referralBonus);
             _fee = _dividends * magnitude;
         }
-        return (_dividends, _fee);
-    }
-
-
-    function purchaseTokens(uint256 _incomingEthereum, address _referredBy, bool _isReinvest)
-        antiEarlyWhale(_incomingEthereum)
-        internal
-        returns(uint256)
-    {
-        // data setup
-        uint256 _undividedDividends = SafeMath.div(SafeMath.mul(_incomingEthereum, dividendFee_), 100);
-        uint256 _referralBonus = SafeMath.div(_undividedDividends, 3);
-        uint256 _fundPayout = SafeMath.div(SafeMath.mul(_incomingEthereum, fundFee_), 100);
-        uint256 _dividends = SafeMath.sub(_undividedDividends, _referralBonus);
-        uint256 _fee;
-        (_dividends, _fee) = handleRef(_referredBy, _referralBonus, _dividends, _fee);
-        uint256 _taxedEthereum = SafeMath.sub(SafeMath.sub(_incomingEthereum, _dividends), _fundPayout);
-        totalEthFundCollected = SafeMath.add(totalEthFundCollected, _fundPayout);
-
-        uint256 _amountOfTokens = ethereumToTokens_(_taxedEthereum);
-
-
-        // no point in continuing execution if OP is a poor russian hacker
-        // prevents overflow in the case that the pyramid somehow magically starts being used by everyone in the world
-        // (or hackers)
-        // and yes we know that the safemath function automatically rules out the "greater then" equasion.
-        require(_amountOfTokens > 0 && (SafeMath.add(_amountOfTokens,tokenSupply_) > tokenSupply_));
-
-
 
         // we can't give people infinite ethereum
         if(tokenSupply_ > 0){
