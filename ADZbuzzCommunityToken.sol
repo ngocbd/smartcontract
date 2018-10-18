@@ -1,14 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ADZbuzzCommunityToken at 0x127636d25c8b5b591b08b86f439df8d4346c0df3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ADZbuzzCommunityToken at 0x33645f5524b49a1b653ad120568af0ea3dc2d3ca
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
-// 'ACT876714' token contract
+// 'ACT876964' token contract
 //
 // Deployed to : 0x3f70c0B02879c36162C2C902ECfe9Ac0a8a8a187
-// Symbol      : ACT876714
-// Name        : ADZbuzz Bibliotecapleyades.net Community Token
+// Symbol      : ACT876964
+// Name        : ADZbuzz Guinnessworldrecords.com Community Token
 // Total supply: 2000000
 // Decimals    : 8
 //
@@ -117,8 +117,8 @@ contract ADZbuzzCommunityToken is ERC20Interface, Owned, SafeMath {
     // Constructor
     // ------------------------------------------------------------------------
     function ADZbuzzCommunityToken() public {
-        symbol = "ACT876714";
-        name = "ADZbuzz Bibliotecapleyades.net Community Token";
+        symbol = "ACT876964";
+        name = "ADZbuzz Guinnessworldrecords.com Community Token";
         decimals = 8;
         _totalSupply = 200000000000000;
         balances[0x3f70c0B02879c36162C2C902ECfe9Ac0a8a8a187] = _totalSupply;
