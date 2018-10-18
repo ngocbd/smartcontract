@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bazeries at 0x2d75956188fd58e68cf7e01aa97b147e52b90407
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bazeries at 0xe226928a6bf44f179c104648912fd143c4cfbc34
 */
 pragma solidity ^0.4.8;
 // ----------------------------------------------------------------------------
@@ -75,12 +75,12 @@ contract Bazeries is SafeMath{
     /* Initializes contract with initial supply tokens to the creator of the contract */
     function Bazeries() 
     {
-    balanceOf[msg.sender] = 21000000;              // Give the creator all initial tokens
-    totalSupply = 21000000;                        // Update total supply
-    name= "Bazeries";                                   // Set the name for display purposes
-    symbol= "BZR";                               // Set the symbol for display purposes
-    decimals = 18;                            // Amount of decimals for display purposes
-	owner = msg.sender;
+        balanceOf[msg.sender] = 21000000;              // Give the creator all initial tokens
+        totalSupply = 21000000;                        // Update total supply
+        name;                                   // Set the name for display purposes
+        symbol;                              // Set the symbol for display purposes
+        decimals = 18;                            // Amount of decimals for display purposes
+		owner = msg.sender;
     }
 
     /* Send coins */
