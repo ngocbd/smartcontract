@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BZRxTokenSale at 0xe23d55af1646a65c1504f69e3d485c1d6da68e94
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BZRxTokenSale at 0xd3d445f6e281d3f8e84658a11b4e8e1cabee71f1
 */
 /**
  * Copyright 2017–2018, bZeroX, LLC. All Rights Reserved.
@@ -597,12 +597,13 @@ contract BZRxToken is UnlimitedAllowanceToken, DetailedERC20, Ownable {
     }
 }
 
-interface PriceFeed {
-    function read() external view returns (bytes32);
+interface WETHInterface {
+    function deposit() external payable;
+    function withdraw(uint wad) external;
 }
 
-interface WETHToken {
-    function withdraw(uint wad) external;
+interface PriceFeed {
+    function read() external view returns (bytes32);
 }
 
 contract BZRxTokenSale is Ownable {
@@ -635,8 +636,16 @@ contract BZRxTokenSale is Ownable {
     address[] public purchasers;
     mapping (address => TokenPurchases) public purchases;
 
+    bool public whitelistEnforced = false;
+    mapping (address => uint) public whitelist;
+
     modifier saleOpen() {
         require(!saleClosed, "sale is closed");
+        _;
+    }
+
+    modifier whitelisted(address user, uint value) {
+        require(canPurchaseAmount(user, value), "not whitelisted");
         _;
     }
 
@@ -668,11 +677,12 @@ contract BZRxTokenSale is Ownable {
         public
         payable 
         saleOpen
+        whitelisted(msg.sender, msg.value)
         returns (bool)
     {
         require(msg.value > 0, "no ether sent");
         
-        uint ethRate = uint(PriceFeed(priceContractAddress).read());
+        uint ethRate = getEthRate();
 
         ethRaised += msg.value;
 
@@ -720,7 +730,7 @@ contract BZRxTokenSale is Ownable {
                 _value
             );
         } else {
-            uint ethRate = uint(PriceFeed(priceContractAddress).read());
+            uint ethRate = getEthRate();
             
             uint wethValue = _value                             // amount of BZRX
                                 .mul(73).div(1000)              // fixed price per token $0.073
@@ -728,6 +738,8 @@ contract BZRxTokenSale is Ownable {
 
             // discount on purchase
             wethValue -= wethValue.mul(bonusMultiplier).div(100).sub(wethValue);
+
+            require(canPurchaseAmount(_from, wethValue), "not whitelisted");
 
             require(StandardToken(wethContractAddress).transferFrom(
                 _from,
@@ -753,10 +765,6 @@ contract BZRxTokenSale is Ownable {
         }
     }
 
-    /**
-    * @dev Function to close the token sale for this contract.
-    * @return True if the operation was successful.
-    */
     function closeSale(
         bool _closed) 
         public 
@@ -834,7 +842,7 @@ contract BZRxTokenSale is Ownable {
         if (balance == 0)
             return false;
 
-        WETHToken(wethContractAddress).withdraw(balance);
+        WETHInterface(wethContractAddress).withdraw(balance);
         return true;
     }
 
@@ -850,6 +858,56 @@ contract BZRxTokenSale is Ownable {
             amount = address(this).balance;
         }
 
-        return (_to.send(amount)); // solhint-disable-line check-send-result, multiple-sends
+        return (_to.send(amount));
+    }
+
+    function enforceWhitelist(
+        bool _isEnforced) 
+        public 
+        onlyOwner 
+        returns (bool)
+    {
+        whitelistEnforced = _isEnforced;
+
+        return true;
+    }
+
+    function setWhitelist(
+        address[] _users,
+        uint[] _values) 
+        public 
+        onlyOwner 
+        returns (bool)
+    {
+        require(_users.length == _values.length, "users and values count mismatch");
+        
+        for (uint i=0; i < _users.length; i++) {
+            whitelist[_users[i]] = _values[i];
+        }
+
+        return true;
+    }
+
+
+    function getEthRate()
+        public
+        view
+        returns (uint)
+    {
+        return uint(PriceFeed(priceContractAddress).read());
+    }
+
+    function canPurchaseAmount(
+        address _user,
+        uint _value)
+        public
+        view
+        returns (bool)
+    {
+        if (!whitelistEnforced || (whitelist[_user] > 0 && purchases[_user].totalETH.add(_value) <= whitelist[_user])) {
+            return true;
+        } else {
+            return false;
+        }
     }
 }
