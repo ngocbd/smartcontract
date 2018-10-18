@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract fathercontract at 0x85d2b1cb300a51ccf929d109611c1301727aea0b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract fathercontract at 0x516d81a212ad95e6fc9eaa586b7e12e58d5129a9
 */
 pragma solidity^0.4.24;
 
@@ -46,8 +46,8 @@ contract fathercontract{
     function fallback(uint num,address sender,uint amount) public {
         require(contr[sender] == msg.sender);
         if (num == 10){
-            uint a = (amount+(amount/500)-value[sender])/100*5;
-            ERC20(NEO).transfer(sender,amount+(amount/500)-a);
+            uint a = (amount-value[sender])/100*5;
+            ERC20(NEO).transfer(sender,amount-a);
             ERC20(NEO).transfer(owner,a);
             value[sender] = 0;
         }else{
