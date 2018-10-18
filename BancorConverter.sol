@@ -1,7 +1,43 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorConverter at 0x9e31b635da72ffd5f6f263be5937591730a0919b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorConverter at 0x6b2b6fff0fffd452bbfc56ce285366bef31b5809
 */
 pragma solidity ^0.4.23;
+
+/*
+    Owned contract interface
+*/
+contract IOwned {
+    // this function isn't abstract since the compiler emits automatically generated getter functions as external
+    function owner() public view returns (address) {}
+
+    function transferOwnership(address _newOwner) public;
+    function acceptOwnership() public;
+}
+
+/*
+    Whitelist interface
+*/
+contract IWhitelist {
+    function isWhitelisted(address _address) public view returns (bool);
+}
+
+/*
+    Contract Registry interface
+*/
+contract IContractRegistry {
+    function addressOf(bytes32 _contractName) public view returns (address);
+
+    // deprecated, backward compatibility
+    function getAddress(bytes32 _contractName) public view returns (address);
+}
+
+/*
+    Contract Features interface
+*/
+contract IContractFeatures {
+    function isSupported(address _contract, uint256 _features) public view returns (bool);
+    function enableFeatures(uint256 _features, bool _enable) public;
+}
 
 /*
     ERC20 Standard Token interface
@@ -20,65 +56,41 @@ contract IERC20Token {
     function approve(address _spender, uint256 _value) public returns (bool success);
 }
 
-
 /*
-    Owned contract interface
+    Smart Token interface
 */
-contract IOwned {
-    // this function isn't abstract since the compiler emits automatically generated getter functions as external
-    function owner() public view returns (address) {}
-
-    function transferOwnership(address _newOwner) public;
-    function acceptOwnership() public;
-    function setOwner(address _newOwner) public;
+contract ISmartToken is IOwned, IERC20Token {
+    function disableTransfers(bool _disable) public;
+    function issue(address _to, uint256 _amount) public;
+    function destroy(address _from, uint256 _amount) public;
 }
 
-
 /*
-    Whitelist interface
+    Token Holder interface
 */
-contract IWhitelist {
-    function isWhitelisted(address _address) public view returns (bool);
+contract ITokenHolder is IOwned {
+    function withdrawTokens(IERC20Token _token, address _to, uint256 _amount) public;
 }
 
-
 /*
-    Contract Features interface
+    Bancor Converter interface
 */
-contract IContractFeatures {
-    function isSupported(address _contract, uint256 _features) public view returns (bool);
-    function enableFeatures(uint256 _features, bool _enable) public;
-}
-
-
-/*
-    Contract Registry interface
-*/
-contract IContractRegistry {
-    function addressOf(bytes32 _contractName) public view returns (address);
-
+contract IBancorConverter {
+    function getReturn(IERC20Token _fromToken, IERC20Token _toToken, uint256 _amount) public view returns (uint256);
+    function convert(IERC20Token _fromToken, IERC20Token _toToken, uint256 _amount, uint256 _minReturn) public returns (uint256);
+    function conversionWhitelist() public view returns (IWhitelist) {}
     // deprecated, backward compatibility
-    function getAddress(bytes32 _contractName) public view returns (address);
+    function change(IERC20Token _fromToken, IERC20Token _toToken, uint256 _amount, uint256 _minReturn) public returns (uint256);
 }
 
-
-/**
-    Id definitions for bancor contracts
-
-    Can be used in conjunction with the contract registry to get contract addresses
+/*
+    Bancor Formula interface
 */
-contract ContractIds {
-    // generic
-    bytes32 public constant CONTRACT_FEATURES = "ContractFeatures";
-
-    // bancor logic
-    bytes32 public constant BANCOR_NETWORK = "BancorNetwork";
-    bytes32 public constant BANCOR_FORMULA = "BancorFormula";
-    bytes32 public constant BANCOR_GAS_PRICE_LIMIT = "BancorGasPriceLimit";
-    bytes32 public constant BANCOR_CONVERTER_FACTORY = "BancorConverterFactory";
+contract IBancorFormula {
+    function calculatePurchaseReturn(uint256 _supply, uint256 _connectorBalance, uint32 _connectorWeight, uint256 _depositAmount) public view returns (uint256);
+    function calculateSaleReturn(uint256 _supply, uint256 _connectorBalance, uint32 _connectorWeight, uint256 _sellAmount) public view returns (uint256);
+    function calculateCrossConnectorReturn(uint256 _fromConnectorBalance, uint32 _fromConnectorWeight, uint256 _toConnectorBalance, uint32 _toConnectorWeight, uint256 _amount) public view returns (uint256);
 }
-
-
 
 /*
     Bancor Network interface
@@ -110,165 +122,6 @@ contract IBancorNetwork {
         bytes32 _s)
         public payable returns (uint256);
 }
-
-
-/*
-    Bancor Formula interface
-*/
-contract IBancorFormula {
-    function calculatePurchaseReturn(uint256 _supply, uint256 _connectorBalance, uint32 _connectorWeight, uint256 _depositAmount) public view returns (uint256);
-    function calculateSaleReturn(uint256 _supply, uint256 _connectorBalance, uint32 _connectorWeight, uint256 _sellAmount) public view returns (uint256);
-    function calculateCrossConnectorReturn(uint256 _fromConnectorBalance, uint32 _fromConnectorWeight, uint256 _toConnectorBalance, uint32 _toConnectorWeight, uint256 _amount) public view returns (uint256);
-}
-
-
-
-
-/*
-    Bancor Converter interface
-*/
-contract IBancorConverter {
-    function getReturn(IERC20Token _fromToken, IERC20Token _toToken, uint256 _amount) public view returns (uint256);
-    function convert(IERC20Token _fromToken, IERC20Token _toToken, uint256 _amount, uint256 _minReturn) public returns (uint256);
-    function conversionWhitelist() public view returns (IWhitelist) {}
-    // deprecated, backward compatibility
-    function change(IERC20Token _fromToken, IERC20Token _toToken, uint256 _amount, uint256 _minReturn) public returns (uint256);
-}
-
-
-
-
-
-
-
-/**
-    Id definitions for bancor contract features
-
-    Can be used to query the ContractFeatures contract to check whether a certain feature is supported by a contract
-*/
-contract FeatureIds {
-    // converter features
-    uint256 public constant CONVERTER_CONVERSION_WHITELIST = 1 << 0;
-}
-
-
-
-
-
-/*
-    Provides support and utilities for contract ownership
-*/
-contract Owned is IOwned {
-    address public owner;
-    address public newOwner;
-
-    event OwnerUpdate(address indexed _prevOwner, address indexed _newOwner);
-
-    /**
-        @dev constructor
-    */
-    constructor() public {
-        owner = msg.sender;
-    }
-
-    // allows execution by the owner only
-    modifier ownerOnly {
-        assert(msg.sender == owner);
-        _;
-    }
-
-    function setOwner(address _newOwner) public ownerOnly {
-        require(_newOwner != owner && _newOwner != address(0));
-        emit OwnerUpdate(owner, _newOwner);
-        owner = _newOwner;
-        newOwner = address(0);
-    }
-
-    /**
-        @dev allows transferring the contract ownership
-        the new owner still needs to accept the transfer
-        can only be called by the contract owner
-
-        @param _newOwner    new contract owner
-    */
-    function transferOwnership(address _newOwner) public ownerOnly {
-        require(_newOwner != owner);
-        newOwner = _newOwner;
-    }
-
-    /**
-        @dev used by a new owner to accept an ownership transfer
-    */
-    function acceptOwnership() public {
-        require(msg.sender == newOwner);
-        emit OwnerUpdate(owner, newOwner);
-        owner = newOwner;
-        newOwner = address(0);
-    }
-}
-
-
-/*
-    Provides support and utilities for contract management
-    Note that a managed contract must also have an owner
-*/
-contract Managed is Owned {
-    address public manager;
-    address public newManager;
-
-    event ManagerUpdate(address indexed _prevManager, address indexed _newManager);
-
-    /**
-        @dev constructor
-    */
-    constructor() public {
-        manager = msg.sender;
-    }
-
-    // allows execution by the manager only
-    modifier managerOnly {
-        assert(msg.sender == manager);
-        _;
-    }
-
-    // allows execution by either the owner or the manager only
-    modifier ownerOrManagerOnly {
-        require(msg.sender == owner || msg.sender == manager);
-        _;
-    }
-
-    /**
-        @dev allows transferring the contract management
-        the new manager still needs to accept the transfer
-        can only be called by the contract manager
-
-        @param _newManager    new contract manager
-    */
-    function transferManagement(address _newManager) public ownerOrManagerOnly {
-        require(_newManager != manager);
-        newManager = _newManager;
-    }
-
-    /**
-        @dev used by a new manager to accept a management transfer
-    */
-    function acceptManagement() public {
-        require(msg.sender == newManager);
-        emit ManagerUpdate(manager, newManager);
-        manager = newManager;
-        newManager = address(0);
-    }
-
-    function setManager(address _newManager) public managerOnly {
-        require(_newManager != manager && _newManager != address(0));
-        emit ManagerUpdate(manager, _newManager);
-        manager = _newManager;
-        newManager = address(0);
-    }
-    
-}
-
-
 
 /*
     Utilities & Common Modifiers
@@ -342,21 +195,128 @@ contract Utils {
     }
 }
 
-
-
-
-
-
-
 /*
-    Token Holder interface
+    Provides support and utilities for contract ownership
 */
-contract ITokenHolder is IOwned {
-    function withdrawTokens(IERC20Token _token, address _to, uint256 _amount) public;
+contract Owned is IOwned {
+    address public owner;
+    address public newOwner;
+
+    event OwnerUpdate(address indexed _prevOwner, address indexed _newOwner);
+
+    /**
+        @dev constructor
+    */
+    constructor() public {
+        owner = msg.sender;
+    }
+
+    // allows execution by the owner only
+    modifier ownerOnly {
+        assert(msg.sender == owner);
+        _;
+    }
+
+    /**
+        @dev allows transferring the contract ownership
+        the new owner still needs to accept the transfer
+        can only be called by the contract owner
+
+        @param _newOwner    new contract owner
+    */
+    function transferOwnership(address _newOwner) public ownerOnly {
+        require(_newOwner != owner);
+        newOwner = _newOwner;
+    }
+
+    /**
+        @dev used by a new owner to accept an ownership transfer
+    */
+    function acceptOwnership() public {
+        require(msg.sender == newOwner);
+        emit OwnerUpdate(owner, newOwner);
+        owner = newOwner;
+        newOwner = address(0);
+    }
 }
 
+/*
+    Provides support and utilities for contract management
+    Note that a managed contract must also have an owner
+*/
+contract Managed is Owned {
+    address public manager;
+    address public newManager;
 
+    event ManagerUpdate(address indexed _prevManager, address indexed _newManager);
 
+    /**
+        @dev constructor
+    */
+    constructor() public {
+        manager = msg.sender;
+    }
+
+    // allows execution by the manager only
+    modifier managerOnly {
+        assert(msg.sender == manager);
+        _;
+    }
+
+    // allows execution by either the owner or the manager only
+    modifier ownerOrManagerOnly {
+        require(msg.sender == owner || msg.sender == manager);
+        _;
+    }
+
+    /**
+        @dev allows transferring the contract management
+        the new manager still needs to accept the transfer
+        can only be called by the contract manager
+
+        @param _newManager    new contract manager
+    */
+    function transferManagement(address _newManager) public ownerOrManagerOnly {
+        require(_newManager != manager);
+        newManager = _newManager;
+    }
+
+    /**
+        @dev used by a new manager to accept a management transfer
+    */
+    function acceptManagement() public {
+        require(msg.sender == newManager);
+        emit ManagerUpdate(manager, newManager);
+        manager = newManager;
+        newManager = address(0);
+    }
+}
+
+/**
+    Id definitions for bancor contracts
+
+    Can be used in conjunction with the contract registry to get contract addresses
+*/
+contract ContractIds {
+    // generic
+    bytes32 public constant CONTRACT_FEATURES = "ContractFeatures";
+
+    // bancor logic
+    bytes32 public constant BANCOR_NETWORK = "BancorNetwork";
+    bytes32 public constant BANCOR_FORMULA = "BancorFormula";
+    bytes32 public constant BANCOR_GAS_PRICE_LIMIT = "BancorGasPriceLimit";
+    bytes32 public constant BANCOR_CONVERTER_FACTORY = "BancorConverterFactory";
+}
+
+/**
+    Id definitions for bancor contract features
+
+    Can be used to query the ContractFeatures contract to check whether a certain feature is supported by a contract
+*/
+contract FeatureIds {
+    // converter features
+    uint256 public constant CONVERTER_CONVERSION_WHITELIST = 1 << 0;
+}
 
 /*
     We consider every contract to be a 'token holder' since it's currently not possible
@@ -390,7 +350,6 @@ contract TokenHolder is ITokenHolder, Owned, Utils {
         assert(_token.transfer(_to, _amount));
     }
 }
-
 
 /*
     The smart token controller is an upgradable part of the smart token that allows
@@ -481,37 +440,6 @@ contract SmartTokenController is TokenHolder {
         ITokenHolder(token).withdrawTokens(_token, _to, _amount);
     }
 }
-
-
-
-
-
-/*
-    Smart Token interface
-*/
-contract ISmartToken is IOwned, IERC20Token {
-    function disableTransfers(bool _disable) public;
-    function issue(address _to, uint256 _amount) public;
-    function destroy(address _from, uint256 _amount) public;
-}
-
-
-
-
-
-
-
-
-
-/*
-    Ether Token interface
-*/
-contract IEtherToken is ITokenHolder, IERC20Token {
-    function deposit() public payable;
-    function withdraw(uint256 _amount) public;
-    function withdrawTo(address _to, uint256 _amount) public;
-}
-
 
 /*
     Bancor Converter v0.10
