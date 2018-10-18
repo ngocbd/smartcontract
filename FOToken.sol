@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FOToken at 0xf554e037e79ea654fe7b7783cfa25fc2e19fd175
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FOToken at 0x112ad8c6c507fdf38dc0cc493fe470f07f2a9273
 */
 pragma solidity ^0.4.18;
 
@@ -7,9 +7,9 @@ pragma solidity ^0.4.18;
 // 'FO Token' token contract
 //
 // Deployed to : 0x743fd6d924ae32ccddb377f11d43129cdd0d0d00
-// Symbol      : FO
+// Symbol      : FOD
 // Name        : FO Token
-// Total supply: 1000000000a
+// Total supply: 1000000000
 // Decimals    : 18
 //
 // Enjoy.
@@ -116,10 +116,10 @@ contract FOToken is ERC20Interface, Owned, SafeMath {
     // Constructor
     // ------------------------------------------------------------------------
     function FOToken() public {
-        symbol = "FO";
-        name = "Fo Token";
+        symbol = "FOD";
+        name = "FO Token";
         decimals = 18;
-        _totalSupply = 1000000000000e18; //????
+        _totalSupply = 1000000000e18; //????
         balances[0x743fd6d924ae32ccddb377f11d43129cdd0d0d00] = _totalSupply;
         Transfer(address(0), 0x743fd6d924ae32ccddb377f11d43129cdd0d0d00, _totalSupply);
     }
