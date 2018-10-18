@@ -1,8 +1,28 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VOXTrader at 0xa0c71a02cf40546ab5581919a15bc76720ee5064
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VOXTrader at 0x01e15429fedbc08dec25e127df09b4af17167f5e
 */
 pragma solidity 0.4.24;
 
+
+/**
+* VOXTrader for the talketh.io ICO by Horizon-Globex.com of Switzerland.
+*
+* An ERC20 compliant DEcentralized eXchange [DEX] https://talketh.io/dex
+*
+* ICO issuers that utilize the Swiss token issuance standard from Horizon Globex
+* are supplied with a complete KYC+AML platform, an ERC20 token issuance platform,
+* a Transfer Agent service, and a post-ICO ERC20 DEX for their investor exit strategy.
+*
+* Trade events shall be rebroadcast on issuers Twitter feed https://twitter.com/talkethICO
+*
+* -- DEX Platform Notes --
+* 1. By default, only KYC'ed hodlers of tokens may participate on this DEX.
+*    - Issuer is free to relax this restriction subject to counsels Legal Opinion.
+* 2. The issuer has sole discretion to set a minimum bid and a maximum ask. 
+* 3. Seller shall pay a trade execution fee in ETH which is automatically deducted herein. 
+*    - Issuer is free to amend the trade execution fee percentage from time to time.
+*
+*/
 
 // ----------------------------------------------------------------------------
 // ERC Token Standard #20 Interface
@@ -38,7 +58,7 @@ contract HorizonContractBase {
 
     // Contract authorization - only allow the owner to perform certain actions.
     modifier onlyOwner {
-        require(msg.sender == owner);
+        require(msg.sender == owner, "Only the owner can call this function.");
         _;
     }
 }
@@ -94,18 +114,69 @@ library SafeMath {
         return c;
     }
 }
+/// math.sol -- mixin for inline numerical wizardry
+
+// Taken from: https://dapp.tools/dappsys/ds-math.html
+
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+
+library DSMath {
+    
+    function dsAdd(uint x, uint y) internal pure returns (uint z) {
+        require((z = x + y) >= x);
+    }
+
+    function dsMul(uint x, uint y) internal pure returns (uint z) {
+        require(y == 0 || (z = x * y) / y == x);
+    }
+
+    uint constant WAD = 10 ** 18;
+
+    function wmul(uint x, uint y) internal pure returns (uint z) {
+        z = dsAdd(dsMul(x, y), WAD / 2) / WAD;
+    }
+
+    function wdiv(uint x, uint y) internal pure returns (uint z) {
+        z = dsAdd(dsMul(x, WAD), y / 2) / y;
+    }
+}
 
 
 /**
- * VOXToken trader contract for the Talketh.io ICO by Horizon-Globex.com of Switzerland.
- *
- * Author: Horizon Globex GmbH Development Team
- *
- */
-
-
+* VOXTrader for the talketh.io ICO by Horizon-Globex.com of Switzerland.
+*
+* An ERC20 compliant DEcentralized eXchange [DEX] https://talketh.io/dex
+*
+* ICO issuers that utilize the Swiss token issuance standard from Horizon Globex
+* are supplied with a complete KYC+AML platform, an ERC20 token issuance platform,
+* a Transfer Agent service, and a post-ICO ERC20 DEX for their investor exit strategy.
+*
+* Trade events shall be rebroadcast on issuers Twitter feed https://twitter.com/talkethICO
+*
+* -- DEX Platform Notes --
+* 1. By default, only KYC'ed hodlers of tokens may participate on this DEX.
+*    - Issuer is free to relax this restriction subject to counsels Legal Opinion.
+* 2. The issuer has sole discretion to set a minimum bid and a maximum ask. 
+* 3. Seller shall pay a trade execution fee in ETH which is automatically deducted herein. 
+*    - Issuer is free to amend the trade execution fee percentage from time to time.
+*
+*/
 contract VOXTrader is HorizonContractBase {
     using SafeMath for uint256;
+    using DSMath for uint256;
 
     struct TradeOrder {
         uint256 quantity;
@@ -125,23 +196,23 @@ contract VOXTrader is HorizonContractBase {
     // The price paid for the last sale of tokens on this contract.
     uint256 public lastSellPrice;
 
-    // The lowest price an asks can be placed.
+    // The highest price an asks can be placed.
     uint256 public sellCeiling;
 
-    // The highest price an ask can be placed.
+    // The lowest price an ask can be placed.
     uint256 public sellFloor;
 
-    // The percentage taken off transferred tokens during a buy.
-    uint256 public tokenFeePercent;
-    
-    // The minimum fee when buying tokens (if the calculated percent is less than this value);
-    uint256 public tokenFeeMin;
-    
     // The percentage taken off the cost of buying tokens in Ether.
     uint256 public etherFeePercent;
     
     // The minimum Ether fee when buying tokens (if the calculated percent is less than this value);
     uint256 public etherFeeMin;
+
+    // Both buying and selling tokens is restricted to only those who have successfully passed KYC.
+    bool public enforceKyc;
+
+    // The addresses of those allowed to trade using this contract.
+    mapping (address => bool) public tradingWhitelist;
 
     // A sell order was put into the order book.
     event TokensOffered(address indexed who, uint256 quantity, uint256 price, uint256 expiry);
@@ -149,8 +220,14 @@ contract VOXTrader is HorizonContractBase {
     // A user bought tokens from another user.
     event TokensPurchased(address indexed purchaser, address indexed seller, uint256 quantity, uint256 price);
 
+    // A user updated their ask.
+    event TokenOfferChanged(address who, uint256 quantity, uint256 price, uint256 expiry);
+
     // A user bought phone credit using a top-up voucher, buy VOX Tokens on thier behalf to convert to phone credit.
     event VoucherRedeemed(uint256 voucherCode, address voucherOwner, address tokenSeller, uint256 quantity);
+
+    // The contract has been shut down.
+    event ContractRetired(address newAddcontract);
 
 
     /**
@@ -161,6 +238,10 @@ contract VOXTrader is HorizonContractBase {
     constructor(address tokenContract_) public {
         owner = msg.sender;
         tokenContract = tokenContract_;
+
+        // On publication the only person allowed trade is the issuer/owner.
+        enforceKyc = true;
+        setTradingAllowed(msg.sender, true);
     }
 
     /**
@@ -181,14 +262,13 @@ contract VOXTrader is HorizonContractBase {
      * @param price     The unit price of the tokens.
      * @param expiry    The date and time this order ends.
      */
-    function sell(uint256 quantity, uint256 price, uint256 expiry) public {
+    function offer(uint256 quantity, uint256 price, uint256 expiry) public {
+        require(enforceKyc == false || isAllowedTrade(msg.sender), "You are unknown and not allowed to trade.");
         require(quantity > 0, "You must supply a quantity.");
         require(price > 0, "The sale price cannot be zero.");
         require(expiry > block.timestamp, "Cannot have an expiry date in the past.");
         require(price >= sellFloor, "The ask is below the minimum allowed.");
         require(sellCeiling == 0 || price <= sellCeiling, "The ask is above the maximum allowed.");
-		//require(!willLosePrecision(quantity), "The ask quantity will lose precision when multiplied by price, the bottom 9 digits must be zeroes.");
-		//require(!willLosePrecision(price), "The ask price will lose precision when multiplied by quantity, the bottom 9 digits must be zeroes.");
 
         uint256 allowed = ERC20Interface(tokenContract).allowance(msg.sender, this);
         require(allowed >= quantity, "You must approve the transfer of tokens before offering them for sale.");
@@ -207,33 +287,33 @@ contract VOXTrader is HorizonContractBase {
      * @param quantity  The number of tokens to buy.
      * @param price     The ask price of the tokens.
     */
-    function buy(address seller, uint256 quantity, uint256 price) public payable {
+    function execute(address seller, uint256 quantity, uint256 price) public payable {
+        require(enforceKyc == false || (isAllowedTrade(msg.sender) && isAllowedTrade(seller)), "Buyer and Seller must be approved to trade on this exchange.");
         TradeOrder memory order = orderBook[seller];
         require(order.price == price, "Buy price does not match the listed sell price.");
         require(block.timestamp < order.expiry, "Sell order has expired.");
+        require(price >= sellFloor, "The bid is below the minimum allowed.");
+        require(sellCeiling == 0 || price <= sellCeiling, "The bid is above the maximum allowed.");
 
+        // Deduct the sold tokens from the sell order immediateley to prevent re-entrancy.
         uint256 tradeQuantity = order.quantity > quantity ? quantity : order.quantity;
-        uint256 cost = multiplyAtPrecision(tradeQuantity, order.price, 9);
-        require(msg.value >= cost, "You did not send enough Ether to purchase the tokens.");
-
-        uint256 tokenFee;
-        uint256 etherFee;
-        (tokenFee, etherFee) = calculateFee(tradeQuantity, cost);
-
-        if(!ERC20Interface(tokenContract).transferFrom(seller, msg.sender, tradeQuantity.sub(tokenFee))) {
-            revert("Unable to transfer tokens from seller to buyer.");
-        }
-
-        // Send any tokens taken as fees to the owner account to be burned.
-        if(tokenFee > 0 && !ERC20Interface(tokenContract).transferFrom(seller, owner, tokenFee)) {
-            revert("Unable to transfer tokens from seller to buyer.");
-        }
-
-        // Deduct the sold tokens from the sell order.
         order.quantity = order.quantity.sub(tradeQuantity);
+        if (order.quantity == 0) {
+            order.price = 0;
+            order.expiry = 0;
+        }
         orderBook[seller] = order;
 
-        // Pay the seller.
+        uint256 cost = tradeQuantity.wmul(order.price);
+        require(msg.value >= cost, "You did not send enough Ether to purchase the tokens.");
+
+        uint256 etherFee = calculateFee(cost);
+
+        if(!ERC20Interface(tokenContract).transferFrom(seller, msg.sender, tradeQuantity)) {
+            revert("Unable to transfer tokens from seller to buyer.");
+        }
+
+        // Pay the seller and if applicable the fee to the issuer.
         seller.transfer(cost.sub(etherFee));
         if(etherFee > 0)
             owner.transfer(etherFee);
@@ -244,22 +324,94 @@ contract VOXTrader is HorizonContractBase {
     }
 
     /**
-     * @notice Set the percent fee applied to tokens that are transferred.
-     *
-     * @param percent   The new percentage value at 18 decimal places.
+     * @notice Cancel an outstanding order.
      */
-    function setTokenFeePercent(uint256 percent) public onlyOwner {
-        require(percent <= 100000000000000000000, "Percent must be between 0 and 100.");
-        tokenFeePercent = percent;
+    function cancel() public {
+        orderBook[msg.sender] = TradeOrder(0, 0, 0);
+
+        TradeOrder memory order = orderBook[msg.sender];
+        emit TokenOfferChanged(msg.sender, order.quantity, order.price, order.expiry);
+    }
+
+    /** @notice Allow/disallow users from participating in trading.
+     *
+     * @param who       The user 
+     * @param canTrade  True to allow trading, false to disallow.
+    */
+    function setTradingAllowed(address who, bool canTrade) public onlyOwner {
+        tradingWhitelist[who] = canTrade;
     }
 
     /**
-     * @notice Set the minimum number of tokens to be deducted during a buy.
+     * @notice Check if a user is allowed to trade.
      *
-     * @param min   The new minimum value.
+     * @param who   The user to check.
      */
-    function setTokenFeeMin(uint256 min) public onlyOwner {
-        tokenFeeMin = min;
+    function isAllowedTrade(address who) public view returns (bool) {
+        return tradingWhitelist[who];
+    }
+
+    /**
+     * @notice Restrict trading to only those who are whitelisted.  This is true during the ICO.
+     *
+     * @param enforce   True to restrict trading, false to open it up.
+    */
+    function setEnforceKyc(bool enforce) public onlyOwner {
+        enforceKyc = enforce;
+    }
+
+    /**
+     * @notice Modify the price of an existing ask.
+     *
+     * @param price     The new price.
+     */
+    function setOfferPrice(uint256 price) public {
+        require(enforceKyc == false || isAllowedTrade(msg.sender), "You are unknown and not allowed to trade.");
+        require(price >= sellFloor && (sellCeiling == 0 || price <= sellCeiling), "Updated price is out of range.");
+
+        TradeOrder memory order = orderBook[msg.sender];
+        require(order.price != 0 || order.expiry != 0, "There is no existing order to modify.");
+        
+        order.price = price;
+        orderBook[msg.sender] = order;
+
+        emit TokenOfferChanged(msg.sender, order.quantity, order.price, order.expiry);
+    }
+
+    /**
+     * @notice Change the number of VOX Tokens offered by this user.  NOTE: to set the quantity to zero use cancel().
+     *
+     * @param quantity  The new quantity of the ask.
+     */
+    function setOfferSize(uint256 quantity) public {
+        require(enforceKyc == false || isAllowedTrade(msg.sender), "You are unknown and not allowed to trade.");
+        require(quantity > 0, "Size must be greater than zero, change rejected.");
+        uint256 balance = ERC20Interface(tokenContract).balanceOf(msg.sender);
+        require(balance >= quantity, "Not enough tokens owned to complete the order change.");
+        uint256 allowed = ERC20Interface(tokenContract).allowance(msg.sender, this);
+        require(allowed >= quantity, "You must approve the transfer of tokens before offering them for sale.");
+
+        TradeOrder memory order = orderBook[msg.sender];
+        order.quantity = quantity;
+        orderBook[msg.sender] = order;
+
+        emit TokenOfferChanged(msg.sender, quantity, order.price, order.expiry);
+    }
+
+    /**
+     * @notice Modify the expiry date of an existing ask.
+     *
+     * @param expiry    The new expiry date.
+     */
+    function setOfferExpiry(uint256 expiry) public {
+        require(enforceKyc == false || isAllowedTrade(msg.sender), "You are unknown and not allowed to trade.");
+        require(expiry > block.timestamp, "Cannot have an expiry date in the past.");
+
+        TradeOrder memory order = orderBook[msg.sender];
+        order.expiry = expiry;
+        orderBook[msg.sender] = order;
+
+        emit TokenOfferChanged(msg.sender, order.quantity, order.price, order.expiry);        
     }
 
     /**
@@ -282,24 +434,19 @@ contract VOXTrader is HorizonContractBase {
     }
 
     /**
-     * @notice Calculate the company's fee for facilitating the transfer of tokens.  The fee can be deducted
-     * from the number of tokens the buyer purchased or the amount of ether being paid to the seller or both.
+     * @notice Calculate the company's fee for facilitating the transfer of tokens.  The fee is in Ether so
+     * is deducted from the seller of the tokens.
      *
-     * @param tokens    The number of tokens being transferred.
      * @param ethers    The amount of Ether to pay for the tokens.
-     * @return tokenFee The number of tokens taken as a fee during a transfer.
-     * @return etherFee The amount of Ether taken as a fee during a transfer. 
+     * @return fee      The amount of Ether taken as a fee during a transfer.
      */
-    function calculateFee(uint256 tokens, uint256 ethers) public view returns (uint256 tokenFee, uint256 etherFee) {
-        tokenFee = multiplyAtPrecision(tokens, tokenFeePercent / 100, 9);
-        if(tokenFee < tokenFeeMin)
-            tokenFee = tokenFeeMin;
+    function calculateFee(uint256 ethers) public view returns (uint256 fee) {
 
-        etherFee = multiplyAtPrecision(ethers, etherFeePercent / 100, 9);
-        if(etherFee < etherFeeMin)
-            etherFee = etherFeeMin;            
+        fee = ethers.wmul(etherFeePercent / 100);
+        if(fee < etherFeeMin)
+            fee = etherFeeMin;            
 
-        return (tokenFee, etherFee);
+        return fee;
     }
 
     /**
@@ -311,17 +458,24 @@ contract VOXTrader is HorizonContractBase {
      * @param lastQuantity  The quantity of tokens to buy from the last seller on the list (the other asks
      *                      are bought in full).
      */
-    function multiBuy(address[] sellers, uint256 lastQuantity) public payable {
+    function multiExecute(address[] sellers, uint256 lastQuantity) public payable returns (uint256 totalVouchers) {
+        require(enforceKyc == false || isAllowedTrade(msg.sender), "You are unknown and not allowed to trade.");
+
+        totalVouchers = 0;
 
         for (uint i = 0; i < sellers.length; i++) {
             TradeOrder memory to = orderBook[sellers[i]];
             if(i == sellers.length-1) {
-                buy(sellers[i], lastQuantity, to.price);
+                execute(sellers[i], lastQuantity, to.price);
+                totalVouchers += lastQuantity;
             }
             else {
-                buy(sellers[i], to.quantity, to.price);
+                execute(sellers[i], to.quantity, to.price);
+                totalVouchers += to.quantity;
             }
         }
+
+        return totalVouchers;
     }
 
     /**
@@ -330,16 +484,37 @@ contract VOXTrader is HorizonContractBase {
      *
      * @param voucherCode   The code on the e.g. scratch card that is to be redeemed for call credit.
      * @param voucherOwner  The wallet id of the user redeeming the voucher.
-     * @param tokenSeller   The wallet id selling the VOX Tokens that are converted to phone crdit.
-     * @param quantity      The number of vouchers to purchase on behalf of the voucher owner to fulfill the voucher.
+     * @param seller        The wallet id selling the VOX Tokens needed to fill the voucher.
+     * @param quantity      The quantity of VOX tokens needed to fill the voucher.
      */
-    function redeemVoucher(uint256 voucherCode, address voucherOwner, address tokenSeller, uint256 quantity) public onlyOwner payable {
+    function redeemVoucherSingle(uint256 voucherCode, address voucherOwner, address seller, uint256 quantity) public onlyOwner payable {
 
         // Send ether to the token owner and as we buy them as the owner they get burned.
-        buy(tokenSeller, quantity, orderBook[tokenSeller].price);
+        TradeOrder memory order = orderBook[seller];
+        execute(seller, quantity, order.price);
 
         // Log the event so the system can detect the successful top-up and transfer credit to the voucher owner.
-        emit VoucherRedeemed(voucherCode, voucherOwner, tokenSeller, quantity);
+        emit VoucherRedeemed(voucherCode, voucherOwner, seller, quantity);
+    }
+
+    /**
+     * @notice A user has redeemed a top-up voucher for phone credit.  This is executed by the owner as it is an internal process
+     * to convert a voucher to phone credit via VOX Tokens.
+     *
+     * @param voucherCode   The code on the e.g. scratch card that is to be redeemed for call credit.
+     * @param voucherOwner  The wallet id of the user redeeming the voucher.
+     * @param sellers       The wallet id(s) selling the VOX Tokens needed to fill the voucher.
+     * @param lastQuantity  The quantity of the last seller's ask to use, the other orders are used in full.
+     */
+    function redeemVoucher(uint256 voucherCode, address voucherOwner, address[] sellers, uint256 lastQuantity) public onlyOwner payable {
+
+        // Send ether to the token owner and as we buy them as the owner they get burned.
+        uint256 totalVouchers = multiExecute(sellers, lastQuantity);
+
+        // If we fill the voucher from multiple sellers we set the seller address to zero, the associated
+        // TokensPurchased events will contain the details of the orders filled.
+        address seller = sellers.length == 1 ? sellers[0] : 0;
+        emit VoucherRedeemed(voucherCode, voucherOwner, seller, totalVouchers);
     }
 
     /**
@@ -361,32 +536,14 @@ contract VOXTrader is HorizonContractBase {
     }
 
     /**
-     * @dev Multiply two large numbers using a reduced number of digits e.g. multiply two 10^18 numbers as
-     * 10^9 numbers to give a 10^18 result.
-     *
-     * @param num1      The first number to multiply.
-     * @param num2      The second number to multiply.
-     * @param digits    The number of trailing digits to remove.
-     * @return          The product of the two numbers at the given precision.
-     */
-    function multiplyAtPrecision(uint256 num1, uint256 num2, uint8 digits) public pure returns (uint256) {
-        return removeLowerDigits(num1, digits) * removeLowerDigits(num2, digits);
-    }
+    * @dev A newer version of this contract is available and this contract is now discontinued.
+    *
+    * @param recipient      Which account would get any ether from this contract (it shouldn't have any).
+    * @param newContract    The address of the newer version of this contract.
+    */
+    function retire(address recipient, address newContract) public onlyOwner {
+        emit ContractRetired(newContract);
 
-    /**
-     * @dev Strip off the lower n digits of a number, but only if they are zero (to prevent loss of precision).
-     *
-     * @param value     The numeric value to remove the lower digits from.
-     * @param digits    The number of digits to remove.
-     * @return          The original value (e.g. 10^18) as a smaller number (e.g. 10^9).
-     */
-    function removeLowerDigits(uint256 value, uint8 digits) public pure returns (uint256) {
-        uint256 divisor = 10 ** uint256(digits);
-        uint256 div = value / divisor;
-        uint256 mult = div * divisor;
-
-        require(mult == value, "The lower digits bring stripped off must be non-zero");
-
-        return div;
+        selfdestruct(recipient);
     }
 }
