@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AIToken at 0x929dac58cf32c693c7c9e9e72c2786525679898d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AiToken at 0x75c25b9b80c7ff2bd326f1bb9dfbd444f463cfcc
 */
 pragma solidity ^0.4.16;
 
@@ -144,15 +144,15 @@ contract PausableToken is StandardToken, Pausable {
 }
 
 
-contract AIToken is PausableToken {
+contract AiToken is PausableToken {
 
-    string public name = 'AIToken';
-    string public symbol = 'AIToken';
+    string public name = 'AiToken';
+    string public symbol = 'AiToken';
     string public version = '1.0.1';
     uint8 public decimals = 18;
     
     
-    function AIToken(uint256 initialSupply) public {
+    function AiToken(uint256 initialSupply) public {
         totalSupply = initialSupply * 10 ** uint256(decimals);
         balances[msg.sender] = totalSupply;
 
