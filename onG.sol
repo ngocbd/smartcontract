@@ -1,275 +1,129 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract oNG at 0xbfc11b16d354dd03a28564e2d5fdee46af29577a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ONG at 0x07ace122d32a927bc912d30581fceaaa264051e5
 */
-pragma solidity ^0.4.13;
-
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
-contract Ownable {
-  address public owner;
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() {
-    owner = msg.sender;
-  }
-
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) onlyOwner {
-    if (newOwner != address(0)) {
-      owner = newOwner;
-    }
-  }
-
-}
-
-contract HasNoEther is Ownable {
-
-  /**
-  * @dev Constructor that rejects incoming Ether
-  * @dev The `payable` flag is added so we can access `msg.value` without compiler warning. If we
-  * leave out payable, then Solidity will allow inheriting contracts to implement a payable
-  * constructor. By doing it this way we prevent a payable constructor from working. Alternatively
-  * we could use assembly to access msg.value.
-  */
-  function HasNoEther() payable {
-    require(msg.value == 0);
-  }
-
-  /**
-   * @dev Disallows direct send by settings a default function without the `payable` flag.
-   */
-  function() external {
-  }
-
-  /**
-   * @dev Transfer all Ether held by the contract to the owner.
-   */
-  function reclaimEther() external onlyOwner {
-    assert(owner.send(this.balance));
-  }
-}
-
-contract HasNoTokens is Ownable {
-
- /**
-  * @dev Reject all ERC23 compatible tokens
-  * @param from_ address The address that is transferring the tokens
-  * @param value_ uint256 the amount of the specified token
-  * @param data_ Bytes The data passed from the caller.
-  */
-  function tokenFallback(address from_, uint256 value_, bytes data_) external {
-    revert();
-  }
-
-  /**
-   * @dev Reclaim all ERC20Basic compatible tokens
-   * @param tokenAddr address The address of the token contract
-   */
-  function reclaimToken(address tokenAddr) external onlyOwner {
-    ERC20Basic tokenInst = ERC20Basic(tokenAddr);
-    uint256 balance = tokenInst.balanceOf(this);
-    tokenInst.transfer(owner, balance);
-  }
-}
-
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) constant returns (uint256);
-  function transfer(address to, uint256 value) returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-contract BasicToken is ERC20Basic {
-  using SafeMath for uint256;
-
-  mapping(address => uint256) balances;
-
-  /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
-  function transfer(address _to, uint256 _value) returns (bool) {
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-  /**
-  * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of. 
-  * @return An uint256 representing the amount owned by the passed address.
-  */
-  function balanceOf(address _owner) constant returns (uint256 balance) {
-    return balances[_owner];
-  }
-
-}
-
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) returns (bool);
-  function approve(address spender, uint256 value) returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-contract StandardToken is ERC20, BasicToken {
-
-  mapping (address => mapping (address => uint256)) allowed;
-
-
-  /**
-   * @dev Transfer tokens from one address to another
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amout of tokens to be transfered
-   */
-  function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
-    var _allowance = allowed[_from][msg.sender];
-
-    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
-    // require (_value <= _allowance);
-
-    balances[_to] = balances[_to].add(_value);
-    balances[_from] = balances[_from].sub(_value);
-    allowed[_from][msg.sender] = _allowance.sub(_value);
-    Transfer(_from, _to, _value);
-    return true;
-  }
-
-  /**
-   * @dev Aprove the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   * @param _spender The address which will spend the funds.
-   * @param _value The amount of tokens to be spent.
-   */
-  function approve(address _spender, uint256 _value) returns (bool) {
-
-    // To change the approve amount you first have to reduce the addresses`
-    //  allowance to zero by calling `approve(_spender, 0)` if it is not
-    //  already 0 to mitigate the race condition described here:
-    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
-
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
-
-  /**
-   * @dev Function to check the amount of tokens that an owner allowed to a spender.
-   * @param _owner address The address which owns the funds.
-   * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifing the amount of tokens still avaible for the spender.
-   */
-  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-    return allowed[_owner][_spender];
-  }
-
-}
-
-contract BurnableToken is StandardToken {
-
-	event Burn(address indexed burner, uint256 value);
-
-	/**
-	 * @dev Burns a specific amount of tokens.
-	 * @param _value The amount of token to be burned.
-	 */
-	function burn(uint256 _value) public {
-		require(_value > 0);
-		require(_value <= balances[msg.sender]);
-		// no need to require value <= totalSupply, since that would imply the
-		// sender's balance is greater than the totalSupply, which *should* be an assertion failure
-
-		address burner = msg.sender;
-		balances[burner] = balances[burner].sub(_value);
-		totalSupply = totalSupply.sub(_value);
-		Burn(burner, _value);
+pragma solidity ^0.4.24;
+contract ONG_Base{
+    struct Project{
+        address Owner;
+        uint256 Id;
+        uint256 Tokens;
+        bool Enable;
+    	}
+	struct Member{
+        address Owner;
+        uint256 Tokens;
+        bool Enable;
 	}
+	address public Oracle;
+    address public Owner;
+	address[] membersAddresses;
+    uint256 constant OwnerProject = 1;
+    uint256 public Period =1;
+	mapping (uint256=>Project) Projects;
+	mapping (address=> Member) Members;
+	
+	
+	modifier IsOracle(){
+        require(msg.sender == Oracle );
+        _;
+	}
+    modifier IsOwner(){
+        require(msg.sender == Owner);
+        _;
+    }
 }
-
-contract MintableToken is StandardToken, Ownable {
-  event Mint(address indexed to, uint256 amount);
-  event MintFinished();
-
-  bool public mintingFinished = false;
-
-
-  modifier canMint() {
-    require(!mintingFinished);
-    _;
-  }
-
-  /**
-   * @dev Function to mint tokens
-   * @param _to The address that will recieve the minted tokens.
-   * @param _amount The amount of tokens to mint.
-   * @return A boolean that indicates if the operation was successful.
-   */
-  function mint(address _to, uint256 _amount) onlyOwner canMint returns (bool) {
-    totalSupply = totalSupply.add(_amount);
-    balances[_to] = balances[_to].add(_amount);
-    Mint(_to, _amount);
-    return true;
-  }
-
-  /**
-   * @dev Function to stop minting new tokens.
-   * @return True if the operation was successful.
-   */
-  function finishMinting() onlyOwner returns (bool) {
-    mintingFinished = true;
-    MintFinished();
-    return true;
-  }
+contract ONG_ProjectFunctions is ONG_Base{
+    function Project_RemoveToken (uint256 _ProjectID, uint256 _tokens) public {
+        require(Projects[_ProjectID].Owner == msg.sender);
+        require(Projects[_ProjectID].Enable);
+        require(Projects[_ProjectID].Tokens >= _tokens);
+        Projects[_ProjectID].Tokens = Projects[_ProjectID].Tokens  - _tokens;
+    }
+    function Project_Info(uint256 _ProjectID) public view returns(address _Owner,uint256 _Id,uint256 _Tokens,bool _Enable    )  {
+         _Owner= Projects[_ProjectID].Owner;
+         _Id= Projects[_ProjectID].Id;
+         _Tokens= Projects[_ProjectID].Tokens;
+         _Enable= Projects[_ProjectID].Enable;
+    }
+    function Project_ChangeOwner(uint256 _ProjectID, address _newOwner) public{
+        require(Projects[_ProjectID].Owner == msg.sender);
+        Projects[_ProjectID].Owner = _newOwner;
+    }
+    function Project_Enable(uint256 _ProjectID) public  returns(bool) {
+        require(Projects[_ProjectID].Owner == msg.sender);
+        Projects[_ProjectID].Enable = !Projects[_ProjectID].Enable;
+        return (Projects[_ProjectID].Enable);
+    }
 }
-
-contract oNG is MintableToken, BurnableToken, HasNoEther, HasNoTokens {
-
-	string public name = "oNG";
-	string public symbol = "ONG";
-	uint256 public decimals = 18;
-
+contract ONG_MembersFunctions is ONG_Base{
+    function Member_AssingTokensToProject(uint256 _tokens, uint256 _ProjectID) public{
+        require(Period ==2);
+        require(Members[msg.sender].Tokens>=_tokens);
+        require(Members[msg.sender].Enable);
+        require(Projects[_ProjectID].Enable);
+        require(_ProjectID!=OwnerProject);
+        
+        Members[msg.sender].Tokens = Members[msg.sender].Tokens + _tokens;
+    }
+    function Members_info(address _member) public view returns(address _Owner,uint256 _Tokens,bool _Enable){
+        _Owner = Members[_member].Owner;
+        _Tokens = Members[_member].Tokens;
+        _Enable = Members[_member].Enable;
+}
+}
+contract ONG_OwnerFunction is ONG_Base{
+    function AddMember(address _member, uint256 _tokens) IsOwner public{
+        require(Members[_member].Owner != msg.sender);
+        Members[_member].Enable = true;
+        Members[_member].Owner = _member;
+        Members[_member].Tokens = _tokens;
+        membersAddresses.push(_member);
+    }
+    function AddTokensToMember(address _member, uint256 _tokens) IsOwner public{
+        require(Period ==1);
+        require(Members[_member].Enable);
+        Members[_member].Tokens =Members[_member].Tokens + _tokens;
+    }
+    function EnableMember(address _member)  IsOwner public returns(bool){
+        Members[_member].Enable = !Members[_member].Enable;
+        return(Members[_member].Enable);
+    }
+    function AddProject(uint256 _id, address _ProjectOwner) IsOwner public{
+        require(Projects[_id].Id != _id);
+        Projects[_id].Id = _id;
+        Projects[_id].Owner = _ProjectOwner;
+        Projects[_id].Enable = true;
+    }
+    function ReassingTokens(uint256 _IdProject, uint256 _tokens) IsOwner public{
+        require(Period ==3);
+        require(Projects[OwnerProject].Tokens>= _tokens);
+        Projects[OwnerProject].Tokens = Projects[OwnerProject].Tokens - _tokens;
+        Projects[_IdProject].Tokens = Projects[_IdProject].Tokens + _tokens;
+    }
+}
+contract ONG_OracleFunctions is ONG_Base{
+    function ToPeriod() IsOracle public{
+        Period ++;
+        if (Period == 3 ){
+            for (uint256 i; i> membersAddresses.length;i++ ){
+                if(Members[membersAddresses[i]].Tokens>0){
+                    Projects[OwnerProject].Tokens = Projects[OwnerProject].Tokens + Members[membersAddresses[i]].Tokens;
+                    Members[membersAddresses[i]].Tokens= 0; 
+                }
+            }
+        }
+        if( Period ==4){
+            Period = 1;
+        }
+        
+    }
+}
+contract ONG is ONG_OracleFunctions, ONG_OwnerFunction, ONG_MembersFunctions, ONG_ProjectFunctions  {
+  constructor (address _Oracle) public{
+      Owner= msg.sender;
+      Oracle = _Oracle;
+      Projects[OwnerProject].Owner = Owner;
+      Projects[OwnerProject].Enable = true;
+      Projects[OwnerProject].Id = OwnerProject;
+  }
 }
