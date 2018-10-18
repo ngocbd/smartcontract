@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RubiixToken at 0x726ba175035aa622c3c12b74efc577bb1081593a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RubiixToken at 0xc96f23a166c2cb107230a85371abf28c144aa793
 */
 pragma solidity ^0.4.24;
 
@@ -442,6 +442,8 @@ contract Adminable is Ownable {
  * @title Lockable
  * @dev The Lockable contract has an locks address map, and provides lockable control
  * functions, this simplifies the implementation of "lock transfers".
+ *
+ * The contents of this Smart Contract and all associated code is owned and operated by Rubiix, a Gibraltar company in formation.
  */
 contract Lockable is Adminable, ERC20Basic {
   using SafeMath for uint256;
@@ -589,6 +591,8 @@ contract Lockable is Adminable, ERC20Basic {
 
 /**
  * @title StandardLockableToken
+ *
+ * The contents of this Smart Contract and all associated code is owned and operated by Rubiix, a Gibraltar company in formation.
  */
 contract StandardLockableToken is Lockable, /**/ERC223Basic, /*ERC20*/StandardToken {
 
@@ -692,6 +696,8 @@ contract StandardLockableToken is Lockable, /**/ERC223Basic, /*ERC20*/StandardTo
 
 /**
  * @title StandardBurnableLockableToken
+ *
+ * The contents of this Smart Contract and all associated code is owned and operated by Rubiix, a Gibraltar company in formation.
  */
 contract StandardBurnableLockableToken is StandardLockableToken, BurnableToken {
   /**
@@ -733,6 +739,8 @@ contract StandardBurnableLockableToken is StandardLockableToken, BurnableToken {
  * @title RubiixToken
  * @dev The RubiixToken contract is an Standard ERC20 and ERC223 Lockable smart contract
  * uses as a coin
+ *
+ * The contents of this Smart Contract and all associated code is owned and operated by Rubiix, a Gibraltar company in formation.
  */
 contract RubiixToken is StandardBurnableLockableToken, Destructible {
   string public constant name = "Rubiix Token";
@@ -741,9 +749,9 @@ contract RubiixToken is StandardBurnableLockableToken, Destructible {
 
   /**
     * @dev Inits an owner, totalSupply and assigns tokens for the reserved addresses.
-    * Owner = 58%
+    * Owner = 55%
     * Team = 20%
-    * Company = 20%
+    * Company = 23%
     * Wallet = 2%
     * Fires ERC20 & ERC223 transfer events
     */
@@ -752,7 +760,7 @@ contract RubiixToken is StandardBurnableLockableToken, Destructible {
     owner = msg.sender;
     admin = 0xfb36E83F6bE7C0E9ba9FF403389001f2312121aF;
 
-    uint256 INITIAL_SUPPLY = 91626795 * (10**decimals);
+    uint256 INITIAL_SUPPLY = 223684211 * (10**decimals);
 
     // init totalSupply
     totalSupply_ = INITIAL_SUPPLY;
@@ -761,28 +769,28 @@ contract RubiixToken is StandardBurnableLockableToken, Destructible {
     bytes memory empty;
 
     // Owner = 55%
-    uint256 ownerSupply = 5039473725 * (10**(decimals-2));
+    uint256 ownerSupply =  12302631605 * (10**(decimals-2));
     balances[msg.sender] = ownerSupply;
     emit Transfer(address(0), msg.sender, ownerSupply);
     emit Transfer(address(0), msg.sender, ownerSupply, empty);
 
     // Team = 20%
     address teamAddress = 0x7B1Af4A3b427C8eED8aA36a9f997b056853d0e36;
-    uint256 teamSupply = 18325359 * (10**decimals);
+    uint256 teamSupply = 447368422 * (10**(decimals - 1));
     balances[teamAddress] = teamSupply;
     emit Transfer(address(0), teamAddress, teamSupply);
     emit Transfer(address(0), teamAddress, teamSupply, empty);
 
     // Company = 23%
     address companyAddress = 0x3AFb62d009fEe4DD66A405f191B25e77f1d64126;
-    uint256 companySupply = 2107416285 * (10**(decimals-2));
+    uint256 companySupply = 5144736853 * (10**(decimals-2));
     balances[companyAddress] = companySupply;
     emit Transfer(address(0), companyAddress, companySupply);
     emit Transfer(address(0), companyAddress, companySupply, empty);
 
     // Wallet = 2%
     address walletAddress = 0x4E44743330b950a8c624C457178AaC1355c4f6b2;
-    uint256 walletSupply = 18325359 * (10**(decimals-1));
+    uint256 walletSupply = 447368422 * (10**(decimals-2));
     balances[walletAddress] = walletSupply;
     emit Transfer(address(0), walletAddress, walletSupply);
     emit Transfer(address(0), walletAddress, walletSupply, empty);
