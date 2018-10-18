@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XCoin at 0x7ecfa7885e395d7b5218179ebb8ebee13e6966f8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XCoin at 0x0d0e7b023f9e62e4f23ec34a21a4c66cef9e3962
 */
 pragma solidity ^0.4.25;
 
@@ -473,8 +473,8 @@ contract XCoin is PauseBurnableERC827Token {
         totalSupply_ = _totalSupply;
         name = _name;
         symbol = _symbol;
-        balances[msg.sender] = _totalSupply;
-        emit Transfer(0x0, msg.sender, _totalSupply);
+        balances[owner] = _totalSupply;
+        emit Transfer(0x0, owner, _totalSupply);
     }
     function batchTransfer(address[] _tos, uint256 _value) public whenNotPaused returns (bool) {
         uint256 all = _value.mul(_tos.length);
