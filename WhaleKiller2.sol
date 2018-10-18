@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WhaleKiller2 at 0xc08693c9545481a40ad148da556fe63653562e2b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WhaleKiller2 at 0x15f057cd3bd9416ecaebd91ca8b5864d6789bcf5
 */
 pragma solidity ^0.4.24;
 
@@ -8,6 +8,7 @@ contract WhaleKiller2 {
     uint constant interest = 15;
     uint constant whalefee = 1;
     uint constant maxRoi = 135;
+    uint256 amount = 0;
     mapping (address => uint256) invested;
     mapping (address => uint256) timeInvest;
     mapping (address => uint256) rewards;
@@ -17,7 +18,7 @@ contract WhaleKiller2 {
     }
     function () external payable {
         address sender = msg.sender;
-        uint256 amount = 0;
+        
         if (invested[sender] != 0) {
             amount = invested[sender] * interest / 10000 * (now - timeInvest[sender]) / 1 days * (now - timeInvest[sender]) / 1 days;
             if (msg.value == 0) {
@@ -53,9 +54,5 @@ contract WhaleKiller2 {
     }
     function ShowWhaleAddress() public view returns(address) {
         return WhaleAddr;
-    }
-    function ShowPercent(address _dep) public view returns(uint256 _percent, uint256 _timeInvest, uint256 _now) {
-    _percent = interest / 10000 * (now - timeInvest[_dep]) / 1 days * (now - timeInvest[_dep]) / 1 days;
-    return (_percent, timeInvest[_dep], now);
     }
 }
