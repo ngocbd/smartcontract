@@ -1,7 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OneEther at 0xc5fb8e0ffa1e03d6252542cbb63c01d78d197789
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OneEther at 0x42d7c0c40a153c49212a89d0129a8cec8c23935b
 */
 pragma solidity ^0.4.24;
+
 
 contract OneEther {
 
@@ -12,6 +13,7 @@ contract OneEther {
         uint256 unit,
         uint256 recordTime
     );
+
     event onEditBet(
         uint256 indexed bID,
         address owner,
@@ -19,6 +21,7 @@ contract OneEther {
         uint256 unit,
         uint256 recordTime
     );
+
     event onOpenNewRound(
         uint256 indexed bID,
         uint256 indexed rID,
@@ -27,10 +30,12 @@ contract OneEther {
         uint256 ethAmount,
         uint256 recordTime
     );
+
     event RoundMask(
         uint256 rID,
         bytes32 hashmask
     );
+
     event onReveal(
         uint256 indexed rID,
         address winner,
@@ -40,6 +45,7 @@ contract OneEther {
         uint256 randomNumber,
         uint256 recordTime
     );
+
     event onBuyBet(
         uint256 indexed bID,
         uint256 indexed rID,
@@ -58,11 +64,13 @@ contract OneEther {
         uint256 currentKey,
         uint256 lastUpdate
     );
+
     event onRoundEnd(
         uint256 indexed bID,
         uint256 indexed rID,
         uint256 lastUpdate
     );
+
     event onWithdraw
     (
         uint256 indexed playerID,
@@ -70,12 +78,7 @@ contract OneEther {
         uint256 ethOut,
         uint256 recordTime
     );
-    event onRegistLink
-    (
-        uint256 indexed playerID,
-        address indexed playerAddress,
-        uint256 recordTime
-    );
+
     event onBuyFailed
     (
         uint256 indexed playerID,
@@ -83,12 +86,13 @@ contract OneEther {
         uint256 ethIn,
         uint256 recordTime
     );
+
     using SafeMath for *;
 
     address private owner = msg.sender;
     address private admin = msg.sender;
-    bytes32 constant public name = "OneEther";
-    bytes32 constant public symbol = "OneEther";
+    bytes32 constant public NAME = "OneEther";
+    bytes32 constant public SYMBOL = "OneEther";
     uint256 constant  MIN_BUY = 0.001 ether;
     uint256 constant  MAX_BUY = 30000 ether;
     uint256 public linkPrice_ = 0.01 ether;
@@ -99,38 +103,49 @@ contract OneEther {
     uint256 public pID = 100;
     uint256 public rID = 1000;
 
-    mapping (address => uint256) public pIDAddr_;//(addr => pID) returns player id by address
+    mapping(address => uint256) public pIDAddr_;//(addr => pID) returns player id by address
     mapping(uint256 => OneEtherDatasets.BetInfo) public bIDBet_;
-    mapping(uint256 => OneEtherDatasets.stake[]) public betList_;
+    mapping(uint256 => OneEtherDatasets.Stake[]) public betList_;
     mapping(uint256 => OneEtherDatasets.BetState) public rIDBet_;
     mapping(uint256 => OneEtherDatasets.Player) public pIDPlayer_;
-    mapping (uint256 => uint256) public bIDrID_;
+    mapping(uint256 => uint256) public bIDrID_;
+    mapping(uint256 => address) public pIDAgent_;
     uint256[] public bIDList_;
 
 //===============================================================
 //   construct
 //==============================================================
-    constructor()payable public{
-    }
+    constructor() public {}
 //===============================================================
 //   The following are safety checks
 //==============================================================
     //isActivated
-    modifier isbetActivated(uint256 _bID){require(bIDBet_[_bID].bID != 0 && bIDBet_[_bID].isActivated == true,"cant find this bet");_;}
-    modifier isActivated() {require(activated_ == true,"its not ready yet. ");_;}
+
+    modifier isAdmin() {require(msg.sender == admin, "its can only be call by admin");_;}
+
+    modifier isbetActivated(uint256 _bID) {
+        require(bIDBet_[_bID].bID != 0 && bIDBet_[_bID].isActivated == true, "cant find this bet");
+        _;
+    }
+
+    modifier isActivated() {require(activated_ == true, "its not ready yet. ");_;}
     //isAdmin
-    modifier isAdmin(){require(msg.sender == admin,"its can only be call by admin");_;}
-    //limits
-    modifier isWithinLimits(uint256 _eth){require(_eth >= MIN_BUY,"too small");require(_eth <= MAX_BUY,"too big"); _;}
+
+    modifier isWithinLimits(uint256 _eth) {
+        require(_eth >= MIN_BUY, "too small");
+        require(_eth <= MAX_BUY, "too big");
+        _;
+    }
+
     //activate game
-    function activate()isAdmin()public{require(activated_ == false,"the game is running");activated_ = true;}
+    function activate() public isAdmin() {require(activated_ == false, "the game is running");activated_ = true;}
+
     //close game  dangerous!
-    function close() isAdmin() isActivated() public{activated_ = false;}
+    function close() public isAdmin() isActivated() {activated_ = false;}
 
 //===============================================================
 //   Functions call by admin
 //==============================================================
-
     //set new admin
     function setNewAdmin(address _addr)
     public
@@ -139,22 +154,19 @@ contract OneEther {
         admin = _addr;
     }
 
-    function openNewBet(address _owner,uint256 _check,uint256 _unit)
+    function openNewBet(address _owner, uint256 _check, uint256 _unit)
+    public
     isAdmin()
     isActivated()
-    public
     {
-        require((_check >= MIN_BUY) && (_check <= MAX_BUY),"out of range");
-        require((_unit * 2) <= _check,"unit of payment dennied");
+        require((_check >= MIN_BUY) && (_check <= MAX_BUY), "out of range");
+        require((_unit * 2) <= _check, "unit of payment dennied");
         bID++;
         bIDBet_[bID].bID = bID;
         uint256 _now = now;
-        if(_owner == address(0))
-        {
+        if (_owner == address(0)) {
             bIDBet_[bID].owner = admin;
-        }
-        else
-        {
+        } else {
             bIDBet_[bID].owner = _owner;
         }
         bIDBet_[bID].check = _check;
@@ -162,26 +174,26 @@ contract OneEther {
         bIDBet_[bID].isActivated = true;
         bIDList_.push(bID);
         //emit
-        emit onOpenNewBet(bID,bIDBet_[bID].owner,_check,_unit,_now);
+        emit onOpenNewBet(bID, bIDBet_[bID].owner, _check, _unit, _now);
     }
 
-    function openFirstRound(uint256 _bID,bytes32 _maskHash)
+    function openFirstRound(uint256 _bID, bytes32 _maskHash)
     public
     isbetActivated(_bID)
     {
         address addr = msg.sender;
-        require(bIDBet_[bID].bID != 0,"cant find this bet");
-        require(bIDBet_[bID].owner == addr || bIDBet_[bID].owner == admin,"Permission denied");
-        require(bIDrID_[_bID] == 0,"One Bet can only open one round");
-        newRound(_bID,_maskHash);
+        require(bIDBet_[bID].bID != 0, "cant find this bet");
+        require(bIDBet_[bID].owner == addr || bIDBet_[bID].owner == admin, "Permission denied");
+        require(bIDrID_[_bID] == 0, "One Bet can only open one round");
+        newRound(_bID, _maskHash);
     }
 
     function closeBet(uint256 _bID)
     public
     {
         address addr = msg.sender;
-        require(bIDBet_[bID].bID != 0,"cant find this bet");
-        require(bIDBet_[bID].owner == addr || bIDBet_[bID].owner == admin,"Permission denied");
+        require(bIDBet_[bID].bID != 0, "cant find this bet");
+        require(bIDBet_[bID].owner == addr || bIDBet_[bID].owner == admin, "Permission denied");
         // this means it cant be generated next round. current round would continue to end.
         bIDBet_[_bID].isActivated = false;
         //emit
@@ -191,143 +203,150 @@ contract OneEther {
     public
     {
         address addr = msg.sender;
-        require(bIDBet_[bID].bID != 0,"cant find this bet");
-        require(bIDBet_[bID].owner == addr || bIDBet_[bID].owner == admin,"Permission denied");
-        require(bIDBet_[_bID].isActivated = false,"This bet is opening");
+        require(bIDBet_[bID].bID != 0, "cant find this bet");
+        require(bIDBet_[bID].owner == addr || bIDBet_[bID].owner == admin, "Permission denied");
+        require(bIDBet_[_bID].isActivated = false, "This bet is opening");
         bIDBet_[_bID].isActivated = true;
     }
 
-    function editBet(uint256 _bID,uint256 _check,uint256 _unit)
+    function editBet(uint256 _bID, uint256 _check, uint256 _unit)
     public
     {
-        require((_check >= MIN_BUY) && (_check <= MAX_BUY),"out of range");
+        require((_check >= MIN_BUY) && (_check <= MAX_BUY), "out of range");
         address addr = msg.sender;
-        require(bIDBet_[_bID].bID != 0,"cant find this bet");
-        require(bIDBet_[bID].owner == addr || bIDBet_[bID].owner == admin,"Permission denied");
+        require(bIDBet_[_bID].bID != 0, "cant find this bet");
+        require(bIDBet_[bID].owner == addr || bIDBet_[bID].owner == admin, "Permission denied");
 
         bIDBet_[_bID].check = _check;
         bIDBet_[_bID].unit = _unit;
-        emit onEditBet(bID,bIDBet_[bID].owner,_check,_unit,now);
-
+        emit onEditBet(bID, bIDBet_[bID].owner, _check, _unit, now);
     }
 
     function withdrawFee()
-    isAdmin()
     public
+    isAdmin()
     {
         uint256 temp = teamFee_;
         teamFee_ = 0;
         msg.sender.transfer(temp);
     }
 
+    function registAgent(address _addr)
+    public
+    isAdmin()
+    {
+        uint256 _pID = pIDAddr_[_addr];
+        if (_pID == 0) {
+            // regist a new player
+            pID++;
+            pIDAddr_[_addr] = pID;
+            // set new player struct
+            pIDPlayer_[pID].addr = _addr;
+            pIDPlayer_[pID].balance = 0;
+            pIDPlayer_[pID].agent = 0;
+
+            pIDAgent_[pID] = _addr;
+        } else {
+            pIDAgent_[_pID] = _addr;
+        }
+
+    }
+
+    function resetAgent(address _addr)
+    public
+    isAdmin() {
+        uint256 _pID = pIDAddr_[_addr];
+        if (_pID != 0) {
+            pIDAgent_[_pID] = address(0);
+        }
+    }
 
 //===============================================================
 //   functions call by gameplayer
 //==============================================================
-    function buySome(uint256 _rID,uint256 _key,uint256 _playerCode,uint256 _linkPID)
+    function buySome(uint256 _rID, uint256 _key, uint256 _playerCode, uint256 _linkPID, uint256 _agent)
     public
     payable
     {
-        require(rIDBet_[_rID].rID != 0,"cant find this round");
+        require(rIDBet_[_rID].rID != 0, "cant find this round");
         uint256 _bID = rIDBet_[_rID].bID;
-        require(bIDBet_[_bID].bID != 0,"cant find this bet");
-        require(_key <= rIDBet_[_rID].total,"key must not beyond limit");
-        require(msg.value >= bIDBet_[_bID].unit,"too small for this bet");
-        require(bIDBet_[_bID].unit * _key == msg.value,"not enough payment");
-        require(_playerCode < 100000000000000,"your random number is too big");
-        uint256 _pID = managePID(_linkPID);
+        require(bIDBet_[_bID].bID != 0, "cant find this bet");
+        require(_key <= rIDBet_[_rID].total, "key must not beyond limit");
+        require(msg.value >= bIDBet_[_bID].unit, "too small for this bet");
+        require(bIDBet_[_bID].unit * _key == msg.value, "not enough payment");
+        require(_playerCode < 100000000000000, "your random number is too big");
+        uint256 _pID = managePID(_linkPID, _agent);
 
-        if(rIDBet_[_rID].current + _key <= rIDBet_[_rID].total)
-        {
-            uint256 _value = manageLink(_pID,msg.value);
-            manageKey(_pID,_rID,_key);
+        if (rIDBet_[_rID].current + _key <= rIDBet_[_rID].total) {
+            uint256 _value = manageLink(_pID, msg.value);
+            manageKey(_pID, _rID, _key);
             rIDBet_[_rID].current = rIDBet_[_rID].current.add(_key);
             rIDBet_[_rID].ethAmount = rIDBet_[_rID].ethAmount.add(_value);
             rIDBet_[_rID].playerCode = rIDBet_[_rID].playerCode.add(_playerCode);
-            emit onBuyBet(_bID,_rID,pIDPlayer_[_pID].addr,_value,_key,_playerCode,pIDPlayer_[_pID].invator,now);
+            emit onBuyBet(_bID, _rID, pIDPlayer_[_pID].addr, _value, _key, _playerCode, pIDPlayer_[_pID].invator, now);
 
-            if(rIDBet_[_rID].current >= rIDBet_[_rID].total)
-            {
-                emit onRoundEnd(_bID,_rID,now);
+            if (rIDBet_[_rID].current >= rIDBet_[_rID].total) {
+                emit onRoundEnd(_bID, _rID, now);
             }
-        }
-        else{
+        } else {
             // failed to pay a bet,the value will be stored in player's balance
             pIDPlayer_[_pID].balance = pIDPlayer_[_pID].balance.add(msg.value);
-            emit onBuyFailed(_pID,_rID,msg.value,now);
-
+            emit onBuyFailed(_pID, _rID, msg.value, now);
         }
 
 
     }
 
-    function buyWithBalance(uint256 _rID,uint256 _key,uint256 _playerCode)
+    function buyWithBalance(uint256 _rID, uint256 _key, uint256 _playerCode)
     public
     payable
     {
         uint256 _pID = pIDAddr_[msg.sender];
-        require(_pID != 0,"player not founded in contract ");
-        require(rIDBet_[_rID].rID != 0,"cant find this round");
+        require(_pID != 0, "player not founded in contract ");
+        require(rIDBet_[_rID].rID != 0, "cant find this round");
         uint256 _bID = rIDBet_[_rID].bID;
-        require(bIDBet_[_bID].bID != 0,"cant find this bet");
+        require(bIDBet_[_bID].bID != 0, "cant find this bet");
 
         uint256 _balance = pIDPlayer_[_pID].balance;
-        require(_key <= rIDBet_[_rID].total,"key must not beyond limit");
-        require(_balance >= bIDBet_[_bID].unit,"too small for this bet");
-        require(bIDBet_[_bID].unit * _key <= _balance,"not enough balance");
-        require(_playerCode < 100000000000000,"your random number is too big");
+        require(_key <= rIDBet_[_rID].total, "key must not beyond limit");
+        require(_balance >= bIDBet_[_bID].unit, "too small for this bet");
+        require(bIDBet_[_bID].unit * _key <= _balance, "not enough balance");
+        require(_playerCode < 100000000000000, "your random number is too big");
 
-        require(rIDBet_[_rID].current + _key <= rIDBet_[_rID].total,"you beyond key");
+        require(rIDBet_[_rID].current + _key <= rIDBet_[_rID].total, "you beyond key");
         pIDPlayer_[_pID].balance = pIDPlayer_[_pID].balance.sub(bIDBet_[_bID].unit * _key);
-        uint256 _value = manageLink(_pID,bIDBet_[_bID].unit * _key);
-        manageKey(_pID,_rID,_key);
+        uint256 _value = manageLink(_pID, bIDBet_[_bID].unit * _key);
+        manageKey(_pID, _rID, _key);
         rIDBet_[_rID].current = rIDBet_[_rID].current.add(_key);
         rIDBet_[_rID].ethAmount = rIDBet_[_rID].ethAmount.add(_value);
         rIDBet_[_rID].playerCode = rIDBet_[_rID].playerCode.add(_playerCode);
 
-        emit onBuyBet(_bID,_rID,pIDPlayer_[_pID].addr,_value,_key,_playerCode,pIDPlayer_[_pID].invator,now);
+        emit onBuyBet(_bID, _rID, pIDPlayer_[_pID].addr, _value, _key, _playerCode, pIDPlayer_[_pID].invator, now);
 
-        if(rIDBet_[_rID].current == rIDBet_[_rID].total)
-        {
-            emit onRoundEnd(_bID,_rID,now);
+        if (rIDBet_[_rID].current == rIDBet_[_rID].total) {
+            emit onRoundEnd(_bID, _rID, now);
         }
     }
 
-    function buyLink()
-    public
-    payable
-    {
-        require(msg.value >= linkPrice_,"not enough payment to buy link");
-        uint256 _pID = managePID(0);
-        pIDPlayer_[_pID].VIP = true;
-        teamFee_ = teamFee_.add(msg.value);
-
-        //emit
-        emit onRegistLink(_pID,pIDPlayer_[_pID].addr,now);
-
-    }
-
-    function reveal(uint256 _rID,uint256 _scretKey,bytes32 _maskHash)
+    function reveal(uint256 _rID, uint256 _scretKey, bytes32 _maskHash)
     public
     {
-        require(rIDBet_[_rID].rID != 0,"cant find this round");
+        require(rIDBet_[_rID].rID != 0, "cant find this round");
         uint256 _bID = rIDBet_[_rID].bID;
-        require(bIDBet_[_bID].bID != 0,"cant find this bet");
-        require((bIDBet_[_bID].owner == msg.sender) || admin == msg.sender,"can only be revealed by admin or owner");
+        require(bIDBet_[_bID].bID != 0, "cant find this bet");
+        require((bIDBet_[_bID].owner == msg.sender) || admin == msg.sender, "can only be revealed by admin or owner");
         bytes32 check = keccak256(abi.encodePacked(_scretKey));
-        require(check == rIDBet_[_rID].maskHash,"scretKey is not match maskHash");
+        require(check == rIDBet_[_rID].maskHash, "scretKey is not match maskHash");
 
         uint256 modulo = rIDBet_[_rID].total;
 
          //get random , use secretnumber,playerCode,blockinfo
-        bytes32 random = keccak256(abi.encodePacked(check,rIDBet_[_rID].playerCode,(block.number + now)));
+        bytes32 random = keccak256(abi.encodePacked(check, rIDBet_[_rID].playerCode, (block.number + now)));
         uint result = (uint(random) % modulo) + 1;
         uint256 _winPID = 0;
 
-        for(uint i = 0;i < betList_[_rID].length;i++)
-        {
-            if(result >= betList_[_rID][i].start && result <= betList_[_rID][i].end)
-            {
+        for (uint i = 0; i < betList_[_rID].length; i++) {
+            if (result >= betList_[_rID][i].start && result <= betList_[_rID][i].end) {
                 _winPID = betList_[_rID][i].pID;
                 break;
             }
@@ -337,7 +356,7 @@ contract OneEther {
         uint256 teamFee = (bIDBet_[_bID].check.mul(3))/100;
         pIDPlayer_[_winPID].balance = pIDPlayer_[_winPID].balance.add(reward);
         //emit
-        emit onReveal(_rID,pIDPlayer_[_winPID].addr,reward,teamFee,_scretKey,result,now);
+        emit onReveal(_rID, pIDPlayer_[_winPID].addr, reward, teamFee, _scretKey, result, now);
 
         // delete thie round;
         delete rIDBet_[_rID];
@@ -345,22 +364,22 @@ contract OneEther {
         bIDrID_[_bID] = 0;
 
         // start to reset round
-        newRound(_bID,_maskHash);
+        newRound(_bID, _maskHash);
     }
 
     function getPlayerByAddr(address _addr)
     public
     view
-    returns(uint256,uint256,bool)
+    returns(uint256, uint256)
     {
         uint256 _pID = pIDAddr_[_addr];
-        return (_pID,pIDPlayer_[_pID].balance,pIDPlayer_[_pID].VIP);
+        return (_pID, pIDPlayer_[_pID].balance);
     }
 
     function getRoundInfoByID(uint256 _rID)
     public
     view
-    returns(uint256,uint256,uint256,uint256,uint256,bytes32,uint256)
+    returns(uint256, uint256, uint256, uint256, uint256, bytes32, uint256)
     {
         return
         (
@@ -377,7 +396,7 @@ contract OneEther {
     function getBetInfoByID(uint256 _bID)
     public
     view
-    returns(uint256,uint256,address,uint256,uint256,bool)
+    returns(uint256, uint256, address, uint256, uint256, bool)
     {
         return
         (
@@ -396,47 +415,49 @@ contract OneEther {
     returns(uint256[])
     {return(bIDList_);}
 
+    function getAgent(address _addr)
+    public
+    view
+    returns(uint256)
+    {
+        uint256 _pID = pIDAddr_[_addr];
+        return pIDAgent_[_pID] == address(0) ? 0 : _pID;
+    }
 
     function withdraw()
-    isActivated()
     public
+    isActivated()
     {
         uint256 _now = now;
         uint256 _pID = pIDAddr_[msg.sender];
         uint256 _eth;
 
-        if(_pID != 0)
-        {
+        if (_pID != 0) {
             _eth = withdrawEarnings(_pID);
-            require(_eth > 0,"no any balance left");
+            require(_eth > 0, "no any balance left");
             pIDPlayer_[_pID].addr.transfer(_eth);
 
-            emit onWithdraw(_pID,msg.sender,_eth,_now);
+            emit onWithdraw(_pID, msg.sender, _eth, _now);
         }
     }
-
-
-
 //===============================================================
 //   internal call
 //==============================================================
 
-
-    function manageKey(uint256 _pID,uint256 _rID,uint256 _key)
+    function manageKey(uint256 _pID, uint256 _rID, uint256 _key)
     private
     {
         uint256 _current = rIDBet_[_rID].current;
 
-        OneEtherDatasets.stake memory _playerstake = OneEtherDatasets.stake(0,0,0);
+        OneEtherDatasets.Stake memory _playerstake = OneEtherDatasets.Stake(0, 0, 0);
         _playerstake.start = _current + 1;
         _playerstake.end = _current + _key;
         _playerstake.pID = _pID;
 
         betList_[_rID].push(_playerstake);
-
     }
 
-    function manageLink(uint256 _pID,uint256 _value)
+    function manageLink(uint256 _pID, uint256 _value)
     private
     returns(uint256)
     {
@@ -444,25 +465,29 @@ contract OneEther {
         uint256 _value2 = _value.sub(cut);
 
         uint256 _invator = pIDPlayer_[_pID].invator;
-        if(_invator != 0)
-        {
+        if (_invator != 0) {
             uint256 cut2 = (cut.mul(60))/100; //2% for the invator
             cut = cut.sub(cut2);
             pIDPlayer_[_invator].balance = pIDPlayer_[_invator].balance.add(cut2);
         }
-
+        //agent Fee
+        uint256 _agent = pIDPlayer_[_pID].agent;
+        if (_agent != 0 && pIDAgent_[_agent] != address(0)) {
+            uint256 cut3 = (cut.mul(50))/100; //50% for the agent
+            cut = cut.sub(cut3);
+            pIDPlayer_[_agent].balance = pIDPlayer_[_agent].balance.add(cut3);
+        }
         teamFee_ = teamFee_.add(cut);
         return _value2;
     }
 
-    function managePID(uint256 _linkPID)
+    function managePID(uint256 _linkPID, uint256 _agent)
     private
     returns (uint256)
     {
         uint256 _pID = pIDAddr_[msg.sender];
 
-        if(_pID == 0)
-        {
+        if (_pID == 0) {
             // regist a new player
             pID++;
             pIDAddr_[msg.sender] = pID;
@@ -471,30 +496,28 @@ contract OneEther {
             // set new player struct
             pIDPlayer_[pID].addr = msg.sender;
             pIDPlayer_[pID].balance = 0;
-            pIDPlayer_[pID].VIP = false;
+            pIDPlayer_[pID].agent = 0;
 
-            if(pIDPlayer_[_linkPID].addr != address(0) && pIDPlayer_[_linkPID].VIP == true)
-            {
+            if (pIDPlayer_[_linkPID].addr != address(0)) {
                 pIDPlayer_[pID].invator = _linkPID;
+                pIDPlayer_[pID].agent = pIDPlayer_[_linkPID].agent;
+            } else {
+                if (pIDAgent_[_agent] != address(0)) {
+                    pIDPlayer_[pID].agent = _agent;
+                }
             }
-
             return (pID);
-        }
-
-        else{
+        } else {
             return (_pID);
         }
 
     }
 
-
-
-    function newRound(uint256 _bID,bytes32 _maskHash)
+    function newRound(uint256 _bID, bytes32 _maskHash)
     private
     {
         uint256 _total = bIDBet_[_bID].check / bIDBet_[_bID].unit;
-        if(bIDBet_[_bID].isActivated == true)
-        {
+        if (bIDBet_[_bID].isActivated == true) {
             rID++;
             rIDBet_[rID].rID = rID;
             rIDBet_[rID].bID = _bID;
@@ -505,11 +528,9 @@ contract OneEther {
             rIDBet_[rID].playerCode = 0;
 
             bIDrID_[_bID] = rID;
-            emit onOpenNewRound(_bID,rID,rIDBet_[rID].total,rIDBet_[rID].current,rIDBet_[rID].ethAmount,now);
-            emit RoundMask(rID,_maskHash);
-        }
-        else
-        {
+            emit onOpenNewRound(_bID, rID, rIDBet_[rID].total, rIDBet_[rID].current, rIDBet_[rID].ethAmount, now);
+            emit RoundMask(rID, _maskHash);
+        } else {
             bIDrID_[_bID] = 0;
         }
 
@@ -520,14 +541,14 @@ contract OneEther {
         returns(uint256)
     {
         uint256 _earnings = pIDPlayer_[_pID].balance;
-        if (_earnings > 0)
-        {
+        if (_earnings > 0) {
             pIDPlayer_[_pID].balance = 0;
         }
 
         return(_earnings);
     }
 }
+
 
 library OneEtherDatasets {
 
@@ -539,7 +560,7 @@ library OneEtherDatasets {
         bool isActivated;
     }
 
-    struct BetState{
+    struct BetState {
         uint256 rID;
         uint256 bID;
         uint256 total;
@@ -549,14 +570,14 @@ library OneEtherDatasets {
         uint256 playerCode;
     }
 
-    struct Player{
+    struct Player {
         address addr;
         uint256 balance;
         uint256 invator;
-        bool VIP;
+        uint256 agent;
     }
 
-    struct stake{
+    struct Stake {
         uint256 start;
         uint256 end;
         uint256 pID;
@@ -615,12 +636,11 @@ library SafeMath {
         pure
         returns (uint256 y)
     {
-        uint256 z = ((add(x,1)) / 2);
+        uint256 z = ((add(x, 1)) / 2);
         y = x;
-        while (z < y)
-        {
+        while (z < y) {
             y = z;
-            z = ((add((x / z),z)) / 2);
+            z = ((add((x / z), z)) / 2);
         }
     }
 
@@ -632,7 +652,7 @@ library SafeMath {
         pure
         returns (uint256)
     {
-        return (mul(x,x));
+        return (mul(x, x));
     }
 
     /**
@@ -643,15 +663,14 @@ library SafeMath {
         pure
         returns (uint256)
     {
-        if (x==0)
+        if (x == 0)
             return (0);
-        else if (y==0)
-            return (1);
-        else
-        {
+        else if (y == 0)
+                return (1);
+        else {
             uint256 z = x;
-            for (uint256 i = 1;i < y;i++)
-                z = mul(z,x);
+            for (uint256 i = 1; i < y; i++)
+                z = mul(z, x);
             return (z);
         }
     }
