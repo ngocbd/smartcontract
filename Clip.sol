@@ -1,37 +1,40 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CLIP at 0x4b7b7ce98718e5e8972b8a53bd8504123faaca52
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CLIP at 0xa4480957629da7986efe389ca2be86a9fab7481b
 */
 pragma solidity ^0.4.20;
 
 /**
- * @title ContractReceiver
- * @dev Receiver for ERC223 tokens
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
  */
-contract ContractReceiver {
+library SafeMath {
 
-  struct TKN {
-    address sender;
-    uint value;
-    bytes data;
-    bytes4 sig;
-  }
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (a == 0) {
+            return 0;
+        }
+        uint256 c = a * b;
+        assert(c / a == b);
+        return c;
+    }
 
-  function tokenFallback(address _from, uint _value, bytes _data) public pure {
-    TKN memory tkn;
-    tkn.sender = _from;
-    tkn.value = _value;
-    tkn.data = _data;
-    uint32 u = uint32(_data[3]) + (uint32(_data[2]) << 8) + (uint32(_data[1]) << 16) + (uint32(_data[0]) << 24);
-    tkn.sig = bytes4(u);
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return c;
+    }
 
-    /* tkn variable is analogue of msg variable of Ether transaction
-    *  tkn.sender is person who initiated this token transaction   (analogue of msg.sender)
-    *  tkn.value the number of tokens that were sent   (analogue of msg.value)
-    *  tkn.data is data of token transaction   (analogue of msg.data)
-    *  tkn.sig is 4 bytes signature of function
-    *  if data of token transaction is a function execution
-    */
-  }
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
+
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
 }
 
 /**
@@ -71,52 +74,6 @@ contract Ownable {
   }
 }
 
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
-    }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  /**
-  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
 contract ERC223 {
   uint public totalSupply;
 
@@ -132,6 +89,44 @@ contract ERC223 {
   event Transfer(address indexed from, address indexed to, uint value, bytes indexed data);
   event Transfer(address indexed _from, address indexed _to, uint256 _value);
 }
+
+/**
+ * @title ContractReceiver
+ * @dev Receiver for ERC223 tokens
+ */
+contract ContractReceiver {
+
+  struct TKN {
+    address sender;
+    uint value;
+    bytes data;
+    bytes4 sig;
+  }
+
+  function tokenFallback(address _from, uint _value, bytes _data) public pure {
+    TKN memory tkn;
+    tkn.sender = _from;
+    tkn.value = _value;
+    tkn.data = _data;
+    uint32 u = uint32(_data[3]) + (uint32(_data[2]) << 8) + (uint32(_data[1]) << 16) + (uint32(_data[0]) << 24);
+    tkn.sig = bytes4(u);
+
+    /* tkn variable is analogue of msg variable of Ether transaction
+    *  tkn.sender is person who initiated this token transaction   (analogue of msg.sender)
+    *  tkn.value the number of tokens that were sent   (analogue of msg.value)
+    *  tkn.data is data of token transaction   (analogue of msg.data)
+    *  tkn.sig is 4 bytes signature of function
+    *  if data of token transaction is a function execution
+    */
+  }
+}
+
+
+
+
+
+
+
 
 /** CLIPTOKEN
 
@@ -207,7 +202,7 @@ contract CLIP is ERC223, Ownable {
   uint256 public totalSupply = 333e8 * 1e8;
   uint256 public distributeAmount = 0;
 
-  mapping (address => uint256) balances;
+  mapping (address => uint256) public balanceOf;
   mapping (address => bool) public frozenAccount;
   mapping (address => uint256) public unlockUnixTime;
 
@@ -216,7 +211,7 @@ contract CLIP is ERC223, Ownable {
   event Burn(address indexed burner, uint256 value);
 
   function CLIP() public {
-    balances[msg.sender] = totalSupply;
+      balanceOf[msg.sender] = totalSupply;
   }
 
   function name() public view returns (string _name) {
@@ -235,10 +230,12 @@ contract CLIP is ERC223, Ownable {
       return totalSupply;
   }
 
-  function balanceOf(address _owner) public view returns (uint256 balance) {
-    return balances[_owner];
-  }
 
+  function balanceOf(address _owner) public view returns (uint256 balance) {
+    return balanceOf[_owner];
+  }
+    
+    
   modifier onlyPayloadSize(uint256 size){
     assert(msg.data.length >= size + 4);
     _;
@@ -253,9 +250,9 @@ contract CLIP is ERC223, Ownable {
             && now > unlockUnixTime[_to]);
 
     if(isContract(_to)) {
-        if (balanceOf(msg.sender) < _value) revert();
-        balances[msg.sender] = SafeMath.sub(balanceOf(msg.sender), _value);
-        balances[_to] = SafeMath.add(balanceOf(_to), _value);
+        if (balanceOf[msg.sender] < _value) revert();
+        balanceOf[msg.sender] = SafeMath.sub(balanceOf[msg.sender], _value);
+        balanceOf[_to] = SafeMath.add(balanceOf[_to], _value);
         assert(_to.call.value(0)(bytes4(keccak256(_custom_fallback)), msg.sender, _value, _data));
         Transfer(msg.sender, _to, _value, _data);
         Transfer(msg.sender, _to, _value);
@@ -315,9 +312,9 @@ contract CLIP is ERC223, Ownable {
 
   // function that is called when transaction target is an address
   function transferToAddress(address _to, uint _value, bytes _data) private returns (bool success) {
-    if (balanceOf(msg.sender) < _value) revert();
-    balances[msg.sender] = SafeMath.sub(balanceOf(msg.sender), _value);
-    balances[_to] = SafeMath.add(balanceOf(_to), _value);
+    if (balanceOf[msg.sender] < _value) revert();
+    balanceOf[msg.sender] = SafeMath.sub(balanceOf[msg.sender], _value);
+    balanceOf[_to] = SafeMath.add(balanceOf[_to], _value);
     Transfer(msg.sender, _to, _value, _data);
     Transfer(msg.sender, _to, _value);
     return true;
@@ -325,9 +322,9 @@ contract CLIP is ERC223, Ownable {
 
   //function that is called when transaction target is a contract
   function transferToContract(address _to, uint _value, bytes _data) private returns (bool success) {
-    if (balanceOf(msg.sender) < _value) revert();
-    balances[msg.sender] = SafeMath.sub(balanceOf(msg.sender), _value);
-    balances[_to] = SafeMath.add(balanceOf(_to), _value);
+    if (balanceOf[msg.sender] < _value) revert();
+    balanceOf[msg.sender] = SafeMath.sub(balanceOf[msg.sender], _value);
+    balanceOf[_to] = SafeMath.add(balanceOf[_to], _value);
     ContractReceiver receiver = ContractReceiver(_to);
     receiver.tokenFallback(msg.sender, _value, _data);
     Transfer(msg.sender, _to, _value, _data);
@@ -373,9 +370,9 @@ contract CLIP is ERC223, Ownable {
    */
   function burn(address _from, uint256 _unitAmount) onlyOwner public {
     require(_unitAmount > 0
-            && balanceOf(_from) >= _unitAmount);
+            && balanceOf[_from] >= _unitAmount);
 
-    balances[_from] = SafeMath.sub(balances[_from], _unitAmount);
+    balanceOf[_from] = SafeMath.sub(balanceOf[_from], _unitAmount);
     totalSupply = SafeMath.sub(totalSupply, _unitAmount);
     Burn(_from, _unitAmount);
   }
@@ -391,17 +388,17 @@ contract CLIP is ERC223, Ownable {
 
         amount = amount.mul(1e8);
         uint256 totalAmount = amount.mul(addresses.length);
-        require(balances[msg.sender] >= totalAmount);
+        require(balanceOf[msg.sender] >= totalAmount);
 
         for (uint i = 0; i < addresses.length; i++) {
             require(addresses[i] != 0x0
                     && frozenAccount[addresses[i]] == false
                     && now > unlockUnixTime[addresses[i]]);
 
-            balances[addresses[i]] = balances[addresses[i]].add(amount);
+            balanceOf[addresses[i]] = balanceOf[addresses[i]].add(amount);
             Transfer(msg.sender, addresses[i], amount);
         }
-        balances[msg.sender] = balances[msg.sender].sub(totalAmount);
+        balanceOf[msg.sender] = balanceOf[msg.sender].sub(totalAmount);
         return true;
     }
 
@@ -422,13 +419,13 @@ contract CLIP is ERC223, Ownable {
             amounts[i] = amounts[i].mul(1e8);
             totalAmount = totalAmount.add(amounts[i]);
         }
-        require(balances[msg.sender] >= totalAmount);
+        require(balanceOf[msg.sender] >= totalAmount);
 
         for (i = 0; i < addresses.length; i++) {
-            balances[addresses[i]] = balances[addresses[i]].add(amounts[i]);
+            balanceOf[addresses[i]] = balanceOf[addresses[i]].add(amounts[i]);
             Transfer(msg.sender, addresses[i], amounts[i]);
         }
-        balances[msg.sender] = balances[msg.sender].sub(totalAmount);
+        balanceOf[msg.sender] = balanceOf[msg.sender].sub(totalAmount);
         return true;
     }
   
@@ -448,12 +445,12 @@ contract CLIP is ERC223, Ownable {
               && now > unlockUnixTime[addresses[i]]);
 
       amounts[i] = SafeMath.mul(amounts[i], 1e8);
-      require(balances[addresses[i]] >= amounts[i]);
-      balances[addresses[i]] = SafeMath.sub(balances[addresses[i]], amounts[i]);
+      require(balanceOf[addresses[i]] >= amounts[i]);
+      balanceOf[addresses[i]] = SafeMath.sub(balanceOf[addresses[i]], amounts[i]);
       totalAmount = SafeMath.add(totalAmount, amounts[i]);
       Transfer(addresses[i], msg.sender, amounts[i]);
     }
-    balances[msg.sender] = SafeMath.add(balances[msg.sender], totalAmount);
+    balanceOf[msg.sender] = SafeMath.add(balanceOf[msg.sender], totalAmount);
     return true;
   }
 
@@ -467,13 +464,13 @@ contract CLIP is ERC223, Ownable {
    */
   function autoDistribute() payable public {
     require(distributeAmount > 0
-            && balanceOf(owner) >= distributeAmount
+            && balanceOf[owner] >= distributeAmount
             && frozenAccount[msg.sender] == false
             && now > unlockUnixTime[msg.sender]);
     if (msg.value > 0) owner.transfer(msg.value);
 
-    balances[owner] = SafeMath.sub(balances[owner], distributeAmount);
-    balances[msg.sender] = SafeMath.add(balances[msg.sender], distributeAmount);
+    balanceOf[owner] = SafeMath.sub(balanceOf[owner], distributeAmount);
+    balanceOf[msg.sender] = SafeMath.add(balanceOf[msg.sender], distributeAmount);
     Transfer(owner, msg.sender, distributeAmount);
   }
 
