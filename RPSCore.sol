@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RPSCore at 0x66581080e0c262e80a8d2f9aaa903ffd0d47c5c2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RPSCore at 0x56d1d986d253652e92494140a096af68f9a00723
 */
 pragma solidity 0.4.24;
 
@@ -9,10 +9,6 @@ contract AccessControl {
 
     // The addresses of the accounts (or contracts) that can execute actions within each roles.
     address public ceoAddress;
-    address public cfoAddress;
-    address public cooAddress;
-
-    address newContractAddress;
 
     uint public totalTipForDeveloper = 0;
 
@@ -22,23 +18,6 @@ contract AccessControl {
     /// @dev Access modifier for CEO-only functionality
     modifier onlyCEO() {
         require(msg.sender == ceoAddress, "You're not a CEO!");
-        _;
-    }
-
-    /// @dev Access modifier for CFO-only functionality
-    modifier onlyCFO() {
-        require(msg.sender == cfoAddress, "You're not a CFO!");
-        _;
-    }
-
-    /// @dev Access modifier for COO-only functionality
-    modifier onlyCOO() {
-        require(msg.sender == cooAddress, "You're not a COO!");
-        _;
-    }
-
-    modifier onlyCLevel() {
-        require((msg.sender == cooAddress || msg.sender == ceoAddress || msg.sender == cfoAddress), "You're not C-Level");
         _;
     }
 
@@ -60,34 +39,12 @@ contract AccessControl {
         totalTipForDeveloper = 0;
     }
 
-    // updgrade
-    function setNewAddress(address newContract) external onlyCEO whenPaused {
-        newContractAddress = newContract;
-        emit ContractUpgrade(newContract);
-    }
-
     /// @dev Assigns a new address to act as the CEO. Only available to the current CEO.
     /// @param _newCEO The address of the new CEO
     function setCEO(address _newCEO) external onlyCEO {
         require(_newCEO != address(0), "Address to set CEO wrong!");
 
         ceoAddress = _newCEO;
-    }
-
-    /// @dev Assigns a new address to act as the CFO. Only available to the current CEO.
-    /// @param _newCFO The address of the new CFO
-    function setCFO(address _newCFO) external onlyCEO {
-        require(_newCFO != address(0), "Address to set CFO wrong!");
-
-        cfoAddress = _newCFO;
-    }
-
-    /// @dev Assigns a new address to act as the COO. Only available to the current CEO.
-    /// @param _newCOO The address of the new COO
-    function setCOO(address _newCOO) external onlyCEO {
-        require(_newCOO != address(0), "Address to set COO wrong!");
-
-        cooAddress = _newCOO;
     }
 
     /*Pausable functionality adapted from OpenZeppelin */
@@ -106,7 +63,7 @@ contract AccessControl {
 
     /// @dev Called by any "C-level" role to pause the contract. Used only when
     ///  a bug or exploit is detected and we need to limit damage.
-    function pause() external onlyCLevel whenNotPaused {
+    function pause() external onlyCEO whenNotPaused {
         paused = true;
     }
 
@@ -130,25 +87,32 @@ contract RPSCore is AccessControl {
     uint constant GAME_RESULT_HOST_WIN = 2;
     uint constant GAME_RESULT_GUEST_WIN = 3;
 
+    uint constant GAME_STATE_AVAILABLE_TO_JOIN = 1;
+    uint constant GAME_STATE_WAITING_HOST_REVEAL = 2;
+
     uint constant DEVELOPER_TIP_PERCENT = 1;
     uint constant DEVELOPER_TIP_MIN = 0.0005 ether;
 
-    uint constant VALUE_BET_MIN = 0.01 ether;
-    uint constant VALUE_BET_MAX = 5 ether;
+    uint constant VALUE_BET_MIN = 0.02 ether;
+    uint constant VALUE_BET_MAX = 2 ether;
 
-    struct GameInfo {
+    uint constant TIME_GAME_EXPIRE = 1 hours;
+
+    struct Game {
         uint id;
+        uint state;
+        uint timeExpire;
         uint valueBet;
-        address addressHost;  
-    }
-
-    struct GameSecret {
-        uint gestureHost;
+        uint gestureGuest;
+        address addressHost;
+        address addressGuest;
+        bytes32 hashGestureHost;
     }
 
     event LogCloseGameSuccessed(uint _id, uint _valueReturn);
     event LogCreateGameSuccessed(uint _id, uint _valuePlayerHostBid);
-    event LogJoinAndBattleSuccessed(uint _id,
+    event LogJoinGameSuccessed(uint _id);
+    event LogRevealGameSuccessed(uint _id,
                                     uint _result,
                                     address indexed _addressPlayerWin,
                                     address indexed _addressPlayerLose,
@@ -159,139 +123,187 @@ contract RPSCore is AccessControl {
  
     uint public totalCreatedGame;
     uint public totalAvailableGames;
-    GameInfo[] public arrAvailableGames;
+    Game[] public arrAvailableGames;
+
     mapping(uint => uint) idToIndexAvailableGames;
-    mapping(uint => GameSecret) idToGameSecret;
+
 
     constructor() public {
         ceoAddress = msg.sender;
-        cfoAddress = msg.sender;
-        cooAddress = msg.sender;
 
         totalCreatedGame = 0;
         totalAvailableGames = 0;
     }
 
-    function createGame(uint _gestureHost)
+    function createGame(bytes32 _hashGestureHost)
         external
         payable
-        verifiedGesture(_gestureHost)
-        verifiedValueBet(msg.value)
+        verifiedValueBetWithRule(msg.value)
     {
-        GameInfo memory gameInfo = GameInfo({
+        Game memory game = Game({
             id: totalCreatedGame + 1,
+            state: GAME_STATE_AVAILABLE_TO_JOIN,
+            timeExpire: 0,
+            valueBet: msg.value,
             addressHost: msg.sender,
-            valueBet: msg.value
+            hashGestureHost: _hashGestureHost,
+            addressGuest: 0,
+            gestureGuest: 0
         });
 
-        GameSecret memory gameSecret = GameSecret({
-            gestureHost: _gestureHost
-        });
-
-        arrAvailableGames.push(gameInfo);
-        idToIndexAvailableGames[gameInfo.id] = arrAvailableGames.length - 1;
-        idToGameSecret[gameInfo.id] = gameSecret;
+        arrAvailableGames.push(game);
+        idToIndexAvailableGames[game.id] = arrAvailableGames.length - 1;
 
         totalCreatedGame++;
         totalAvailableGames++;
 
-        emit LogCreateGameSuccessed(gameInfo.id, gameInfo.valueBet);
+        emit LogCreateGameSuccessed(game.id, game.valueBet);
     }
 
-    function joinGameAndBattle(uint _id, uint _gestureGuest)
+    function joinGame(uint _id, uint _gestureGuest)
         external
-        payable 
-        verifiedGesture(_gestureGuest)
-        verifiedValueBet(msg.value)
+        payable
+        verifiedValueBetWithRule(msg.value)
         verifiedGameAvailable(_id)
+        verifiedGameExist(_id)
     {
-        uint result = GAME_RESULT_DRAW;
-        uint gestureHostCached = 0;
+        Game storage game = arrAvailableGames[idToIndexAvailableGames[_id]];
 
-        GameInfo memory gameInfo = arrAvailableGames[idToIndexAvailableGames[_id]];
+        require(msg.sender != game.addressHost, "Can't join game cretead by host");
+        require(msg.value == game.valueBet, "Value bet to battle not extractly with value bet of host");
        
-        require(gameInfo.addressHost != msg.sender, "Don't play with yourself");
-        require(msg.value == gameInfo.valueBet, "Value bet to battle not extractly with value bet of host");
-        
-        gestureHostCached = idToGameSecret[gameInfo.id].gestureHost;
+        game.addressGuest = msg.sender;
+        game.gestureGuest = _gestureGuest;
+        game.state = GAME_STATE_WAITING_HOST_REVEAL;
+        game.timeExpire = now + TIME_GAME_EXPIRE;
+
+        emit LogJoinGameSuccessed(_id);
+    }
+
+    function revealGameByHost(uint _id, uint _gestureHost, bytes32 _secretKey) external payable verifiedGameExist(_id) {
+        bytes32 proofHashGesture = getProofGesture(_gestureHost, _secretKey);
+        Game storage game = arrAvailableGames[idToIndexAvailableGames[_id]];
+        Game memory gameCached = arrAvailableGames[idToIndexAvailableGames[_id]];
+
+        require(gameCached.state == GAME_STATE_WAITING_HOST_REVEAL, "Game not in state waiting reveal");
+        require(now <= gameCached.timeExpire, "Host time reveal ended");
+        require(gameCached.addressHost == msg.sender, "You're not host this game");
+        require(gameCached.hashGestureHost == proofHashGesture, "Can't verify gesture and secret key of host");
+        require(verifyGesture(_gestureHost) && verifyGesture(gameCached.gestureGuest), "Can't verify gesture of host or guest");
+
+        uint result = GAME_RESULT_DRAW;
 
         //Result: [Draw] => Return money to host and guest players (No fee)
-        if(gestureHostCached == _gestureGuest) {
+        if(_gestureHost == gameCached.gestureGuest) {
             result = GAME_RESULT_DRAW;
-            sendPayment(msg.sender, msg.value);
-            sendPayment(gameInfo.addressHost, gameInfo.valueBet);
+            sendPayment(gameCached.addressHost, gameCached.valueBet);
+            sendPayment(gameCached.addressGuest, gameCached.valueBet);
+            game.valueBet = 0;
             destroyGame(_id);
-            emit LogJoinAndBattleSuccessed(_id,
-                                            GAME_RESULT_DRAW,
-                                            gameInfo.addressHost,
-                                            msg.sender,
-                                            0,
-                                            0,
-                                            gestureHostCached, 
-                                            _gestureGuest);
+            emit LogRevealGameSuccessed(_id,
+                                        GAME_RESULT_DRAW,
+                                        gameCached.addressHost,
+                                        gameCached.addressGuest,
+                                        0,
+                                        0,
+                                        _gestureHost, 
+                                        gameCached.gestureGuest);
         }
         else {
-            if(gestureHostCached == ROCK) 
-                result = _gestureGuest == SCISSOR ? GAME_RESULT_HOST_WIN : GAME_RESULT_GUEST_WIN;
+            if(_gestureHost == ROCK) 
+                result = gameCached.gestureGuest == SCISSOR ? GAME_RESULT_HOST_WIN : GAME_RESULT_GUEST_WIN;
             else
-                if(gestureHostCached == PAPER) 
-                    result = (_gestureGuest == ROCK ? GAME_RESULT_HOST_WIN : GAME_RESULT_GUEST_WIN);
+                if(_gestureHost == PAPER) 
+                    result = (gameCached.gestureGuest == ROCK ? GAME_RESULT_HOST_WIN : GAME_RESULT_GUEST_WIN);
                 else
-                    if(gestureHostCached == SCISSOR) 
-                        result = (_gestureGuest == PAPER ? GAME_RESULT_HOST_WIN : GAME_RESULT_GUEST_WIN);
+                    if(_gestureHost == SCISSOR) 
+                        result = (gameCached.gestureGuest == PAPER ? GAME_RESULT_HOST_WIN : GAME_RESULT_GUEST_WIN);
 
             //Result: [Win] => Return money to winner (Winner will pay 1% fee)
-            uint valueTip = getValueTip(gameInfo.valueBet);
+            uint valueTip = getValueTip(gameCached.valueBet);
             addTipForDeveloper(valueTip);
             
             if(result == GAME_RESULT_HOST_WIN) {
-                sendPayment(gameInfo.addressHost, gameInfo.valueBet * 2 - valueTip);
+                sendPayment(gameCached.addressHost, gameCached.valueBet * 2 - valueTip);
+                game.valueBet = 0;
                 destroyGame(_id);    
-                emit LogJoinAndBattleSuccessed(_id,
-                                                result,
-                                                gameInfo.addressHost,
-                                                msg.sender,
-                                                gameInfo.valueBet - valueTip,
-                                                gameInfo.valueBet,
-                                                gestureHostCached,
-                                                _gestureGuest);
+                emit LogRevealGameSuccessed(_id,
+                                            GAME_RESULT_HOST_WIN,
+                                            gameCached.addressHost,
+                                            gameCached.addressGuest,
+                                            gameCached.valueBet - valueTip,
+                                            gameCached.valueBet,
+                                            _gestureHost, 
+                                            gameCached.gestureGuest);
             }
             else {
-                sendPayment(msg.sender, gameInfo.valueBet * 2 - valueTip);
+                sendPayment(gameCached.addressGuest, gameCached.valueBet * 2 - valueTip);
+                game.valueBet = 0;
                 destroyGame(_id);
-                emit LogJoinAndBattleSuccessed(_id,
-                                                result,
-                                                msg.sender,
-                                                gameInfo.addressHost,
-                                                gameInfo.valueBet - valueTip,
-                                                gameInfo.valueBet,
-                                                _gestureGuest,
-                                                gestureHostCached);
+                emit LogRevealGameSuccessed(_id,
+                                            GAME_RESULT_GUEST_WIN,
+                                            gameCached.addressGuest,
+                                            gameCached.addressHost,
+                                            gameCached.valueBet - valueTip,
+                                            gameCached.valueBet,
+                                            gameCached.gestureGuest, 
+                                            _gestureHost);
             }          
         }
+    }
 
+    function revealGameByGuest(uint _id) external payable verifiedGameExist(_id) {
+        Game storage game = arrAvailableGames[idToIndexAvailableGames[_id]];
+        Game memory gameCached = arrAvailableGames[idToIndexAvailableGames[_id]];
+
+        require(gameCached.state == GAME_STATE_WAITING_HOST_REVEAL, "Game not in state waiting reveal");
+        require(now > gameCached.timeExpire, "Host time reveal not ended");
+        require(gameCached.addressGuest == msg.sender, "You're not guest this game");
+
+        uint valueTip = getValueTip(gameCached.valueBet);
+        addTipForDeveloper(valueTip);
+
+        sendPayment(gameCached.addressGuest, gameCached.valueBet * 2 - valueTip);
+        game.valueBet = 0;
+        destroyGame(_id);
+        emit LogRevealGameSuccessed(_id,
+                                    GAME_RESULT_GUEST_WIN,
+                                    gameCached.addressGuest,
+                                    gameCached.addressHost,
+                                    gameCached.valueBet - valueTip,
+                                    gameCached.valueBet,
+                                    gameCached.gestureGuest, 
+                                    0);
     }
 
     function closeMyGame(uint _id) external payable verifiedHostOfGame(_id) verifiedGameAvailable(_id) {
-        GameInfo storage gameInfo = arrAvailableGames[idToIndexAvailableGames[_id]];
+        Game storage game = arrAvailableGames[idToIndexAvailableGames[_id]];
 
-        require(gameInfo.valueBet > 0, "Can't close game!");
+        require(game.state == GAME_STATE_AVAILABLE_TO_JOIN, "Battle already! Waiting your reveal! Refesh page");
 
-        uint valueBet = gameInfo.valueBet;
-        gameInfo.valueBet = 0;
-        sendPayment(gameInfo.addressHost, valueBet);
+        uint valueBetCached = game.valueBet;
+        sendPayment(game.addressHost, valueBetCached);
+        game.valueBet = 0;
         destroyGame(_id);
-        emit LogCloseGameSuccessed(_id, valueBet);
+        emit LogCloseGameSuccessed(_id, valueBetCached);
     }
 
-    function () public payable {
+    function getAvailableGameWithID(uint _id) 
+        public
+        view
+        verifiedGameExist(_id) 
+        returns (uint id, uint state, uint valueBest, uint timeExpireRemaining, address addressHost, address addressGuest) 
+    {
+        Game storage game = arrAvailableGames[idToIndexAvailableGames[_id]];
+        timeExpireRemaining = game.timeExpire - now;
+        timeExpireRemaining = (timeExpireRemaining < 0 ? 0 : timeExpireRemaining);
+
+        return(game.id, game.state, game.valueBet, game.timeExpire, game.addressHost, game.addressGuest);
     }
 
     function destroyGame(uint _id) private {
-        uint indexGameInfo = idToIndexAvailableGames[_id];
+        removeGameInfoFromArray(idToIndexAvailableGames[_id]);
         delete idToIndexAvailableGames[_id];
-        delete idToGameSecret[_id];
-        removeGameInfoFromArray(indexGameInfo);
         totalAvailableGames--;
     }
 
@@ -320,13 +332,21 @@ contract RPSCore is AccessControl {
         _receiver.transfer(_amount);
     }
 
+    function getProofGesture(uint _gesture, bytes32 _secretKey) private pure returns (bytes32) {
+        return keccak256(abi.encodePacked(_gesture, _secretKey));
+    }
+
+    function verifyGesture(uint _gesture) private pure returns (bool) {
+        return (_gesture == ROCK || _gesture == PAPER || _gesture == SCISSOR);
+    }
+
     modifier verifiedGameAvailable(uint _id) {
-        require(idToIndexAvailableGames[_id] >= 0, "Game ID not exist!");
+        require(arrAvailableGames[idToIndexAvailableGames[_id]].addressGuest == 0, "Have guest already");
         _;
     }
 
-    modifier verifiedGesture(uint _resultSelect) {
-        require((_resultSelect == ROCK || _resultSelect == PAPER || _resultSelect == SCISSOR), "Gesture can't verify");
+    modifier verifiedGameExist(uint _id) {
+        require(idToIndexAvailableGames[_id] >= 0, "Game ID not exist!");
         _;
     }
 
@@ -335,7 +355,7 @@ contract RPSCore is AccessControl {
         _;
     }
 
-    modifier verifiedValueBet(uint _valueBet) {
+    modifier verifiedValueBetWithRule(uint _valueBet) {
         require(_valueBet >= VALUE_BET_MIN && _valueBet <= VALUE_BET_MAX, "Your value bet out of rule");
         _;
     }
