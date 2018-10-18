@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CREXToken at 0x098332c29f4b1b11f69d6988fdfdfb09120e43c4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CREXToken at 0xdafe38c5f5e40f7b11f28344154e78e57537bd66
 */
 pragma solidity ^0.4.16;
 
@@ -49,11 +49,11 @@ contract CREXToken is Ownable {
     string public constant symbol = "CRXT";
     uint8 public constant decimals = 18;
 
-    uint256 constant restrictedPercent = 25; //should never be set above 100
+    uint256 constant restrictedPercent = 35; //should never be set above 100
     address constant restrictedAddress = 0x237c494b5B0164593898Fb95703c532A5340f12E;
     uint256 constant mintFinishTime = 1551448800;
     uint256 constant transferAllowTime = 1552140000;
-    uint256 public constant hardcap = 299000000 * 1 ether;
+    uint256 public constant hardcap = 399000000 * 1 ether;
     
     bool public transferAllowed = false;
     bool public mintingFinished = false;
