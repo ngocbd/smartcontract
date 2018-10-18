@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitRich at 0xf293df3337bdfc76a454ce00b3d2fa5c8ba086a5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BITRICH at 0x21b6639b8b10fdab5c7f110f81b23156522c67bb
 */
-pragma solidity ^0.4.25;
+pragma solidity ^0.4.24;
 
 /**
  * @title SafeMath
@@ -9,7 +9,7 @@ pragma solidity ^0.4.25;
 library SafeMath {
 
     /**
-    * Multiplies two numbers, throws on overflow.
+    * @dev Multiplies two numbers, throws on overflow.
     */
     function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
         if (a == 0) {
@@ -21,7 +21,7 @@ library SafeMath {
     }
 
     /**
-    * Integer division of two numbers, truncating the quotient.
+    * @dev Integer division of two numbers, truncating the quotient.
     */
     function div(uint256 a, uint256 b) internal pure returns (uint256) {
         // assert(b > 0); // Solidity automatically throws when dividing by 0
@@ -31,7 +31,7 @@ library SafeMath {
     }
 
     /**
-    * Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+    * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
     */
     function sub(uint256 a, uint256 b) internal pure returns (uint256) {
         assert(b <= a);
@@ -39,7 +39,7 @@ library SafeMath {
     }
 
     /**
-    * Adds two numbers, throws on overflow.
+    * @dev Adds two numbers, throws on overflow.
     */
     function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
         c = a + b;
@@ -48,7 +48,7 @@ library SafeMath {
     }
 }
 
-contract ALTokens {
+contract ForeignToken {
     function balanceOf(address _owner) constant public returns (uint256);
     function transfer(address _to, uint256 _value) public returns (bool);
 }
@@ -67,7 +67,7 @@ contract ERC20 is ERC20Basic {
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-contract BitRich is ERC20 {
+contract BITRICH is ERC20 {
     
     using SafeMath for uint256;
     address owner = msg.sender;
@@ -75,25 +75,21 @@ contract BitRich is ERC20 {
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;    
 
-    string public constant name = "BitRich";
+    string public constant name = "BITRICH";
     string public constant symbol = "BTH";
-    uint public constant decimals = 8;
+    uint public constant decimals = 18;
     
-    uint256 public totalSupply = 7000000000e8;
-    uint256 public totalDistributed = 0;        
-    uint256 public tokensPerEth = 10000000e8;
-    uint256 public constant minContribution = 1 ether / 100; // 0.01 Ether
+    uint256 public totalSupply = 7000000000e18; // Supply
+    uint256 public totalDistributed = 5000000000e18;    
+    uint256 public constant MIN_CONTRIBUTION = 1 ether / 100; // 0.01 Ether
+    uint256 public tokensPerEth = 10000000e18;
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-    
     event Distr(address indexed to, uint256 amount);
     event DistrFinished();
-
     event Airdrop(address indexed _owner, uint _amount, uint _balance);
-
     event TokensPerEthUpdated(uint _tokensPerEth);
-    
     event Burn(address indexed burner, uint256 value);
 
     bool public distributionFinished = false;
@@ -109,10 +105,9 @@ contract BitRich is ERC20 {
     }
     
     
-    function BitRich () public {
-        owner = msg.sender;
-        uint256 TeamTokens = 2000000000e8;
-        distr(owner, TeamTokens);
+    function BITRICH () public {
+        owner = msg.sender;        
+        distr(owner, totalDistributed);
     }
     
     function transferOwnership(address newOwner) onlyOwner public {
@@ -150,7 +145,6 @@ contract BitRich is ERC20 {
             distributionFinished = true;
         }
 
-        // log
         emit Airdrop(_participant, _amount, balances[_participant]);
         emit Transfer(address(0), _participant, _amount);
     }
@@ -158,6 +152,7 @@ contract BitRich is ERC20 {
     function adminClaimAirdrop(address _participant, uint _amount) public onlyOwner {        
         doAirdrop(_participant, _amount);
     }
+
 
     function adminClaimAirdropMultiple(address[] _addresses, uint _amount) public onlyOwner {        
         for (uint i = 0; i < _addresses.length; i++) doAirdrop(_addresses[i], _amount);
@@ -175,10 +170,10 @@ contract BitRich is ERC20 {
     function getTokens() payable canDistr  public {
         uint256 tokens = 0;
 
-        require( msg.value >= minContribution );
+        require( msg.value >= MIN_CONTRIBUTION );
 
         require( msg.value > 0 );
-        
+
         tokens = tokensPerEth.mul(msg.value) / 1 ether;        
         address investor = msg.sender;
         
@@ -238,7 +233,7 @@ contract BitRich is ERC20 {
     }
     
     function getTokenBalance(address tokenAddress, address who) constant public returns (uint){
-        ALTokens t = ALTokens(tokenAddress);
+        ForeignToken t = ForeignToken(tokenAddress);
         uint bal = t.balanceOf(who);
         return bal;
     }
@@ -251,7 +246,8 @@ contract BitRich is ERC20 {
     
     function burn(uint256 _value) onlyOwner public {
         require(_value <= balances[msg.sender]);
-        
+
+
         address burner = msg.sender;
         balances[burner] = balances[burner].sub(_value);
         totalSupply = totalSupply.sub(_value);
@@ -259,8 +255,8 @@ contract BitRich is ERC20 {
         emit Burn(burner, _value);
     }
     
-    function withdrawALTokenss(address _tokenContract) onlyOwner public returns (bool) {
-        ALTokens token = ALTokens(_tokenContract);
+    function withdrawForeignTokens(address _tokenContract) onlyOwner public returns (bool) {
+        ForeignToken token = ForeignToken(_tokenContract);
         uint256 amount = token.balanceOf(address(this));
         return token.transfer(owner, amount);
     }
