@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DSToken at 0xaf55787f6f40f17e6de9987058817c558b8cef52
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DSToken at 0xedac0e5bedf702accc3a9b2b4b44b4ba0806e882
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.18;
 
 contract DSNote {
     event LogNote(
@@ -9,7 +9,7 @@ contract DSNote {
         address  indexed  guy,
         bytes32  indexed  foo,
         bytes32  indexed  bar,
-	uint	 	  wad,
+        uint	 	  wad,
         bytes             fax
     ) anonymous;
 
@@ -23,15 +23,16 @@ contract DSNote {
         }
 
         LogNote(msg.sig, msg.sender, foo, bar, msg.value, msg.data);
-
         _;
     }
 }
 
 contract DSAuthority {
+
     function canCall(
         address src, address dst, bytes4 sig
-    ) constant returns (bool);
+    ) public constant returns (bool);
+    
 }
 
 contract DSAuthEvents {
@@ -43,20 +44,20 @@ contract DSAuth is DSAuthEvents {
     DSAuthority  public  authority;
     address      public  owner;
 
-    function DSAuth() {
+    function DSAuth()  public {
         owner = msg.sender;
         LogSetOwner(msg.sender);
     }
 
     function setOwner(address owner_)
-        auth
+        public auth
     {
         owner = owner_;
         LogSetOwner(owner);
     }
 
     function setAuthority(DSAuthority authority_)
-        auth
+        public auth
     {
         authority = authority_;
         LogSetAuthority(authority);
@@ -85,7 +86,7 @@ contract DSAuth is DSAuthEvents {
     }
 
     function assert(bool x) internal {
-        if (!x) throw;
+        require(x);
     }
 }
 
@@ -97,13 +98,12 @@ contract DSStop is DSAuth, DSNote {
         assert (!stopped);
         _;
     }
-    function stop() auth note {
+    function stop() public auth note {
         stopped = true;
     }
-    function start() auth note {
+    function start() public auth note {
         stopped = false;
     }
-
 }
 
 contract DSMath {
@@ -267,13 +267,13 @@ contract DSMath {
 }
 
 contract ERC20 {
-    function totalSupply() constant returns (uint supply);
-    function balanceOf( address who ) constant returns (uint value);
-    function allowance( address owner, address spender ) constant returns (uint _allowance);
+    function totalSupply() constant public returns (uint supply);
+    function balanceOf( address who ) constant public returns (uint value);
+    function allowance( address owner, address spender ) constant public returns (uint _allowance);
 
-    function transfer( address to, uint value) returns (bool ok);
-    function transferFrom( address from, address to, uint value) returns (bool ok);
-    function approve( address spender, uint value ) returns (bool ok);
+    function transfer( address to, uint value) public returns (bool ok);
+    function transferFrom( address from, address to, uint value) public returns (bool ok);
+    function approve( address spender, uint value ) public returns (bool ok);
 
     event Transfer( address indexed from, address indexed to, uint value);
     event Approval( address indexed owner, address indexed spender, uint value);
@@ -284,22 +284,24 @@ contract DSTokenBase is ERC20, DSMath {
     mapping (address => uint256)                       _balances;
     mapping (address => mapping (address => uint256))  _approvals;
     
-    function DSTokenBase(uint256 supply) {
+    function DSTokenBase(uint256 supply) public {
         _balances[msg.sender] = supply;
         _supply = supply;
     }
     
-    function totalSupply() constant returns (uint256) {
+    function totalSupply() constant public returns (uint256) {
         return _supply;
     }
-    function balanceOf(address src) constant returns (uint256) {
+    
+    function balanceOf(address src) constant public returns (uint256) {
         return _balances[src];
     }
-    function allowance(address src, address guy) constant returns (uint256) {
+    
+    function allowance(address src, address guy) constant public returns (uint256) {
         return _approvals[src][guy];
     }
     
-    function transfer(address dst, uint wad) returns (bool) {
+    function transfer(address dst, uint wad) public returns (bool) {
         assert(_balances[msg.sender] >= wad);
         
         _balances[msg.sender] = sub(_balances[msg.sender], wad);
@@ -310,7 +312,7 @@ contract DSTokenBase is ERC20, DSMath {
         return true;
     }
     
-    function transferFrom(address src, address dst, uint wad) returns (bool) {
+    function transferFrom(address src, address dst, uint wad) public returns (bool) {
         assert(_balances[src] >= wad);
         assert(_approvals[src][msg.sender] >= wad);
         
@@ -323,58 +325,60 @@ contract DSTokenBase is ERC20, DSMath {
         return true;
     }
     
-    function approve(address guy, uint256 wad) returns (bool) {
+    function approve(address guy, uint256 wad) public returns (bool) {
         _approvals[msg.sender][guy] = wad;
         
         Approval(msg.sender, guy, wad);
         
         return true;
     }
-
 }
 
 contract DSToken is DSTokenBase(0), DSStop {
 
-    bytes32  public  symbol;
+    string  public  symbol = "QC";
     uint256  public  decimals = 18; // standard token precision. override to customize
 
-    function DSToken(bytes32 symbol_) {
+    function DSToken(string symbol_) public {
         symbol = symbol_;
     }
 
-    function transfer(address dst, uint wad) stoppable note returns (bool) {
+    function transfer(address dst, uint wad) public stoppable note returns (bool) {
         return super.transfer(dst, wad);
     }
+
     function transferFrom(
         address src, address dst, uint wad
-    ) stoppable note returns (bool) {
+    ) public stoppable note returns (bool) {
         return super.transferFrom(src, dst, wad);
     }
-    function approve(address guy, uint wad) stoppable note returns (bool) {
+
+    function approve(address guy, uint wad) public stoppable note returns (bool) {
         return super.approve(guy, wad);
     }
 
-    function push(address dst, uint128 wad) returns (bool) {
+    function push(address dst, uint128 wad) public returns (bool) {
         return transfer(dst, wad);
     }
-    function pull(address src, uint128 wad) returns (bool) {
+
+    function pull(address src, uint128 wad) public returns (bool) {
         return transferFrom(src, msg.sender, wad);
     }
 
-    function mint(uint128 wad) auth stoppable note {
+    function mint(uint128 wad) public auth stoppable note {
         _balances[msg.sender] = add(_balances[msg.sender], wad);
         _supply = add(_supply, wad);
     }
-    function burn(uint128 wad) auth stoppable note {
+
+    function burn(uint128 wad) public auth stoppable note {
         _balances[msg.sender] = sub(_balances[msg.sender], wad);
         _supply = sub(_supply, wad);
     }
 
     // Optional token name
-
-    bytes32   public  name = "";
+    string   public  name = "MixBee Token";
     
-    function setName(bytes32 name_) auth {
+    function setName(string name_) public auth {
         name = name_;
     }
 
