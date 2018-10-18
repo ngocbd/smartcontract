@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BRBasketballConfig at 0xed9bdf04345601ba6afa89bb569ac43df5e19d57
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BRBasketballConfig at 0x92fe038a54366f6a2be3db1c8db4f30b8c52006d
 */
 pragma solidity ^0.4.7;
 contract MobaBase {
@@ -61,8 +61,8 @@ contract IRandomUtil{
 
 contract BRRandom {
     
-    IRandomUtil private baseRandom;
-    address internal mainnet_random_addr = 0x31E0d4b2d086e8Bfc25A10bE133dEc09cb5284d2;
+    IRandomUtil public baseRandom;
+    address internal mainnet_random_addr = 0x00Df567284E9c076eb207cB64fcDc14aE89199c44d;
     
     function initRandom (address addr) internal  {
         
