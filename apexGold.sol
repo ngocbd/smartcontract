@@ -1,21 +1,21 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract apexGold at 0xe15107b93db5fe00c1b5337ca965300adb93ecd2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract apexGOLD at 0xa5c463308e36e0ef97004e6e88e032c16a2e09d1
 */
 pragma solidity ^0.4.24;
 
 /***
- * https://apexgold.io
+ * https://apexGOLD
  * 
  * No administrators or developers, this contract is fully autonomous
  *
- * 15 % entry fee
- * 15 % of entry fee to masternode referrals
+ * 12 % entry fee
+ * 12 % of entry fee to masternode referrals
  * 0 % transfer fee
- * Exit fee starts at 40% from contract start
- * Exit fee decreases over 15 days  until 15%
- * Stays at 15% forever.
+ * Exit fee starts at 48% from contract start
+ * Exit fee decreases over 30 days  until 12%
+ * Stays at 12% forever.
  */
-contract apexGold {
+contract apexGOLD {
 
     /*=================================
     =            MODIFIERS            =
@@ -45,12 +45,12 @@ contract apexGold {
           require(msg.value <= maxEarlyStake);
         }
         if (depositCount_ == 0){
-          require(ambassadors_[msg.sender] && msg.value == 1 ether);
+          require(ambassadors_[msg.sender] && msg.value == 0.25 ether);
         }else
-        if (depositCount_ < 5){
-          require(ambassadors_[msg.sender] && msg.value == 1 ether);
+        if (depositCount_ < 6){
+          require(ambassadors_[msg.sender] && msg.value == 0.75 ether);
         }else
-        if (depositCount_ == 5 || depositCount_==6){
+        if (depositCount_ == 6 || depositCount_==7){
           require(ambassadors_[msg.sender] && msg.value == 1 ether);
         }
         _;
@@ -106,24 +106,24 @@ contract apexGold {
     =            CONFIGURABLES            =
     =====================================*/
 
-    string public name = "ApexGold";
+    string public name = "apexGOLD Token";
     string public symbol = "APG";
     uint8 constant public decimals = 18;
 
-    /// @dev 15% dividends for token purchase
-    uint8 constant internal entryFee_ = 15;
+    /// @dev 12% dividends for token purchase
+    uint8 constant internal entryFee_ = 12;
 
-    /// @dev 40% dividends for token selling
-    uint8 constant internal startExitFee_ = 40;
+    /// @dev 48% dividends for token selling
+    uint8 constant internal startExitFee_ = 48;
 
-    /// @dev 15% dividends for token selling after step
-    uint8 constant internal finalExitFee_ = 15;
+    /// @dev 12% dividends for token selling after step
+    uint8 constant internal finalExitFee_ = 12;
 
     /// @dev Exit fee falls over period of 30 days
-    uint256 constant internal exitFeeFallDuration_ = 15 days;
+    uint256 constant internal exitFeeFallDuration_ = 30 days;
 
-    /// @dev 15% masternode
-    uint8 constant internal refferalFee_ = 15;
+    /// @dev 12% masternode
+    uint8 constant internal refferalFee_ = 12;
 
     /// @dev P3D pricing
     uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
@@ -168,17 +168,11 @@ contract apexGold {
      //Community Promotional Fund
      ambassadors_[msg.sender]=true;
      //1
-     ambassadors_[0x4c3B215a24fCd7dd34d4EDF098A5d8609FfEBD63]=true;
+     ambassadors_[0x31A41203344C225Ef5Fc294244b5Fb7b0514f319]=true;
      //2
-     ambassadors_[0x37Ca19c7419eeea4100bB93c3fAF0b670a0D6C52]=true;
+     ambassadors_[0x5Fa7ca52E3829326b4bD75FFf551313AceA135Ba]=true;
      //3
-     ambassadors_[0xeafe863757a2b2a2c5c3f71988b7d59329d09a78]=true;
-     //4
-     ambassadors_[0xb03bEF1D9659363a9357aB29a05941491AcCb4eC]=true;
-     //5
-     ambassadors_[0x7564471378eC834A9A49Ab1ecB1E6B287d1a3563]=true;
-     //6
-     ambassadors_[0xeafe863757a2b2a2c5c3f71988b7d59329d09a78]=true;
+     ambassadors_[0x893a8b6fF42286670BCB2221d1398d2136596E4e]=true;
      
      apex = msg.sender;
    }
@@ -442,7 +436,7 @@ contract apexGold {
 
     // @dev Function for find if premine
     function isPremine() public view returns (bool) {
-      return depositCount_<=4;
+      return depositCount_<=7;
     }
 
     // @dev Function for find if premine
