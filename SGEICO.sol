@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SGEICO at 0x2ada0cddb716033e52c3d591ad12a59103230e52
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SGEICO at 0x7a7a13da4697ed133f102c3160405c3b7be73770
 */
 pragma solidity ^0.4.16;
 
@@ -61,7 +61,6 @@ contract SGEICO {
     }
 
     function () payable public {
-        require(msg.value > 1 ether);
         require(now > startDate);
         require(now < endDate);
 	    uint amount = msg.value * price;
