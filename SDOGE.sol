@@ -1,6 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SDOGE at 0xe4f1905cf68568ad8949d945dcae4d20890c93aa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SDOGE at 0x0b4367a21d5246780a63da4253247f9d89d6b1dd
 */
+pragma solidity ^0.4.25;
+
 contract Token {
 
     /// @return total amount of tokens
@@ -58,7 +60,7 @@ contract StandardToken is Token {
         if (balances[msg.sender] >= _value && _value > 0) {
             balances[msg.sender] -= _value;
             balances[_to] += _value;
-            Transfer(msg.sender, _to, _value);
+            emit Transfer(msg.sender, _to, _value);
             return true;
         } else { return false; }
     }
@@ -70,7 +72,7 @@ contract StandardToken is Token {
             balances[_to] += _value;
             balances[_from] -= _value;
             allowed[_from][msg.sender] -= _value;
-            Transfer(_from, _to, _value);
+            emit Transfer(_from, _to, _value);
             return true;
         } else { return false; }
     }
@@ -81,7 +83,7 @@ contract StandardToken is Token {
 
     function approve(address _spender, uint256 _value) returns (bool success) {
         allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+        emit Approval(msg.sender, _spender, _value);
         return true;
     }
 
@@ -111,17 +113,11 @@ contract SDOGE is StandardToken {
 
     function () {
         //if ether is sent to this address, send it back.
-        throw;
+        revert();
     }
 
     /* Public variables of the token */
 
-    /*
-    NOTE:
-    The following variables are OPTIONAL vanities. One does not have to include them.
-    They allow one to customise the token contract & in no way influences the core functionality.
-    Some wallets/interfaces might not even bother to look at this information.
-    */
     string public name;                   //fancy name: eg Simon Bucks
     uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
     string public symbol;                 //An identifier: eg SBX
@@ -143,7 +139,7 @@ contract SDOGE is StandardToken {
     /* Approves and then calls the receiving contract */
     function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
         allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+        emit Approval(msg.sender, _spender, _value);
 
         //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
         //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
