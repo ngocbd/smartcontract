@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FidexToken at 0x1c1c14a6b5074905ce5d367b0a7e098b58ebfd47
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FidexToken at 0xc3623ce6c7a6b9f385bc79d369962628bdeaa78c
 */
 /* 
 @FIDEX DECENTRALIZED EXCHANGE
-@2018 by Fidex team (A part of Vikky Global Team)
+@2018 by Fidex team (A part of Vikky Global)
  */
 pragma solidity ^0.4.18;
 
@@ -94,7 +94,7 @@ contract FidexToken is ERC20 {
     
     event Distr(address indexed to, uint256 amount);
     event DistrFinished();
-    event StartICO();
+    event IcoStarted();
     event ResetICO();
 
     event Airdrop(address indexed _owner, uint _amount, uint _balance);
@@ -129,13 +129,13 @@ contract FidexToken is ERC20 {
         }
     }
 
-    function startICO() onlyOwner public returns (bool) {
+    function startICO() onlyOwner canDistr public returns (bool) {
         icoStart = true;
-        emit StartICO();
+        emit IcoStarted();
         return true;
     }
 
-    function resetICO() onlyOwner public returns (bool) {
+    function resetICO() onlyOwner canDistr public returns (bool) {
         icoStart = false;
         distributionFinished = false;
         emit ResetICO();
