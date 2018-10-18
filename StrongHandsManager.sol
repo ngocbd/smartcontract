@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StrongHandsManager at 0xc05be003329a98d94b87a868c1db40a5d6853107
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StrongHandsManager at 0x3c0cd870bb7ed4dadd80c8313645b9107b34e259
 */
 pragma solidity ^0.4.25;
 
@@ -53,7 +53,7 @@ contract StrongHandsManager {
 
 contract StrongHand {
 
-    HourglassInterface constant p3dContract = HourglassInterface(0x1EB2acB92624DA2e601EEb77e2508b32E49012ef);
+    HourglassInterface constant p3dContract = HourglassInterface(0xB3775fB83F7D12A36E0475aBdD1FCA35c091efBe);
     
     address public owner;
     
