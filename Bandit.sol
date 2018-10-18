@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bandit at 0x5ec71419f100642130e596c352d93dea7589a31f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bandit at 0x4ad0a7b4884adc2f5bf769253efe89549d10f7b4
 */
 // <ORACLIZE_API>
 /*
@@ -2075,7 +2075,7 @@ contract Bandit is usingOraclize, DSSafeAddSub {
         * integer query is in plain text
         */               
 		randomQueryID += 1;
-        string memory queryString1 = "[URL] ['json(https://api.random.org/json-rpc/1/invoke).result.random[\"serialNumber\",\"data\"]', '\\n{\"jsonrpc\":\"2.0\",\"method\":\"generateSignedIntegers\",\"params\":{\"apiKey\":${[decrypt] BLZ8vZRQmLd5fkKkvByDhERZrrM9fPZRBSORtfzLooOhTaYlCP8aLDOACqDuSPL6tX75mlJVZxrBJFoqyS9X2BfwrsKih76dfkB946Gii8eDyQk3bvLdswaHqtq7m87lbmhw/6ZF9MY9iz0p9jtvulRS4EzMU8E=},\"n\":3,\"min\":1,\"max\":20,\"replacement\":true,\"base\":10${[identity] \"}\"},\"id\":";
+        string memory queryString1 = "[URL] ['json(https://api.random.org/json-rpc/1/invoke).result.random[\"serialNumber\",\"data\"]', '\\n{\"jsonrpc\":\"2.0\",\"method\":\"generateSignedIntegers\",\"params\":{\"apiKey\":${[decrypt] BGD/97q1t/T+kvazlXwudelwzebpvcx6bW5LckCuZDcCeJILY20m+eimHn32fvEDE9eF26eiPl5M15FYdY4MPcrqHdrTUOuYGL2KA2MJ++A4XjNfaCCzJGzxd5FpgTTOZ+eX4lL+X1TcQrkd85VmG6oTwZX8/MM=},\"n\":3,\"min\":1,\"max\":20,\"replacement\":true,\"base\":10${[identity] \"}\"},\"id\":";
         string memory queryString2 = uint2str(randomQueryID);
         string memory queryString3 = "${[identity] \"}\"}']";
 		
