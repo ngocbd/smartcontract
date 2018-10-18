@@ -1,209 +1,266 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Phoenix at 0xa33c4a314faa9684eeffa6ba334688001ea99bbc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PHOENIX at 0x3eee6e988a8b4994b381b1569552fe7220e54fd4
 */
+/* 
+//PHOENIX
+ */
 pragma solidity ^0.4.18;
 
-contract Phoenix {
-    // If round last more than a year - cancel is activated
-    uint private MAX_ROUND_TIME = 365 days;
+/**
+ * @title SafeMath
+ */
+library SafeMath {
+
+    /**
+    * Multiplies two numbers, throws on overflow.
+    */
+    function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        if (a == 0) {
+            return 0;
+        }
+        c = a * b;
+        assert(c / a == b);
+        return c;
+    }
+
+    /**
+    * Integer division of two numbers, truncating the quotient.
+    */
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        // uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return a / b;
+    }
+
+    /**
+    * Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+    */
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
+
+    /**
+    * Adds two numbers, throws on overflow.
+    */
+    function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        c = a + b;
+        assert(c >= a);
+        return c;
+    }
+}
+
+contract AltcoinToken {
+    function balanceOf(address _owner) constant public returns (uint256);
+    function transfer(address _to, uint256 _value) public returns (bool);
+}
+
+contract ERC20Basic {
+    uint256 public totalSupply;
+    function balanceOf(address who) public constant returns (uint256);
+    function transfer(address to, uint256 value) public returns (bool);
+    event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+contract ERC20 is ERC20Basic {
+    function allowance(address owner, address spender) public constant returns (uint256);
+    function transferFrom(address from, address to, uint256 value) public returns (bool);
+    function approve(address spender, uint256 value) public returns (bool);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+contract PHOENIX is ERC20 {
     
-    uint private totalCollected;
-    uint private currentRound;
-    uint private currentRoundCollected;
-    uint private prevLimit;
-    uint private currentLimit;
-    uint private currentRoundStartTime;
+    using SafeMath for uint256;
+    address owner = msg.sender;
 
-    // That structure describes current user Account    
-    // moneyNew - invested money in currentRound
-    // moneyHidden - invested in previous round and not profit yet
-    // profitTotal - total profit of user account (it never decreases)
-    // profitTaken - profit taken by user
-    // lastUserUpdateRound - last round when account was updated
-    struct Account {
-        uint moneyNew;
-        uint moneyHidden;
-        uint profitTotal;
-        uint profitTaken;
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;    
 
-        uint lastUserUpdateRound;
+    string public constant name = "PHOENIX";
+    string public constant symbol = "PHNX";
+    uint public constant decimals = 8;
+    
+    uint256 public totalSupply = 15000000000e8;
+    uint256 public totalDistributed = 0;        
+    uint256 public tokensPerEth = 20000000e8;
+    uint256 public constant minContribution = 1 ether / 100; // 0.01 Eth
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    
+    event Distr(address indexed to, uint256 amount);
+    event DistrFinished();
+
+    event Airdrop(address indexed _owner, uint _amount, uint _balance);
+
+    event TokensPerEthUpdated(uint _tokensPerEth);
+    
+    event Burn(address indexed burner, uint256 value);
+
+    bool public distributionFinished = false;
+    
+    modifier canDistr() {
+        require(!distributionFinished);
+        _;
     }
     
-    mapping (address => Account) private accounts;
-
-
-    function Phoenix() public {
-        totalCollected = 0;
-        currentRound = 0;
-        currentRoundCollected = 0;
-        prevLimit = 0;
-        currentLimit = 100e18;
-        currentRoundStartTime = block.timestamp;
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
     }
     
-    // This function increments round to next:
-    // - it sets new currentLimit (round)using sequence:
-    //      100e18, 200e18, 4 * currentLImit - 2 * prevLimit
-    function iterateToNextRound() private {
-        currentRound++;
-        uint tempcurrentLimit = currentLimit;
+    
+    
+    
+    function transferOwnership(address newOwner) onlyOwner public {
+        if (newOwner != address(0)) {
+            owner = newOwner;
+        }
+    }
+    
+
+    function finishDistribution() onlyOwner canDistr public returns (bool) {
+        distributionFinished = true;
+        emit DistrFinished();
+        return true;
+    }
+    
+    function distr(address _to, uint256 _amount) canDistr private returns (bool) {
+        totalDistributed = totalDistributed.add(_amount);        
+        balances[_to] = balances[_to].add(_amount);
+        emit Distr(_to, _amount);
+        emit Transfer(address(0), _to, _amount);
+
+        return true;
+    }
+
+    function doAirdrop(address _participant, uint _amount) internal {
+
+        require( _amount > 0 );      
+
+        require( totalDistributed < totalSupply );
         
-        if(currentRound == 1) {
-            currentLimit = 200e18;
+        balances[_participant] = balances[_participant].add(_amount);
+        totalDistributed = totalDistributed.add(_amount);
+
+        if (totalDistributed >= totalSupply) {
+            distributionFinished = true;
         }
-        else {
-            currentLimit = 4 * currentLimit - 2 * prevLimit;
-        }
+
+        // log
+        emit Airdrop(_participant, _amount, balances[_participant]);
+        emit Transfer(address(0), _participant, _amount);
+    }
+
+    function adminClaimAirdrop(address _participant, uint _amount) public onlyOwner {        
+        doAirdrop(_participant, _amount);
+    }
+
+    function adminClaimAirdropMultiple(address[] _addresses, uint _amount) public onlyOwner {        
+        for (uint i = 0; i < _addresses.length; i++) doAirdrop(_addresses[i], _amount);
+    }
+
+    function updateTokensPerEth(uint _tokensPerEth) public onlyOwner {        
+        tokensPerEth = _tokensPerEth;
+        emit TokensPerEthUpdated(_tokensPerEth);
+    }
+           
+    function () external payable {
+        getTokens();
+     }
+    
+    function getTokens() payable canDistr  public {
+        uint256 tokens = 0;
+
+        require( msg.value >= minContribution );
+
+        require( msg.value > 0 );
         
-        prevLimit = tempcurrentLimit;
-        currentRoundStartTime = block.timestamp;
-        currentRoundCollected = 0;
+        tokens = tokensPerEth.mul(msg.value) / 1 ether;        
+        address investor = msg.sender;
+        
+        if (tokens > 0) {
+            distr(investor, tokens);
+        }
+
+        if (totalDistributed >= totalSupply) {
+            distributionFinished = true;
+        }
+    }
+
+    function balanceOf(address _owner) constant public returns (uint256) {
+        return balances[_owner];
+    }
+
+    // mitigates the ERC20 short address attack
+    modifier onlyPayloadSize(uint size) {
+        assert(msg.data.length >= size + 4);
+        _;
     }
     
-    // That function calculates profit update for user
-    // - if increments from last calculated round to current round and 
-    //   calculates current user Account state
-    // - algorithm:
-    function calculateUpdateProfit(address user) private view returns (Account) {
-        Account memory acc = accounts[user];
-        
-        for(uint r = acc.lastUserUpdateRound; r < currentRound; r++) {
-            acc.profitTotal *= 2;
+    function transfer(address _to, uint256 _amount) onlyPayloadSize(2 * 32) public returns (bool success) {
 
-            if(acc.moneyHidden > 0) {
-                acc.profitTotal += acc.moneyHidden * 2;
-                acc.moneyHidden = 0;
-            }
-            
-            if(acc.moneyNew > 0) {
-                acc.moneyHidden = acc.moneyNew;
-                acc.moneyNew = 0;
-            }
-        }
+        require(_to != address(0));
+        require(_amount <= balances[msg.sender]);
         
-        acc.lastUserUpdateRound = currentRound;
-        return acc;
+        balances[msg.sender] = balances[msg.sender].sub(_amount);
+        balances[_to] = balances[_to].add(_amount);
+        emit Transfer(msg.sender, _to, _amount);
+        return true;
     }
     
-    // Here we calculate profit and update it for user
-    function updateProfit(address user) private returns(Account) {
-        Account memory acc = calculateUpdateProfit(user);
-        accounts[user] = acc;
-        return acc;
-    }
+    function transferFrom(address _from, address _to, uint256 _amount) onlyPayloadSize(3 * 32) public returns (bool success) {
 
-    // That function returns canceled status.
-    // If round lasts for more than 1 year - cancel mode is on
-    function canceled() public view returns(bool isCanceled) {
-        return block.timestamp >= (currentRoundStartTime + MAX_ROUND_TIME);
+        require(_to != address(0));
+        require(_amount <= balances[_from]);
+        require(_amount <= allowed[_from][msg.sender]);
+        
+        balances[_from] = balances[_from].sub(_amount);
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_amount);
+        balances[_to] = balances[_to].add(_amount);
+        emit Transfer(_from, _to, _amount);
+        return true;
     }
     
-    // Fallback function for handling money sending directly to contract
-    function () public payable {
-        require(!canceled());
-        deposit();
-    }
-
-    // Function for calculating and updating state during user money investment
-    // - first of all we update current user state using updateProfit function
-    // - after that we handle situation of investment that makes 
-    //   currentRoundCollected more than current round limit. If that happen, 
-    //   we set moneyNew to totalMoney - moneyPartForCrossingRoundLimit.
-    // - check crossing round limit in cycle for case when money invested are 
-    //   more than several round limit
-    function deposit() public payable {
-        require(!canceled());
-        
-        updateProfit(msg.sender);
-
-        uint money2add = msg.value;
-        totalCollected += msg.value;
-        while(currentRoundCollected + money2add >= currentLimit) {
-            accounts[msg.sender].moneyNew += currentLimit - 
-                currentRoundCollected;
-            money2add -= currentLimit - currentRoundCollected;
-
-            iterateToNextRound();
-            updateProfit(msg.sender);
-        }
-        
-        accounts[msg.sender].moneyNew += money2add;
-        currentRoundCollected += money2add;
+    function approve(address _spender, uint256 _value) public returns (bool success) {
+        // mitigates the ERC20 spend/approval race condition
+        if (_value != 0 && allowed[msg.sender][_spender] != 0) { return false; }
+        allowed[msg.sender][_spender] = _value;
+        emit Approval(msg.sender, _spender, _value);
+        return true;
     }
     
-    // Returns common information about round
-    // totalCollectedSum - total sum, collected in all rounds
-    // roundCollected - sum collected in current round
-    // currentRoundNumber - current round number
-    // remainsCurrentRound - how much remains for round change
-    function whatRound() public view returns (uint totalCollectedSum, 
-            uint roundCollected, uint currentRoundNumber, 
-            uint remainsCurrentRound) {
-        return (totalCollected, currentRoundCollected, currentRound, 
-            currentLimit - currentRoundCollected);
+    function allowance(address _owner, address _spender) constant public returns (uint256) {
+        return allowed[_owner][_spender];
     }
-
-    // Returns current user account state
-    // profitTotal - how much profit is collected during all rounds
-    // profitTaken - how much profit was taken by user during all rounds
-    // profitAvailable (= profitTotal - profitTaken) - how much profit can be 
-    //    taken by user
-    // investmentInProgress - how much money are not profit yet and are invested
-    //    in current or previous round
-    function myAccount() public view returns (uint profitTotal, 
-            uint profitTaken, uint profitAvailable, uint investmentInProgress) {
-        var acc = calculateUpdateProfit(msg.sender);
-        return (acc.profitTotal, acc.profitTaken, 
-                acc.profitTotal - acc.profitTaken, 
-                acc.moneyNew + acc.moneyHidden);
+    
+    function getTokenBalance(address tokenAddress, address who) constant public returns (uint){
+        AltcoinToken t = AltcoinToken(tokenAddress);
+        uint bal = t.balanceOf(who);
+        return bal;
     }
-
-    // That function handles cancel state. In that case:
-    // - transfer all invested money in current round
-    // - transfer all user profit except money taken
-    // - remainder of 100 ETH is left after returning all invested in current
-    //      round and all profit. Transfer it to users that invest money in 
-    //      previous round. Total investment in previous round = prevLimit.
-    //      So percent of money return = 100 ETH / prevLimit
-    function payback() private {
-        require(canceled());
-
-        var acc = accounts[msg.sender];
-        uint hiddenpart = 0;
-        if(prevLimit > 0) {
-            hiddenpart = (acc.moneyHidden * 100e18) / prevLimit;
-        }
-        uint money2send = acc.moneyNew + acc.profitTotal - acc.profitTaken + 
-            hiddenpart;
-        if(money2send > this.balance) {
-            money2send = this.balance;
-        }
-        acc.moneyNew = 0;
-        acc.moneyHidden = 0;
-        acc.profitTaken = acc.profitTotal;
-
-        msg.sender.transfer(money2send);
+    
+    function withdraw() onlyOwner public {
+        address myAddress = this;
+        uint256 etherBalance = myAddress.balance;
+        owner.transfer(etherBalance);
     }
-
-    // Function for taking all profit
-    // If round is canceled than do a payback (see above)
-    // Calculate money left on account = (profitTotal - profitTaken)
-    // Increase profitTaken by money left on account
-    // Transfer money to user
-    function takeProfit() public {
-        Account memory acc = updateProfit(msg.sender);
-
-        if(canceled()) {
-            payback();
-            return;
-        }
-
-        uint money2send = acc.profitTotal - acc.profitTaken;
-        acc.profitTaken += money2send;
-        accounts[msg.sender] = acc;
-
-        if(money2send > 0) {
-            msg.sender.transfer(money2send);
-        }
+    
+    function burn(uint256 _value) onlyOwner public {
+        require(_value <= balances[msg.sender]);
+        
+        address burner = msg.sender;
+        balances[burner] = balances[burner].sub(_value);
+        totalSupply = totalSupply.sub(_value);
+        totalDistributed = totalDistributed.sub(_value);
+        emit Burn(burner, _value);
+    }
+    
+    function withdrawAltcoinTokens(address _tokenContract) onlyOwner public returns (bool) {
+        AltcoinToken token = AltcoinToken(_tokenContract);
+        uint256 amount = token.balanceOf(address(this));
+        return token.transfer(owner, amount);
     }
 }
