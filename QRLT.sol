@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract QRLT at 0x64d431354f27009965b163f7e6cdb60700ad5d12
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract QRLT at 0x74b6d7da02c1ad35d0c2e6f71270f6b92aed1c7f
 */
 pragma solidity ^0.4.8;
 
