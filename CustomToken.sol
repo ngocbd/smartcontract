@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xceafd5704af7066f4b8ea66ced79f10fa6f1f2d4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xbcab16bdfb461fa3f7d54bf747e63c7ff1031bb7
 */
 pragma solidity ^0.4.19;
 
@@ -45,91 +45,13 @@ contract BaseToken {
     }
 }
 
-contract BurnToken is BaseToken {
-    event Burn(address indexed from, uint256 value);
-
-    function burn(uint256 _value) public returns (bool success) {
-        require(balanceOf[msg.sender] >= _value);
-        balanceOf[msg.sender] -= _value;
-        totalSupply -= _value;
-        Burn(msg.sender, _value);
-        return true;
-    }
-
-    function burnFrom(address _from, uint256 _value) public returns (bool success) {
-        require(balanceOf[_from] >= _value);
-        require(_value <= allowance[_from][msg.sender]);
-        balanceOf[_from] -= _value;
-        allowance[_from][msg.sender] -= _value;
-        totalSupply -= _value;
-        Burn(_from, _value);
-        return true;
-    }
-}
-
-contract ICOToken is BaseToken {
-    // 1 ether = icoRatio token
-    uint256 public icoRatio;
-    uint256 public icoBegintime;
-    uint256 public icoEndtime;
-    address public icoSender;
-    address public icoHolder;
-
-    event ICO(address indexed from, uint256 indexed value, uint256 tokenValue);
-    event Withdraw(address indexed from, address indexed holder, uint256 value);
-
-    function ico() public payable {
-        require(now >= icoBegintime && now <= icoEndtime);
-        uint256 tokenValue = (msg.value * icoRatio * 10 ** uint256(decimals)) / (1 ether / 1 wei);
-        if (tokenValue == 0 || balanceOf[icoSender] < tokenValue) {
-            revert();
-        }
-        _transfer(icoSender, msg.sender, tokenValue);
-        ICO(msg.sender, msg.value, tokenValue);
-    }
-
-    function withdraw() public {
-        uint256 balance = this.balance;
-        icoHolder.transfer(balance);
-        Withdraw(msg.sender, icoHolder, balance);
-    }
-}
-
-contract LockToken is BaseToken {
-    struct LockMeta {
-        uint256 amount;
-        uint256 endtime;
-    }
-    
-    mapping (address => LockMeta) public lockedAddresses;
-
-    function _transfer(address _from, address _to, uint _value) internal {
-        require(balanceOf[_from] >= _value);
-        LockMeta storage meta = lockedAddresses[_from];
-        require(now >= meta.endtime || meta.amount <= balanceOf[_from] - _value);
-        super._transfer(_from, _to, _value);
-    }
-}
-
-contract CustomToken is BaseToken, BurnToken, ICOToken, LockToken {
+contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 400000000000000000000000000;
-        name = 'SMARTCADUCEUSCOIN';
-        symbol = 'SUU';
-        decimals = 18;
-        balanceOf[0xb340d4ced1d1197cd00b3a64ebb3972bc8589666] = totalSupply;
-        Transfer(address(0), 0xb340d4ced1d1197cd00b3a64ebb3972bc8589666, totalSupply);
-
-        icoRatio = 1370;
-        icoBegintime = 1535731200;
-        icoEndtime = 1543590000;
-        icoSender = 0x9ef929636be2661b3ade633cdde2d662cf79cb0a;
-        icoHolder = 0x762b73320cd039c92a2f4167ed7110cb91cb0a08;
-
-        lockedAddresses[0x41e35c22e784dc0c1336ea23ec8158af8cfcae1e] = LockMeta({amount: 100000000000000000000000000, endtime: 1557676800});
-    }
-
-    function() public payable {
-        ico();
+        totalSupply = 9600000000000000000;
+        name = 'HEC';
+        symbol = 'HEC';
+        decimals = 10;
+        balanceOf[0x5ebc4B61A0E0187d9a72Da21bfb8b45F519cb530] = totalSupply;
+        Transfer(address(0), 0x5ebc4B61A0E0187d9a72Da21bfb8b45F519cb530, totalSupply);
     }
 }
