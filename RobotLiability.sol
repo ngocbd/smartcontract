@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RobotLiability at 0x0bdc423052d4728423fc0ad6d4c64b92e0ef5cd2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RobotLiability at 0xc5d3a89ef914654aa18d181e2f1122fd7ff5da58
 */
 pragma solidity ^0.4.13;
 
