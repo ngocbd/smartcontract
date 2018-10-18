@@ -1,6 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafeMathLibExt at 0x86c7CFeAfBc55CD982Fef9430BBb9d8915d8807E
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafeMathLibExt at 0x9Dc2d20C685a287919A63214cDDaA1e91923a27D
 */
+// Created using by the awesome team of Local Remit. Erick Jongo| Kamoho Molapo
+/**
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ *
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ */
+
 pragma solidity ^0.4.6;
 
 /**
