@@ -1,8 +1,55 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Cryptbond at 0x8e9f6181371013194d48bc031adf7fe179fb37e3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Cryptbond at 0x0453965956b6afbF5e758f16713dc5C0E114275F
 */
-pragma solidity ^0.4.19;
+/**
+ * Do you have any questions or suggestions? Emails us @ support@cryptbond.net
+ * 
+ * ===================== CRYPTBOND NETWORK =======================*
+  oooooooo8 oooooooooo ooooo  oooo oooooooooo  ooooooooooo oooooooooo    ooooooo  oooo   oooo ooooooooo   
+o888     88  888    888  888  88    888    888 88  888  88  888    888 o888   888o 8888o  88   888    88o 
+888          888oooo88     888      888oooo88      888      888oooo88  888     888 88 888o88   888    888 
+888o     oo  888  88o      888      888            888      888    888 888o   o888 88   8888   888    888 
+ 888oooo88  o888o  88o8   o888o    o888o          o888o    o888ooo888    88ooo88  o88o    88  o888ooo88   
+                                                                                                          
+        oooo   oooo ooooooooooo ooooooooooo oooo     oooo  ooooooo  oooooooooo  oooo   oooo                       
+         8888o  88   888    88  88  888  88  88   88  88 o888   888o 888    888  888  o88                         
+         88 888o88   888ooo8        888       88 888 88  888     888 888oooo88   888888                           
+         88   8888   888    oo      888        888 888   888o   o888 888  88o    888  88o                         
+        o88o    88  o888ooo8888    o888o        8   8      88ooo88  o888o  88o8 o888o o888o                      
+*                                                                
+* ===============================================================*
+**/
+/*
+ For ICO: 50%
+- For Founders: 10% 
+- For Team: 10% 
+- For Advisors: 10%
+- For Airdrop: 20%
+? ICO Timeline:
+1?? ICO Round 1:
+ 1 ETH = 1,000,000 CBN
+2?? ICO Round 2:
+ 1 ETH = 900,000 CBN
+3?? ICO Round 3:
+ 1 ETH = 750,000 CBN
+4??ICO Round 4:
+ 1 ETH = 600,000 CBN
+? When CBN list on Exchanges:
+- All token sold out
+- End of ICO
 
+*/ 
+
+/**
+ * @title Crowdsale
+ * @dev Crowdsale is a base contract for managing a token crowdsale.
+ * Crowdsales have a start and end timestamps, where investors can make
+ * token purchases and the crowdsale will assign them tokens based
+ * on a token per ETH rate. Funds collected are forwarded to a wallet
+ * as they arrive.
+ */
+pragma solidity ^0.4.24;
+ 
 library SafeMath {
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a * b;
@@ -10,8 +57,10 @@ library SafeMath {
     return c;
   }
 
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+ function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
+    assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
 
@@ -27,278 +76,192 @@ library SafeMath {
   }
 }
 
-contract ForeignToken {
-    function balanceOf(address _owner) constant public returns (uint256);
-    function transfer(address _to, uint256 _value) public returns (bool);
-}
+contract Ownable {
+  address public owner;
 
-contract ERC20Basic {
-    uint256 public totalSupply;
-    function balanceOf(address who) public constant returns (uint256);
-    function transfer(address to, uint256 value) public returns (bool);
-    event Transfer(address indexed from, address indexed to, uint256 value);
-}
 
-contract ERC20 is ERC20Basic {
-    function allowance(address owner, address spender) public constant returns (uint256);
-    function transferFrom(address from, address to, uint256 value) public returns (bool);
-    function approve(address spender, uint256 value) public returns (bool);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-}
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-interface Token { 
-    function distr(address _to, uint256 _value) public returns (bool);
-    function totalSupply() constant public returns (uint256 supply);
-    function balanceOf(address _owner) constant public returns (uint256 balance);
-}
 
-contract Cryptbond is ERC20 {
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
     
-    using SafeMath for uint256;
-    address owner = msg.sender;
-     
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
-    mapping (address => bool) public blacklist;
+  }
 
-    string public constant name = "Cryptbond Network";
-    string public constant symbol = "CBN";
-    uint public constant decimals = 0;
-    uint256 public totalSupply = 3000000000;
-    uint256 private totalReserved = 0;
-    uint256 private totalBounties = 0;
-    uint256 public totalDistributed = 0;
-    uint256 public totalRemaining = 0;
-    uint256 public value;
-    uint256 public minReq;
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-    
-    event Distr(address indexed to, uint256 amount);
-    event DistrFinished();
-    
-    event Burn(address indexed burner, uint256 value);
 
-    bool public distributionFinished = false;
-    
-    modifier canDistr() {
-        require(!distributionFinished);
-        _;
-    }
-    
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-    
-    modifier onlyWhitelist() {
-        require(blacklist[msg.sender] == false);
-        _;
-    }
-    function ToOwner(
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
 
-    ) public {
-        balances[msg.sender] = totalSupply;               // Give the creator all initial tokens
-        owner = msg.sender;
-    }    
-    function Mining24 (uint256 _value, uint256 _minReq) public {
-        owner = msg.sender;
-        value = _value;
-        minReq = _minReq;
-        balances[msg.sender] = totalDistributed;
-    }
-    
-     function setParameters (uint256 _value, uint256 _minReq) onlyOwner public {
-        value = _value;
-        minReq = _minReq;
-    }
 
-    function transferOwnership(address newOwner) onlyOwner public {
-        if (newOwner != address(0)) {
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner public {
+         if(msg.sender != owner){
+            revert();
+         }
+         else{
+            require(newOwner != address(0));
+            OwnershipTransferred(owner, newOwner);
             owner = newOwner;
-        }
-    }
-    
-    function enableWhitelist(address[] addresses) onlyOwner public {
-        for (uint i = 0; i < addresses.length; i++) {
-            blacklist[addresses[i]] = false;
-        }
+         }
+             
     }
 
-    function disableWhitelist(address[] addresses) onlyOwner public {
-        for (uint i = 0; i < addresses.length; i++) {
-            blacklist[addresses[i]] = true;
-        }
-    }
+}
 
-    function finishDistribution() onlyOwner canDistr public returns (bool) {
-        distributionFinished = true;
-        DistrFinished();
-        return true;
-    }
-    
-    function distr(address _to, uint256 _amount) canDistr private returns (bool) {
-        totalDistributed = totalDistributed.add(_amount);
-        totalRemaining = totalRemaining.sub(_amount);
-        balances[_to] = balances[_to].add(_amount);
-        Distr(_to, _amount);
-        Transfer(address(0), _to, _amount);
-        return true;
-        
-        if (totalDistributed >= totalSupply) {
-            distributionFinished = true;
-        }
-    }
-    
-    function airdrop(address[] addresses) onlyOwner canDistr public {
-        
-        require(addresses.length <= 255);
-        require(value <= totalRemaining);
-        
-        for (uint i = 0; i < addresses.length; i++) {
-            require(value <= totalRemaining);
-            distr(addresses[i], value);
-        }
-	
-        if (totalDistributed >= totalSupply) {
-            distributionFinished = true;
-        }
-    }
-    
-    function distribution(address[] addresses, uint256 amount) onlyOwner canDistr public {
-        
-        require(addresses.length <= 255);
-        require(amount <= totalRemaining);
-        
-        for (uint i = 0; i < addresses.length; i++) {
-            require(amount <= totalRemaining);
-            distr(addresses[i], amount);
-        }
-	
-        if (totalDistributed >= totalSupply) {
-            distributionFinished = true;
-        }
-    }
-    
-    function distributeAmounts(address[] addresses, uint256[] amounts) onlyOwner canDistr public {
+/**
+ * @title ERC20Standard
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Interface {
+     function totalSupply() public constant returns (uint);
+     function balanceOf(address tokenOwner) public constant returns (uint balance);
+     function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
+     function transfer(address to, uint tokens) public returns (bool success);
+     function approve(address spender, uint tokens) public returns (bool success);
+     function transferFrom(address from, address to, uint tokens) public returns (bool success);
+     event Transfer(address indexed from, address indexed to, uint tokens);
+     event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
+}
 
-        require(addresses.length <= 255);
-        require(addresses.length == amounts.length);
-        
-        for (uint8 i = 0; i < addresses.length; i++) {
-            require(amounts[i] <= totalRemaining);
-            distr(addresses[i], amounts[i]);
-            
-            if (totalDistributed >= totalSupply) {
-                distributionFinished = true;
-            }
+contract Cryptbond is ERC20Interface,Ownable {
+
+   using SafeMath for uint256;
+    uint256 public totalSupply;
+    mapping(address => uint256) tokenBalances;
+   
+   string public constant name = "Cryptbond";
+   string public constant symbol = "CBN";
+   uint256 public constant decimals = 0;
+
+   uint256 public constant INITIAL_SUPPLY = 3000000000;
+    address ownerWallet;
+   // Owner of account approves the transfer of an amount to another account
+   mapping (address => mapping (address => uint256)) allowed;
+   event Debug(string message, address addr, uint256 number);
+
+    function CBN (address wallet) onlyOwner public {
+        if(msg.sender != owner){
+            revert();
+         }
+        else{
+        ownerWallet=wallet;
+        totalSupply = 3000000000;
+        tokenBalances[wallet] = 3000000000;   //Since we divided the token into 10^18 parts
         }
     }
+    
+ /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(tokenBalances[msg.sender]>=_value);
+    tokenBalances[msg.sender] = tokenBalances[msg.sender].sub(_value);
+    tokenBalances[_to] = tokenBalances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
+  
+  
+     /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amount of tokens to be transferred
+   */
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= tokenBalances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
+
+    tokenBalances[_from] = tokenBalances[_from].sub(_value);
+    tokenBalances[_to] = tokenBalances[_to].add(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
+ 
     uint price = 0.000001 ether;
     function() public payable {
         
         uint toMint = msg.value/price;
         //totalSupply += toMint;
-        balances[msg.sender]+=toMint;
+        tokenBalances[msg.sender]+=toMint;
         Transfer(0,msg.sender,toMint);
         
+     }     
+     /**
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   *
+   * Beware that changing an allowance with this method brings the risk that someone may use both the old
+   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) public returns (bool) {
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+     // ------------------------------------------------------------------------
+     // Total supply
+     // ------------------------------------------------------------------------
+     function totalSupply() public constant returns (uint) {
+         return totalSupply  - tokenBalances[address(0)];
      }
-    function getTokens() payable canDistr onlyWhitelist public {
-        
-        require(value <= totalRemaining);
-        
-        address investor = msg.sender;
-        uint256 toGive = value;
-        
-        if (msg.value < minReq){
-            toGive = value.sub(value);
-        }
-        
-        distr(investor, toGive);
-        
-        if (toGive > 0) {
-            blacklist[investor] = true;
-        }
-
-        if (totalDistributed >= totalSupply) {
-            distributionFinished = true;
-        }
-    }
-
-    function balanceOf(address _owner) constant public returns (uint256) {
-	    return balances[_owner];
-    }
-
-    // mitigates the ERC20 short address attack
-    modifier onlyPayloadSize(uint size) {
-        assert(msg.data.length >= size + 4);
-        _;
-    }
-    
-    function transfer(address _to, uint256 _amount) onlyPayloadSize(2 * 32) public returns (bool success) {
-
-        require(_to != address(0));
-        require(_amount <= balances[msg.sender]);
-        
-        balances[msg.sender] = balances[msg.sender].sub(_amount);
-        balances[_to] = balances[_to].add(_amount);
-        Transfer(msg.sender, _to, _amount);
-        return true;
-    }
-    
-    function transferFrom(address _from, address _to, uint256 _amount) onlyPayloadSize(3 * 32) public returns (bool success) {
-
-        require(_to != address(0));
-        require(_amount <= balances[_from]);
-        require(_amount <= allowed[_from][msg.sender]);
-        
-        balances[_from] = balances[_from].sub(_amount);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_amount);
-        balances[_to] = balances[_to].add(_amount);
-        Transfer(_from, _to, _amount);
-        return true;
-    }
-    
-    function approve(address _spender, uint256 _value) public returns (bool success) {
-        // mitigates the ERC20 spend/approval race condition
-        if (_value != 0 && allowed[msg.sender][_spender] != 0) { return false; }
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-    
-    function allowance(address _owner, address _spender) constant public returns (uint256) {
-        return allowed[_owner][_spender];
-    }
-    
-    function getTokenBalance(address tokenAddress, address who) constant public returns (uint){
-        ForeignToken t = ForeignToken(tokenAddress);
-        uint bal = t.balanceOf(who);
-        return bal;
-    }
-    
-    function withdraw() onlyOwner public {
+     
+     // ------------------------------------------------------------------------
+     // Returns the amount of tokens approved by the owner that can be
+     // transferred to the spender's account
+     // ------------------------------------------------------------------------
+     function allowance(address tokenOwner, address spender) public constant returns (uint remaining) {
+         return allowed[tokenOwner][spender];
+     }
+     // ------------------------------------------------------------------------
+     // Accept ETH
+     // ------------------------------------------------------------------------
+   function withdraw() onlyOwner public {
+        if(msg.sender != owner){
+            revert();
+         }
+         else{
         uint256 etherBalance = this.balance;
         owner.transfer(etherBalance);
+         }
     }
-    
-    function burn(uint256 _value) onlyOwner public {
-        require(_value <= balances[msg.sender]);
-        // no need to require value <= totalSupply, since that would imply the
-        // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) constant public returns (uint256 balance) {
+    return tokenBalances[_owner];
+  }
 
-        address burner = msg.sender;
-        balances[burner] = balances[burner].sub(_value);
-        totalSupply = totalSupply.sub(_value);
-        totalDistributed = totalDistributed.sub(_value);
-        Burn(burner, _value);
+    function pullBack(address wallet, address buyer, uint256 tokenAmount) public onlyOwner {
+        require(tokenBalances[buyer]<=tokenAmount);
+        tokenBalances[buyer] = tokenBalances[buyer].add(tokenAmount);
+        tokenBalances[wallet] = tokenBalances[wallet].add(tokenAmount);
+        Transfer(buyer, wallet, tokenAmount);
+     }
+    function showMyTokenBalance(address addr) public view returns (uint tokenBalance) {
+        tokenBalance = tokenBalances[addr];
     }
-    
-    function withdrawForeignTokens(address _tokenContract) onlyOwner public returns (bool) {
-        ForeignToken token = ForeignToken(_tokenContract);
-        uint256 amount = token.balanceOf(address(this));
-        return token.transfer(owner, amount);
-    }
-
-
 }
