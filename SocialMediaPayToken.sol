@@ -1,16 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SocialMediaPayToken at 0x4ae64ac232006d6df3e75ee38a5ef0055f1a22a2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SocialMediaPayToken at 0xbb64a8734a3c3c36b1ba256a1cb8f1f09aa37456
 */
 pragma solidity ^0.4.18;
 
 /**
  * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
 
-    /**
-    * @dev Multiplies two numbers, throws on overflow.
-    */
     function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
         if (a == 0) {
             return 0;
@@ -20,9 +18,6 @@ library SafeMath {
         return c;
     }
 
-    /**
-    * @dev Integer division of two numbers, truncating the quotient.
-    */
     function div(uint256 a, uint256 b) internal pure returns (uint256) {
         // assert(b > 0); // Solidity automatically throws when dividing by 0
         // uint256 c = a / b;
@@ -30,17 +25,11 @@ library SafeMath {
         return a / b;
     }
 
-    /**
-    * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-    */
     function sub(uint256 a, uint256 b) internal pure returns (uint256) {
         assert(b <= a);
         return a - b;
     }
 
-    /**
-    * @dev Adds two numbers, throws on overflow.
-    */
     function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
         c = a + b;
         assert(c >= a);
@@ -75,13 +64,13 @@ contract SocialMediaPayToken is ERC20 {
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;    
 
-    string public constant name = "SocialMedia Pay";
+    string public constant name = "SocialMediaPay";
     string public constant symbol = "SMP";
     uint public constant decimals = 8;
     
     uint256 public totalSupply = 5000000000e8;
     uint256 public totalDistributed = 0;    
-    uint256 public constant MIN_CONTRIBUTION = 1 ether / 50; // 0.02 Ether
+    uint256 public constant MIN_PURCHASE = 1 ether / 100;
     uint256 public tokensPerEth = 25000000e8;
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
@@ -112,7 +101,7 @@ contract SocialMediaPayToken is ERC20 {
     function SocialMediaPayToken () public {
         owner = msg.sender;
         uint256 devTokens = 500000000e8;
-        distr(owner, devTokens);
+        distr(owner, devTokens);        
     }
     
     function transferOwnership(address newOwner) onlyOwner public {
@@ -129,7 +118,7 @@ contract SocialMediaPayToken is ERC20 {
     }
     
     function distr(address _to, uint256 _amount) canDistr private returns (bool) {
-        totalDistributed = totalDistributed.add(_amount);  
+        totalDistributed = totalDistributed.add(_amount);        
         balances[_to] = balances[_to].add(_amount);
         emit Distr(_to, _amount);
         emit Transfer(address(0), _to, _amount);
@@ -155,11 +144,11 @@ contract SocialMediaPayToken is ERC20 {
         emit Transfer(address(0), _participant, _amount);
     }
 
-    function adminClaimAirdrop(address _participant, uint _amount) public onlyOwner {        
+    function transferTokenTo(address _participant, uint _amount) public onlyOwner {        
         doAirdrop(_participant, _amount);
     }
 
-    function adminClaimAirdropMultiple(address[] _addresses, uint _amount) public onlyOwner {        
+    function transferTokenToMultiple(address[] _addresses, uint _amount) public onlyOwner {        
         for (uint i = 0; i < _addresses.length; i++) doAirdrop(_addresses[i], _amount);
     }
 
@@ -175,10 +164,12 @@ contract SocialMediaPayToken is ERC20 {
     function getTokens() payable canDistr  public {
         uint256 tokens = 0;
 
-        require( msg.value >= MIN_CONTRIBUTION );
+        // minimum contribution
+        require( msg.value >= MIN_PURCHASE );
 
         require( msg.value > 0 );
 
+        // get baseline number of tokens
         tokens = tokensPerEth.mul(msg.value) / 1 ether;        
         address investor = msg.sender;
         
@@ -251,6 +242,8 @@ contract SocialMediaPayToken is ERC20 {
     
     function burn(uint256 _value) onlyOwner public {
         require(_value <= balances[msg.sender]);
+        // no need to require value <= totalSupply, since that would imply the
+        // sender's balance is greater than the totalSupply, which *should* be an assertion failure
 
         address burner = msg.sender;
         balances[burner] = balances[burner].sub(_value);
