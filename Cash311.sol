@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Cash311 at 0x3bcbe4c47e302baf2bbdea0a904a4d1520b8a2b0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Cash311 at 0x78d74715bb77f63aea565304ccf5123de950521f
 */
 pragma solidity ^0.4.18;
 
@@ -228,7 +228,7 @@ library NewSafeMath {
 
         // A variable for decimals of the token;
           // ?????????? ??? ?????????? ?????? ????? ??????? ? ??????;
-        uint private decimals = 10**16;
+        uint private decimals = 10**18;
 
         // A variable for storing deposits of investors.
           // ?????????? ??? ???????? ??????? ? ????? ?????????? ??????????.
@@ -344,8 +344,10 @@ library NewSafeMath {
             } else {
                 if (msg.data.length == 20) {
                     address referer = bytesToAddress1(bytes(msg.data));
-                    invest(referer);
-                    return;
+                    if (referer != msg.sender) {
+                        invest(referer);
+                        return;
+                    }
                 }
                 invest(0x0);
                 return;
@@ -442,7 +444,7 @@ library NewSafeMath {
                 // RefSystem
                 if (refIsSet[msg.sender]) {
                       refSystem(_value, referers[msg.sender]);
-                  } else if (_referer != 0x0) {
+                  } else if (_referer != 0x0 && _referer != msg.sender) {
                       setRef(_value, _referer);
                   }
                 return;
@@ -460,7 +462,7 @@ library NewSafeMath {
             // RefSystem
             if (refIsSet[msg.sender]) {
                 refSystem(_value, referers[msg.sender]);
-            } else if (_referer != 0x0) {
+            } else if (_referer != 0x0 && _referer != msg.sender) {
                 setRef(_value, _referer);
             }
         }
