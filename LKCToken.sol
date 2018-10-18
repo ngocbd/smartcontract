@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LKCToken at 0x71ff2355d1b2be86c796f5004e876a3fbaf915b4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LKCToken at 0x384a3070f64bd7e4148528aacbdf6b35e0ecfc9d
 */
 pragma solidity ^0.4.11;
 
@@ -160,7 +160,7 @@ contract StandardToken is ERC20, BasicToken {
  */
 contract LKCToken is StandardToken {
 
-  string public constant name = "LKCoin ??";
+  string public constant name = "LKChain";
   string public constant symbol = "LKC";
   uint256 public constant decimals = 18;
 
@@ -168,7 +168,7 @@ contract LKCToken is StandardToken {
     * @dev Creates a new LKCToken instance
     */
   function LKCToken()public {
-    totalSupply = 10 * (10 ** 8) * (10 ** 18);
+    totalSupply = 100 * (10 ** 8) * (10 ** 18);
     balances[0xbd21453fc62b730ddeba9fe22fbe7cffcedebebd] = totalSupply;
 	emit Transfer(0, 0xbd21453fc62b730ddeba9fe22fbe7cffcedebebd, totalSupply );
   }
