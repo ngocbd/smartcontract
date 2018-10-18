@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract braggerContract at 0xfce43251e6deeba84f9b736b3b18cf4e37438162
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract braggerContract at 0xa93da2147eabb1e517cc17d2d7f6bfa7f15ee389
 */
 pragma solidity ^0.4.24;
 
@@ -40,7 +40,7 @@ contract braggerContract {
 /*********************************/
 
     address public ownerAddress = 0x000;
-    address private bragAddress = 0x845EC9f9C0650b98f70E05fc259F4A04f6AC366e;
+    address private bragAddress = 0x04fd8fcff717754dE3BA18dAC22A5Fda7D69658E;
 
     string private initialQuote = "Teach your people with your wisdom.";
     /******SET PICTURE*/
@@ -48,12 +48,15 @@ contract braggerContract {
 
     uint256 basicFine = 25000000000000000;
 
-    uint256 blocks;
     uint256 totalBraggedValue = 0;
-    
+
     uint256 winningpot = 0;
-    
+
     uint256 totalbrags = 0;
+
+    bool payoutReady;
+    bool payoutRequested;
+    uint256 payoutBlock;
 
 /*********************************/
 /*********** DATA TYPES **********/
@@ -90,25 +93,77 @@ contract braggerContract {
 /*********************************/
 
     constructor() public {
-        blocks=0;
+        payoutRequested = false;
+        payoutReady = false;
         ownerAddress = msg.sender;
     }
 
-    function random() private view returns (uint8) {
-        return uint8(uint256(keccak256(block.timestamp, block.difficulty))%251);
+/*********************************/
+/******* PAYOUT FUNCTIONS ********/
+/*********************************/
+
+    function requestPayout() public {
+        //require(isUser[msg.sender]);
+        if(!getPayoutRequestedState()) {
+            payoutRequested = true;
+            payoutBlock = SafeMath.add(block.number, 17280);
+        }
     }
 
-    function random2() private view returns (uint8) {
-        return uint8(uint256(keccak256(blocks, block.difficulty))%251);
+    function delayPayout() public payable {
+        require(getPayoutRequestedState());
+        //require(isUser[msg.sender]);
+        require(msg.value>=2500000000000000);
+        payoutBlock = SafeMath.add(payoutBlock, 240);
+        bragAddress.transfer(msg.value);
     }
 
-    function random3() private view returns (uint8) {
-        return uint8(uint256(keccak256(blocks, block.difficulty))%braggers.length);
+    function triggerPayout() public {
+        //require(isUser[msg.sender]);
+        require(checkPayoutReadyState());
+        address _winner = braggers[braggers.length-1].braggerAddress;
+        _winner.transfer(getWinnerPot());
+        payoutBlock = 0;
+        payoutRequested = false;
+    }
+
+     function checkPayoutReadyState() public returns(bool){
+        if(block.number >= payoutBlock && payoutBlock != 0){
+            payoutReady = true;
+            return true;
+        }
+
+        if(block.number < payoutBlock){
+            payoutReady = false;
+            return false;
+        }
     }
 
 /*********************************/
 /************ GETTERS ************/
 /*********************************/
+
+    function getPayoutRequestedState() public view returns(bool){
+        return payoutRequested;
+    }
+
+    function getPayoutReadyState() public view returns(bool){
+         if(block.number>=payoutBlock && payoutBlock != 0){
+            return true;
+        }
+
+        if(block.number < payoutBlock){
+            return false;
+        }
+    }
+
+    function getCurrentPayoutBlock() public view returns(uint){
+        return payoutBlock;
+    }
+
+    function getRemainingBlocksUntilPayoutk() public view returns(uint){
+        return SafeMath.sub(payoutBlock, block.number);
+    }
 
     function getTotalBraggedVolume() public view returns (uint256 _amount){
         return totalBraggedValue;
@@ -191,11 +246,11 @@ contract braggerContract {
         _fineAmount = _fineLevel * basicFine;
         return (_fineLevel, _fineAmount);
     }
-    
+
     function getTotalBrags() public view returns(uint256){
         return totalbrags;
     }
-    
+
     function getWinnerPot() public view returns(uint256){
         return winningpot;
     }
@@ -226,20 +281,11 @@ contract braggerContract {
         braggers.push(_bragger);
 
         totalBraggedValue = totalBraggedValue + msg.value;
-        
+
         winningpot = winningpot + SafeMath.sub(msg.value, shortage);
 
         bragAddress.transfer(shortage);
 
-        if(random() == random2()){
-            address sender = msg.sender;
-            sender.transfer(SafeMath.mul(SafeMath.div(address(this).balance,100), 70));
-            uint256 luckyIndex = random3();
-            address luckyGuy = braggers[luckyIndex].braggerAddress;
-            luckyGuy.transfer(address(this).balance);
-        }
-
-        blocks = SafeMath.add(blocks, random());
         totalbrags += 1;
     }
 
@@ -249,7 +295,7 @@ contract braggerContract {
 
     function setTheKingsQuote(string _message) public payable{
         if(fineLevel[msg.sender] > 0){
-            require(msg.value > (basicFine * fineLevel[msg.sender]));
+            require(msg.value >= (basicFine * fineLevel[msg.sender]));
         }
         address currentKing = braggers[braggers.length-1].braggerAddress;
         require(msg.sender == currentKing);
