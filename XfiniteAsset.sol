@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XfiniteAsset at 0xd3f0d4fcf07d26f121c9e31598062a95ccd72d79
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XfiniteAsset at 0x717014f1930fd49612c3fbdf44251e8f184a35ac
 */
 pragma solidity ^0.4.4;
 
