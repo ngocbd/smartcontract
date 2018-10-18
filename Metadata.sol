@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Metadata at 0xbf75f8d6c645684a82f1f25f204dd8d62ff25341
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Metadata at 0x75190b1cd717eb74820c7c15e121bae9ad28b67c
 */
 pragma solidity ^0.4.18;
 
@@ -730,10 +730,9 @@ contract Metadata {
     using strings for *;
 
     function tokenURI(uint _tokenId) public view returns (string _infoUrl) {
-        string memory base = "https://ensnifty.com/metadata/0x";
+        string memory base = "https://ensnifty.com/metadata?hash=0x";
         string memory id = uint2hexstr(_tokenId);
-        string memory suffix = ".json";
-        return base.toSlice().concat(id.toSlice()).toSlice().concat(suffix.toSlice());
+        return base.toSlice().concat(id.toSlice());
     }
     function uint2hexstr(uint i) internal pure returns (string) {
         if (i == 0) return "0";
