@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KittyPillar at 0x9a982eee43a2f78869db9f8d3608f21602889e9f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KittyPillar at 0x48e3065f8f7b3d752f370a2450267321ed818398
 */
 pragma solidity ^0.4.21;
 
@@ -202,8 +202,8 @@ contract KittyPillar {
 		pillarRounds_[_pillarIdx][currentRId_].kittyIds.push(_kittyId);
 				
 		//update current round pot
-		totalDeveloperCut_ = totalDeveloperCut_.add((msg.value/100).mul(4)); //4% developer fee
-		round_[currentRId_].pot = round_[currentRId_].pot.add((msg.value/100).mul(96)); //update pot minus fee
+		totalDeveloperCut_ = totalDeveloperCut_.add((joinFee_/100).mul(4)); //4% developer fee
+		round_[currentRId_].pot = round_[currentRId_].pot.add((joinFee_/100).mul(96)); //update pot minus fee
 		
 		emit KittyJoined
 		(
