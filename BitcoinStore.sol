@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitcoinStore at 0x3018f598fcc8aa5acc17c1f133e4679dfcd8274a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitcoinStore at 0xe63e3ebfeeb37bda9b29ec62c27c7d065e65a055
 */
 pragma solidity ^0.4.11;
 
@@ -58,7 +58,6 @@ contract BitcoinStore is Ownable {
 
   address constant public Bitcoin_address = 0xB6eD7644C69416d67B522e20bC294A9a9B405B31;
   uint tokenPrice = 35e14; // 0.0035 eth starting price
-  uint tokenFactor = 1e8;
 
   function getBalance()
   public
@@ -90,13 +89,13 @@ contract BitcoinStore is Ownable {
 
   /* fallback function for when ether is sent to the contract */
   function () external payable {
-      uint buytokens = msg.value * tokenFactor / tokenPrice;
+      uint buytokens = msg.value / tokenPrice;
       require(getBalance() >= buytokens);
       ERC20(Bitcoin_address).transfer(msg.sender, buytokens);
   }
 
   function buy() public payable {
-      uint buytokens = msg.value * tokenFactor / tokenPrice;
+      uint buytokens = msg.value / tokenPrice;
       require(getBalance() >= buytokens);
       ERC20(Bitcoin_address).transfer(msg.sender, buytokens);
   }
