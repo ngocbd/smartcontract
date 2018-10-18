@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0x38A3E0423708f5797284aEDDbac1a69FC0aa3883
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0xce7149603aeD4d9468f4025c93cE487c79fC0557
 */
 pragma solidity ^0.4.24;
 /*
@@ -561,6 +561,9 @@ contract PlayerBook {
         games_[gID_] = PlayerBookReceiverInterface(_gameAddress);
 
         games_[gID_].receivePlayerInfo(1, plyr_[1].addr, plyr_[1].name, 0);
+        games_[gID_].receivePlayerInfo(2, plyr_[2].addr, plyr_[2].name, 0);
+        games_[gID_].receivePlayerInfo(3, plyr_[3].addr, plyr_[3].name, 0);
+        games_[gID_].receivePlayerInfo(4, plyr_[4].addr, plyr_[4].name, 0);
     }
 
     function setRegistrationFee(uint256 _fee)
