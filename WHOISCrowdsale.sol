@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WHOISCrowdsale at 0x996adcccf9a83ed7d0acc829cccf5e55f61e1d20
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WHOISCrowdsale at 0x2bb8d859c2902ba5951cdd473f7b36f6b9bfa9eb
 */
 /**
  * WHOIS Token Donations contract
@@ -58,11 +58,11 @@ contract WHOISCrowdsale {
 **/
 
 
- function WHOISCrowdsale( ) public {
+ function Crowdsale( ) public {
         wallet =   0x22610b478e2087c18C0bbf173b7B6f4F137F2B72;
         tokenStockAddress = wallet;
         rate = 100 ;
-        token = WHOIS(0xBD0706f616b8D465d87583B727Df8478Ed1496fD);
+        token = WHOIS(0xbd0706f616b8d465d87583b727df8478ed1496fd);
   }
 
 
