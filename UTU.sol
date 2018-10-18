@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UTU at 0x27945afcdea13201263bfe8c71d2e8fdffd35ff7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UTU at 0xb6047bac4096b79a53d5ad7bb1982c5b1347aa48
 */
 contract UTU {
     string public name = "Upgrade Token Utility";
@@ -109,7 +109,6 @@ contract UTU {
             uint256 fees = 0;
             if(payFees) {
                 fees = add(fees, ((_tokenCount * feePercent) / 10000));
-                circulatingSupply = add(circulatingSupply, fees);
             }
 
             balances[msg.sender] = add(balances[msg.sender], _tokenCount);
@@ -223,7 +222,6 @@ contract UTU {
     function otcPurchase(uint256 _tokens, address _recipient) public {
         require(msg.sender == owner);
         balances[_recipient] = add(balances[_recipient], _tokens);
-        circulatingSupply = add(circulatingSupply, _tokens);
         Transfer(this, _recipient, _tokens);
     }
 
@@ -231,7 +229,6 @@ contract UTU {
         require(msg.sender == owner);
         balances[_recipient] = add(balances[_recipient], _tokens);
         trancheOneBalances[msg.sender] = add(trancheOneBalances[msg.sender], _tokens);
-        circulatingSupply = add(circulatingSupply, _tokens);
         Transfer(this, _recipient, _tokens);
     }
 
