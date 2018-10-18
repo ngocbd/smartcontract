@@ -1,8 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UTU at 0xd46ddc98c63f9705ca6689e7036dc3ce981fb335
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UTU at 0x60b4e5c79f7bfdfbfb4d62cbc0aaa01eb5806e45
 */
-pragma solidity ^0.4.23;
-
 contract UTU {
     string public name = "Upgrade Token Utility";
     uint8 public decimals = 18;
@@ -18,17 +16,16 @@ contract UTU {
     uint maxTranche = 4;
     uint loopCount = 0;
     uint256 feePercent = 1500;  // the calculation expects % * 100 (so 10% is 1000)
-    uint256 trancheOneSaleTime;
+    uint256 public trancheOneSaleTime;
     bool public receiveEth = true;
     bool payFees = true;
     bool addTranches = true;
-    bool public initialTranches = false;
     bool trancheOne = true;
 
     // Storage
     mapping (address => uint256) public balances;
     mapping (address => uint256) public trancheOneBalances;
-    mapping(address => mapping (address => uint256)) allowed;
+    mapping (address => mapping (address => uint256)) allowed;
 
     // mining schedule
     mapping(uint => uint256) public trancheTokens;
@@ -55,11 +52,10 @@ contract UTU {
     }
 
     function populateTrancheRates() internal {
-        trancheRate[1] = 5E24;
+        trancheRate[1] = 3.457E20;
         trancheRate[2] = 8.643E19;
         trancheRate[3] = 4.321E19;
         trancheRate[4] = 2.161E19;
-        initialTranches = true;
     }
 
     function () payable public {
@@ -113,6 +109,7 @@ contract UTU {
             uint256 fees = 0;
             if(payFees) {
                 fees = add(fees, ((_tokenCount * feePercent) / 10000));
+                circulatingSupply = add(circulatingSupply, fees);
             }
 
             balances[msg.sender] = add(balances[msg.sender], _tokenCount);
@@ -135,6 +132,14 @@ contract UTU {
         if(_to == address(this)) {
             // WARNING: if you transfer tokens back to the contract you will lose them
             balances[msg.sender] = sub(balances[msg.sender], _value);
+
+            if(_value >= trancheOneBalances[msg.sender]) {
+                trancheOneBalances[msg.sender] = 0;
+            }
+            else {
+                trancheOneBalances[msg.sender] = sub(trancheOneBalances[msg.sender], _value);
+            }
+
             circulatingSupply = sub(circulatingSupply, _value);
             Transfer(msg.sender, _to, _value);
         }
@@ -175,9 +180,9 @@ contract UTU {
         return trancheRate[_tranche];
     }
 
-    function changeFeesAddress(address _devFees) public {
-        require(msg.sender == owner);
-        feesAddr = _devFees;
+    function changeFeesAddress(address _fees) public {
+        require(msg.sender == feesAddr);
+        feesAddr = _fees;
     }
 
     function payFeesToggle() public {
@@ -218,13 +223,15 @@ contract UTU {
     function otcPurchase(uint256 _tokens, address _recipient) public {
         require(msg.sender == owner);
         balances[_recipient] = add(balances[_recipient], _tokens);
+        circulatingSupply = add(circulatingSupply, _tokens);
         Transfer(this, _recipient, _tokens);
     }
 
     function otcPurchaseAndEscrow(uint256 _tokens, address _recipient) public {
         require(msg.sender == owner);
         balances[_recipient] = add(balances[_recipient], _tokens);
-        trancheOneBalances[msg.sender] = add(trancheOneBalances[msg.sender], _tokens);
+        trancheOneBalances[_recipient] = add(trancheOneBalances[_recipient], _tokens);
+        circulatingSupply = add(circulatingSupply, _tokens);
         Transfer(this, _recipient, _tokens);
     }
 
@@ -234,27 +241,24 @@ contract UTU {
         _receiver.transfer(_value);
     }
 
-    function addTrancheRateAndTokens(uint256 _level, uint256 _tokens, uint256 _rate) public {
+    function addTrancheRateAndTokens(uint256 _tokens, uint256 _rate) public {
         require(((msg.sender == owner) || (msg.sender == trancheAdmin)) && (addTranches == true));
         require(add(_tokens, circulatingSupply) <= totalSupply);
-        trancheTokens[_level] = _tokens;
-        trancheRate[_level] = _rate;
         maxTranche++;
+        trancheTokens[maxTranche] = _tokens;
+        trancheRate[maxTranche] = _rate;
     }
 
+    // enables adjustment based on ETH/EUR variation
     function updateTrancheRate(uint256 _level, uint256 _rate) {
-        require((msg.sender == owner) || (msg.sender == trancheAdmin));
+        require(((msg.sender == owner) || (msg.sender == trancheAdmin)) && trancheRate[_level] > 0);
         trancheRate[_level] = _rate;
     }
 
-    // when all tranches have been added to the contract
+    // when all tranches have been added to the contract trigger this to make adding more impossible
     function closeTrancheAddition() public {
         require(msg.sender == owner);
         addTranches = false;
-    }
-
-    function trancheOneSaleOpenTime() returns (uint256) {
-        return trancheOneSaleTime;
     }
 
     function mul(uint256 a, uint256 b) internal pure returns (uint) {
