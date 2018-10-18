@@ -1,10 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherMiner at 0x7c20263dd382628f5100d252960adda402a28aa1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherMiner at 0xf59b306b7e7091bac1d764edf71c9e7e36f156c5
 */
 pragma solidity ^0.4.25;
 
 /*
-* http://etherminer.club
+* http://eth-miner.pro
 *
 * EthMiner Pro concept
 *
