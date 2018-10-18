@@ -1,19 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x16ea01acb4b0bca2000ee5473348b6937ee6f72f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x6e09b7d6c08bbc5327892013c07b44169e8a9a7c
 */
 pragma solidity 0.4.24;
 
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * See https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address _who) public view returns (uint256);
-  function transfer(address _to, uint256 _value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
 
 /**
  * @title SafeMath
@@ -24,46 +13,56 @@ library SafeMath {
   /**
   * @dev Multiplies two numbers, throws on overflow.
   */
-  function mul(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
-    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
-    // benefit is lost if 'b' is also tested.
-    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
-    if (_a == 0) {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
       return 0;
     }
-
-    c = _a * _b;
-    assert(c / _a == _b);
+    uint256 c = a * b;
+    assert(c / a == b);
     return c;
   }
 
   /**
   * @dev Integer division of two numbers, truncating the quotient.
   */
-  function div(uint256 _a, uint256 _b) internal pure returns (uint256) {
-    // assert(_b > 0); // Solidity automatically throws when dividing by 0
-    // uint256 c = _a / _b;
-    // assert(_a == _b * c + _a % _b); // There is no case in which this doesn't hold
-    return _a / _b;
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
   }
 
   /**
-  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
   */
-  function sub(uint256 _a, uint256 _b) internal pure returns (uint256) {
-    assert(_b <= _a);
-    return _a - _b;
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
   }
 
   /**
   * @dev Adds two numbers, throws on overflow.
   */
-  function add(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
-    c = _a + _b;
-    assert(c >= _a);
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
     return c;
   }
 }
+
+
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
 
 /**
  * @title Basic token
@@ -72,26 +71,27 @@ library SafeMath {
 contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
 
-  mapping(address => uint256) internal balances;
+  mapping(address => uint256) balances;
 
-  uint256 internal totalSupply_;
+  uint256 totalSupply_;
 
   /**
-  * @dev Total number of tokens in existence
+  * @dev total number of tokens in existence
   */
   function totalSupply() public view returns (uint256) {
     return totalSupply_;
   }
 
   /**
-  * @dev Transfer token for a specified address
+  * @dev transfer token for a specified address
   * @param _to The address to transfer to.
   * @param _value The amount to be transferred.
   */
   function transfer(address _to, uint256 _value) public returns (bool) {
-    require(_value <= balances[msg.sender]);
     require(_to != address(0));
+    require(_value <= balances[msg.sender]);
 
+    // SafeMath.sub will throw if there is not enough balance.
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
     emit Transfer(msg.sender, _to, _value);
@@ -103,37 +103,59 @@ contract BasicToken is ERC20Basic {
   * @param _owner The address to query the the balance of.
   * @return An uint256 representing the amount owned by the passed address.
   */
-  function balanceOf(address _owner) public view returns (uint256) {
+  function balanceOf(address _owner) public view returns (uint256 balance) {
     return balances[_owner];
   }
 
 }
+
+
+/**
+ * @title Burnable Token
+ * @dev Token that can be irreversibly burned (destroyed).
+ */
+contract BurnableToken is BasicToken {
+
+  event Burn(address indexed burner, uint256 value);
+
+  /**
+   * @dev Burns a specific amount of tokens.
+   * @param _value The amount of token to be burned.
+   */
+  function burn(uint256 _value) public {
+    require(_value <= balances[msg.sender]);
+    // no need to require value <= totalSupply, since that would imply the
+    // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+
+    address burner = msg.sender;
+    balances[burner] = balances[burner].sub(_value);
+    totalSupply_ = totalSupply_.sub(_value);
+    emit Burn(burner, _value);
+  }
+}
+
+
+
 
 /**
  * @title ERC20 interface
  * @dev see https://github.com/ethereum/EIPs/issues/20
  */
 contract ERC20 is ERC20Basic {
-  function allowance(address _owner, address _spender)
-    public view returns (uint256);
-
-  function transferFrom(address _from, address _to, uint256 _value)
-    public returns (bool);
-
-  function approve(address _spender, uint256 _value) public returns (bool);
-  event Approval(
-    address indexed owner,
-    address indexed spender,
-    uint256 value
-  );
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
 }
+
+
 
 /**
  * @title Standard ERC20 token
  *
  * @dev Implementation of the basic standard token.
- * https://github.com/ethereum/EIPs/issues/20
- * Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
  */
 contract StandardToken is ERC20, BasicToken {
 
@@ -146,17 +168,10 @@ contract StandardToken is ERC20, BasicToken {
    * @param _to address The address which you want to transfer to
    * @param _value uint256 the amount of tokens to be transferred
    */
-  function transferFrom(
-    address _from,
-    address _to,
-    uint256 _value
-  )
-    public
-    returns (bool)
-  {
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
     require(_value <= balances[_from]);
     require(_value <= allowed[_from][msg.sender]);
-    require(_to != address(0));
 
     balances[_from] = balances[_from].sub(_value);
     balances[_to] = balances[_to].add(_value);
@@ -167,6 +182,7 @@ contract StandardToken is ERC20, BasicToken {
 
   /**
    * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   *
    * Beware that changing an allowance with this method brings the risk that someone may use both the old
    * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
    * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
@@ -186,19 +202,13 @@ contract StandardToken is ERC20, BasicToken {
    * @param _spender address The address which will spend the funds.
    * @return A uint256 specifying the amount of tokens still available for the spender.
    */
-  function allowance(
-    address _owner,
-    address _spender
-   )
-    public
-    view
-    returns (uint256)
-  {
+  function allowance(address _owner, address _spender) public view returns (uint256) {
     return allowed[_owner][_spender];
   }
 
   /**
    * @dev Increase the amount of tokens that an owner allowed to a spender.
+   *
    * approve should be called when allowed[_spender] == 0. To increment
    * allowed value is better to use this function to avoid 2 calls (and wait until
    * the first transaction is mined)
@@ -206,21 +216,15 @@ contract StandardToken is ERC20, BasicToken {
    * @param _spender The address which will spend the funds.
    * @param _addedValue The amount of tokens to increase the allowance by.
    */
-  function increaseApproval(
-    address _spender,
-    uint256 _addedValue
-  )
-    public
-    returns (bool)
-  {
-    allowed[msg.sender][_spender] = (
-      allowed[msg.sender][_spender].add(_addedValue));
+  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
     emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
   /**
    * @dev Decrease the amount of tokens that an owner allowed to a spender.
+   *
    * approve should be called when allowed[_spender] == 0. To decrement
    * allowed value is better to use this function to avoid 2 calls (and wait until
    * the first transaction is mined)
@@ -228,15 +232,9 @@ contract StandardToken is ERC20, BasicToken {
    * @param _spender The address which will spend the funds.
    * @param _subtractedValue The amount of tokens to decrease the allowance by.
    */
-  function decreaseApproval(
-    address _spender,
-    uint256 _subtractedValue
-  )
-    public
-    returns (bool)
-  {
-    uint256 oldValue = allowed[msg.sender][_spender];
-    if (_subtractedValue >= oldValue) {
+  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
       allowed[msg.sender][_spender] = 0;
     } else {
       allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
@@ -247,6 +245,8 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
+
+
 /**
  * @title Ownable
  * @dev The Ownable contract has an owner address, and provides basic authorization control
@@ -256,11 +256,7 @@ contract Ownable {
   address public owner;
 
 
-  event OwnershipRenounced(address indexed previousOwner);
-  event OwnershipTransferred(
-    address indexed previousOwner,
-    address indexed newOwner
-  );
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
 
   /**
@@ -280,122 +276,17 @@ contract Ownable {
   }
 
   /**
-   * @dev Allows the current owner to relinquish control of the contract.
-   * @notice Renouncing to ownership will leave the contract without an owner.
-   * It will not be possible to call the functions with the `onlyOwner`
-   * modifier anymore.
-   */
-  function renounceOwnership() public onlyOwner {
-    emit OwnershipRenounced(owner);
-    owner = address(0);
-  }
-
-  /**
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param _newOwner The address to transfer ownership to.
+   * @param newOwner The address to transfer ownership to.
    */
-  function transferOwnership(address _newOwner) public onlyOwner {
-    _transferOwnership(_newOwner);
-  }
-
-  /**
-   * @dev Transfers control of the contract to a newOwner.
-   * @param _newOwner The address to transfer ownership to.
-   */
-  function _transferOwnership(address _newOwner) internal {
-    require(_newOwner != address(0));
-    emit OwnershipTransferred(owner, _newOwner);
-    owner = _newOwner;
-  }
-}
-
-/**
- * @title Mintable token
- * @dev Simple ERC20 Token example, with mintable token creation
- * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
- */
-contract MintableToken is StandardToken, Ownable {
-  event Mint(address indexed to, uint256 amount);
-  event MintFinished();
-
-  bool public mintingFinished = false;
-
-
-  modifier canMint() {
-    require(!mintingFinished);
-    _;
-  }
-
-  modifier hasMintPermission() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Function to mint tokens
-   * @param _to The address that will receive the minted tokens.
-   * @param _amount The amount of tokens to mint.
-   * @return A boolean that indicates if the operation was successful.
-   */
-  function mint(
-    address _to,
-    uint256 _amount
-  )
-    public
-    hasMintPermission
-    canMint
-    returns (bool)
-  {
-    totalSupply_ = totalSupply_.add(_amount);
-    balances[_to] = balances[_to].add(_amount);
-    emit Mint(_to, _amount);
-    emit Transfer(address(0), _to, _amount);
-    return true;
-  }
-
-  /**
-   * @dev Function to stop minting new tokens.
-   * @return True if the operation was successful.
-   */
-  function finishMinting() public onlyOwner canMint returns (bool) {
-    mintingFinished = true;
-    emit MintFinished();
-    return true;
-  }
-}
-
-/**
- * @title Capped token
- * @dev Mintable token with a token cap.
- */
-contract CappedToken is MintableToken {
-
-  uint256 public cap;
-
-  constructor(uint256 _cap) public {
-    require(_cap > 0);
-    cap = _cap;
-  }
-
-  /**
-   * @dev Function to mint tokens
-   * @param _to The address that will receive the minted tokens.
-   * @param _amount The amount of tokens to mint.
-   * @return A boolean that indicates if the operation was successful.
-   */
-  function mint(
-    address _to,
-    uint256 _amount
-  )
-    public
-    returns (bool)
-  {
-    require(totalSupply_.add(_amount) <= cap);
-
-    return super.mint(_to, _amount);
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    emit OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
   }
 
 }
+
 
 /**
  * @title Pausable
@@ -427,7 +318,7 @@ contract Pausable is Ownable {
   /**
    * @dev called by the owner to pause, triggers stopped state
    */
-  function pause() public onlyOwner whenNotPaused {
+  function pause() onlyOwner whenNotPaused public {
     paused = true;
     emit Pause();
   }
@@ -435,11 +326,12 @@ contract Pausable is Ownable {
   /**
    * @dev called by the owner to unpause, returns to normal state
    */
-  function unpause() public onlyOwner whenPaused {
+  function unpause() onlyOwner whenPaused public {
     paused = false;
     emit Unpause();
   }
 }
+
 
 /**
  * @title Pausable token
@@ -447,87 +339,261 @@ contract Pausable is Ownable {
  **/
 contract PausableToken is StandardToken, Pausable {
 
-  function transfer(
-    address _to,
-    uint256 _value
-  )
-    public
-    whenNotPaused
-    returns (bool)
-  {
+  function transfer(address _to, uint256 _value) public whenNotPaused returns (bool) {
     return super.transfer(_to, _value);
   }
 
-  function transferFrom(
-    address _from,
-    address _to,
-    uint256 _value
-  )
-    public
-    whenNotPaused
-    returns (bool)
-  {
+  function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool) {
     return super.transferFrom(_from, _to, _value);
   }
 
-  function approve(
-    address _spender,
-    uint256 _value
-  )
-    public
-    whenNotPaused
-    returns (bool)
-  {
+  function approve(address _spender, uint256 _value) public whenNotPaused returns (bool) {
     return super.approve(_spender, _value);
   }
 
-  function increaseApproval(
-    address _spender,
-    uint _addedValue
-  )
-    public
-    whenNotPaused
-    returns (bool success)
-  {
+  function increaseApproval(address _spender, uint _addedValue) public whenNotPaused returns (bool success) {
     return super.increaseApproval(_spender, _addedValue);
   }
 
-  function decreaseApproval(
-    address _spender,
-    uint _subtractedValue
-  )
-    public
-    whenNotPaused
-    returns (bool success)
-  {
+  function decreaseApproval(address _spender, uint _subtractedValue) public whenNotPaused returns (bool success) {
     return super.decreaseApproval(_spender, _subtractedValue);
   }
 }
 
+
+contract MintableAndPausableToken is PausableToken {
+    uint8 public constant decimals = 18;
+    uint256 public maxTokenSupply = 2000000000 * 10 ** uint256(decimals);
+
+    bool public mintingFinished = false;
+    
+    event Mint(address indexed to, uint256 amount);
+    event MintFinished();
+    event MintStarted();
+
+    modifier canMint() {
+        require(!mintingFinished);
+        _;
+    }
+
+    modifier checkMaxSupply(uint256 _amount) {
+        require(maxTokenSupply >= totalSupply_.add(_amount));
+        _;
+    }
+
+    modifier cannotMint() {
+        require(mintingFinished);
+        _;
+    }
+
+    function mint(address _to, uint256 _amount)
+        external
+        onlyOwner
+        canMint
+        checkMaxSupply (_amount)
+        whenNotPaused
+        returns (bool)
+    {
+        totalSupply_ = totalSupply_.add(_amount);
+        balances[_to] = balances[_to].add(_amount);
+        emit Mint(_to, _amount);
+        emit Transfer(address(0), _to, _amount);
+        return true;
+    }
+
+    function finishMinting() external onlyOwner canMint returns (bool) {
+        mintingFinished = true;
+        emit MintFinished();
+        return true;
+    }
+
+    function startMinting() external onlyOwner cannotMint returns (bool) {
+        mintingFinished = false;
+        emit MintStarted();
+        return true;
+    }
+}
+
+
 /**
- * @title ENQ Token Smart Contract
- * @author GeekHack t.me/GeekHack
+ * Token upgrader interface inspired by Lunyr.
+ *
+ * Token upgrader transfers previous version tokens to a newer version.
+ * Token upgrader itself can be the token contract, or just a middle man contract doing the heavy lifting.
  */
-contract Token is CappedToken, PausableToken {
-	/* solhint-disable const-name-snakecase */
-	string public constant name = "Enecuum"; // solium-disable-line uppercase
-	string public constant symbol = "ENQ"; // solium-disable-line uppercase
-	uint8 public constant decimals = 10; // solium-disable-line uppercase
-	/* solhint-enable const-name-snakecase */
-	uint256 public cap = 687566880 * (10 ** uint256(decimals));
+contract TokenUpgrader {
+    uint public originalSupply;
 
-	// solium-disable-next-line max-len
-	uint256 public constant INITIAL_SUPPLY = 99901437 * (10 ** uint256(decimals)); // solhint-disable-line max-line-length
+    /** Interface marker */
+    function isTokenUpgrader() external pure returns (bool) {
+        return true;
+    }
 
-	constructor(
-		address _wallet
-	)
-	public
-	CappedToken(cap)
-	{ // solhint-disable-line bracket-align
-		require(_wallet != address(0));
-		totalSupply_ = INITIAL_SUPPLY;
-		balances[_wallet] = INITIAL_SUPPLY;
-		emit Transfer(address(0), _wallet, INITIAL_SUPPLY);
-	}
+    function upgradeFrom(address _from, uint256 _value) public {}
+}
+
+
+/**
+ * A token upgrade mechanism where users can opt-in amount of tokens to the next smart contract revision.
+ *
+ * First envisioned by Golem and Lunyr projects.
+ */
+
+
+contract UpgradeableToken is MintableAndPausableToken {
+    // Contract or person who can set the upgrade path.
+    address public upgradeMaster;
+    
+    // Bollean value needs to be true to start upgrades
+    bool private upgradesAllowed;
+
+    // The next contract where the tokens will be migrated.
+    TokenUpgrader public tokenUpgrader;
+
+    // How many tokens we have upgraded by now.
+    uint public totalUpgraded;
+
+    /**
+    * Upgrade states.
+    * - NotAllowed: The child contract has not reached a condition where the upgrade can begin
+    * - Waiting: Token allows upgrade, but we don't have a new token version
+    * - ReadyToUpgrade: The token version is set, but not a single token has been upgraded yet
+    * - Upgrading: Token upgrader is set and the balance holders can upgrade their tokens
+    */
+    enum UpgradeState { NotAllowed, Waiting, ReadyToUpgrade, Upgrading }
+
+    // Somebody has upgraded some of his tokens.
+    event Upgrade(address indexed _from, address indexed _to, uint256 _value);
+
+    // New token version available.
+    event TokenUpgraderIsSet(address _newToken);
+
+    modifier onlyUpgradeMaster {
+        // Only a master can designate the next token
+        require(msg.sender == upgradeMaster);
+        _;
+    }
+
+    modifier notInUpgradingState {
+        // Upgrade has already begun for token
+        require(getUpgradeState() != UpgradeState.Upgrading);
+        _;
+    }
+
+    // Do not allow construction without upgrade master set.
+    constructor(address _upgradeMaster) public {
+        upgradeMaster = _upgradeMaster;
+    }
+
+    // set a token upgrader
+    function setTokenUpgrader(address _newToken)
+        external
+        onlyUpgradeMaster
+        notInUpgradingState
+    {
+        require(canUpgrade());
+        require(_newToken != address(0));
+
+        tokenUpgrader = TokenUpgrader(_newToken);
+
+        // Handle bad interface
+        require(tokenUpgrader.isTokenUpgrader());
+
+        // Make sure that token supplies match in source and target
+        require(tokenUpgrader.originalSupply() == totalSupply_);
+
+        emit TokenUpgraderIsSet(tokenUpgrader);
+    }
+
+    // Allow the token holder to upgrade some of their tokens to a new contract.
+    function upgrade(uint _value) external {
+        UpgradeState state = getUpgradeState();
+        
+        // Check upgrate state 
+        require(state == UpgradeState.ReadyToUpgrade || state == UpgradeState.Upgrading);
+        // Validate input value
+        require(_value != 0);
+
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+
+        // Take tokens out from circulation
+        totalSupply_ = totalSupply_.sub(_value);
+        totalUpgraded = totalUpgraded.add(_value);
+
+        // Token Upgrader reissues the tokens
+        tokenUpgrader.upgradeFrom(msg.sender, _value);
+        emit Upgrade(msg.sender, tokenUpgrader, _value);
+    }
+
+    /**
+    * Change the upgrade master.
+    * This allows us to set a new owner for the upgrade mechanism.
+    */
+    function setUpgradeMaster(address _newMaster) external onlyUpgradeMaster {
+        require(_newMaster != address(0));
+        upgradeMaster = _newMaster;
+    }
+
+    // To be overriden to add functionality
+    function allowUpgrades() external onlyUpgradeMaster () {
+        upgradesAllowed = true;
+    }
+
+    // To be overriden to add functionality
+    function rejectUpgrades() external onlyUpgradeMaster () {
+        require(!(totalUpgraded > 0));
+        upgradesAllowed = false;
+    }
+
+    // Get the state of the token upgrade.
+    function getUpgradeState() public view returns(UpgradeState) {
+        if (!canUpgrade()) return UpgradeState.NotAllowed;
+        else if (address(tokenUpgrader) == address(0)) return UpgradeState.Waiting;
+        else if (totalUpgraded == 0) return UpgradeState.ReadyToUpgrade;
+        else return UpgradeState.Upgrading;
+    }
+
+    // To be overriden to add functionality
+    function canUpgrade() public view returns(bool) {
+        return upgradesAllowed;
+    }
+}
+
+
+contract Token is UpgradeableToken, BurnableToken {
+    string public name = "KEYOTO";
+    string public symbol = "KEYO";
+
+    // For patient incentive programs
+    uint256 public INITIAL_SUPPLY;
+
+    event UpdatedTokenInformation(string newName, string newSymbol);
+
+    constructor (address kpoWallet, address _upgradeMaster, uint256 _INITIAL_SUPPLY)
+        public
+        UpgradeableToken(_upgradeMaster)
+    {
+        require(maxTokenSupply >= _INITIAL_SUPPLY * (10 ** uint256(decimals)));
+        INITIAL_SUPPLY = _INITIAL_SUPPLY * (10 ** uint256(decimals));
+        totalSupply_ = INITIAL_SUPPLY;
+        balances[kpoWallet] = INITIAL_SUPPLY;
+        emit Transfer(address(0), kpoWallet, INITIAL_SUPPLY);
+    }
+
+    /**
+    * Owner can update token information here
+    */
+    function setTokenInformation(string _name, string _symbol) external onlyOwner {
+        name = _name;
+        symbol = _symbol;
+
+        emit UpdatedTokenInformation(name, symbol);
+    }
+
+    /**
+    * Owner can burn token here
+    */
+    function burn(uint256 _value) public onlyOwner {
+        super.burn(_value);
+    }
 }
