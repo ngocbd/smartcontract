@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Exchange at 0x9e75153a78f1f61fe2e87d7ecdf9eb2aab01a3aa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Exchange at 0x09011b803cc859bbda9751c742ec144de6b6c15b
 */
-pragma solidity ^0.4.25;
+pragma solidity ^0.4.24;
 
 contract AcceptsExchange {
     Exchange public tokenContract;
@@ -62,6 +62,42 @@ contract Exchange {
         _;
     }
 
+    uint ACTIVATION_TIME = 1538694000;
+
+    // ensures that the first tokens in the contract will be equally distributed
+    // meaning, no divine dump will be ever possible
+    // result: healthy longevity.
+    modifier antiEarlyWhale(uint256 _amountOfEthereum){
+
+        if (now >= ACTIVATION_TIME) {
+            onlyAmbassadors = false;
+        }
+
+        // are we still in the vulnerable phase?
+        // if so, enact anti early whale protocol
+        if( onlyAmbassadors && ((totalEthereumBalance() - _amountOfEthereum) <= ambassadorQuota_ )){
+            require(
+                // is the customer in the ambassador list?
+                ambassadors_[msg.sender] == true &&
+
+                // does the customer purchase exceed the max ambassador quota?
+                (ambassadorAccumulatedQuota_[msg.sender] + _amountOfEthereum) <= ambassadorMaxPurchase_
+
+            );
+
+            // updated the accumulated quota
+            ambassadorAccumulatedQuota_[msg.sender] = SafeMath.add(ambassadorAccumulatedQuota_[msg.sender], _amountOfEthereum);
+
+            // execute
+            _;
+        } else {
+            // in case the ether count drops low, the ambassador phase won't reinitiate
+            onlyAmbassadors = false;
+            _;
+        }
+
+    }
+
     /*==============================
     =            EVENTS            =
     ==============================*/
@@ -69,13 +105,18 @@ contract Exchange {
         address indexed customerAddress,
         uint256 incomingEthereum,
         uint256 tokensMinted,
-        address indexed referredBy
+        address indexed referredBy,
+        bool isReinvest,
+        uint timestamp,
+        uint256 price
     );
 
     event onTokenSell(
         address indexed customerAddress,
         uint256 tokensBurned,
-        uint256 ethereumEarned
+        uint256 ethereumEarned,
+        uint timestamp,
+        uint256 price
     );
 
     event onReinvestment(
@@ -86,7 +127,9 @@ contract Exchange {
 
     event onWithdraw(
         address indexed customerAddress,
-        uint256 ethereumWithdrawn
+        uint256 ethereumWithdrawn,
+        uint256 estimateTokens,
+        bool isTransfer
     );
 
     // ERC20
@@ -118,6 +161,11 @@ contract Exchange {
     // proof of stake (defaults at 100 tokens)
     uint256 public stakingRequirement = 25e18;
 
+    // ambassador program
+    mapping(address => bool) internal ambassadors_;
+    uint256 constant internal ambassadorMaxPurchase_ = 2.5 ether;
+    uint256 constant internal ambassadorQuota_ = 2.5 ether;
+
    /*================================
     =            DATASETS            =
     ================================*/
@@ -125,11 +173,15 @@ contract Exchange {
     mapping(address => uint256) internal tokenBalanceLedger_;
     mapping(address => uint256) internal referralBalance_;
     mapping(address => int256) internal payoutsTo_;
+    mapping(address => uint256) internal ambassadorAccumulatedQuota_;
     uint256 internal tokenSupply_ = 0;
     uint256 internal profitPerShare_;
 
     // administrator list (see above on what they can do)
     mapping(address => bool) public administrators;
+
+    // when this is set to true, only ambassadors can purchase tokens (this prevents a whale premine, it ensures a fairly distributed upper pyramid)
+    bool public onlyAmbassadors = true;
 
     // To whitelist game contracts on the platform
     mapping(address => bool) public canAcceptTokens_; // contracts, which can accept the exchanges tokens
@@ -147,6 +199,9 @@ contract Exchange {
     {
         // add administrators here
         administrators[0x7191cbD8BBCacFE989aa60FB0bE85B47f922FE21] = true;
+
+        // add the ambassadors here - Tokens will be distributed to these addresses from main premine
+        ambassadors_[0x7191cbD8BBCacFE989aa60FB0bE85B47f922FE21] = true;
     }
 
 
@@ -160,7 +215,7 @@ contract Exchange {
     {
 
         require(tx.gasprice <= 0.05 szabo);
-        purchaseTokens(msg.value, _referredBy);
+        purchaseTokens(msg.value, _referredBy, false);
     }
 
     /**
@@ -173,7 +228,7 @@ contract Exchange {
     {
 
         require(tx.gasprice <= 0.05 szabo);
-        purchaseTokens(msg.value, 0x0);
+        purchaseTokens(msg.value, 0x0, false);
     }
 
     function updateFundAddress(address _newAddress)
@@ -197,8 +252,8 @@ contract Exchange {
         uint256 ethToPay = SafeMath.sub(totalEthFundCollected, totalEthFundRecieved);
         require(ethToPay > 0);
         totalEthFundRecieved = SafeMath.add(totalEthFundRecieved, ethToPay);
-        if(!giveEthFundAddress.call.value(ethToPay)()) {
-            revert();
+        if(!giveEthFundAddress.call.value(ethToPay).gas(400000)()) {
+           totalEthFundRecieved = SafeMath.sub(totalEthFundRecieved, ethToPay);
         }
     }
 
@@ -221,7 +276,7 @@ contract Exchange {
         referralBalance_[_customerAddress] = 0;
 
         // dispatch a buy order with the virtualized "withdrawn dividends"
-        uint256 _tokens = purchaseTokens(_dividends, 0x0);
+        uint256 _tokens = purchaseTokens(_dividends, 0x0, true);
 
         // fire event
         emit onReinvestment(_customerAddress, _dividends, _tokens);
@@ -239,13 +294,13 @@ contract Exchange {
         if(_tokens > 0) sell(_tokens);
 
         // lambo delivery service
-        withdraw();
+        withdraw(false);
     }
 
     /**
      * Withdraws all of the callers earnings.
      */
-    function withdraw()
+    function withdraw(bool _isTransfer)
         onlyStronghands()
         public
     {
@@ -253,8 +308,10 @@ contract Exchange {
         address _customerAddress = msg.sender;
         uint256 _dividends = myDividends(false); // get ref. bonus later in the code
 
+        uint256 _estimateTokens = calculateTokensReceived(_dividends);
+
         // update dividend tracker
-        payoutsTo_[_customerAddress] +=  (int256) (_dividends * magnitude);
+        payoutsTo_[_customerAddress] += (int256) (_dividends * magnitude);
 
         // add ref. bonus
         _dividends += referralBalance_[_customerAddress];
@@ -264,7 +321,7 @@ contract Exchange {
         _customerAddress.transfer(_dividends);
 
         // fire event
-        emit onWithdraw(_customerAddress, _dividends);
+        emit onWithdraw(_customerAddress, _dividends, _estimateTokens, _isTransfer);
     }
 
     /**
@@ -308,7 +365,7 @@ contract Exchange {
         }
 
         // fire event
-        emit onTokenSell(_customerAddress, _tokens, _taxedEthereum);
+        emit onTokenSell(_customerAddress, _tokens, _taxedEthereum, now, buyPrice());
     }
 
 
@@ -330,7 +387,7 @@ contract Exchange {
         require(_amountOfTokens <= tokenBalanceLedger_[_customerAddress]);
 
         // withdraw all outstanding dividends first
-        if(myDividends(true) > 0) withdraw();
+        if(myDividends(true) > 0) withdraw(true);
 
         // exchange tokens
         tokenBalanceLedger_[_customerAddress] = SafeMath.sub(tokenBalanceLedger_[_customerAddress], _amountOfTokens);
@@ -593,28 +650,6 @@ contract Exchange {
     =            INTERNAL FUNCTIONS            =
     ==========================================*/
 
-    // Make sure we will send back excess if user sends more then 5 ether before 100 ETH in contract
-    function purchaseInternal(uint256 _incomingEthereum, address _referredBy)
-      notContract()// no contracts allowed
-      internal
-      returns(uint256) {
-
-      uint256 purchaseEthereum = _incomingEthereum;
-      uint256 excess;
-      if(purchaseEthereum > 2.5 ether) { // check if the transaction is over 2.5 ether
-          if (SafeMath.sub(address(this).balance, purchaseEthereum) <= 100 ether) { // if so check the contract is less then 100 ether
-              purchaseEthereum = 2.5 ether;
-              excess = SafeMath.sub(_incomingEthereum, purchaseEthereum);
-          }
-      }
-
-      purchaseTokens(purchaseEthereum, _referredBy);
-
-      if (excess > 0) {
-        msg.sender.transfer(excess);
-      }
-    }
-
     function handleRef(address _ref, uint _referralBonus, uint _currentDividends, uint _currentFee) internal returns (uint, uint){
         uint _dividends = _currentDividends;
         uint _fee = _currentFee;
@@ -667,7 +702,8 @@ contract Exchange {
     }
 
 
-    function purchaseTokens(uint256 _incomingEthereum, address _referredBy)
+    function purchaseTokens(uint256 _incomingEthereum, address _referredBy, bool _isReinvest)
+        antiEarlyWhale(_incomingEthereum)
         internal
         returns(uint256)
     {
@@ -718,7 +754,7 @@ contract Exchange {
         payoutsTo_[msg.sender] += _updatedPayouts;
 
         // fire event
-        emit onTokenPurchase(msg.sender, _incomingEthereum, _amountOfTokens, _referredBy);
+        emit onTokenPurchase(msg.sender, _incomingEthereum, _amountOfTokens, _referredBy, _isReinvest, now, buyPrice());
 
         return _amountOfTokens;
     }
