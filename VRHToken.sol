@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VRHToken at 0x7a6127de2bdefb19c45def37b02219d06315e3db
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VRHToken at 0x41b05aa756c8fa5f236a8e107d2a9bf03849c927
 */
 /*
 Copyright 2018 Virtual Rehab (http://virtualrehab.co)
@@ -16,7 +16,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
  */
-
+ 
  pragma solidity 0.4.24;
 
 
@@ -330,9 +330,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
  */
-
-
-
+ 
+ 
+ 
 
 
 /*
@@ -437,7 +437,7 @@ contract CustomAdmin is Ownable {
   constructor() public {
     admins[msg.sender] = true;
     numberOfAdmins = 1;
-
+    
     emit AdminAdded(msg.sender);
   }
   /**
@@ -519,12 +519,12 @@ contract CustomPausable is CustomAdmin {
 
 ///@title Virtual Rehab Token (VRH) ERC20 Token Contract
 ///@author Binod Nirvan, Subramanian Venkatesan (http://virtualrehab.co)
-///@notice The Virtual Rehab Token (VRH) has been created as a centralized currency
-///to be used within the Virtual Rehab network. Users will be able to purchase and sell
-///VRH tokens in exchanges. The token follows the standards of Ethereum ERC20 Standard token.
-///Its design follows the widely adopted token implementation standards.
-///This allows token holders to easily store and manage their VRH tokens using existing solutions
-///including ERC20-compatible Ethereum wallets. The VRH Token is a utility token
+///@notice The Virtual Rehab Token (VRH) has been created as a centralized currency 
+///to be used within the Virtual Rehab network. Users will be able to purchase and sell 
+///VRH tokens in exchanges. The token follows the standards of Ethereum ERC20 Standard token. 
+///Its design follows the widely adopted token implementation standards. 
+///This allows token holders to easily store and manage their VRH tokens using existing solutions 
+///including ERC20-compatible Ethereum wallets. The VRH Token is a utility token 
 ///and is core to Virtual Rehab’s end-to-end operations.
 ///
 ///VRH utility use cases include:
@@ -533,7 +533,7 @@ contract CustomPausable is CustomAdmin {
 ///3- Receive incentives (VRH rewards) for seeking help and counselling from psychologists, therapists, or medical doctors
 contract VRHToken is StandardToken, CustomPausable, BurnableToken {
   uint8 public constant decimals = 18;
-  string public constant name = "Virtual Rehab";
+  string public constant name = "VirtualRehab";
   string public constant symbol = "VRH";
 
   uint public constant MAX_SUPPLY = 400000000 * (10 ** uint256(decimals));
@@ -585,7 +585,7 @@ contract VRHToken is StandardToken, CustomPausable, BurnableToken {
 
 
 
-  ///@notice This function enables token transfers for everyone.
+  ///@notice This function enables token transfers for everyone. 
   ///Can only be enabled after the end of the ICO.
   function releaseTokenForTransfer() public onlyAdmin whenNotPaused {
     require(!released);
@@ -611,7 +611,7 @@ contract VRHToken is StandardToken, CustomPausable, BurnableToken {
     require(_date > now);
 
     ICOEndDate = _date;
-
+    
     emit ICOEndDateSet(_date);
   }
 
@@ -641,7 +641,7 @@ contract VRHToken is StandardToken, CustomPausable, BurnableToken {
     mintingList[computeHash(_key)] = true;
   }
 
-  ///@notice Mints the below-mentioned amount of tokens allocated to the Virtual Rehab advisors.
+  ///@notice Mints the below-mentioned amount of tokens allocated to the Virtual Rehab advisors. 
   //The tokens are only available to the advisors after 1 year of the ICO end.
   function mintTokensForAdvisors() public onlyAdmin {
     require(ICOEndDate != 0);
@@ -650,7 +650,7 @@ contract VRHToken is StandardToken, CustomPausable, BurnableToken {
     mintOnce("advisors", msg.sender, 750000);
   }
 
-  ///@notice Mints the below-mentioned amount of tokens allocated to the Virtual Rehab founders.
+  ///@notice Mints the below-mentioned amount of tokens allocated to the Virtual Rehab founders. 
   //The tokens are only available to the founders after 1 year of the ICO end.
   function mintTokensForFounders() public onlyAdmin {
     require(ICOEndDate != 0);
@@ -659,7 +659,7 @@ contract VRHToken is StandardToken, CustomPausable, BurnableToken {
     mintOnce("founders", msg.sender, 60000000);
   }
 
-  ///@notice Mints the below-mentioned amount of tokens allocated to Virtual Rehab services.
+  ///@notice Mints the below-mentioned amount of tokens allocated to Virtual Rehab services. 
   //The tokens are only available to the services after 1 year of the ICO end.
   function mintTokensForServices() public onlyAdmin  {
     require(ICOEndDate != 0);
@@ -668,8 +668,8 @@ contract VRHToken is StandardToken, CustomPausable, BurnableToken {
     mintOnce("services", msg.sender, 2085000);
   }
 
-  ///@notice Transfers the specified value of VRH tokens to the destination address.
-  //Transfers can only happen when the tranfer state is enabled.
+  ///@notice Transfers the specified value of VRH tokens to the destination address. 
+  //Transfers can only happen when the tranfer state is enabled. 
   //Transfer state can only be enabled after the end of the crowdsale.
   ///@param _to The destination wallet address to transfer funds to.
   ///@param _value The amount of tokens to send to the destination address.
@@ -691,7 +691,7 @@ contract VRHToken is StandardToken, CustomPausable, BurnableToken {
   ///@notice Approves a wallet address to spend on behalf of the sender.
   ///@dev This function is overriden to leverage transfer state feature.
   ///@param _spender The address which is approved to spend on behalf of the sender.
-  ///@param _value The amount of tokens approve to spend.
+  ///@param _value The amount of tokens approve to spend. 
   function approve(address _spender, uint256 _value) public canTransfer(msg.sender) returns (bool) {
     require(_spender != address(0));
     return super.approve(_spender, _value);
@@ -717,7 +717,7 @@ contract VRHToken is StandardToken, CustomPausable, BurnableToken {
   }
 
   ///@notice Returns the sum of supplied values.
-  ///@param _values The collection of values to create the sum from.
+  ///@param _values The collection of values to create the sum from.  
   function sumOf(uint256[] _values) private pure returns(uint256) {
     uint256 total = 0;
 
@@ -727,10 +727,10 @@ contract VRHToken is StandardToken, CustomPausable, BurnableToken {
 
     return total;
   }
-
+  
   ///@notice Allows only the admins and/or whitelisted applications to perform bulk transfer operation.
   ///@param _destinations The destination wallet addresses to send funds to.
-  ///@param _amounts The respective amount of fund to send to the specified addresses.
+  ///@param _amounts The respective amount of fund to send to the specified addresses. 
   function bulkTransfer(address[] _destinations, uint256[] _amounts) public onlyAdmin {
     require(_destinations.length == _amounts.length);
 
@@ -738,7 +738,7 @@ contract VRHToken is StandardToken, CustomPausable, BurnableToken {
     //to post this transaction.
     uint256 requiredBalance = sumOf(_amounts);
     require(balances[msg.sender] >= requiredBalance);
-
+    
     for (uint256 i = 0; i < _destinations.length; i++) {
      transfer(_destinations[i], _amounts[i]);
     }
