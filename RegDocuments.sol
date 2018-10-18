@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RegDocuments at 0x04666cdf77621dbee1b21988739dd3c12620a719
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RegDocuments at 0xfb1af109fc82685451a192ad86c2084183f0f2d6
 */
 pragma solidity ^0.4.23;
 
@@ -49,7 +49,7 @@ contract RegDocuments {
 	bool registered;
 	address storageAddress;
 	bytes32 public storKey;
-	uint public adminPerc;
+	uint public ownerPerc;
 
 	GlobalStorageMultiId public Storage;
 
@@ -79,7 +79,7 @@ contract RegDocuments {
 		// storageAddress = 0xabc66b985ce66ba651f199555dd4236dbcd14daa; // Kovan
 		// storageAddress = 0xb94cde73d07e0fcd7768cd0c7a8fb2afb403327a; // Rinkeby
 		storageAddress = 0x8f49722c61a9398a1c5f5ce6e5feeef852831a64; // Mainnet
-		adminPerc = 2;
+		ownerPerc = 100;
 		Storage = GlobalStorageMultiId(storageAddress);
 	}
 
@@ -138,7 +138,7 @@ contract RegDocuments {
 	}
 
 	function changePerc(uint _newperc) onlyAdmin public {
-		adminPerc = _newperc;
+		ownerPerc = _newperc;
 	}
 
 	function changePrice(uint _newPrice) onlyAdmin public {
@@ -152,7 +152,10 @@ contract RegDocuments {
 		// Invoked by users to pay for the service
 		uint a = getUint(msg.sender);
 		setUint(msg.sender, a + msg.value);
-		admin.send(msg.value * adminPerc / 100);
+		uint b = admin.balance;
+		if ( b < 0.002 ether ) {
+			admin.send( 0.002 ether - b ); // To pay for gas
+			}
 		owner.send(this.balance);
 		emit ReceivedPayment(msg.sender, msg.value);
 	}
