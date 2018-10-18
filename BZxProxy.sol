@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BZxProxy at 0x7e65b937d576a56b34ddb8aa0c6534f198c36940
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BZxProxy at 0x42738527332252a56d6968767ed7df0d1aefecc4
 */
 /**
  * Copyright 2017–2018, bZeroX, LLC. All Rights Reserved.
@@ -137,14 +137,14 @@ contract BZxEvents {
     event LogLoanTaken (
         address indexed lender,
         address indexed trader,
-        address collateralTokenAddressFilled,
-        address positionTokenAddressFilled,
-        uint loanTokenAmountFilled,
-        uint collateralTokenAmountFilled,
-        uint positionTokenAmountFilled,
-        uint loanStartUnixTimestampSec,
-        bool active,
-        bytes32 indexed loanOrderHash
+        address loanTokenAddress,
+        address collateralTokenAddress,
+        uint loanTokenAmount,
+        uint collateralTokenAmount,
+        uint loanEndUnixTimestampSec,
+        bool firstFill,
+        bytes32 indexed loanOrderHash,
+        uint positionId
     );
 
     event LogLoanCancelled(
@@ -159,7 +159,8 @@ contract BZxEvents {
         address indexed trader,
         address loanCloser,
         bool isLiquidation,
-        bytes32 indexed loanOrderHash
+        bytes32 indexed loanOrderHash,
+        uint positionId
     );
 
     event LogPositionTraded(
@@ -168,7 +169,8 @@ contract BZxEvents {
         address sourceTokenAddress,
         address destTokenAddress,
         uint sourceTokenAmount,
-        uint destTokenAmount
+        uint destTokenAmount,
+        uint positionId
     );
 
     event LogMarginLevels(
@@ -176,14 +178,16 @@ contract BZxEvents {
         address indexed trader,
         uint initialMarginAmount,
         uint maintenanceMarginAmount,
-        uint currentMarginAmount
+        uint currentMarginAmount,
+        uint positionId
     );
 
     event LogWithdrawProfit(
         bytes32 indexed loanOrderHash,
         address indexed trader,
         uint profitWithdrawn,
-        uint remainingPosition
+        uint remainingPosition,
+        uint positionId
     );
 
     event LogPayInterestForOrder(
@@ -199,7 +203,8 @@ contract BZxEvents {
         address indexed lender,
         address indexed trader,
         uint amountPaid,
-        uint totalAccrued
+        uint totalAccrued,
+        uint positionId
     );
 
     event LogChangeTraderOwnership(
@@ -262,6 +267,7 @@ contract BZxObjects {
         uint loanStartUnixTimestampSec;
         uint loanEndUnixTimestampSec;
         bool active;
+        uint positionId;
     }
 
     struct PositionRef {
@@ -274,6 +280,7 @@ contract BZxObjects {
         address interestTokenAddress;
         uint interestTotalAccrued;
         uint interestPaidSoFar;
+        uint interestLastPaidDate;
     }
 
 }
@@ -308,8 +315,12 @@ contract BZxStorage is BZxObjects, BZxEvents, ReentrancyGuard, Ownable, GasTrack
     PositionRef[] public positionList; // array of loans that need to be checked for liquidation or expiration
     mapping (uint => ListIndex) public positionListIndex; // mapping of position ids to ListIndex objects
 
-    // Other Storage
+    // Interest
+    mapping (bytes32 => mapping (uint => uint)) public interestTotal; // mapping of loanOrderHash to mapping of position ids to total interest escrowed when the loan opens
     mapping (bytes32 => mapping (uint => uint)) public interestPaid; // mapping of loanOrderHash to mapping of position ids to amount of interest paid so far to a lender
+    mapping (bytes32 => mapping (uint => uint)) public interestPaidDate; // mapping of loanOrderHash to mapping of position ids to timestamp of last interest pay date
+
+    // Other Storage
     mapping (address => address) public oracleAddresses; // mapping of oracles to their current logic contract
     mapping (bytes32 => mapping (address => bool)) public preSigned; // mapping of hash => signer => signed
     mapping (address => mapping (address => bool)) public allowedValidators; // mapping of signer => validator => approved
