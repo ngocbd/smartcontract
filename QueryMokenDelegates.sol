@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract QueryMokenDelegates at 0x7ab3761c1371519e032c5f99e5b98e01c2322ffe
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract QueryMokenDelegates at 0xa8cf07b6b1bc0612e7ec54cd8faabac4a53c6117
 */
 pragma solidity 0.4.24;
 pragma experimental "v0.5.0";
@@ -30,9 +30,9 @@ contract Storage0 {
 ///////////////////////////////////////////////////////////////////////////////////
 contract Storage1 is Storage0 {
     address internal contractOwner;
-    bytes[] internal functionSignatures;
+    string[] internal functionSignatures;
     // signature => index+1
-    mapping(bytes => uint256) internal functionSignatureToIndex;
+    mapping(string => uint256) internal functionSignatureToIndex;
 }
 
 contract QueryMokenDelegates is Storage1 {
@@ -41,91 +41,86 @@ contract QueryMokenDelegates is Storage1 {
         return functionSignatures.length;
     }
 
-    function functionByIndex(uint256 _index) external view returns(string memory functionSignature, bytes4 functionId, address delegate) {
+    function functionByIndex(uint256 _index) external view returns(string memory signature, bytes4 functionId, address delegate) {
         require(_index < functionSignatures.length, "functionSignatures index does not exist.");
-        bytes memory signature = functionSignatures[_index];
-        functionId = bytes4(keccak256(signature));
+        signature = functionSignatures[_index];
+        functionId = bytes4(keccak256(bytes(signature)));
         delegate = delegates[functionId];
-        return (string(signature), functionId, delegate);
+        return (signature, functionId, delegate);
     }
 
     function functionExists(string signature) external view returns(bool) {
-        return functionSignatureToIndex[bytes(signature)] != 0;
+        return functionSignatureToIndex[signature] != 0;
     }
 
-    function getFunctionSignatures() external view returns(string) {
-        uint256 signaturesLength;
-        bytes memory signatures;
-        bytes memory signature;
-        uint256 functionIndex;
-        uint256 charPos;
-        uint256 functionSignaturesNum = functionSignatures.length;
-        bytes[] memory memoryFunctionSignatures = new bytes[](functionSignaturesNum);
-        for(; functionIndex < functionSignaturesNum; functionIndex++) {
-            signature = functionSignatures[functionIndex];
-            signaturesLength += signature.length;
-            memoryFunctionSignatures[functionIndex] = signature;
+    function getFunctions() external view returns(string) {
+        uint256 functionSignaturesSize = 0;
+        bytes memory functionSignaturesBytes;
+        bytes memory functionSignatureBytes;
+        uint256 functionIndex = 0;
+        uint256 charPos = 0;
+        for(; functionIndex < functionSignatures.length; functionIndex++) {
+            functionSignaturesSize += bytes(functionSignatures[functionIndex]).length;
         }
-        signatures = new bytes(signaturesLength);
+        functionSignaturesBytes = new bytes(functionSignaturesSize);
         functionIndex = 0;
-        for(; functionIndex < functionSignaturesNum; functionIndex++) {
-            signature = memoryFunctionSignatures[functionIndex];
-            for(uint256 i = 0; i < signature.length; i++) {
-                signatures[charPos] = signature[i];
+        for(; functionIndex < functionSignatures.length; functionIndex++) {
+            functionSignatureBytes = bytes(functionSignatures[functionIndex]);
+            for(uint256 i = 0; i < functionSignatureBytes.length; i++) {
+                functionSignaturesBytes[charPos] = functionSignatureBytes[i];
                 charPos++;
             }
         }
-        return string(signatures);
+        return string(functionSignaturesBytes);
     }
 
-    function getDelegateFunctionSignatures(address _delegate) external view returns(string) {
-        uint256 signaturesNum = functionSignatures.length;
-        bytes[] memory delegateSignatures = new bytes[](signaturesNum);
-        uint256 delegateSignaturesPos;
-        uint256 signaturesLength;
-        bytes memory signatures;
-        bytes memory signature;
-        uint256 functionIndex;
-        uint256 charPos;
-        for(; functionIndex < signaturesNum; functionIndex++) {
-            signature = functionSignatures[functionIndex];
-            if(_delegate == delegates[bytes4(keccak256(signature))]) {
-                signaturesLength += signature.length;
-                delegateSignatures[delegateSignaturesPos] = signature;
-                delegateSignaturesPos++;
+    function getDelegateFunctions(address _delegate) external view returns(string) {
+        bytes[] memory delegateFunctionSignatures = new bytes[](functionSignatures.length);
+        uint256 delegateFunctionSignaturesPos = 0;
+        uint256 functionSignaturesSize = 0;
+        bytes memory functionSignaturesBytes;
+        bytes memory functionSignatureBytes;
+        uint256 functionIndex = 0;
+        uint256 charPos = 0;
+        for(; functionIndex < functionSignatures.length; functionIndex++) {
+            functionSignatureBytes = bytes(functionSignatures[functionIndex]);
+            if(_delegate == delegates[bytes4(keccak256(functionSignatureBytes))]) {
+                functionSignaturesSize += functionSignatureBytes.length;
+                delegateFunctionSignatures[delegateFunctionSignaturesPos] = functionSignatureBytes;
+                delegateFunctionSignaturesPos++;
             }
 
         }
-        signatures = new bytes(signaturesLength);
+        functionSignaturesBytes = new bytes(functionSignaturesSize);
         functionIndex = 0;
-        for(; functionIndex < delegateSignatures.length; functionIndex++) {
-            signature = delegateSignatures[functionIndex];
-            if(signature.length == 0) {
+        for(; functionIndex < delegateFunctionSignatures.length; functionIndex++) {
+            functionSignatureBytes = delegateFunctionSignatures[functionIndex];
+            if(functionSignatureBytes.length == 0) {
                 break;
             }
-            for(uint256 i = 0; i < signature.length; i++) {
-                signatures[charPos] = signature[i];
+            for(uint256 i = 0; i < functionSignatureBytes.length; i++) {
+                functionSignaturesBytes[charPos] = functionSignatureBytes[i];
                 charPos++;
             }
         }
-        return string(signatures);
+        return string(functionSignaturesBytes);
     }
 
-    function getDelegate(string functionSignature) external view returns(address) {
-        require(functionSignatureToIndex[bytes(functionSignature)] != 0, "Function signature not found.");
-        return delegates[bytes4(keccak256(bytes(functionSignature)))];
+    function getDelegate(string signature) external view returns(address) {
+        require(functionSignatureToIndex[signature] != 0, "Function signature not found.");
+        return delegates[bytes4(keccak256(bytes(signature)))];
     }
 
-    function getFunctionBySignature(string functionSignature) external view returns(bytes4 functionId, address delegate) {
-        require(functionSignatureToIndex[bytes(functionSignature)] != 0, "Function signature not found.");
-        functionId = bytes4(keccak256(bytes(functionSignature)));
+    function getFunctionBySignature(string signature) external view returns(bytes4 functionId, address delegate) {
+        require(functionSignatureToIndex[signature] != 0, "Function signature not found.");
+        functionId = bytes4(keccak256(bytes(signature)));
         return (functionId,delegates[functionId]);
     }
 
     function getFunctionById(bytes4 functionId) external view returns(string signature, address delegate) {
         for(uint256 i = 0; i < functionSignatures.length; i++) {
-            if(functionId == bytes4(keccak256(functionSignatures[i]))) {
-                return (string(functionSignatures[i]), delegates[functionId]);
+            if(functionId == keccak256(bytes(functionSignatures[i]))) {
+                return (functionSignatures[i], delegates[functionId]);
             }
         }
         revert("functionId not found");
@@ -134,12 +129,12 @@ contract QueryMokenDelegates is Storage1 {
     function getDelegates() external view returns(address[]) {
         uint256 functionSignaturesNum = functionSignatures.length;
         address[] memory delegatesBucket = new address[](functionSignaturesNum);
-        uint256 numDelegates;
-        uint256 functionIndex;
-        bool foundDelegate;
+        uint256 numDelegates = 0;
+        uint256 functionIndex = 0;
+        bool foundDelegate = false;
         address delegate;
         for(; functionIndex < functionSignaturesNum; functionIndex++) {
-            delegate = delegates[bytes4(keccak256(functionSignatures[functionIndex]))];
+            delegate = delegates[bytes4(keccak256(bytes(functionSignatures[functionIndex])))];
             for(uint256 i = 0; i < numDelegates; i++) {
                 if(delegate == delegatesBucket[i]) {
                     foundDelegate = true;
