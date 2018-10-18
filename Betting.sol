@@ -1,6 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Betting at 0xe75a60da4bad89b84d10a7ab8e28f9ed7ba22401
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Betting at 0xc8abbe9bd2af3e1c5a3cb042be08ab57847e31b0
 */
+pragma solidity ^0.4.20;
+
 pragma solidity ^0.4.21;
 library SafeMath {
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
@@ -32,7 +34,7 @@ interface P3DTakeout {
     function buyTokens() external payable;
 }
 
-contract Betting {
+contract Betting{
     using SafeMath for uint256; //using safemath
 
     address public owner; //owner address
@@ -40,7 +42,7 @@ contract Betting {
     P3DTakeout P3DContract_;
 
     uint public winnerPoolTotal;
-    string public constant version = "0.2.3";
+    string public constant version = "0.2.4";
 
     struct chronus_info {
         bool  betting_open; // boolean: check if betting is open
@@ -133,6 +135,7 @@ contract Betting {
 
     //function to change owner
     function changeOwnership(address _newOwner) onlyOwner external {
+        require(now > chronus.starting_time + chronus.race_duration + 60 minutes);
         owner = _newOwner;
     }
 
@@ -302,9 +305,16 @@ contract Betting {
     }
 
     function forceVoidRace() internal {
+        require(!chronus.voided_bet);
         chronus.voided_bet=true;
         chronus.race_end = true;
         chronus.voided_timestamp=uint32(now);
+    }
+    
+    //this methohd can only be called by controller contract in case of timestamp errors
+    function forceVoidExternal() external onlyOwner {
+        forceVoidRace();
+        emit RefundEnabled("Inaccurate price timestamp");
     }
 
     // exposing the coin pool details for DApp
@@ -324,10 +334,19 @@ contract Betting {
     function reward_total() external constant returns (uint) {
         return ((coinIndex[horses.BTC].total) + (coinIndex[horses.ETH].total) + (coinIndex[horses.LTC].total));
     }
+    
+    function getChronus() external view returns (uint32[]) {
+        uint32[] memory chronusData = new uint32[](3);
+        chronusData[0] = chronus.starting_time;
+        chronusData[1] = chronus.betting_duration;
+        chronusData[2] = chronus.race_duration;
+        return (chronusData);
+        // return (chronus.starting_time, chronus.betting_duration ,chronus.race_duration);
+    }
 
     // in case of any errors in race, enable full refund for the Bettors to claim
     function refund() external onlyOwner {
-        require(now > chronus.starting_time + chronus.race_duration);
+        require(now > chronus.starting_time + chronus.race_duration + 60 minutes);
         require((chronus.betting_open && !chronus.race_start)
             || (chronus.race_start && !chronus.race_end));
         chronus.voided_bet = true;
