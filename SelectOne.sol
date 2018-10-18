@@ -1,73 +1,65 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SelectOne at 0x56c95c0a4e3c667e30ef383dcaffa7d35b64e20a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SelectOne at 0x0a28dd8141394e6d680d20d54ffeb3544b576a78
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.21;
+
+
 
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    if (a == 0) {
-      return 0;
+    function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        if (a == 0) {
+            return 0;
+        }
+        c = a * b;
+        assert(c / a == b);
+        return c;
     }
-    c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    return a / b;
-  }
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    c = a + b;
-    assert(c >= a);
-    return c;
-  }
+
+    function div(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        
+        
+        
+        return a / b;
+    }
+
+    function sub(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        assert(b <= a);
+        return a - b;
+    }
+
+    function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        c = a + b;
+        assert(c >= a);
+        return c;
+    }
 }
 
-interface IDonQuixoteToken{                          
-    function withhold(address _user,  uint256 _amount) external returns (bool _result);  
-    function transfer(address _to, uint256 _value) external;                             
-    function sendGameGift(address _player) external returns (bool _result);              
-    function logPlaying(address _player) external returns (bool _result);               
-    function balanceOf(address _user) constant  external returns (uint256 _balance);
-} 
 
-contract BaseGame {             
-    string public gameName="BigOrSmall";         
-     uint public constant gameType = 2001;   
+contract BaseGame {
+    using SafeMath for uint256;
+    
     string public officialGameUrl;  
-    mapping (address => uint256) public userTokenOf;     
-    uint public bankerBeginTime;     
-    uint public bankerEndTime;       
-    address public currentBanker;      
-    	
-    function depositToken(uint256 _amount) public;
-    function withdrawToken(uint256 _amount) public;
-	function withdrawAllToken() public;
-    function setBanker(address _banker, uint256 _beginTime, uint256 _endTime) public returns(bool _result);     
-    function canSetBanker() view public returns (bool _result);         
+    string public gameName = "SelectOne";    
+    uint public gameType = 3002;               
+
+    mapping (address => uint256) public userEtherOf;
+    
+    function userRefund() public  returns(bool _result);
 }
-contract Base is BaseGame { 
-    using SafeMath for uint256;     
+
+contract Base is  BaseGame{
     uint public createTime = now;
     address public owner;
-	
-    IDonQuixoteToken public DonQuixoteToken;
-      function Base() public {
-    }
-	
+
     modifier onlyOwner {
         require(msg.sender == owner);
         _;
     }
-	
+
     function setOwner(address _newOwner)  public  onlyOwner {
-         require(_newOwner!= 0x0);
         owner = _newOwner;
     }
-        
+
     bool public globalLocked = false;     
 
     function lock() internal {             
@@ -78,47 +70,16 @@ contract Base is BaseGame {
     function unLock() internal {
         require(globalLocked);
         globalLocked = false;
-    }    
-  
+    }
+
     function setLock()  public onlyOwner{
-        globalLocked = false;     
-    }
-    function tokenOf(address _user) view public returns(uint256 _result){
-        _result = DonQuixoteToken.balanceOf(_user);
-    }
-	
-    function depositToken(uint256 _amount) public {
-        lock();
-        _depositToken(msg.sender, _amount);
-        unLock();
+        globalLocked = false;
     }
 
-    function _depositToken(address _to, uint256 _amount) internal {         
-        require(_to != 0x0);
-        DonQuixoteToken.withhold(_to, _amount);
-        userTokenOf[_to] = userTokenOf[_to].add(_amount);
-    }
 
-    function withdrawAllToken() public{    
-        uint256 _amount = userTokenOf[msg.sender];
-        withdrawToken(_amount);
-    }
-	
-	function withdrawToken(uint256 _amount) public {    
-        lock();  
-        _withdrawToken(msg.sender, _amount);
-        unLock();
-    }
+    uint public currentEventId = 1;
 
-    function _withdrawToken(address _to, uint256 _amount) internal {      
-        require(_to != 0x0);
-        userTokenOf[_to] = userTokenOf[_to].sub(_amount);
-        DonQuixoteToken.transfer(_to, _amount);
-    }
-
-    uint public currentEventId = 1;            
-
-    function getEventId() internal returns(uint _result) {  
+    function getEventId() internal returns(uint _result) { 
         _result = currentEventId;
         currentEventId ++;
     }
@@ -126,355 +87,432 @@ contract Base is BaseGame {
     function setOfficialGameUrl(string _newOfficialGameUrl) public onlyOwner{
         officialGameUrl = _newOfficialGameUrl;
     }
-        
 }
 
-contract SelectOne is Base
-{    
-    uint public constant minNum = 1;        
-    uint public maxNum = 22;               
-    uint  public winMultiplePer = 90;     
+
+
+interface IDividendToken{                           
+    function profitOrgPay() payable external ;    
+}
+
+interface IGameToken{                                             
+    function mineToken(address _player, uint256 _etherAmount) external returns (uint _toPlayerToken);
+    function balanceOf(address _owner) constant  external returns (uint256 _balance);
+}
+
+contract Loan is Base{     
+
+    address public shareholder;               
+
+    bool public shareholderIsToken = false;
+    bool public isStopPlay = false;
+    uint public stopTime = 0;
     
-    uint  public constant maxPlayerNum = 100;      
-    uint public gameTime; 
-    uint256 public gameMaxBetAmount;    
-    uint256 public gameMinBetAmount;    
-	
-	function SelectOne(uint _maxNum, uint  _gameTime, uint256 _gameMinBetAmount, uint256 _gameMaxBetAmount,uint _winMultiplePer, string _gameName,address _DonQuixoteToken)  public {
-        require(_gameMinBetAmount >= 0);
-        require(_gameMaxBetAmount > 0);
-        require(_gameMaxBetAmount >= _gameMinBetAmount);
-		require(_maxNum < 10000);              
-        require(1 < _maxNum);                   
-        require(_winMultiplePer < _maxNum.mul(100));      
-        
-		gameMinBetAmount = _gameMinBetAmount;
-        gameMaxBetAmount = _gameMaxBetAmount;
-        gameTime = _gameTime;
-        maxNum = _maxNum;                      
-        winMultiplePer = _winMultiplePer;       
-        owner = msg.sender;             
-        gameName = _gameName;           
-
-        require(_DonQuixoteToken != 0x0);
-        DonQuixoteToken = IDonQuixoteToken(_DonQuixoteToken);
+    function setStopPlay(bool _isStopPlay) public onlyOwner
+    {
+        isStopPlay = _isStopPlay;
+        stopTime = now;
     }
 
-    uint public lastBlockNumber = 0;            
-    bool public betInfoIsLocked = false;       
-    address public auction;             
-    
-
-    function setAuction(address _newAuction) public onlyOwner{
-        require(_newAuction != 0x0);
-        auction = _newAuction;
-    }
-    modifier onlyAuction {             
-        require(msg.sender == auction);
-        _;
+    function userRefund() public  returns(bool _result) {
+        return _userRefund(msg.sender);
     }
 
-    function canSetBanker() public view returns (bool _result){
-        _result =  bankerEndTime <= now && gameOver;
-    }
-	
-    modifier onlyBanker {               
-        require(msg.sender == currentBanker);
-        require(bankerBeginTime <= now);
-        require(now < bankerEndTime);     
-        _;
-    }
-
-    event OnSetNewBanker(address _caller, address _banker, uint _beginTime, uint _endTime, uint _code, uint _eventTime, uint eventId);
-
-    function setBanker(address _banker, uint _beginTime, uint _endTime) public onlyAuction returns(bool _result)
-	{
+    function _userRefund(address _to) internal  returns(bool _result){    
+        require (_to != 0x0);
         _result = false;
-        require(_banker != 0x0);
-        if(now < bankerEndTime){        
-            emit OnSetNewBanker(msg.sender, _banker,  _beginTime,  _endTime, 1, now, getEventId());
-            return;
+        lock();
+        uint256 amount = userEtherOf[msg.sender];
+        if(amount > 0){
+            if(msg.sender == shareholder){       
+		checkPayShareholder();
+            }
+            else{       
+                userEtherOf[msg.sender] = 0;
+                _to.transfer(amount);
+            }
+            _result = true;
         }
-        if(!gameOver){                  
-            emit OnSetNewBanker(msg.sender, _banker,  _beginTime,  _endTime, 2, now, getEventId());
-            return;
+        else{   
+            _result = false;
         }
-        if(_beginTime > now){               
-            emit OnSetNewBanker(msg.sender, _banker,  _beginTime,  _endTime, 3, now, getEventId()); 
-            return;
-        }
-        if(_endTime <= now){
-            emit OnSetNewBanker(msg.sender, _banker,  _beginTime,  _endTime, 4, now, getEventId());
-            return;
-        }
-	    if(now < donGameGiftLineTime){
-            DonQuixoteToken.logPlaying(_banker);
-        }
-        currentBanker = _banker;
-        bankerBeginTime = _beginTime;
-        bankerEndTime = _endTime;
-        emit OnSetNewBanker(msg.sender, _banker,  _beginTime,  _endTime, 0 , now, getEventId());
-        _result = true;
-    }
- 
-    uint public playNo = 1;             
-    uint public gameID = 0;             
-    uint public gameBeginPlayNo;        
-    uint public gameEndPlayNo;          
-    bytes32 public gameEncryptedText;  
-    uint public gameResult;            
-    string public gameRandon1;          
-    string public constant gameRandon2 = 'ChinasNewGovernmentBracesforTrump';   
-    uint  public gameBeginTime;        
-    uint  public gameEndTime;           
-    bool public gameOver = true;       
-    uint public donGameGiftLineTime = now.add(90 days);  
-    
-	
-    event OnNewGame(uint _gameID, address _banker, bytes32 _gameEncryptedText, uint  _gameBeginTime,  uint  _gameEndTime, uint _eventTime, uint _eventId);
-
-    function newGame(bytes32 _gameEncryptedText) public onlyBanker returns(bool _result)               
-    {
-        _result = _newGame( _gameEncryptedText);
+        unLock();
     }
 
-    function _newGame(bytes32 _gameEncryptedText) private  returns(bool _result)       
-    {
-        _result = false;
-        require(gameOver); 
-        require(bankerBeginTime < now);       
-        require(now.add(gameTime) <= bankerEndTime);    
-        gameID++;                           
-        currentBanker = msg.sender;
-        gameEncryptedText = _gameEncryptedText;
-        gameRandon1 = '';          
-        gameBeginTime = now;                
-        gameEndTime = now.add(gameTime);
-        gameBeginPlayNo = playNo;          
-        gameEndPlayNo = 0;                 
-        gameResult = 0;  
-        gameOver = false;
-        
-        emit OnNewGame(gameID, msg.sender, _gameEncryptedText, now, now.add(gameTime), now, getEventId());
-        _result = true;
-    }
-    
-    struct betInfo              
-    {
-        address Player;
-        uint BetNum;            
-        uint256 BetAmount;      
-        bool IsReturnAward;     
+    uint256 maxShareholderEther = 20 ether;                                
+
+    function setMaxShareholderEther(uint256 _value) public onlyOwner {     
+        require(_value >= minBankerEther * 2);
+        require(_value <= minBankerEther * 20);
+        maxShareholderEther = _value;
     }
 
-    mapping (uint => betInfo) public playerBetInfoOf;              
-    event OnPlay(uint indexed _gameID, address indexed _player, uint _betNum, uint256 _betAmount, uint _playNo, uint _eventTime, uint _eventId);
-
-    function play(uint _betNum, uint256 _betAmount) public  returns(bool _result){      
-        _result = _play(_betNum, _betAmount);
+    function autoCheckPayShareholder() internal {                             
+        if (userEtherOf[shareholder] > maxShareholderEther){
+            checkPayShareholder();
+         }
     }
 
-    function _play(uint _betNum, uint256 _betAmount) private  returns(bool _result){            
-        _result = false;
-        require(!gameOver);
-        require(!betInfoIsLocked);                         
-        require(now < gameEndTime);
-        require(playNo.sub(gameBeginPlayNo) <= maxPlayerNum); 
-        require(minNum <= _betNum && _betNum <= maxNum);    
-        require(msg.sender != currentBanker);                
-                   
-        uint256 ba = _betAmount;
-        if (ba > gameMaxBetAmount){                       
-            ba = gameMaxBetAmount;
-        }
-        require(ba >= gameMinBetAmount);                   
-
-        if(userTokenOf[msg.sender] < ba){                                       
-            depositToken(ba.sub(userTokenOf[msg.sender]));                    
-        }
-        require(userTokenOf[msg.sender] >= ba);             
-       
-        uint256 BankerAmount = ba.mul(winMultiplePer).div(100);                  
-      
-        require(userTokenOf[currentBanker] >= BankerAmount);
-
-        betInfo memory bi = betInfo({
-                Player :  msg.sender,
-                BetNum : _betNum,
-                BetAmount : ba,
-                IsReturnAward: false                 
-        });
-
-        playerBetInfoOf[playNo] = bi;
-        userTokenOf[msg.sender] = userTokenOf[msg.sender].sub(ba);                     
-        userTokenOf[currentBanker] = userTokenOf[currentBanker].sub(BankerAmount);      
-        userTokenOf[this] = userTokenOf[this].add(ba.add(BankerAmount));                
-
-        emit OnPlay(gameID,  msg.sender,  _betNum,  ba, playNo, now, getEventId());
-
-        lastBlockNumber = block.number;    
-        playNo++;                          
-
-        if(now < donGameGiftLineTime){     
-            DonQuixoteToken.logPlaying(msg.sender);           
-        }
-        _result = true;
-    }
-
-   
-    
-    function lockBetInfo() public onlyBanker returns (bool _result) {                  
-        require(!gameOver);
-        require(now < gameEndTime);
-        require(!betInfoIsLocked);
-        betInfoIsLocked = true;
-        _result = true;
-    }
-
-    function uint8ToString(uint v) private pure returns (string)    
-    {
-        uint maxlength = 8;                    
-        bytes memory reversed = new bytes(maxlength);
-        uint i = 0;
-        while (v != 0) {
-            uint remainder = v % 10;
-            v = v.div(10);
-            reversed[i++] = byte(remainder.add(48));
-        }
-        bytes memory s = new bytes(i);         
-        for (uint j = 0; j < i; j++) {
-            s[j] = reversed[(i.sub(j)).sub(1)];         
-        }
-        string memory str = string(s);          
-        return str;                             
-    }
-
-    event OnOpenGameResult(uint indexed _gameID, address _banker, uint _gameResult, string _r1, bool  _result, uint  _code, uint _eventTime, uint eventId);
-
-    function openGameResult(uint _gameResult, string _r1) public onlyBanker  returns(bool _result){
-        _result =  _openGameResult( _gameResult,  _r1);
-    }
-    
-    function _openGameResult(uint _gameResult, string _r1) private  returns(bool _result){            
-       
-	   _result = false;
-        require(betInfoIsLocked);          
-        require(!gameOver);
-        require(now <= gameEndTime);       
-
-        if(lastBlockNumber == block.number){                        
-            emit OnOpenGameResult(gameID, msg.sender, _gameResult, _r1,  false, 2, now, getEventId());         
-            return;
-        }
-
-        string memory gr = uint8ToString(_gameResult); 
-        if(keccak256(gr, gameRandon2,  _r1) ==  gameEncryptedText){
-            if(_gameResult >= minNum && _gameResult <= maxNum){     
-                gameResult = _gameResult;
-                gameRandon1 = _r1;
-                gameEndPlayNo = playNo.sub(1); 
-                for(uint i = gameBeginPlayNo; i < playNo; i++){     
-                    betInfo storage p = playerBetInfoOf[i];
-                    if(!p.IsReturnAward){   
-                        p.IsReturnAward = true;
-                        uint256 AllAmount = p.BetAmount.mul(winMultiplePer.add(100)).div(100);    
-                        if(p.BetNum == _gameResult){                                           
-                            userTokenOf[p.Player] = userTokenOf[p.Player].add(AllAmount);     
-                            userTokenOf[this] = userTokenOf[this].sub(AllAmount);               
-                        }else{                                                                  
-                            userTokenOf[currentBanker] = userTokenOf[currentBanker].add(AllAmount);
-                            userTokenOf[this] = userTokenOf[this].sub(AllAmount);               
-                            if(now < donGameGiftLineTime){  
-                                DonQuixoteToken.sendGameGift(p.Player);                                
-                            } 
-                        }
-                    }
+    function checkPayShareholder() internal {               
+        uint256 amount = userEtherOf[shareholder];
+        if(currentLoanPerson == 0x0 || checkPayLoan()){       
+            uint256 me = minBankerEther;                    
+            if(isStopPlay){
+                me = 0;
+            }
+            if(amount >= me){     
+                uint256 toShareHolder = amount - me;
+                if(shareholderIsToken){     
+                    IDividendToken token = IDividendToken(shareholder);
+                    token.profitOrgPay.value(toShareHolder)();  
+                }else{
+                    shareholder.transfer(toShareHolder);
                 }
-                gameOver = true;
-                betInfoIsLocked = false;    
-                emit OnOpenGameResult(gameID, msg.sender,  _gameResult,  _r1, true, 0, now, getEventId());      
-                _result = true;
-                return;
-            }else{       
-                emit OnOpenGameResult(gameID, msg.sender,  _gameResult,  _r1,  false, 3, now, getEventId()); 
-                return;                  
-            }
-        }else{           
-            emit OnOpenGameResult(gameID, msg.sender,  _gameResult,  _r1,  false,4, now, getEventId());
-            return;
-        }        
-    }
-
-    function openGameResultAndNewGame(uint _gameResult, string _r1, bytes32 _gameEncryptedText) public onlyBanker returns(bool _result){
-		if(gameOver){
-            _result = true ;
-        }else{
-            _result = _openGameResult( _gameResult,  _r1);
-        }
-        if (_result){      
-            _result = _newGame( _gameEncryptedText);
-        }
-    }
-
-    function noOpenGameResult() public  returns(bool _result){         
-        _result = false;
-        require(!gameOver);       
-        require(gameEndTime < now); 
-        if(lastBlockNumber == block.number){                           
-            emit OnOpenGameResult(gameID, msg.sender,0, '',false, 2, now, getEventId());
-            return;
-        }
-
-        lock(); 
-		
-        gameEndPlayNo = playNo - 1;         
-        for(uint i = gameBeginPlayNo; i < playNo; i++){                                
-            betInfo storage p = playerBetInfoOf[i];
-            if(!p.IsReturnAward){           
-                p.IsReturnAward = true;
-                uint256 AllAmount = p.BetAmount.mul(winMultiplePer.add(100)).div(100);     
-                userTokenOf[p.Player] = userTokenOf[p.Player].add(AllAmount);          
-                userTokenOf[this] = userTokenOf[this].sub(AllAmount);                  
+                userEtherOf[shareholder] = me;
             }
         }
-
-        gameOver = true;
-        if(betInfoIsLocked){
-            betInfoIsLocked = false;    
-        }
-        emit OnOpenGameResult(gameID, msg.sender,   0,  '',  true, 1, now, getEventId());
-        _result = true;
-
-        unLock();  
     }
 
-    function  failUserRefund(uint _playNo) public returns (bool _result) {      
-        _result = false;
-        require(!gameOver);
-        require(gameEndTime.add(30 days) < now);          
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        betInfo storage p = playerBetInfoOf[_playNo];   
-        require(p.Player == msg.sender);               
+    uint256 public gameMaxBetAmount = 0.4 ether;        
+    uint256 public gameMinBetAmount = 0.04 ether;      
+    uint256 public minBankerEther = gameMaxBetAmount * 20;
+
+    function setMinBankerEther(uint256 _value) public onlyOwner {          
+        require(_value >= gameMinBetAmount *  18 * 1);
+        require(_value <= gameMaxBetAmount *  18 * 10);
+        minBankerEther = _value;
+    }
+
+    uint256 public currentDayRate10000 = 0;
+    address public currentLoanPerson;       
+    uint256 public currentLoanAmount;       
+    uint public currentLoanDayTime;      
+
+    function depositEther() public payable
+    {  
+        if (msg.value > 0){
+            userEtherOf[msg.sender] = userEtherOf[msg.sender].add(msg.value);
+        }
+    }
+
+    event OnBidLoan(bool indexed _success, address indexed _user, uint256 indexed _dayRate10000,  uint256 _etherAmount);
+    event OnPayLoan(address _sender,uint _eventTime,uint256 _toLoan);
+
+    function bidLoan(uint256 _dayRate10000) public payable returns(bool _result) {      
+        _result = false;
+        require(!isStopPlay);
+        require(msg.sender != shareholder);
+
+        require(_dayRate10000 < 1000);
+        depositEther();
         
-        if(!p.IsReturnAward && p.BetNum > 0){            
-            p.IsReturnAward = true;
-            uint256 ToUser = p.BetAmount;   
-            uint256 ToBanker = p.BetAmount.mul(winMultiplePer).div(100);  
-            userTokenOf[this] = userTokenOf[this].sub(ToUser.add(ToBanker));              
-            userTokenOf[p.Player] = userTokenOf[p.Player].add(ToUser);         
-            userTokenOf[currentBanker] = userTokenOf[currentBanker].add(ToBanker);
-            _result = true;                                  
+        if(checkPayLoan()){
+            emit OnBidLoan(false, msg.sender, _dayRate10000,  0);
+            return;
+        }
+        
+        uint256 toLoan = calLoanAmount();
+        uint256 toGame = 0;
+        if (userEtherOf[shareholder] < minBankerEther){       
+            toGame = minBankerEther.sub(userEtherOf[shareholder]);
+        }
+
+        if(toLoan > 0 && toGame == 0 && currentLoanPerson != 0x0){                   
+            require(_dayRate10000 < currentDayRate10000);
+        }
+
+        require(toLoan + toGame > 0);
+        require(userEtherOf[msg.sender] >= toLoan + toGame);
+
+        userEtherOf[msg.sender] = userEtherOf[msg.sender].sub(toLoan + toGame);
+        userEtherOf[currentLoanPerson] = userEtherOf[currentLoanPerson].add(toLoan);
+        userEtherOf[shareholder] = userEtherOf[shareholder].add(toGame);
+
+        currentLoanPerson = msg.sender;
+        currentDayRate10000 = _dayRate10000;
+        currentLoanAmount = toLoan + toGame;
+        currentLoanDayTime = now;
+
+        emit OnBidLoan(false, msg.sender, _dayRate10000,  currentLoanAmount);
+
+        _result = true;
+        return;
+    }
+
+    function getCanLoanAmount() public view returns(uint256  _result){                 
+        uint256 toLoan = calLoanAmount();
+
+        uint256 toGame = 0;
+        if (userEtherOf[shareholder] <= minBankerEther){
+            toGame = minBankerEther - userEtherOf[shareholder];
+            _result =  toLoan + toGame;
+            return;
+        }
+        else if (userEtherOf[shareholder] > minBankerEther){
+            uint256 c = userEtherOf[shareholder] - minBankerEther;
+            if(toLoan > c){
+                _result =  toLoan - c;
+                return;
+            }
+            else{
+                _result =  0;
+                return;
+            }
         }
     }
 
-    function transEther() public onlyOwner()    
-    {
-        msg.sender.transfer(address(this).balance);
-    }
-    
-    function () public payable {        
-      
+    function calLoanAmount() public view returns (uint256 _result){
+      _result = 0;
+      if(currentLoanPerson != 0x0 && currentLoanAmount > 0){
+          _result = currentLoanAmount;
+          uint d = now.sub(currentLoanDayTime).div(1 days);
+          for(uint i = 0; i < d; i++){
+              _result = _result.mul(currentDayRate10000.add(10000)).div(10000);
+          }
+        }
     }
 
+
+    function checkPayLoan() public returns (bool _result) {                        
+        _result = false;
+        uint256 toLoan = calLoanAmount();
+        if(toLoan > 0){
+            if(isStopPlay && now  > stopTime.add(1 days)){         
+                if(toLoan > userEtherOf[shareholder]){
+                    toLoan = userEtherOf[shareholder];
+                    userEtherOf[currentLoanPerson] = userEtherOf[currentLoanPerson].add(toLoan);
+                    userEtherOf[shareholder] = userEtherOf[shareholder].sub(toLoan);
+                }
+                else{
+                    userEtherOf[currentLoanPerson] = userEtherOf[currentLoanPerson].add(toLoan);
+                    userEtherOf[shareholder] = userEtherOf[shareholder].sub(toLoan);
+                }
+
+                currentLoanPerson = 0x0;
+                currentDayRate10000 = 0;
+                currentLoanAmount = 0;
+                currentLoanDayTime = now;
+                _result = true;
+                emit OnPayLoan(msg.sender, now, toLoan);
+                return;
+            }                             
+            if (userEtherOf[shareholder] >= minBankerEther.add(toLoan)){            
+                userEtherOf[currentLoanPerson] = userEtherOf[currentLoanPerson].add(toLoan);
+                userEtherOf[shareholder] = userEtherOf[shareholder].sub(toLoan);
+                currentLoanPerson = 0x0;
+                currentDayRate10000 = 0;
+                currentLoanAmount = 0;
+                currentLoanDayTime = now;
+                _result = true;
+                emit OnPayLoan(msg.sender,now,toLoan);
+                return;
+            }
+        }
+    }
+}
+
+
+contract SelectOne is Loan
+{
+  uint public playNo = 1;      
+  uint public constant minNum = 1; 
+  uint public constant maxNum = 22;         
+  uint public constant winMultiplePer = 1800;
+
+  struct betInfo              
+  {
+    address Player;         
+    uint[] BetNums;
+    uint AwardNum;
+    uint256[] BetAmounts;      
+    uint256 BlockNumber;    
+    uint EventId;           
+    bool IsReturnAward;     
+  }
+  mapping (uint => betInfo) public playerBetInfoOf;               
+  IGameToken public GameToken;
+
+
+  //function SelectOne(uint _maxNum, uint256 _gameMinBetAmount,uint256 _gameMaxBetAmount,uint _winMultiplePer,string _gameName,address _gameToken,bool _isToken) public{
+  function SelectOne(uint256 _gameMinBetAmount,uint256 _gameMaxBetAmount, string _gameName,address _gameToken) public{
+    //require(1 < _maxNum);
+    //require(_maxNum < 100);
+    require(_gameMinBetAmount > 0); 
+    require(_gameMaxBetAmount >= _gameMinBetAmount);
+    //require(_winMultiplePer < _maxNum.mul(100));
+    owner = msg.sender;             
+    //maxNum = _maxNum;
+    gameMinBetAmount = _gameMinBetAmount;
+    gameMaxBetAmount = _gameMaxBetAmount;
+    minBankerEther = gameMaxBetAmount * 20;
+    //winMultiplePer = _winMultiplePer;
+    gameName = _gameName;   
+    GameToken = IGameToken(_gameToken);
+    shareholder = _gameToken;
+    shareholderIsToken = true;
+    officialGameUrl='http://select.donquixote.games/';
+  }
+  
+
+  function tokenOf(address _user) view public returns(uint _result){
+    _result = GameToken.balanceOf(_user);
+  }
+
+  event OnPlay(address indexed _player, uint[] _betNums,uint256[] _betAmounts,uint256 _giftToken, uint _blockNumber,uint _playNo, uint _eventTime, uint eventId);
+  event OnGetAward(address indexed _player, uint256 _playNo, uint[] _betNums,uint _blockNumber,uint256[] _betAmounts ,uint _eventId,uint _awardNum,uint256 _awardAmount);
+
+
+  function play(uint[] _betNums,uint256[] _betAmounts) public  payable returns(bool _result){       
+    _result = false;
+    require(_betNums.length > 0);
+    require(_betNums.length == _betAmounts.length);
+    depositEther();
+    _result = _play(_betNums,_betAmounts);
+  }
+
+  function _play(uint[] _betNums, uint256[] _betAmounts) private  returns(bool _result){            
+    _result = false;
+    require (!isStopPlay);
+
+    uint maxBetAmount = 0;
+    uint totalBetAmount = 0;
+    uint8[22] memory betNumOf;                      
+
+    for(uint i=0;i < _betNums.length;i++){
+      require(_betNums[i] > 0 && _betNums[i] <= maxNum );
+      require(betNumOf[_betNums[i] - 1] == 0);       
+	  betNumOf[_betNums[i] - 1] = 1;      
+      if(_betAmounts[i] > gameMaxBetAmount){
+        _betAmounts[i] = gameMaxBetAmount;
+      }
+      if(_betAmounts[i] > maxBetAmount){
+        maxBetAmount = _betAmounts[i];
+      }
+      totalBetAmount = totalBetAmount.add(_betAmounts[i]);
+    }
+
+    uint256 needAmount = maxBetAmount.mul(winMultiplePer).div(100);
+    if(totalBetAmount > needAmount){
+      needAmount = 0;
+    }else{
+      needAmount = needAmount.sub(totalBetAmount);
+    }
+    require(userEtherOf[shareholder] >= needAmount);
+    require(userEtherOf[msg.sender] >= totalBetAmount);
+    lock();
+    betInfo memory bi = betInfo({
+      Player :  msg.sender,              
+      BetNums : _betNums,                       
+      AwardNum : 0,
+      BetAmounts : _betAmounts,                     
+      BlockNumber : block.number,         
+      EventId : currentEventId,           
+      IsReturnAward: false               
+    });
+    playerBetInfoOf[playNo] = bi;
+    userEtherOf[msg.sender] = userEtherOf[msg.sender].sub(totalBetAmount);                  
+    userEtherOf[shareholder] = userEtherOf[shareholder].sub(needAmount);             
+    userEtherOf[this] = userEtherOf[this].add(needAmount).add(totalBetAmount);
+    
+    uint256 _giftToken = GameToken.mineToken(msg.sender,totalBetAmount);
+    emit OnPlay(msg.sender,_betNums,_betAmounts,_giftToken,block.number,playNo,now, getEventId());      
+    playNo++;       
+    _result = true;
+    unLock();
+	  autoCheckPayShareholder();             
+  }
+
+  function getAward(uint[] _playNos) public returns(bool _result){
+    require(_playNos.length > 0);
+    _result = false;
+    for(uint i = 0;i < _playNos.length;i++){
+      _result = _getAward(_playNos[i]);
+    }
+  }
+
+  function _getAward(uint _playNo) private  returns(bool _result){
+    require(_playNo < playNo);       
+    _result = false;        
+    betInfo storage bi = playerBetInfoOf[_playNo];        
+    require(block.number > bi.BlockNumber);
+    require(!bi.IsReturnAward);      
+
+    lock();
+    uint awardNum = 0;
+    uint256 awardAmount = 0;
+    uint256 totalBetAmount = 0;
+    uint256 maxBetAmount = 0;
+    uint256 totalAmount = 0;
+    for(uint i=0;i <bi.BetNums.length;i++){
+      if(bi.BetAmounts[i] > maxBetAmount){
+        maxBetAmount = bi.BetAmounts[i];
+      }
+      totalBetAmount = totalBetAmount.add(bi.BetAmounts[i]);
+    }
+    totalAmount = maxBetAmount.mul(winMultiplePer).div(100);
+    if(totalBetAmount >= totalAmount){
+      totalAmount = totalBetAmount;
+    }
+    if(bi.BlockNumber.add(256) >= block.number){
+      uint256 randomNum = bi.EventId%1000000;
+      bytes32 encrptyHash = keccak256(bi.Player,block.blockhash(bi.BlockNumber),uintToString(randomNum));
+      awardNum = uint(encrptyHash)%22;
+      awardNum = awardNum.add(1);
+      bi.AwardNum = awardNum;
+      for(uint n=0;n <bi.BetNums.length;n++){
+        if(bi.BetNums[n] == awardNum){
+          awardAmount = bi.BetAmounts[n].mul(winMultiplePer).div(100);
+          bi.IsReturnAward = true;  
+          userEtherOf[this] = userEtherOf[this].sub(totalAmount);
+          userEtherOf[bi.Player] = userEtherOf[bi.Player].add(awardAmount);
+          userEtherOf[shareholder] = userEtherOf[shareholder].add(totalAmount.sub(awardAmount));
+          break;
+        }
+      }
+    }
+    if(!bi.IsReturnAward){
+      bi.IsReturnAward = true;
+      userEtherOf[this] = userEtherOf[this].sub(totalAmount);
+      userEtherOf[shareholder] = userEtherOf[shareholder].add(totalAmount);
+    }
+    emit OnGetAward(bi.Player,_playNo,bi.BetNums,bi.BlockNumber,bi.BetAmounts,getEventId(),awardNum,awardAmount);  
+    _result = true; 
+    unLock();
+  }
+  function getAwardNum(uint _playNo) view public returns(uint _awardNum){
+    betInfo memory bi = playerBetInfoOf[_playNo];
+    if(bi.BlockNumber.add(256) >= block.number){
+      uint256 randomNum = bi.EventId%1000000;
+      bytes32 encrptyHash = keccak256(bi.Player,block.blockhash(bi.BlockNumber),uintToString(randomNum));
+      _awardNum = uint(encrptyHash)%22;
+      _awardNum = _awardNum.add(1);
+    }
+  }
+
+  function uintToString(uint v) private pure returns (string)    
+  {
+    uint maxlength = 10;                     
+    bytes memory reversed = new bytes(maxlength);
+    uint i = 0;
+    while (v != 0) {
+      uint remainder = v % 10;
+      v = v / 10;
+      reversed[i++] = byte(48 + remainder);
+    }
+    bytes memory s = new bytes(i);          
+    for (uint j = 0; j < i; j++) {
+      s[j] = reversed[i - j - 1];         
+    }
+    string memory str = string(s);         
+    return str;                            
+  }
+
+  function () public payable {        
+    if(msg.value > 0){
+      userEtherOf[msg.sender] = userEtherOf[msg.sender].add(msg.value);
+    }
+  }
 
 }
