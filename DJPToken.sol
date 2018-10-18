@@ -1,13 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DJPToken at 0x8e77fcfbdfc59c160ed6408669a5810409de331f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DJPToken at 0xa01b4776a5528346f5e368fd07e3dbb3cea19fa3
 */
 pragma solidity ^0.4.24;
 
-/**
- * Dijital Para
- * Appreciate The Difference
- * developed by itostarter.com
- */
+// DijitalPara
+// Appreciate The Difference
+
 library SafeMath {
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a * b;
@@ -159,8 +157,8 @@ contract DJPToken is owned, TokenERC20  {
 
 	//Modify these variables
 	uint256 _initialSupply=500000000; 
-	string _tokenName="DJP";
-	string _tokenSymbol="DijitalPara";
+	string _tokenName="DijitalPara";
+	string _tokenSymbol="DJP";
 	address public lockedWallet = 0x3d41E1d1941957FB21c2d3503E59a69aa7990370;
 	uint256 public startTime;
 
