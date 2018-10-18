@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WrapperLockEth at 0x42b9aa7a244b38ef56dff4d2df7e7a7013a59cbf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WrapperLockEth at 0xaa7427d8f17d87a28f5e1ba3adbb270badbe1011
 */
 pragma solidity 0.4.24;
 
@@ -192,7 +192,7 @@ contract Ownable {
 contract WrapperLockEth is BasicToken, Ownable {
     using SafeMath for uint256;
 
-    address public TRANSFER_PROXY_VEFX = 0xdcDb42C9a256690bd153A7B409751ADFC8Dd5851;
+    address public TRANSFER_PROXY_VEFX = 0x7e03d2b8edc3585ecd8a5807661fff0830a0b603;
     address public TRANSFER_PROXY_V2 = 0x2240Dab907db71e64d3E0dbA4800c83B5C502d4E;
     mapping (address => bool) public isSigner;
 
