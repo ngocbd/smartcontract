@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3DFast at 0x1303cb30afdd2d21b821a61c43ad6d98133b5e49
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3DFast at 0xbcb6160d0a10ef893ee5966d6fa171f43d6ccc87
 */
 pragma solidity ^0.4.24;
 
@@ -441,7 +441,6 @@ contract F3Devents {
 
 
 
-
 interface PlayerBookInterface {
     function getPlayerID(address _addr) external returns (uint256);
     function getPlayerName(uint256 _pID) external view returns (bytes32);
@@ -463,7 +462,7 @@ contract FoMo3DFast is modularFast {
     using NameFilter for string;
     using F3DKeysCalcShort for uint256;
 
-    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x990116637aa0e6fBf1549908C079385a38A1B4bC);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x62F9Cd807779A0e8534d564A00230a9b7D241391);
 
     address private admin = msg.sender;
     string constant public name = "OTION";
