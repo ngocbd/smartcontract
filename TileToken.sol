@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TileToken at 0x25f735b108b4273fb0aceb87599ed8bba10065de
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TileToken at 0x5d2964d8920d3655917ffd7d21108763ce2c0d61
 */
 //File: node_modules\openzeppelin-solidity\contracts\token\ERC20\ERC20Basic.sol
 pragma solidity ^0.4.24;
@@ -286,9 +286,9 @@ pragma solidity ^0.4.24;
 
 
 contract TileToken is StandardToken {
-    string public constant name = "LOOMIA TILE";
-    string public constant symbol = "TILE";
-    uint8 public constant decimals = 18;
+    string public constant NAME = "LOOMIA TILE";
+    string public constant SYMBOL = "TILE";
+    uint8 public constant DECIMALS = 18;
 
     uint256 public totalSupply = 109021227 * 1e18; // Supply is 109,021,227 plus the conversion to wei
 
