@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GatewayVote at 0x02f8480768fb9740489d6daf0395334494b4976d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GatewayVote at 0xd9c422d2205248e7ec4d4c21a6b270baa66784c0
 */
 pragma solidity ^0.4.24;
 
@@ -62,7 +62,7 @@ contract GatewayVote
     event AppRemoved(uint32 code, uint256 indexed operation);
     
     event MintByGateway(uint32 appCode, address receiver, uint64 wad, uint256 indexed operation);
-    event BurnForGateway(uint32 appCode, address from, string dstDescribe, uint64 wad, uint64 fee);
+    event BurnForGateway(uint32 appCode, address from, string receiver, uint64 wad);
 
     event GatewayAddrChanged(uint32 appCode, address newer, uint256 indexed operation);
 
@@ -329,9 +329,9 @@ contract GatewayVote
         }
     }
     
-    function burnForGateway(address from, string dstDescribe, uint64 wad, uint64 fee) external 
+    function burnForGateway(address from, string receiver, uint64 wad) external 
     {
         require(isApper(msg.sender));
-        emit BurnForGateway(mAppToCode[uint256(msg.sender)], from, dstDescribe, wad, fee);
+        emit BurnForGateway(mAppToCode[uint256(msg.sender)], from, receiver, wad);
     }
 }
