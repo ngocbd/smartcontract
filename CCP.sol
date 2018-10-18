@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CCP at 0x747bae8392c526754abc01fa519fa4c1bcb41cc5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CCP at 0x988a6b099b6e42f6688eeef79ce7ccba0306fca7
 */
 pragma solidity ^0.4.21;
 
@@ -31,7 +31,7 @@ contract CCP is ERC223, ERC20 {
 	//starting supply of Token
 
 	string public constant symbol = "CCP";
-	string public constant name = "CCPAY COIN";
+	string public constant name = "CCP COIN";
 	uint8 public constant decimals = 18;
 
 	mapping(address => uint256) balances;
