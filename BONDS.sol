@@ -1,52 +1,19 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BONDS at 0x1822435de9b923a7a8c4fbd2f6d0aa8f743d3010
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bonds at 0x330ac216a5a8ccd493f3b9e33a524be3c7124217
 */
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.24;
 
-/*
-
-Wall Street Market presents........
-
-  _      __     ____  ______              __    ___               __  
- | | /| / /__ _/ / / / __/ /________ ___ / /_  / _ )___  ___  ___/ /__
- | |/ |/ / _ `/ / / _\ \/ __/ __/ -_) -_) __/ / _  / _ \/ _ \/ _  (_-<
- |__/|__/\_,_/_/_/ /___/\__/_/  \__/\__/\__/ /____/\___/_//_/\_,_/___/
-                                                                      
-                                                                                                    
-                                                                   
-website:    https://wallstreetmarket.tk
-
-discord:    https://discord.gg/8AFP9gS
-
-
-Wall Street Bonds is a game with earning opportunities avaliable for players actively engaged in the game.   Buy a bond and reap the rewards from other players as they buy in.
-
-Bonds also distribute 5% yield from buys and sell of the Stock Exchange which is also available on the Wall Street Market.
-
-The price of your bond automatically increases once you buy it.   You earn yield until someone else buys your bond.   Then you collect 50% of the gain.
-
-45% of the gain is distributed to the other bond owners.  5% goes to Wall Street Marketing.
-
-The yields are based on the relative price of your bond.  If your bond is priced higher than the average of the other bonds, you will get proportionally more
-yield.  The current yield rate will be listed on your bond at any time along with the price.
-
-A bonus referral program is available.   Using your Masternode you will collect 5% of any net gains made during a purcchase by the user of your masternode.
-
-*/
-
-contract BONDS {
+contract Bonds {
     /*=================================
     =        MODIFIERS        =
     =================================*/
-   
-
 
     modifier onlyOwner(){
-        
+
         require(msg.sender == dev);
         _;
     }
-    
+
 
     /*==============================
     =            EVENTS            =
@@ -57,12 +24,12 @@ contract BONDS {
         uint256 bond,
         uint256 newPrice
     );
-    
+
     event onWithdraw(
         address customerAddress,
         uint256 ethereumWithdrawn
     );
-    
+
     // ERC20
     event Transfer(
         address from,
@@ -70,26 +37,28 @@ contract BONDS {
         uint256 bond
     );
 
-    
+
     /*=====================================
     =            CONFIGURABLES            =
     =====================================*/
-    string public name = "WALLSTREETBONDS";
+    string public name = "NASDAQBONDS";
     string public symbol = "BOND";
 
-    
-
-    uint8 constant public referralRate = 5; 
+    uint8 constant public nsDivRate = 10;
+    uint8 constant public devDivRate = 5;
+    uint8 constant public ownerDivRate = 50;
+    uint8 constant public distDivRate = 40;
+    uint8 constant public referralRate = 5;
 
     uint8 constant public decimals = 18;
-  
-    uint public totalBondValue = 8e18;
 
-    
+    uint public totalBondValue = 9e18;
+
+
    /*================================
     =            DATASETS            =
     ================================*/
-    
+
     mapping(uint => address) internal bondOwner;
     mapping(uint => uint) public bondPrice;
     mapping(uint => uint) internal bondPreviousPrice;
@@ -101,7 +70,7 @@ contract BONDS {
     uint totalDivsProduced = 0;
 
     uint public maxBonds = 200;
-    
+
     uint public initialPrice = 1e17;   //0.1 ETH
 
     uint public nextAvailableBond;
@@ -110,73 +79,73 @@ contract BONDS {
 
     bool allowAutoNewBond = false;
 
-    uint8 public devDivRate = 5;
-    uint8 public ownerDivRate = 50;
-    uint8 public distDivRate = 45;
-
     uint public bondFund = 0;
-   
+
     address dev;
-
-    
-    
-
+    address fundsDividendAddr;
+    address promoter;
 
     /*=======================================
     =            PUBLIC FUNCTIONS            =
     =======================================*/
     /*
-    * -- APPLICATION ENTRY POINTS --  
+    * -- APPLICATION ENTRY POINTS --
     */
-    function BONDS()
+    constructor()
         public
     {
         dev = msg.sender;
-        nextAvailableBond = 11;
+        fundsDividendAddr = 0xd2e32AFc2949d37A221FBAe53DadF48270926F26;
+        promoter = 0xC558895aE123BB02b3c33164FdeC34E9Fb66B660;
+        nextAvailableBond = 13;
 
-        bondOwner[1] = dev;
+        bondOwner[1] = promoter;
         bondPrice[1] = 2e18;//initialPrice;
         bondPreviousPrice[1] = 0;
 
-        bondOwner[2] = dev;
+        bondOwner[2] = promoter;
         bondPrice[2] = 15e17;//initialPrice;
         bondPreviousPrice[2] = 0;
 
-        bondOwner[3] = dev;
+        bondOwner[3] = promoter;
         bondPrice[3] = 10e17;//initialPrice;
         bondPreviousPrice[3] = 0;
 
-        bondOwner[4] = dev;
+        bondOwner[4] = promoter;
         bondPrice[4] = 9e17;//initialPrice;
         bondPreviousPrice[4] = 0;
 
-        bondOwner[5] = dev;
+        bondOwner[5] = promoter;
         bondPrice[5] = 8e17;//initialPrice;
         bondPreviousPrice[5] = 0;
 
-        bondOwner[6] = dev;
+        bondOwner[6] = promoter;
         bondPrice[6] = 7e17;//initialPrice;
         bondPreviousPrice[6] = 0;
 
         bondOwner[7] = dev;
-        bondPrice[7] = 5e17;//initialPrice;
+        bondPrice[7] = 6e17;//initialPrice;
         bondPreviousPrice[7] = 0;
 
         bondOwner[8] = dev;
-        bondPrice[8] = 3e17;//initialPrice;
+        bondPrice[8] = 5e17;//initialPrice;
         bondPreviousPrice[8] = 0;
 
         bondOwner[9] = dev;
-        bondPrice[9] = 2e17;//initialPrice;
+        bondPrice[9] = 4e17;//initialPrice;
         bondPreviousPrice[9] = 0;
 
         bondOwner[10] = dev;
-        bondPrice[10] = 1e17;//initialPrice;
+        bondPrice[10] = 3e17;//initialPrice;
         bondPreviousPrice[10] = 0;
 
-    
+        bondOwner[11] = dev;
+        bondPrice[11] = 2e17;//initialPrice;
+        bondPreviousPrice[11] = 0;
 
-
+        bondOwner[12] = dev;
+        bondPrice[12] = 1e17;//initialPrice;
+        bondPreviousPrice[12] = 0;
     }
 
     function addTotalBondValue(uint _new, uint _old)
@@ -185,7 +154,7 @@ contract BONDS {
         //uint newPrice = SafeMath.div(SafeMath.mul(_new,bondPriceIncrement),100);
         totalBondValue = SafeMath.add(totalBondValue, SafeMath.sub(_new,_old));
     }
-    
+
     function buy(uint _bond, address _referrer)
         public
         payable
@@ -195,38 +164,40 @@ contract BONDS {
         require(msg.value >= bondPrice[_bond]);
         require(msg.sender != bondOwner[_bond]);
 
-        
-  
-
         uint _newPrice = SafeMath.div(SafeMath.mul(msg.value,bondPriceIncrement),100);
 
          //Determine the total dividends
         uint _baseDividends = msg.value - bondPreviousPrice[_bond];
         totalDivsProduced = SafeMath.add(totalDivsProduced, _baseDividends);
 
-        uint _devDividends = SafeMath.div(SafeMath.mul(_baseDividends,devDivRate),100);
+        uint _nsDividends = SafeMath.div(SafeMath.mul(_baseDividends, nsDivRate),100);
         uint _ownerDividends = SafeMath.div(SafeMath.mul(_baseDividends,ownerDivRate),100);
 
         totalBondDivs[_bond] = SafeMath.add(totalBondDivs[_bond],_ownerDividends);
         _ownerDividends = SafeMath.add(_ownerDividends,bondPreviousPrice[_bond]);
-            
+
         uint _distDividends = SafeMath.div(SafeMath.mul(_baseDividends,distDivRate),100);
 
-        if (allowReferral && (_referrer != msg.sender) && (_referrer != 0x0000000000000000000000000000000000000000)) {
-                
-            uint _referralDividends = SafeMath.div(SafeMath.mul(_baseDividends,referralRate),100);
-            _distDividends = SafeMath.sub(_distDividends,_referralDividends);
-            ownerAccounts[_referrer] = SafeMath.add(ownerAccounts[_referrer],_referralDividends);
-        }
-            
 
+        // If referrer is left blank,send to FUND address
+        if (allowReferral && _referrer != msg.sender) {
+            uint _referralDividends = SafeMath.div(SafeMath.mul(_baseDividends, referralRate), 100);
+            _distDividends = SafeMath.sub(_distDividends, _referralDividends);
+
+            if (_referrer == 0x0) {
+                fundsDividendAddr.transfer(_referralDividends);
+            }
+            else {
+                ownerAccounts[_referrer] = SafeMath.add(ownerAccounts[_referrer], _referralDividends);
+            }
+        }
 
         //distribute dividends to accounts
         address _previousOwner = bondOwner[_bond];
         address _newOwner = msg.sender;
 
         ownerAccounts[_previousOwner] = SafeMath.add(ownerAccounts[_previousOwner],_ownerDividends);
-        ownerAccounts[dev] = SafeMath.add(ownerAccounts[dev],_devDividends);
+        fundsDividendAddr.transfer(_nsDividends);
 
         bondOwner[_bond] = _newOwner;
 
@@ -236,40 +207,39 @@ contract BONDS {
         bondPreviousPrice[_bond] = msg.value;
         bondPrice[_bond] = _newPrice;
         addTotalBondValue(_newPrice, bondPreviousPrice[_bond]);
-        
-       
+
         emit onBondPurchase(msg.sender, msg.value, _bond, SafeMath.div(SafeMath.mul(msg.value,bondPriceIncrement),100));
-     
+
     }
 
     function distributeYield(uint _distDividends) internal
-    
+
     {
         uint counter = 1;
 
-        while (counter < nextAvailableBond) { 
+        while (counter < nextAvailableBond) {
 
             uint _distAmountLocal = SafeMath.div(SafeMath.mul(_distDividends, bondPrice[counter]),totalBondValue);
             ownerAccounts[bondOwner[counter]] = SafeMath.add(ownerAccounts[bondOwner[counter]],_distAmountLocal);
             totalBondDivs[counter] = SafeMath.add(totalBondDivs[counter],_distAmountLocal);
             counter = counter + 1;
-        } 
+        }
 
     }
-    
+
     function distributeBondFund() internal
-    
+
     {
         if(bondFund > 0){
             uint counter = 1;
 
-            while (counter < nextAvailableBond) { 
+            while (counter < nextAvailableBond) {
 
                 uint _distAmountLocal = SafeMath.div(SafeMath.mul(bondFund, bondPrice[counter]),totalBondValue);
                 ownerAccounts[bondOwner[counter]] = SafeMath.add(ownerAccounts[bondOwner[counter]],_distAmountLocal);
                 totalBondDivs[counter] = SafeMath.add(totalBondDivs[counter],_distAmountLocal);
                 counter = counter + 1;
-            } 
+            }
             bondFund = 0;
         }
     }
@@ -280,20 +250,20 @@ contract BONDS {
         if(bondFund > 0){
             uint counter = 1;
 
-            while (counter < nextAvailableBond) { 
+            while (counter < nextAvailableBond) {
 
                 uint _distAmountLocal = SafeMath.div(SafeMath.mul(bondFund, bondPrice[counter]),totalBondValue);
                 ownerAccounts[bondOwner[counter]] = SafeMath.add(ownerAccounts[bondOwner[counter]],_distAmountLocal);
                 totalBondDivs[counter] = SafeMath.add(totalBondDivs[counter],_distAmountLocal);
                 counter = counter + 1;
-            } 
+            }
             bondFund = 0;
         }
     }
 
 
     function withdraw()
-    
+
         public
     {
         address _customerAddress = msg.sender;
@@ -302,11 +272,11 @@ contract BONDS {
         ownerAccounts[_customerAddress] = 0;
         _customerAddress.transfer(_dividends);
         // fire event
-        onWithdraw(_customerAddress, _dividends);
+        emit onWithdraw(_customerAddress, _dividends);
     }
 
     function withdrawPart(uint _amount)
-    
+
         public
         onlyOwner()
     {
@@ -316,13 +286,10 @@ contract BONDS {
         ownerAccounts[_customerAddress] = SafeMath.sub(ownerAccounts[_customerAddress],_amount);
         _customerAddress.transfer(_amount);
         // fire event
-        onWithdraw(_customerAddress, _amount);
+        emit onWithdraw(_customerAddress, _amount);
     }
 
-
-    
-
-     // Fallback function: add funds to the addional distibution amount.   This is what will be contributed from the exchange 
+     // Fallback function: add funds to the addional distibution amount.   This is what will be contributed from the exchange
      // and other contracts
 
     function()
@@ -334,12 +301,12 @@ contract BONDS {
         bondFund = SafeMath.add(bondFund, bondAmount);
         ownerAccounts[dev] = SafeMath.add(ownerAccounts[dev], devAmount);
     }
-    
+
     /**
      * Transfer bond to another address
      */
     function transfer(address _to, uint _bond )
-       
+
         public
     {
         require(bondOwner[_bond] == msg.sender);
@@ -349,7 +316,7 @@ contract BONDS {
         emit Transfer(msg.sender, _to, _bond);
 
     }
-    
+
     /*----------  ADMINISTRATOR ONLY FUNCTIONS  ----------*/
     /**
 
@@ -362,7 +329,7 @@ contract BONDS {
     {
         name = _name;
     }
-    
+
     /**
      * If we want to rebrand, we can.
      */
@@ -380,7 +347,7 @@ contract BONDS {
         initialPrice = _price;
     }
 
-    function setMaxbonds(uint _bond)  
+    function setMaxbonds(uint _bond)
         onlyOwner()
         public
     {
@@ -394,8 +361,8 @@ contract BONDS {
         require(bondOwner[_bond] == dev);
         bondPrice[_bond] = _price;
     }
-    
-    function addNewbond(uint _price) 
+
+    function addNewbond(uint _price)
         onlyOwner()
         public
     {
@@ -406,48 +373,23 @@ contract BONDS {
         bondPreviousPrice[nextAvailableBond] = 0;
         nextAvailableBond = nextAvailableBond + 1;
         addTotalBondValue(_price, 0);
-        
+
     }
 
-    function setAllowReferral(bool _allowReferral)   
+    function setAllowReferral(bool _allowReferral)
         onlyOwner()
         public
     {
         allowReferral = _allowReferral;
     }
 
-    function setAutoNewbond(bool _autoNewBond)   
+    function setAutoNewbond(bool _autoNewBond)
         onlyOwner()
         public
     {
         allowAutoNewBond = _autoNewBond;
     }
 
-    function setRates(uint8 _newDistRate, uint8 _newDevRate,  uint8 _newOwnerRate)   
-        onlyOwner()
-        public
-    {
-        require((_newDistRate + _newDevRate + _newOwnerRate) == 100);
-        devDivRate = _newDevRate;
-        ownerDivRate = _newOwnerRate;
-        distDivRate = _newDistRate;
-    }
-
-    function setLowerBondPrice(uint _bond, uint _newPrice)   //Allow a bond owner to lower the price if they want to dump it. They cannont raise the price
-    
-    {
-        require(bondOwner[_bond] == msg.sender);
-        require(_newPrice < bondPrice[_bond]);
-        require(_newPrice >= initialPrice);
-
-        totalBondValue = SafeMath.sub(totalBondValue,SafeMath.sub(bondPrice[_bond],_newPrice));
-
-        bondPrice[_bond] = _newPrice;
-
-    }
-
-
-    
     /*----------  HELPERS AND CALCULATORS  ----------*/
     /**
      * Method to view the current Ethereum stored in the contract
@@ -471,7 +413,7 @@ contract BONDS {
         require(msg.sender == dev);
         return ownerAccounts[_bondOwner];
     }
-    
+
     function getBondPrice(uint _bond)
         public
         view
@@ -504,8 +446,17 @@ contract BONDS {
         view
         returns(uint)
     {
-     
+
         return totalDivsProduced;
+    }
+
+    function getBondDivShare(uint _bond)
+    public
+    view
+    returns(uint)
+    {
+        require(_bond <= nextAvailableBond);
+        return SafeMath.div(SafeMath.mul(bondPrice[_bond],10000),totalBondValue);
     }
 
     function getTotalBondValue()
@@ -513,7 +464,7 @@ contract BONDS {
         view
         returns(uint)
     {
-      
+
         return totalBondValue;
     }
 
