@@ -1,12 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LuckySeven at 0x180e35f768eb870962d2dc04cca1a927d206a089
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LuckySeven at 0x7b5a91d0915f01e46f18becba0560e900228afae
 */
 pragma solidity ^0.4.24;
 
 /*
     Lucky 7 - https://luckyseven.me/
-    7% Daily from your investment!
+    7% Daily from your investment! Small dev fee - 3.5%,
 */
+
 contract LuckySeven {
 
     using SafeMath for uint256;
@@ -19,8 +20,6 @@ contract LuckySeven {
     uint256 public step = 7;
     uint256 public minimum = 10 finney;
     uint256 public stakingRequirement = 0.5 ether;
-    // wallet for charity - GiveEth https://giveth.io/
-    address public charityWallet = 0x5ADF43DD006c6C36506e2b2DFA352E60002d22Dc;
     address public ownerWallet;
     address public owner;
     bool public gameStarted;
@@ -42,7 +41,6 @@ contract LuckySeven {
     /**
      * @dev Modifiers
      */
-
     modifier onlyOwner() {
         require(msg.sender == owner);
         _;
@@ -89,7 +87,7 @@ contract LuckySeven {
            investments[_referredBy] >= stakingRequirement
        ){
            // wealth redistribution
-           referrer[_referredBy] = referrer[_referredBy].add(msg.value.mul(7).div(100));
+           referrer[_referredBy] = referrer[_referredBy].add(msg.value.mul(85).div(1000));
        }
 
        if (investments[msg.sender] > 0){
@@ -100,9 +98,8 @@ contract LuckySeven {
        investments[msg.sender] = investments[msg.sender].add(msg.value);
        joined[msg.sender] = block.timestamp;
        
-       // 4% dev fee and 1% to GiveEth
-       ownerWallet.transfer(msg.value.mul(4).div(100));
-       charityWallet.transfer(msg.value.mul(1).div(100));
+       // 3.5% dev fee
+       ownerWallet.transfer(msg.value.mul(35).div(1000));
        emit Invest(msg.sender, msg.value);
     }
 
