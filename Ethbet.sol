@@ -1,452 +1,476 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ethbet at 0xe512b6fb8f1e6a25d6202ac3631e75abbeb07e5a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthBet at 0x2dc8e886762ee490ec01269e48bf29075f59c0d4
 */
-pragma solidity ^0.4.19;
+pragma solidity 0.4.25;
 
-/**
- * This is the official Ethbet Token smart contract (EBET) - https://ethbet.io/
- */
+// EthBet betting games
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
+
+contract EthBet {
+
+  constructor() public {
+    owner = msg.sender;
+    balances[address(this)] = 0;
+    lockedFunds = 0;
   }
 
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
+  function() public payable {
+    require(msg.data.length == 0, "Not in use");
   }
 
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
+  address public owner;
+  // The address corresponding to a private key used to sign placeBet commits.
+  address public secretSigner = 0x87cF6EdB672Fe969d8B65e9D501e246B91DDF8e1;
+  bool public isActive = true;
+  uint public totalPlayableFunds;
+  uint public lockedFunds;
 
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
+  uint HOUSE_EDGE_PERCENT = 2;
+  uint REFERRER_BONUS_PERCENT = 1;
+  uint REFEREE_FIRST_TIME_BONUS = 0.01 ether;
+  uint HOUSE_EDGE_MIN_AMOUNT = 0.0003 ether;
 
+  uint MINBET = 0.01 ether;
+  uint MAXBET = 1 ether;
+  uint constant MAX_MODULO = 100;
+  uint constant MAX_BET_MASK = 99;
+  uint constant BET_EXPIRATION_BLOCKS = 250;
 
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) constant returns (uint256);
-  function transfer(address to, uint256 value) returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
+  mapping(address => uint) balances;
+  mapping(address => address) referrers;
+  address[] playerAddresses; 
 
-
-/**
- * @title Basic token
- * @dev Basic version of StandardToken, with no allowances.
- */
-contract BasicToken is ERC20Basic {
-  using SafeMath for uint256;
-
-  mapping(address => uint256) balances;
-
-  /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
-  function transfer(address _to, uint256 _value) returns (bool) {
-    require(_to != address(0));
-
-    // SafeMath.sub will throw if there is not enough balance.
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-  /**
-  * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of.
-  * @return An uint256 representing the amount owned by the passed address.
-  */
-  function balanceOf(address _owner) constant returns (uint256 balance) {
-    return balances[_owner];
-  }
-
-}
-
-
-
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) returns (bool);
-  function approve(address spender, uint256 value) returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-
-/**
- * @title Standard ERC20 token
- *
- * @dev Implementation of the basic standard token.
- * @dev https://github.com/ethereum/EIPs/issues/20
- * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
- */
-contract StandardToken is ERC20, BasicToken {
-
-  mapping (address => mapping (address => uint256)) allowed;
-
-
-  /**
-   * @dev Transfer tokens from one address to another
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amount of tokens to be transferred
-   */
-  function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
-    require(_to != address(0));
-
-    var _allowance = allowed[_from][msg.sender];
-
-    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
-    // require (_value <= _allowance);
-
-    balances[_from] = balances[_from].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    allowed[_from][msg.sender] = _allowance.sub(_value);
-    Transfer(_from, _to, _value);
-    return true;
-  }
-
-  /**
-   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   * @param _spender The address which will spend the funds.
-   * @param _value The amount of tokens to be spent.
-   */
-  function approve(address _spender, uint256 _value) returns (bool) {
-
-    // To change the approve amount you first have to reduce the addresses`
-    //  allowance to zero by calling `approve(_spender, 0)` if it is not
-    //  already 0 to mitigate the race condition described here:
-    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
-
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
-
-  /**
-   * @dev Function to check the amount of tokens that an owner allowed to a spender.
-   * @param _owner address The address which owns the funds.
-   * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifying the amount of tokens still available for the spender.
-   */
-  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-    return allowed[_owner][_spender];
-  }
-
-  /**
-   * approve should be called when allowed[_spender] == 0. To increment
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   */
-  function increaseApproval (address _spender, uint _addedValue)
-    returns (bool success) {
-    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
-
-  function decreaseApproval (address _spender, uint _subtractedValue)
-    returns (bool success) {
-    uint oldValue = allowed[msg.sender][_spender];
-    if (_subtractedValue > oldValue) {
-      allowed[msg.sender][_spender] = 0;
-    } else {
-      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
-    }
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
-
-}
-
-/**
- * @title EthbetToken
- */
-contract EthbetToken is StandardToken {
-
-  string public constant name = "Ethbet";
-  string public constant symbol = "EBET";
-  uint8 public constant decimals = 2; // only two deciminals, token cannot be divided past 1/100th
-
-  uint256 public constant INITIAL_SUPPLY = 1000000000; // 10 million + 2 decimals
-
-  /**
-   * @dev Contructor that gives msg.sender all of existing tokens.
-   */
-  function EthbetToken() {
-    totalSupply = INITIAL_SUPPLY;
-    balances[msg.sender] = INITIAL_SUPPLY;
-  }
-}
-
-
-// Import newer SafeMath version under new name to avoid conflict with the version included in EthbetToken
-
-// SafeMath Library https://github.com/OpenZeppelin/zeppelin-solidity/blob/49b42e86963df7192e7024e0e5bd30fa9d7ccbef/contracts/math/SafeMath.sol
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath2 {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
-    }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  /**
-  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
-contract Ethbet {
-  using SafeMath2 for uint256;
-
-  /*
-  * Events
-  */
-
-  event Deposit(address indexed user, uint amount, uint balance);
-
-  event Withdraw(address indexed user, uint amount, uint balance);
-
-  event LockedBalance(address indexed user, uint amount);
-
-  event UnlockedBalance(address indexed user, uint amount);
-
-  event ExecutedBet(address indexed winner, address indexed loser, uint amount);
-
-  event RelayAddressChanged(address relay);
-
-
-  /*
-   * Storage
-   */
-  address public relay;
-
-  EthbetToken public token;
-
-  mapping(address => uint256) balances;
-
-  mapping(address => uint256) lockedBalances;
-
-  /*
-  * Modifiers
-  */
-
-  modifier isRelay() {
-    require(msg.sender == relay);
+  modifier ownerOnly {
+    require(msg.sender == owner, "Ownly Owner");
     _;
   }
 
-  /*
-  * Public functions
-  */
 
-  /**
-  * @dev Contract constructor
-  * @param _relay Relay Address
-  * @param _tokenAddress Ethbet Token Address
-  */
-  function Ethbet(address _relay, address _tokenAddress) public {
-    // make sure relay address set
-    require(_relay != address(0));
-
-    relay = _relay;
-    token = EthbetToken(_tokenAddress);
+  modifier runWhenActiveOnly {
+    require(isActive,"Only Active");
+    _;
   }
 
-  /**
-  * @dev set relay address
-  * @param _relay Relay Address
-  */
-  function setRelay(address _relay) public isRelay {
-    // make sure address not null
-    require(_relay != address(0));
-
-    relay = _relay;
-
-    RelayAddressChanged(_relay);
+  modifier runWhenNotActiveOnly {
+    require(!isActive,"Only Inactive");
+    _;
   }
 
+  modifier validBetAmountOnly(uint amount) {
+    require(amount >= MINBET && amount < MAXBET && amount < totalPlayableFunds,"Invalid betAmount");
+    _;
+  }
+
+  event Withdrawal(address benificiary, uint amount);
+  event ReceivedFund(address benificiary, uint amount);
+
+  event RefererSet(address player, address referrer);
+  event WinBet(address better, uint betAmount, uint winAmount, uint currentBalance);
+  event LoseBet(address better, uint betAmount, uint loseAmount, uint currentBalance);
+
+  event Active();
+  event Deactive();
+
+  event Destroyed();
+  event NewPlayer(address[] players);
+  event ReferralFailedPayout(address receiver, uint amount);
+  event DestroyFailedPayout(address receiver, uint amount);
+
   /**
-   * @dev deposit EBET tokens into the contract
-   * @param _amount Amount to deposit
+   * Ownable
    */
-  function deposit(uint _amount) public {
-    require(_amount > 0);
 
-    // token.approve needs to be called beforehand
-    // transfer tokens from the user to the contract
-    require(token.transferFrom(msg.sender, this, _amount));
-
-    // add the tokens to the user's balance
-    balances[msg.sender] = balances[msg.sender].add(_amount);
-
-    Deposit(msg.sender, _amount, balances[msg.sender]);
+  function transferOwnership(address _newOwner) public ownerOnly {
+    _transferOwnership(_newOwner);
   }
 
+  function _transferOwnership(address _newOwner) internal {
+    require(_newOwner != address(0), "Invalid Address");
+    owner = _newOwner;
+  }
+
+  // See comment for "secretSigner" variable.
+  function setSecretSigner(address newSecretSigner) external ownerOnly {
+    secretSigner = newSecretSigner;
+  }
+
+
   /**
-   * @dev withdraw EBET tokens from the contract
-   * @param _amount Amount to withdraw
+   * Pausable
    */
-  function withdraw(uint _amount) public {
-    require(_amount > 0);
-    require(balances[msg.sender] >= _amount);
-
-    // subtract the tokens from the user's balance
-    balances[msg.sender] = balances[msg.sender].sub(_amount);
-
-    // transfer tokens from the contract to the user
-    require(token.transfer(msg.sender, _amount));
-
-    Withdraw(msg.sender, _amount, balances[msg.sender]);
+  function toggleActive() public ownerOnly {
+    isActive = !isActive;
+    if (isActive)
+      emit Active();
+    else
+      emit Deactive();
   }
 
-
   /**
-   * @dev Lock user balance to be used for bet
-   * @param _userAddress User Address
-   * @param _amount Amount to be locked
+   * Destructible
    */
-  function lockBalance(address _userAddress, uint _amount) public isRelay {
-    require(_amount > 0);
-    require(balances[_userAddress] >= _amount);
+  function destroy() public ownerOnly {
+    emit Destroyed();
+    payOutAllBalanceBeforeDestroy();
+    selfdestruct(owner);
+  }
 
-    // subtract the tokens from the user's balance
-    balances[_userAddress] = balances[_userAddress].sub(_amount);
-
-    // add the tokens to the user's locked balance
-    lockedBalances[_userAddress] = lockedBalances[_userAddress].add(_amount);
-
-    LockedBalance(_userAddress, _amount);
+  function destroyAndSend(address _recipient) public ownerOnly {
+    emit Destroyed();
+    payOutAllBalanceBeforeDestroy();
+    selfdestruct(_recipient);
   }
 
   /**
-   * @dev Unlock user balance
-   * @param _userAddress User Address
-   * @param _amount Amount to be locked
+   * Readable
    */
-  function unlockBalance(address _userAddress, uint _amount) public isRelay {
-    require(_amount > 0);
-    require(lockedBalances[_userAddress] >= _amount);
 
-    // subtract the tokens from the user's locked balance
-    lockedBalances[_userAddress] = lockedBalances[_userAddress].sub(_amount);
+  event LoggingData(uint contractBalance, uint totalHouseEdge, uint totalPlayableFunds);
 
-    // add the tokens to the user's  balance
-    balances[_userAddress] = balances[_userAddress].add(_amount);
-
-    UnlockedBalance(_userAddress, _amount);
-  }
+  function logData() external {
+    emit LoggingData(
+      address(this).balance,
+      balances[address(this)],
+      totalPlayableFunds
+    );
+  } 
 
   /**
-  * @dev Get user balance
-  * @param _userAddress User Address
-  */
-  function balanceOf(address _userAddress) constant public returns (uint) {
-    return balances[_userAddress];
-  }
-
-  /**
-  * @dev Get user locked balance
-  * @param _userAddress User Address
-  */
-  function lockedBalanceOf(address _userAddress) constant public returns (uint) {
-    return lockedBalances[_userAddress];
-  }
-
-  /**
-   * @dev Execute bet
-   * @param _maker Maker Address
-   * @param _caller Caller Address
-   * @param _makerWon Did the maker win
-   * @param _amount amount
+   * Editable
    */
-  function executeBet(address _maker, address _caller, bool _makerWon, uint _amount) isRelay public {
-    //The caller must have enough locked balance
-    require(lockedBalances[_caller] >= _amount);
+  
+  function editBetData(
+    uint _houseEdgePercent, 
+    uint _houseEdgeMin,
+    uint _refererBonusPercent,
+    uint _referreeFirstTimeBonus,
+    uint _minBet,
+    uint _maxBet) external ownerOnly {
 
-    //The maker must have enough locked balance
-    require(lockedBalances[_maker] >= _amount);
+    HOUSE_EDGE_PERCENT = _houseEdgePercent;
+    HOUSE_EDGE_MIN_AMOUNT = _houseEdgeMin;
+    REFERRER_BONUS_PERCENT = _refererBonusPercent;
+    REFEREE_FIRST_TIME_BONUS = _referreeFirstTimeBonus;
 
-    // unlock maker balance
-    unlockBalance(_caller, _amount);
+    MINBET = _minBet;
+    MAXBET = _maxBet;
+  }
 
-    // unlock maker balance
-    unlockBalance(_maker, _amount);
+  /**
+   * Contract external functions
+   */
 
-    var winner = _makerWon ? _maker : _caller;
-    var loser = _makerWon ? _caller : _maker;
+  function playBalance(
+    uint betValue, 
+    uint betMask, 
+    uint modulo, 
+    uint commitLastBlock, 
+    bytes32 commit, 
+    bytes32 r, 
+    bytes32 s, 
+    uint8 v) external runWhenActiveOnly validBetAmountOnly(betValue) {
 
-    // add the tokens to the winner's balance
-    balances[winner] = balances[winner].add(_amount);
-    // remove the tokens from the loser's  balance
-    balances[loser] = balances[loser].sub(_amount);
+    validateCommit(commitLastBlock, commit, r, s, v);
+    
+    uint _possibleWinAmount;
+    uint _referrerBonus;
+    uint _houseEdge;
+    bool _isWin;
+    
+    (_possibleWinAmount, _referrerBonus, _houseEdge, _isWin) = play(msg.sender, betValue, betMask, modulo, commit);
+    settleBet(msg.sender, betValue, _possibleWinAmount, _referrerBonus, _houseEdge, _isWin, true);
+  }
 
-    //Log the event
-    ExecutedBet(winner, loser, _amount);
+  function playTopUp(
+    uint betMask, 
+    uint modulo, 
+    uint commitLastBlock, 
+    bytes32 commit, 
+    bytes32 r, 
+    bytes32 s, 
+    uint8 v) external payable  runWhenActiveOnly validBetAmountOnly(msg.value) {
+
+    validateCommit(commitLastBlock, commit, r, s, v);
+
+    uint _possibleWinAmount;
+    uint _referrerBonus;
+    uint _houseEdge;
+    bool _isWin;
+
+    (_possibleWinAmount, _referrerBonus, _houseEdge, _isWin) = play(msg.sender, msg.value, betMask, modulo, commit);
+    settleBet(msg.sender, msg.value, _possibleWinAmount, _referrerBonus, _houseEdge, _isWin, false);
+  }
+
+  function playFirstTime(
+    address referrer, 
+    uint betMask, 
+    uint modulo, 
+    uint commitLastBlock, 
+    bytes32 commit, 
+    bytes32 r, 
+    bytes32 s, 
+    uint8 v) external payable runWhenActiveOnly validBetAmountOnly(msg.value) {
+
+    validateCommit(commitLastBlock, commit, r, s, v);
+    setupFirstTimePlayer(msg.sender);
+
+    uint _betAmount = msg.value;
+    if(referrer != address(0) && referrer != msg.sender && referrers[msg.sender] == address(0)) {
+      _betAmount += REFEREE_FIRST_TIME_BONUS; 
+      setReferrer(msg.sender, referrer);
+    }
+    else
+      setReferrer(msg.sender, address(this));
+
+    uint _possibleWinAmount;
+    uint _referrerBonus;
+    uint _houseEdge;
+    bool _isWin;
+
+    (_possibleWinAmount, _referrerBonus, _houseEdge, _isWin) = play(msg.sender, _betAmount, betMask, modulo, commit);
+    settleBet(msg.sender, _betAmount, _possibleWinAmount, _referrerBonus, _houseEdge, _isWin, false);
+  }
+
+  function playSitAndGo(
+    uint betMask, 
+    uint modulo, 
+    uint commitLastBlock, 
+    bytes32 commit, 
+    bytes32 r, 
+    bytes32 s, 
+    uint8 v) external payable  runWhenActiveOnly validBetAmountOnly(msg.value) {
+
+    validateCommit(commitLastBlock, commit, r, s, v);
+
+    uint _possibleWinAmount;
+    uint _referrerBonus;
+    uint _houseEdge;
+    bool _isWin;
+
+    (_possibleWinAmount, _referrerBonus, _houseEdge, _isWin) = play(msg.sender, msg.value, betMask, modulo, commit);
+    settleBetAutoWithdraw(msg.sender, msg.value, _possibleWinAmount, _referrerBonus, _houseEdge, _isWin);
+  }
+
+  function withdrawFunds() external {
+    require(balances[msg.sender] > 0, "Not enough balance");
+    uint _amount = balances[msg.sender];
+    balances[msg.sender] = 0;
+    msg.sender.transfer(_amount);
+    emit Withdrawal(msg.sender, _amount);
+  }
+
+  function withdrawForOperationalCosts(uint amount) external ownerOnly {
+    require(amount < totalPlayableFunds, "Amount needs to be smaller than total fund");
+    totalPlayableFunds -= amount;
+    msg.sender.transfer(amount);
+  }
+
+  function donateFunds() external payable {
+    require(msg.value > 0, "Please be more generous!!");
+    uint _oldtotalPlayableFunds = totalPlayableFunds;
+    totalPlayableFunds += msg.value;
+
+    assert(totalPlayableFunds >= _oldtotalPlayableFunds);
+  }
+
+  function topUp() external payable {
+    require(msg.value > 0,"Topup valu needs to be greater than 0");
+    balances[msg.sender] += msg.value;
+  }
+
+  function getBalance() external view returns(uint) {
+    return balances[msg.sender];
+  }
+
+  /**
+   * Conract interal functions
+   */
+
+
+  function validateCommit(uint commitLastBlock, bytes32 commit, bytes32 r, bytes32 s, uint8 v) internal view {
+    require(block.number <= commitLastBlock, "Commit has expired.");
+    bytes32 signatureHash = keccak256(abi.encodePacked(commitLastBlock, commit));
+    require(secretSigner == ecrecover(signatureHash, v, r, s), "ECDSA signature is not valid.");
+  }
+
+  function settleBet(
+    address beneficiary, 
+    uint betAmount,
+    uint possibleWinAmount,
+    uint referrerBonus,
+    uint houseEdge,
+    bool isWin, 
+    bool playedFromBalance) internal {
+
+    lockFunds(possibleWinAmount);
+
+    settleReferrerBonus(referrers[beneficiary], referrerBonus);
+    settleHouseEdge(houseEdge);
+
+    if(isWin) {
+      if(playedFromBalance) 
+        balances[beneficiary] += possibleWinAmount - betAmount;
+      else
+        balances[beneficiary] += possibleWinAmount;
+      totalPlayableFunds -= possibleWinAmount - betAmount;
+      emit WinBet(beneficiary, betAmount, possibleWinAmount, balances[beneficiary]);
+    } else {
+      if(playedFromBalance) 
+        balances[beneficiary] -= betAmount;
+
+      totalPlayableFunds += betAmount;
+      emit LoseBet(beneficiary, betAmount, betAmount, balances[beneficiary]);
+    }
+
+    unlockFunds(possibleWinAmount);
+  }
+
+  function settleBetAutoWithdraw(
+    address beneficiary, 
+    uint betAmount,
+    uint possibleWinAmount,
+    uint referrerBonus,
+    uint houseEdge,
+    bool isWin) internal {
+
+    lockFunds(possibleWinAmount);
+
+    settleReferrerBonus(referrers[beneficiary], referrerBonus);
+    settleHouseEdge(houseEdge);
+
+    if(isWin) {
+      totalPlayableFunds -= possibleWinAmount - betAmount;
+      beneficiary.transfer(possibleWinAmount);
+      emit WinBet(beneficiary, betAmount, possibleWinAmount, balances[beneficiary]);
+    } else {
+      totalPlayableFunds += betAmount;
+      emit LoseBet(beneficiary, betAmount, betAmount, balances[beneficiary]);
+    }
+
+    unlockFunds(possibleWinAmount);
+  }
+
+  function setReferrer(address referee, address referrer) internal {
+    if(referrers[referee] == address(0)) {
+      referrers[referee] = referrer;
+      emit RefererSet(referee, referrer);
+    }
+  }
+
+  function settleReferrerBonus(address referrer, uint referrerBonus) internal {
+    if(referrerBonus > 0) {
+      totalPlayableFunds -= referrerBonus;
+      if(referrer != address(this)) {
+        if(!referrer.send(referrerBonus)) 
+          balances[address(this)] += referrerBonus;
+      } else {
+        balances[address(this)] += referrerBonus;
+      }
+    }
+  }
+
+  function settleHouseEdge(uint houseEdge) internal {
+    totalPlayableFunds -= houseEdge;
+    balances[address(this)] += houseEdge;
+  }
+
+  function setupFirstTimePlayer(address newPlayer) internal {
+    if(referrers[newPlayer] == address(0)) 
+      playerAddresses.push(newPlayer);
+  }
+
+  function payOutAllBalanceBeforeDestroy() internal ownerOnly {
+    uint _numberOfPlayers = playerAddresses.length;
+    for(uint i = 0;i < _numberOfPlayers;i++) {
+      address _player = playerAddresses[i];
+      uint _playerBalance = balances[_player];
+      if(_playerBalance > 0) {
+        if(!_player.send(_playerBalance))
+          emit DestroyFailedPayout(_player, _playerBalance);
+      } 
+    }
+  }
+
+  function play(
+    address player, 
+    uint betValue,
+    uint betMask, 
+    uint modulo, 
+    bytes32 commit) internal view returns(uint, uint, uint, bool) {
+
+    uint _possibleWinAmount;
+    uint _referrerBonus;
+    uint _houseEdge;
+
+    bool _isWin = roll(betMask, modulo, commit);
+    (_possibleWinAmount, _referrerBonus, _houseEdge) = calculatePayouts(player, betValue, modulo, betMask, _isWin);
+    return (_possibleWinAmount, _referrerBonus, _houseEdge, _isWin);
+  }
+
+  function calculatePayouts(
+    address player, 
+    uint betAmount, 
+    uint modulo, 
+    uint rollUnder,
+    bool isWin) internal view returns(uint, uint, uint) {
+    require(0 < rollUnder && rollUnder <= modulo, "Win probability out of range.");
+
+    uint _referrerBonus = 0;
+    uint _multiplier = modulo / rollUnder; 
+    uint _houseEdge = betAmount * HOUSE_EDGE_PERCENT / 100;
+    if(referrers[player] != address(0)) {
+      _referrerBonus = _houseEdge * REFERRER_BONUS_PERCENT / HOUSE_EDGE_PERCENT; 
+    }
+    if(isWin)
+      _houseEdge = _houseEdge * (_multiplier - 1);
+    if (_houseEdge < HOUSE_EDGE_MIN_AMOUNT)
+      _houseEdge = HOUSE_EDGE_MIN_AMOUNT;
+
+    uint _possibleWinAmount = (betAmount * _multiplier) - _houseEdge;
+    _houseEdge = _houseEdge - _referrerBonus;
+
+    return (_possibleWinAmount, _referrerBonus, _houseEdge);
+  }
+
+  function roll(
+    uint betMask, 
+    uint modulo, 
+    bytes32 commit) internal view returns(bool) {
+
+    // Validate input data ranges.
+    require(modulo > 1 && modulo <= MAX_MODULO, "Modulo should be within range.");
+    require(0 < betMask && betMask < MAX_BET_MASK, "Mask should be within range.");
+
+    // Check whether contract has enough funds to process this bet.
+    //require(lockedFunds <= totalPlayableFunds, "Cannot afford to lose this bet.");
+
+    // The RNG - combine "reveal" and blockhash of placeBet using Keccak256. Miners
+    // are not aware of "reveal" and cannot deduce it from "commit" (as Keccak256
+    // preimage is intractable), and house is unable to alter the "reveal" after
+    // placeBet have been mined (as Keccak256 collision finding is also intractable).
+    bytes32 entropy = keccak256(abi.encodePacked(commit, blockhash(block.number)));    
+
+    // Do a roll by taking a modulo of entropy. Compute winning amount.
+    uint dice = uint(entropy) % modulo;
+
+    // calculating dice win
+    uint diceWin = 0;
+
+    if (dice < betMask) {
+      diceWin = 1;
+    }
+    return diceWin > 0;
+  }
+
+  function lockFunds(uint lockAmount) internal 
+  {
+    lockedFunds += lockAmount;
+    assert(lockedFunds <= totalPlayableFunds);
+  }
+
+  function unlockFunds(uint unlockAmount) internal
+  {
+    lockedFunds -= unlockAmount;
   }
 
 }
