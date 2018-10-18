@@ -1,8 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigERC20Token at 0xa42e4338B97649Fee0f0ab4aF52444D4b8651BF9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigERC20Token at 0x41dab199a4aa0e14434473f689aecfcb1c8e520c
 */
-pragma solidity ^0.4.18;
-
 contract MultiSigERC20Token
 {
     uint constant public MAX_OWNER_COUNT = 50;
@@ -13,7 +11,6 @@ contract MultiSigERC20Token
     uint8 public decimals = 8;
     uint256 public totalSupply;
 	address[] public owners;
-	address[] public admins;
 	
 	// Variables for multisig
 	uint256 public required;
@@ -30,8 +27,6 @@ contract MultiSigERC20Token
     event Deposit(address indexed sender, uint value);
     event OwnerAddition(address indexed owner);
     event OwnerRemoval(address indexed owner);
-    event AdminAddition(address indexed admin);
-    event AdminRemoval(address indexed admin);
     event RequirementChange(uint required);
 	
 	// Mappings
@@ -40,7 +35,6 @@ contract MultiSigERC20Token
     mapping (uint => mapping (address => bool)) public confirmations;
     mapping (address => bool) public isOwner;
 	mapping (address => bool) public frozenAccount;
-	mapping (address => bool) public isAdmin;
     mapping (address => uint256) public balanceOf;
 
     // Meta data for pending and executed Transactions
@@ -54,13 +48,9 @@ contract MultiSigERC20Token
     }
 
     // Modifiers
+
     modifier ownerDoesNotExist(address owner) {
         require (!isOwner[owner]);
-        _;
-    }
-    
-    modifier adminDoesNotExist(address admin) {
-        require (!isAdmin[admin]);
         _;
     }
 
@@ -68,14 +58,9 @@ contract MultiSigERC20Token
         require (isOwner[owner]);
         _;
     }
-    
-    modifier adminExists(address admin) {
-        require (isAdmin[admin] || isOwner[admin]);
-        _;
-    }
 
     modifier transactionExists(uint transactionId) {
-        require (transactions[transactionId].operation != 0);
+        require (transactions[transactionId].destination != 0);
         _;
     }
 
@@ -104,7 +89,7 @@ contract MultiSigERC20Token
     {
         if (msg.value > 0)
         {
-            Deposit(msg.sender, msg.value);
+            emit Deposit(msg.sender, msg.value);
         }
     }
 
@@ -114,7 +99,7 @@ contract MultiSigERC20Token
      * Initializes contract with initial supply tokens to the contract and sets owner to the 
      * creator of the contract
      */
-    function MultiSigERC20Token(
+   constructor(
         uint256 initialSupply,
         string tokenName,
         string tokenSymbol
@@ -124,10 +109,8 @@ contract MultiSigERC20Token
         name = tokenName;                                   // Set the name for display purposes
         symbol = tokenSymbol;                               // Set the symbol for display purposes
 		isOwner[msg.sender] = true;                         // Set Owner to Contract Creator
-		isAdmin[msg.sender] = true;
 		required = 1;
 		owners.push(msg.sender);
-		admins.push(msg.sender);
     }
 
     /**
@@ -150,7 +133,7 @@ contract MultiSigERC20Token
         balanceOf[_from] -= _value;
         // Add the same to the recipient
         balanceOf[_to] += _value;
-        Transfer(_from, _to, _value);
+        emit Transfer(_from, _to, _value);
         // Asserts are used to use static analysis to find bugs in your code. They should never fail
         assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
     }
@@ -173,7 +156,7 @@ contract MultiSigERC20Token
     /// @param freeze either to freeze it or not
     function freezeAccount(address target, bool freeze) internal {
         frozenAccount[target] = freeze;
-        FrozenFunds(target, freeze);
+        emit FrozenFunds(target, freeze);
     }
 	
     /// @dev Allows to add a new owner. Transaction has to be sent by wallet.
@@ -186,19 +169,7 @@ contract MultiSigERC20Token
         isOwner[owner] = true;
         owners.push(owner);
         required = required + 1;
-        OwnerAddition(owner);
-    }
-    
-    /// @dev Allows to add a new admin. Transaction has to be sent by wallet.
-    /// @param admin Address of new admin.
-    function addAdmin(address admin)
-        internal
-        adminDoesNotExist(admin)
-        notNull(admin)
-    {
-        isAdmin[admin] = true;
-        admins.push(admin);
-        AdminAddition(admin);
+        emit OwnerAddition(owner);
     }
 
     /// @dev Allows to remove an owner. Transaction has to be sent by wallet.
@@ -216,24 +187,7 @@ contract MultiSigERC20Token
         owners.length -= 1;
         if (required > owners.length)
             changeRequirement(owners.length);
-        OwnerRemoval(owner);
-    }
-    
-    
-    /// @dev Allows to remove an admin. Transaction has to be sent by wallet.
-    /// @param admin Address of admin.
-    function removeAdmin(address admin)
-        internal
-        adminExists(admin)
-    {
-        isAdmin[admin] = false;
-        for (uint i=0; i<admins.length - 1; i++)
-            if (admins[i] == admin) {
-                admins[i] = admins[admins.length - 1];
-                break;
-            }
-        admins.length -= 1;
-        AdminRemoval(admin);
+        emit OwnerRemoval(owner);
     }
 
     /// @dev Allows to replace an owner with a new owner. Transaction has to be sent by wallet.
@@ -251,8 +205,8 @@ contract MultiSigERC20Token
             }
         isOwner[owner] = false;
         isOwner[newOwner] = true;
-        OwnerRemoval(owner);
-        OwnerAddition(newOwner);
+        emit OwnerRemoval(owner);
+        emit OwnerAddition(newOwner);
     }
 
     /// @dev Allows to change the number of required confirmations. Transaction has to be sent by wallet.
@@ -261,80 +215,15 @@ contract MultiSigERC20Token
         internal
     {
         required = _required;
-        RequirementChange(_required);
-    }
-    
-    function requestAddOwner(address newOwner, string reason) public adminExists(msg.sender) returns (uint transactionId)
-    {
-        transactionId = submitTransaction(newOwner,newOwner,0,1,reason);
+        emit RequirementChange(_required);
     }
 
-    function requestRemoveOwner(address oldOwner, string reason) public adminExists(msg.sender) returns (uint transactionId)
-    {
-        transactionId = submitTransaction(oldOwner,oldOwner,0,2,reason);
-    }
-    
-    function requestReplaceOwner(address oldOwner,address newOwner, string reason) public adminExists(msg.sender) returns (uint transactionId)
-    {
-        transactionId = submitTransaction(oldOwner,newOwner,0,3,reason);
-    }
-    
-    function requestFreezeAccount(address account, string reason) public adminExists(msg.sender) returns (uint transactionId)
-    {
-        transactionId = submitTransaction(account,account,0,4,reason);
-    }
-    
-    function requestUnFreezeAccount(address account, string reason) public adminExists(msg.sender) returns (uint transactionId)
-    {
-        transactionId = submitTransaction(account,account,0,5,reason);
-    }
-    
-    function requestChangeRequirement(uint _requirement, string reason) public adminExists(msg.sender) returns (uint transactionId)
-    {
-        transactionId = submitTransaction(msg.sender,msg.sender,_requirement,6,reason);
-    }
-    
-    function requestTokenIssue(address account, uint256 amount, string reason) public adminExists(msg.sender) returns (uint transactionId)
-    {
-        transactionId = submitTransaction(account,account,amount,7,reason);
-    }
-    
-    function requestAdminTokenTransfer(address source,address destination, uint256 amount, string reason) public adminExists(msg.sender) returns (uint transactionId)
-    {
-        transactionId = submitTransaction(source, destination, amount,8,reason);
-    }
-    
-    function requestSetWithdrawalLimit(address owner,uint256 amount, string reason) public adminExists(msg.sender) returns (uint transactionId)
-    {
-        transactionId = submitTransaction(owner, owner, amount,9,reason);
-    }
-    
-    function requestWithdrawalFromLimit(uint256 amount, string reason) public adminExists(msg.sender) returns (uint transactionId)
-    {
-        transactionId = submitTransaction(msg.sender, msg.sender, amount,10,reason);
-    }
-    
-    function requestWithdrawal(address account,uint256 amount, string reason) public adminExists(msg.sender) returns (uint transactionId)
-    {
-        transactionId = submitTransaction(account, account, amount,11,reason);
-    }
-    
-    function requestAddAdmin(address account, string reason) public adminExists(msg.sender) returns (uint transactionId)
-    {
-        transactionId = submitTransaction(account, account, 0,12,reason);
-    }
-    
-    function requestRemoveAdmin(address account, string reason) public adminExists(msg.sender) returns (uint transactionId)
-    {
-        transactionId = submitTransaction(account, account, 0,13,reason);
-    }
-    
     /// @dev Allows an owner to submit and confirm a transaction.
     /// @param destination Transaction target address.
     /// @param value Transaction ether value.
     /// @return Returns transaction ID.
     function submitTransaction(address source, address destination, uint256 value, uint operation, string reason)
-        internal
+        public
         returns (uint transactionId)
     {
         transactionId = transactionCount;
@@ -351,65 +240,47 @@ contract MultiSigERC20Token
         
         if(operation == 1) // Operation 1 is Add Owner
         {
-            Submission(transactionId,"Add Owner", source, destination, value, reason);
+            emit Submission(transactionId,"Add Owner", source, destination, value, reason);
         }
         else if(operation == 2) // Operation 2 is Remove Owner
         {
-            Submission(transactionId,"Remove Owner", source, destination, value, reason);
+            emit Submission(transactionId,"Remove Owner", source, destination, value, reason);
         }
         else if(operation == 3) // Operation 3 is Replace Owner
         {
-            Submission(transactionId,"Replace Owner", source, destination, value, reason);
+            emit Submission(transactionId,"Replace Owner", source, destination, value, reason);
         }
         else if(operation == 4) // Operation 4 is Freeze Account
         {
-            Submission(transactionId,"Freeze Account", source, destination, value, reason);
+            emit Submission(transactionId,"Freeze Account", source, destination, value, reason);
         }
         else if(operation == 5) // Operation 5 is UnFreeze Account
         {
-            Submission(transactionId,"UnFreeze Account", source, destination, value, reason);
+            emit Submission(transactionId,"UnFreeze Account", source, destination, value, reason);
         }
         else if(operation == 6) // Operation 6 is change rquirement
         {
-            Submission(transactionId,"Change Requirement", source, destination, value, reason);
+            emit Submission(transactionId,"Change Requirement", source, destination, value, reason);
         }
         else if(operation == 7) // Operation 7 is Issue Tokens from Contract
         {
-            Submission(transactionId,"Issue Tokens", source, destination, value, reason);
+            emit Submission(transactionId,"Issue Tokens", source, destination, value, reason);
         }
         else if(operation == 8) // Operation 8 is Admin Transfer Tokens
         {
-            Submission(transactionId,"Admin Transfer Tokens", source, destination, value, reason);
+            emit Submission(transactionId,"Admin Transfer Tokens", source, destination, value, reason);
         }
         else if(operation == 9) // Operation 9 is Set Owners Unsigned Withdrawal Limit
         {
-            Submission(transactionId,"Set Unsigned Ethereum Withdrawal Limit", source, destination, value, reason);
+            emit Submission(transactionId,"Set Unsigned Ethereum Withdrawal Limit", source, destination, value, reason);
         }
         else if(operation == 10) // Operation 10 is Admin Withdraw Ether without multisig
         {
-            require(isOwner[destination]);
-            require(withdrawalLimit[destination] > value);
-            
-            Submission(transactionId,"Unsigned Ethereum Withdrawal", source, destination, value, reason);
-            
-            var newValue = withdrawalLimit[destination] - value;
-            withdrawalLimit[destination] = newValue;
-            
-            destination.transfer(value);
-            transactions[transactionId].executed = true;
-            Execution(transactionId);
+            emit Submission(transactionId,"Unsigned Ethereum Withdrawal", source, destination, value, reason);
         }
         else if(operation == 11) // Operation 11 is Admin Withdraw Ether with multisig
         {
-            Submission(transactionId,"Withdraw Ethereum", source, destination, value, reason);
-        }
-        else if(operation == 12) // Operation 12 is Add Admin
-        {
-            Submission(transactionId,"Add Admin", source, destination, value, reason);
-        }
-        else if(operation == 13) // Operation 13 is Remove Admin
-        {
-            Submission(transactionId,"Remove Admin", source, destination, value, reason);
+            emit Submission(transactionId,"Withdraw Ethereum", source, destination, value, reason);
         }
     }
 
@@ -422,26 +293,8 @@ contract MultiSigERC20Token
         notConfirmed(transactionId, msg.sender)
     {
         confirmations[transactionId][msg.sender] = true;
-        Confirmation(msg.sender, transactionId);
+        emit Confirmation(msg.sender, transactionId);
         executeTransaction(transactionId);
-    }
-    
-    /// @dev Allows an owner to confirm a transaction.
-    /// @param startTransactionId the first transaction to approve
-    /// @param endTransactionId the last transaction to approve.
-    function confirmMultipleTransactions(uint startTransactionId, uint endTransactionId)
-        public
-        ownerExists(msg.sender)
-        transactionExists(endTransactionId)
-    {
-        for(var i=startTransactionId;i<=endTransactionId;i++)
-        {
-            require(transactions[i].operation != 0);
-            require(!confirmations[i][msg.sender]);
-            confirmations[i][msg.sender] = true;
-            Confirmation(msg.sender, i);
-            executeTransaction(i);
-        }
     }
 
     /// @dev Allows an owner to revoke a confirmation for a transaction.
@@ -453,73 +306,73 @@ contract MultiSigERC20Token
         notExecuted(transactionId)
     {
         confirmations[transactionId][msg.sender] = false;
-        Revocation(msg.sender, transactionId);
+        emit Revocation(msg.sender, transactionId);
     }
 
     /// @dev Allows anyone to execute a confirmed transaction.
     /// @param transactionId Transaction ID.
     function executeTransaction(uint transactionId)
-        internal
+        public
         notExecuted(transactionId)
     {
         if (isConfirmed(transactionId)) {
-            var transaction = transactions[transactionId];
+            MetaTransaction storage transaction = transactions[transactionId];
 
             if(transaction.operation == 1) // Operation 1 is Add Owner
             {
                 addOwner(transaction.destination);
                 
                 transaction.executed = true;
-                Execution(transactionId);
+                emit Execution(transactionId);
             }
             else if(transaction.operation == 2) // Operation 2 is Remove Owner
             {
                 removeOwner(transaction.destination);
                 
                 transaction.executed = true;
-                Execution(transactionId);
+                emit Execution(transactionId);
             }
             else if(transaction.operation == 3) // Operation 3 is Replace Owner
             {
                 replaceOwner(transaction.source,transaction.destination);
                 
                 transaction.executed = true;
-                Execution(transactionId);
+                emit Execution(transactionId);
             }
             else if(transaction.operation == 4) // Operation 4 is Freeze Account
             {
                 freezeAccount(transaction.destination,true);
                 
                 transaction.executed = true;
-                Execution(transactionId);
+                emit Execution(transactionId);
             }
             else if(transaction.operation == 5) // Operation 5 is UnFreeze Account
             {
                 freezeAccount(transaction.destination, false);
                 
                 transaction.executed = true;
-                Execution(transactionId);
+                emit Execution(transactionId);
             }
-            else if(transaction.operation == 6) // Operation 6 is change requirement Account
+            else if(transaction.operation == 6) // Operation 6 is UnFreeze Account
             {
                 changeRequirement(transaction.value);
                 
                 transaction.executed = true;
-                Execution(transactionId);
+                emit Execution(transactionId);
             }
             else if(transaction.operation == 7) // Operation 7 is Issue Tokens from Contract
             {
                 _transfer(this,transaction.destination,transaction.value);
                 
                 transaction.executed = true;
-                Execution(transactionId);
+                emit Execution(transactionId);
             }
             else if(transaction.operation == 8) // Operation 8 is Admin Transfer Tokens
             {
                 _transfer(transaction.source,transaction.destination,transaction.value);
                 
                 transaction.executed = true;
-                Execution(transactionId);
+                emit Execution(transactionId);
             }
             else if(transaction.operation == 9) // Operation 9 is Set Owners Unsigned Withdrawal Limit
             {
@@ -527,7 +380,7 @@ contract MultiSigERC20Token
                 withdrawalLimit[transaction.destination] = transaction.value;
                 
                 transaction.executed = true;
-                Execution(transactionId);
+                emit Execution(transactionId);
             }
             else if(transaction.operation == 11) // Operation 11 is Admin Withdraw Ether with multisig
             {
@@ -536,22 +389,21 @@ contract MultiSigERC20Token
                 transaction.destination.transfer(transaction.value);
                 
                 transaction.executed = true;
-                Execution(transactionId);
+                emit Execution(transactionId);
             }
-            else if(transaction.operation == 12) // Operation 12 is add Admin
-            {
-                addAdmin(transaction.destination);
-                
-                transaction.executed = true;
-                Execution(transactionId);
-            }
-            else if(transaction.operation == 13) // Operation 13 is remove Admin
-            {
-                removeAdmin(transaction.destination);
-                
-                transaction.executed = true;
-                Execution(transactionId);
-            }
+        }
+        else if(transaction.operation == 10) // Operation 10 is Admin Withdraw Ether without multisig
+        {
+            require(isOwner[transaction.destination]);
+            require(withdrawalLimit[transaction.destination] <= transaction.value);
+            
+            withdrawalLimit[transaction.destination] -= transaction.value;
+            
+            assert(withdrawalLimit[transaction.destination] > 0);
+            
+            transaction.destination.transfer(transaction.value);
+            transaction.executed = true;
+            emit Execution(transactionId);
         }
     }
 
