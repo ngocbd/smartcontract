@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ledger at 0x01805590991328db7f1ef0e8e4b071ad8f58c8ce
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ledger at 0x890cf4a24784871eec8570b2293a4a984694d8b3
 */
 // Unattributed material copyright New Alchemy Limited, 2017. All rights reserved.
 pragma solidity >=0.4.10;
@@ -97,17 +97,15 @@ contract EventDefinitions {
 }
 
 contract Token is Finalizable, TokenReceivable, SafeMath, EventDefinitions, Pausable {
-	// Set these appropriately before you deploy
-	string constant public name = "eByte Token";
+	string constant public name = "Peg Test Token";
 	uint8 constant public decimals = 8;
-	string constant public symbol = "EBYTE";
+	string constant public symbol = "PTT";
 	Controller public controller;
 	string public motd;
 	event Motd(string message);
 
 	// functions below this line are onlyOwner
 
-	// set "message of the day"
 	function setMotd(string _m) onlyOwner {
 		motd = _m;
 		Motd(_m);
@@ -148,7 +146,6 @@ contract Token is Finalizable, TokenReceivable, SafeMath, EventDefinitions, Paus
 	}
 
 	function approve(address _spender, uint _value) onlyPayloadSize(2) notPaused returns (bool success) {
-		// promote safe user behavior
 		if (controller.approve(msg.sender, _spender, _value)) {
 			Approval(msg.sender, _spender, _value);
 			return true;
@@ -339,7 +336,6 @@ contract Ledger is Owned, SafeMath, Finalizable, TokenReceivable {
 	}
 
 	function approve(address _owner, address _spender, uint _value) onlyController returns (bool success) {
-		// require user to set to zero before resetting to nonzero
 		if ((_value != 0) && (allowance[_owner][_spender] != 0)) {
 			return false;
 		}
