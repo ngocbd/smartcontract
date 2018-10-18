@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SCUTokenCrowdsale at 0x35edb498de6827e73d00b3736019051655484655
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SCUTokenCrowdsale at 0x5ecbb3763d6435a2345a9f2e972e1b095f679a92
 */
 pragma solidity ^0.4.25;
 
@@ -84,23 +84,18 @@ contract SCUTokenCrowdsale is Ownable {
         require(!crowdsaleClosed);
         require(now <= deadline && now >= start);
         //https://ethereum.stackexchange.com/questions/9256/float-not-allowed-in-solidity-vs-decimal-places-asked-for-token-contract
-        //fee falls away
+        // fee falls away
 
-        uint256 amount = (msg.value / getTokenPrice()) * 1 ether;
+        uint256 amount = (((msg.value * 100) * getTokenPrice()) / 100);
         totalSold += (amount / tokenPrice) * 100;
 
-        //afterwards calculate  pre sale bonusprogramm
-        if(tokenSold < 6000000)
-        {
-        amount = amount + ((amount * 25) / 100);
-        }
-        else if(tokenSold < 12000000)
-        {
-        amount = amount + ((amount * 15) / 100);
-        }
-        else
-        {
-        amount = amount + ((amount * 10) / 100);
+        // afterwards calculate  pre sale bonusprogramm
+        if(tokenSold < 6000000) {
+            amount = amount + ((amount * 25) / 100);
+        } else if(tokenSold < 12000000) {
+            amount = amount + ((amount * 15) / 100);
+        } else {
+            amount = amount + ((amount * 10) / 100);
         }
 
         ETHWallet.transfer(msg.value);
@@ -108,8 +103,9 @@ contract SCUTokenCrowdsale is Ownable {
         emit Contribution(msg.sender, amount);
     }
 
+
     function getTokenPrice() internal view returns (uint256) {
-        return getEtherInEuroCents() * tokenPrice / 100;
+        return getEtherInEuroCents() / tokenPrice ;
     }
 
     function getEtherInEuroCents() internal view returns (uint256) {
