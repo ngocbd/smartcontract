@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DappleAirdrops at 0xb94241d0afd41e8b277d62c8ee3eef02fb1fb8cf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DappleAirdrops at 0x8f3f14d8c8db1d544404ab2a2273db97740a8eb7
 */
 pragma solidity ^0.4.19;
 
@@ -64,9 +64,10 @@ contract Ownable {
     /**
      * Constructor assigns ownership to the address used to deploy the contract.
      * */
-    function Ownable() public {
-        owner = msg.sender;
-    }
+   
+    constructor() public {
+    owner = msg.sender;
+  }
 
 
     /**
@@ -75,7 +76,7 @@ contract Ownable {
      * functions with this modifier will result in a loss of gas and the contract's state
      * will remain untampered.
      * */
-    modifier onlyOwner {
+    modifier onlyOwner  {
         require(msg.sender == owner);
         _;
     }
@@ -90,7 +91,7 @@ contract Ownable {
             _newOwner != address(0)
             && _newOwner != owner 
         );
-        OwnershipTransferred(owner, _newOwner);
+        emit OwnershipTransferred(owner, _newOwner);
         owner = _newOwner;
     }
 }
@@ -124,7 +125,7 @@ contract DappleAirdrops is Ownable {
     uint256 public bonus;
     uint256 public maxDropsPerTx;
     uint256 public maxTrialDrops;
-    string public constant website = "www.dappleairdrops.com";
+    string public constant website = "www.topscoin.one/air";
     
     event BonusCreditGranted(address indexed to, uint256 credit);
     event BonusCreditRevoked(address indexed from, uint256 credit);
@@ -147,12 +148,12 @@ contract DappleAirdrops is Ownable {
      * credits have been used (unless credits have been granted to an address by the owner of the 
      * contract).
      * */
-    function DappleAirdrops() public {
+    constructor()  public {
         rate = 10000;
         dropUnitPrice = 1e14; 
-        bonus = 20;
-        maxDropsPerTx = 1000000;
-        maxTrialDrops = 1000000;
+        bonus = 100;
+        maxDropsPerTx = 50000;
+        maxTrialDrops = 40000;
     }
     
     
@@ -198,7 +199,7 @@ contract DappleAirdrops is Ownable {
             _newRate != rate 
             && _newRate > 0
         );
-        RateChanged(rate, _newRate);
+        emit RateChanged(rate, _newRate);
         rate = _newRate;
         uint256 eth = 1 ether;
         dropUnitPrice = eth.div(rate);
@@ -231,8 +232,8 @@ contract DappleAirdrops is Ownable {
      * @return true if function executes successfully, false otherwise.
      * */
     function setMaxDrops(uint256 _maxDrops) public onlyOwner returns(bool) {
-        require(_maxDrops >= 1000000);
-        MaxDropsChanged(maxDropsPerTx, _maxDrops);
+        require(_maxDrops >= 100);
+        emit MaxDropsChanged(maxDropsPerTx, _maxDrops);
         maxDropsPerTx = _maxDrops;
         return true;
     }
@@ -246,7 +247,7 @@ contract DappleAirdrops is Ownable {
      * */
     function setBonus(uint256 _newBonus) public onlyOwner returns(bool) {
         require(bonus != _newBonus);
-        BonustChanged(bonus, _newBonus);
+        emit BonustChanged(bonus, _newBonus);
         bonus = _newBonus;
     }
     
@@ -267,7 +268,7 @@ contract DappleAirdrops is Ownable {
             && _bonusDrops > 0
         );
         bonusDropsOf[_addr] = bonusDropsOf[_addr].add(_bonusDrops);
-        BonusCreditGranted(_addr, _bonusDrops);
+        emit BonusCreditGranted(_addr, _bonusDrops);
         return true;
     }
     
@@ -288,7 +289,7 @@ contract DappleAirdrops is Ownable {
             && bonusDropsOf[_addr] >= _bonusDrops
         );
         bonusDropsOf[_addr] = bonusDropsOf[_addr].sub(_bonusDrops);
-        BonusCreditRevoked(_addr, _bonusDrops);
+        emit BonusCreditRevoked(_addr, _bonusDrops);
         return true;
     }
     
@@ -361,7 +362,7 @@ contract DappleAirdrops is Ownable {
     function banToken(address _tokenAddr) public onlyOwner returns(bool) {
         require(!tokenIsBanned[_tokenAddr]);
         tokenIsBanned[_tokenAddr] = true;
-        TokenBanned(_tokenAddr);
+        emit TokenBanned(_tokenAddr);
         return true;
     }
     
@@ -378,7 +379,7 @@ contract DappleAirdrops is Ownable {
     function unbanToken(address _tokenAddr) public onlyOwner returns(bool) {
         require(tokenIsBanned[_tokenAddr]);
         tokenIsBanned[_tokenAddr] = false;
-        TokenUnbanned(_tokenAddr);
+        emit TokenUnbanned(_tokenAddr);
         return true;
     }
     
@@ -410,7 +411,7 @@ contract DappleAirdrops is Ownable {
      * */
     function() public payable {
         ethBalanceOf[msg.sender] = ethBalanceOf[msg.sender].add(msg.value);
-        CreditPurchased(msg.sender, msg.value, msg.value.mul(rate));
+        emit CreditPurchased(msg.sender, msg.value, msg.value.mul(rate));
     }
 
     
@@ -431,7 +432,7 @@ contract DappleAirdrops is Ownable {
         uint256 toTransfer = _eth;
         ethBalanceOf[msg.sender] = ethBalanceOf[msg.sender].sub(_eth);
         msg.sender.transfer(toTransfer);
-        EthWithdrawn(msg.sender, toTransfer);
+        emit EthWithdrawn(msg.sender, toTransfer);
     }
     
     
@@ -446,7 +447,7 @@ contract DappleAirdrops is Ownable {
                 uint256 toRefund = ethBalanceOf[_addrs[i]];
                 ethBalanceOf[_addrs[i]] = 0;
                 _addrs[i].transfer(toRefund);
-                RefundIssued(_addrs[i], toRefund);
+                emit RefundIssued(_addrs[i], toRefund);
             }
         }
     }
@@ -483,7 +484,7 @@ contract DappleAirdrops is Ownable {
         } else {
             updateMsgSenderBonusDrops(_recipients.length);
         }
-        AirdropInvoked(msg.sender, _recipients.length);
+        emit AirdropInvoked(msg.sender, _recipients.length);
         return true;
     }
     
@@ -520,7 +521,7 @@ contract DappleAirdrops is Ownable {
         } else {
             updateMsgSenderBonusDrops(_recipients.length);
         }
-        AirdropInvoked(msg.sender, _recipients.length);
+        emit AirdropInvoked(msg.sender, _recipients.length);
         return true;
     }
     
@@ -568,7 +569,7 @@ contract DappleAirdrops is Ownable {
         );
         ERCInterface token = ERCInterface(_addressOfToken);
         token.transfer(_recipient, _value);
-        ERC20TokensWithdrawn(_addressOfToken, _recipient, _value);
+        emit ERC20TokensWithdrawn(_addressOfToken, _recipient, _value);
         return true;
     }
 }
