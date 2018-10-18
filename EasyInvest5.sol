@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EasyInvest5 at 0x6519d6dfd11363cf0821809b919b55f794fe0cb5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EasyInvest5 at 0x2fadf048c4cb9941491fe00408831760e4a46ce3
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.25;
 
 /**
  *
  * Easy Investment Contract
- *  - GAIN 5% PER 24 HOURS (every 5900 blocks)
+ *  - GAIN 5% PER 24 HOURS(every 5900 blocks)
  *  - NO COMMISSION on your investment (every ether stays on contract's balance)
  *  - NO FEES are collected by the owner, in fact, there is no owner at all (just look at the code)
  *
@@ -23,26 +23,35 @@ pragma solidity ^0.4.24;
  *
  */
 contract EasyInvest5 {
+    // total investors count
+    uint256 public investorsCount;
+    address[] public investors;
     // records amounts invested
     mapping (address => uint256) public invested;
     // records blocks at which investments were made
-    mapping (address => uint256) public atBlock;
+    mapping (address => uint256) atBlock;
 
     // this function called every time anyone sends a transaction to this contract
     function () external payable {
         // if sender (aka YOU) is invested more than 0 ether
-        if (invested[msg.sender] != 0) {
+        if (invested[msg.sender] != 0 && block.number > atBlock[msg.sender]) {
             // calculate profit amount as such:
             // amount = (amount invested) * 5% * (blocks since last transaction) / 5900
             // 5900 is an average block count per day produced by Ethereum blockchain
             uint256 amount = invested[msg.sender] * 5 / 100 * (block.number - atBlock[msg.sender]) / 5900;
+            // if requested amount more than contract balance - we will send a rest
+            if (amount > this.balance) amount = this.balance;
 
             // send calculated amount of ether directly to sender (aka YOU)
             msg.sender.transfer(amount);
+        } else {
+            investors.push(msg.sender);
         }
 
-        // record block number and invested amount (msg.value) of this transaction
-        atBlock[msg.sender] = block.number;
+        /* record block number of this transaction */
         invested[msg.sender] += msg.value;
+        /* record invested amount (msg.value) of this transaction */
+        atBlock[msg.sender] = block.number
+        /*increase total investors count*/*investorsCount++;
     }
 }
