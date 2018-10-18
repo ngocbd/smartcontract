@@ -1,378 +1,140 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xcd61c9841ecf3a3d4b8caec3630f92910629cef0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x5c20ee8a57ba6975bf1292ebe28405b70b908bf9
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.4;
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
+contract Token {
 
-    /**
-    * @dev Multiplies two numbers, throws on overflow.
-    */
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        if (a == 0) {
-            return 0;
-        }
-        uint256 c = a * b;
-        assert(c / a == b);
-        return c;
-    }
+    /// @return total amount of tokens
+    function totalSupply() constant returns (uint256 supply) {}
 
-    /**
-    * @dev Integer division of two numbers, truncating the quotient.
-    */
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return c;
-    }
+    /// @param _owner The address from which the balance will be retrieved
+    /// @return The balance
+    function balanceOf(address _owner) constant returns (uint256 balance) {}
 
-    /**
-    * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-    */
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
+    /// @notice send `_value` token to `_to` from `msg.sender`
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transfer(address _to, uint256 _value) returns (bool success) {}
 
-    /**
-    * @dev Adds two numbers, throws on overflow.
-    */
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
-    }
+    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
+    /// @param _from The address of the sender
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
+
+    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @param _value The amount of wei to be approved for transfer
+    /// @return Whether the approval was successful or not
+    function approve(address _spender, uint256 _value) returns (bool success) {}
+
+    /// @param _owner The address of the account owning tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @return Amount of remaining tokens allowed to spent
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    
 }
 
 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-    address public owner;
 
+contract StandardToken is Token {
 
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-    /**
-     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-     * account.
-     */
-    constructor() public {
-        owner = msg.sender;
+    function transfer(address _to, uint256 _value) returns (bool success) {
+        //Default assumes totalSupply can't be over max (2^256 - 1).
+        //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
+        //Replace the if with this one instead.
+        //if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+        if (balances[msg.sender] >= _value && _value > 0) {
+            balances[msg.sender] -= _value;
+            balances[_to] += _value;
+            Transfer(msg.sender, _to, _value);
+            return true;
+        } else { return false; }
     }
 
-    /**
-     * @dev Throws if called by any account other than the owner.
-     */
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+        //same as above. Replace this line with the following if you want to protect against wrapping uints.
+        //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
+            balances[_to] += _value;
+            balances[_from] -= _value;
+            allowed[_from][msg.sender] -= _value;
+            Transfer(_from, _to, _value);
+            return true;
+        } else { return false; }
     }
 
-    /**
-     * @dev Allows the current owner to transfer control of the contract to a newOwner.
-     * @param newOwner The address to transfer ownership to.
-     */
-    function transferOwnership(address newOwner) public onlyOwner {
-        emit OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
+    function balanceOf(address _owner) constant returns (uint256 balance) {
+        return balances[_owner];
     }
 
-}
+    function approve(address _spender, uint256 _value) returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
 
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+      return allowed[_owner][_spender];
+    }
 
-contract BasicERC20
-{
-    /* Public variables of the token */
-    string public standard = 'ERC20';
-    string public name;
-    string public symbol;
-    uint8 public decimals;
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
     uint256 public totalSupply;
-    bool public isTokenTransferable = true;
+}
 
-    /* This creates an array with all balances */
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
 
-    /* This generates a public event on the blockchain that will notify clients */
-    event Transfer(address indexed from, address indexed to, uint256 value);
+//name this contract whatever you'd like
+contract ERC20Token is StandardToken {
 
-    /* Send coins */
-    function transfer(address _to, uint256 _value) public {
-        assert(isTokenTransferable);
-        assert(balanceOf[msg.sender] >= _value);             // Check if the sender has enough
-        if (balanceOf[_to] + _value < balanceOf[_to]) throw; // Check for overflows
-        balanceOf[msg.sender] -= _value;                     // Subtract from the sender
-        balanceOf[_to] += _value;                            // Add the same to the recipient
-        emit Transfer(msg.sender, _to, _value);                   // Notify anyone listening that this transfer took place
+    function () {
+        //if ether is sent to this address, send it back.
+        throw;
     }
 
-    /* Allow another contract to spend some tokens in your behalf */
-    function approve(address _spender, uint256 _value) public
-    returns (bool success)  {
-        allowance[msg.sender][_spender] = _value;
+    /* Public variables of the token */
+
+    /*
+    NOTE:
+    The following variables are OPTIONAL vanities. One does not have to include them.
+    They allow one to customise the token contract & in no way influences the core functionality.
+    Some wallets/interfaces might not even bother to look at this information.
+    */
+    string public name;                   //fancy name: eg Simon Bucks
+    uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
+    string public symbol;                 //An identifier: eg SBX
+    string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
+
+//
+// CHANGE THESE VALUES FOR YOUR TOKEN
+//
+
+//make sure this function name matches the contract name above. So if you're token is called TutorialToken, make sure the //contract name above is also TutorialToken instead of ERC20Token
+
+    function ERC20Token(
+        ) {
+        balances[msg.sender] = 100000000000000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 100000000000000000000;                        // Update total supply (100000 for example)
+        name = "Actinium";                                   // Set the name for display purposes
+        decimals = 8;                            // Amount of decimals for display purposes
+        symbol = "ACM";                               // Set the symbol for display purposes
+    }
+
+    /* Approves and then calls the receiving contract */
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+
+        //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
+        //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
+        //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
+        if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
         return true;
-    }
-
-    /* A contract attempts to get the coins */
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        assert(isTokenTransferable);
-        if (balanceOf[_from] < _value) throw;                 // Check if the sender has enough
-        if (balanceOf[_to] + _value < balanceOf[_to]) throw;  // Check for overflows
-        if (_value > allowance[_from][msg.sender]) throw;   // Check allowance
-        balanceOf[_from] -= _value;                          // Subtract from the sender
-        balanceOf[_to] += _value;                            // Add the same to the recipient
-        allowance[_from][msg.sender] -= _value;
-        emit Transfer(_from, _to, _value);
-        return true;
-    }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-contract BasicCrowdsale is Ownable
-{
-    using SafeMath for uint256;
-    BasicERC20 token;
-
-    address public ownerWallet;
-    uint256 public startTime;
-    uint256 public endTime;
-    uint256 public totalEtherRaised = 0;
-    uint256 public minDepositAmount;
-    uint256 public maxDepositAmount;
-
-    uint256 public softCapEther;
-    uint256 public hardCapEther;
-
-    mapping(address => uint256) private deposits;
-
-    constructor () public {
-
-    }
-
-    function () external payable {
-        buy(msg.sender);
-    }
-
-    function getSettings () view public returns(uint256 _startTime,
-        uint256 _endTime,
-        uint256 _rate,
-        uint256 _totalEtherRaised,
-        uint256 _minDepositAmount,
-        uint256 _maxDepositAmount,
-        uint256 _tokensLeft ) {
-
-        _startTime = startTime;
-        _endTime = endTime;
-        _rate = getRate();
-        _totalEtherRaised = totalEtherRaised;
-        _minDepositAmount = minDepositAmount;
-        _maxDepositAmount = maxDepositAmount;
-        _tokensLeft = tokensLeft();
-    }
-
-    function tokensLeft() view public returns (uint256)
-    {
-        return token.balanceOf(address(0x0));
-    }
-
-    function changeMinDepositAmount (uint256 _minDepositAmount) onlyOwner public {
-        minDepositAmount = _minDepositAmount;
-    }
-
-    function changeMaxDepositAmount (uint256 _maxDepositAmount) onlyOwner public {
-        maxDepositAmount = _maxDepositAmount;
-    }
-
-    function getRate() view public returns (uint256) {
-        assert(false);
-    }
-
-    function getTokenAmount(uint256 weiAmount) public view returns(uint256) {
-        return weiAmount.mul(getRate());
-    }
-
-    function checkCorrectPurchase() view internal {
-        require(startTime < now && now < endTime);
-        require(msg.value > minDepositAmount);
-        require(msg.value < maxDepositAmount);
-        require(totalEtherRaised + msg.value < hardCapEther);
-    }
-
-    function isCrowdsaleFinished() view public returns(bool)
-    {
-        return totalEtherRaised >= hardCapEther || now > endTime;
-    }
-
-    function buy(address userAddress) public payable {
-        require(userAddress != address(0));
-        checkCorrectPurchase();
-
-        // calculate token amount to be created
-        uint256 tokens = getTokenAmount(msg.value);
-
-        // update state
-        totalEtherRaised = totalEtherRaised.add(msg.value);
-
-        token.transferFrom(address(0x0), userAddress, tokens);
-
-        if (totalEtherRaised >= softCapEther)
-        {
-            ownerWallet.transfer(this.balance);
-        }
-        else
-        {
-            deposits[userAddress] = deposits[userAddress].add(msg.value);
-        }
-    }
-
-    function getRefundAmount(address userAddress) view public returns (uint256)
-    {
-        if (totalEtherRaised >= softCapEther) return 0;
-        return deposits[userAddress];
-    }
-
-    function refund(address userAddress) public
-    {
-        assert(totalEtherRaised < softCapEther && now > endTime);
-        uint256 amount = deposits[userAddress];
-        deposits[userAddress] = 0;
-        userAddress.transfer(amount);
-    }
-}
-
-
-contract CrowdsaleCompatible is BasicERC20, Ownable
-{
-    BasicCrowdsale public crowdsale = BasicCrowdsale(0x0);
-
-    // anyone can unfreeze tokens when crowdsale is finished
-    function unfreezeTokens() public
-    {
-        assert(now > crowdsale.endTime());
-        isTokenTransferable = true;
-    }
-
-    // change owner to 0x0 to lock this function
-    function initializeCrowdsale(address crowdsaleContractAddress, uint256 tokensAmount) onlyOwner public  {
-        transfer((address)(0x0), tokensAmount);
-        allowance[(address)(0x0)][crowdsaleContractAddress] = tokensAmount;
-        crowdsale = BasicCrowdsale(crowdsaleContractAddress);
-        isTokenTransferable = false;
-        transferOwnership(0x0); // remove an owner
-    }
-}
-
-
-
-
-
-
-
-contract EditableToken is BasicERC20, Ownable {
-    using SafeMath for uint256;
-
-    // change owner to 0x0 to lock this function
-    function editTokenProperties(string _name, string _symbol, int256 extraSupplay) onlyOwner public {
-        name = _name;
-        symbol = _symbol;
-        if (extraSupplay > 0)
-        {
-            balanceOf[owner] = balanceOf[owner].add(uint256(extraSupplay));
-            emit Transfer(address(0x0), owner, uint256(extraSupplay));
-        }
-        else if (extraSupplay < 0)
-        {
-            balanceOf[owner] = balanceOf[owner].sub(uint256(extraSupplay * -1));
-            emit Transfer(owner, address(0x0), uint256(extraSupplay * -1));
-        }
-    }
-}
-
-
-
-
-
-
-
-contract ThirdPartyTransferableToken is BasicERC20{
-    using SafeMath for uint256;
-
-    struct confidenceInfo {
-        uint256 nonce;
-        mapping (uint256 => bool) operation;
-    }
-    mapping (address => confidenceInfo) _confidence_transfers;
-
-    function nonceOf(address src) view public returns (uint256) {
-        return _confidence_transfers[src].nonce;
-    }
-
-    function transferByThirdParty(uint256 nonce, address where, uint256 amount, uint8 v, bytes32 r, bytes32 s) public returns (bool){
-        assert(where != address(this));
-        assert(where != address(0x0));
-
-        bytes32 hash = sha256(this, nonce, where, amount);
-        address src = ecrecover(keccak256("\x19Ethereum Signed Message:\n32", hash),v,r,s);
-        assert(balanceOf[src] >= amount);
-        assert(nonce == _confidence_transfers[src].nonce+1);
-
-        assert(_confidence_transfers[src].operation[uint256(hash)]==false);
-
-        balanceOf[src] = balanceOf[src].sub(amount);
-        balanceOf[where] = balanceOf[where].add(amount);
-        _confidence_transfers[src].nonce += 1;
-        _confidence_transfers[src].operation[uint256(hash)] = true;
-
-        emit Transfer(src, where, amount);
-
-        return true;
-    }
-}
-
-
-
-contract ERC20Token is CrowdsaleCompatible, EditableToken, ThirdPartyTransferableToken {
-    using SafeMath for uint256;
-
-    /* Initializes contract with initial supply tokens to the creator of the contract */
-    constructor() public
-    {
-        balanceOf[0x8bdbe3d4eb6ffda287f389eeb2618c2f821ad039] = uint256(1000) * 10**18;
-        emit Transfer(address(0x0), 0x8bdbe3d4eb6ffda287f389eeb2618c2f821ad039, balanceOf[0x8bdbe3d4eb6ffda287f389eeb2618c2f821ad039]);
-
-        transferOwnership(0x8bdbe3d4eb6ffda287f389eeb2618c2f821ad039);
-
-        totalSupply = 1000 * 10**18;                  // Update total supply
-        name = 'AdminCoin';                                   // Set the name for display purposes
-        symbol = 'ADC';                               // Set the symbol for display purposes
-        decimals = 18;                                           // Amount of decimals for display purposes
-    }
-
-    /* This unnamed function is called whenever someone tries to send ether to it */
-    function () public {
-        assert(false);     // Prevents accidental sending of ether
     }
 }
