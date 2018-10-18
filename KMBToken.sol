@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KMBToken at 0x2c90bd4fab6652fcbb08e1d7e530f6387dfc4fd1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KMBToken at 0x7a7b224d100c9034567ef95b8f095f4839abbcc2
 */
 pragma solidity ^0.4.24;
 
@@ -86,11 +86,11 @@ contract StandardToken is Token {
 }
 
 contract KMBToken is StandardToken, SafeMath {
-
+    
     // metadata
     string  public constant name = "KMB";
     string  public constant symbol = "KMB";
-    uint256 public constant decimals = 4;
+    uint256 public constant decimals = 18;
     string  public version = "1.0";
 
     // contracts
@@ -108,8 +108,8 @@ contract KMBToken is StandardToken, SafeMath {
     uint256 public tokenExchangeRate = 300;             // ?????? N?? ?? 1 ETH
 
     // events
-    event AllocateToken(address indexed _to, uint256 _value);   // ???????token;
-    event IssueToken(address indexed _to, uint256 _value);      // ???????token;
+    event AllocateToken(address indexed _to, uint256 _value);   // allocate token for private sale;
+    event IssueToken(address indexed _to, uint256 _value);      // issue token for public sale;
     event IncreaseSupply(uint256 _value);
     event DecreaseSupply(uint256 _value);
     event Migrate(address indexed _to, uint256 _value);
@@ -146,7 +146,7 @@ contract KMBToken is StandardToken, SafeMath {
         tokenExchangeRate = _tokenExchangeRate;
     }
 
-    /// @dev ??token??
+    ///????
     function increaseSupply (uint256 _value) isOwner external {
         uint256 value = formatDecimals(_value);
         require(value + currentSupply <= totalSupply);
@@ -154,7 +154,7 @@ contract KMBToken is StandardToken, SafeMath {
         emit IncreaseSupply(value);
     }
 
-    /// @dev ??token??
+    ///????
     function decreaseSupply (uint256 _value) isOwner external {
         uint256 value = formatDecimals(_value);
         require(value + tokenRaised <= currentSupply);
@@ -163,7 +163,7 @@ contract KMBToken is StandardToken, SafeMath {
         emit DecreaseSupply(value);
     }
 
-    ///  ?????? ?????
+    ///??
     function startFunding (uint256 _fundingStartBlock, uint256 _fundingStopBlock) isOwner external {
         require(!isFunding);
         require(_fundingStartBlock < _fundingStopBlock);
@@ -174,25 +174,25 @@ contract KMBToken is StandardToken, SafeMath {
         isFunding = true;
     }
 
-    ///  ????????
+    ///??
     function stopFunding() isOwner external {
         require(isFunding);
         isFunding = false;
     }
 
-    /// ????????????token?????token?
+    ///set a new contract for recieve the tokens (for update contract)
     function setMigrateContract(address _newContractAddr) isOwner external {
         require(_newContractAddr != newContractAddr);
         newContractAddr = _newContractAddr;
     }
 
-    /// ?????????
+    ///set a new owner.
     function changeOwner(address _newFundDeposit) isOwner() external {
         require(_newFundDeposit != address(0x0));
         ethFundDeposit = _newFundDeposit;
     }
 
-    ///??token?????
+    ///sends the tokens to new contract
     function migrate() external {
         require(!isFunding);
         require(newContractAddr != address(0x0));
