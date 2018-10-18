@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AdvancedToken at 0xd495d88aa708cc191e0a12e0ad3e1e40203ce7ff
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AdvancedToken at 0xe4eb565621c284fc9df052254a8b754bf1d8dc4c
 */
-pragma solidity 0.4.16;
+pragma solidity ^0.4.16;
 
 /**
  * @title SafeMath
@@ -301,9 +301,9 @@ contract AdvancedToken is PausableToken {
     * They allow one to customise the token contract & in no way influences the core functionality.
     * Some wallets/interfaces might not even bother to look at this information.
     */
-    string public name = "HomeChain";
-    string public symbol = "Home";
-    string public version = '3.0.0';
+    string public name = "HomeToken";
+    string public symbol = "HOME";
+    string public version = '3.0.1';
     uint8 public decimals = 18;
 
     /**
