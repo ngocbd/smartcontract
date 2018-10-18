@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DSToken at 0xedac0e5bedf702accc3a9b2b4b44b4ba0806e882
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DSToken at 0x4c65398a84088338bdf80169292f2f067428f3af
 */
 pragma solidity ^0.4.18;
 
@@ -376,7 +376,7 @@ contract DSToken is DSTokenBase(0), DSStop {
     }
 
     // Optional token name
-    string   public  name = "MixBee Token";
+    string   public  name = "Queen Coin";
     
     function setName(string name_) public auth {
         name = name_;
