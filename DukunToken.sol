@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DukunToken at 0x0f437f4bf7f41ff57ae5fee81bbec921ba0371b1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DukunToken at 0x79c944ac64039b202adf589c015b965fc5130f6a
 */
 pragma solidity 0.4.24;
 
@@ -452,15 +452,45 @@ contract DetailedERC20 is ERC20 {
   }
 }
 
+// File: openzeppelin-solidity/contracts/token/ERC20/BurnableToken.sol
+
+/**
+ * @title Burnable Token
+ * @dev Token that can be irreversibly burned (destroyed).
+ */
+contract BurnableToken is BasicToken {
+
+  event Burn(address indexed burner, uint256 value);
+
+  /**
+   * @dev Burns a specific amount of tokens.
+   * @param _value The amount of token to be burned.
+   */
+  function burn(uint256 _value) public {
+    _burn(msg.sender, _value);
+  }
+
+  function _burn(address _who, uint256 _value) internal {
+    require(_value <= balances[_who]);
+    // no need to require value <= totalSupply, since that would imply the
+    // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+
+    balances[_who] = balances[_who].sub(_value);
+    totalSupply_ = totalSupply_.sub(_value);
+    emit Burn(_who, _value);
+    emit Transfer(_who, address(0), _value);
+  }
+}
+
 // File: contracts/DukunToken.sol
 
-contract DukunToken is StandardToken, PausableToken 
+contract DukunToken is StandardToken, PausableToken, BurnableToken 
 {
-    string public constant name = "DukunToken";
+    string public constant name = "Dukun Token";
     string public constant symbol = "DUKUN";
     uint8 public constant decimals = 18;
 
-    uint256 public constant INITIAL_SUPPLY = 400000000 * (10 ** uint256(decimals));
+    uint256 public constant INITIAL_SUPPLY = 1000000000 * (10 ** uint256(decimals));
 
   /**
    * @dev Constructor that gives msg.sender all of existing tokens.
