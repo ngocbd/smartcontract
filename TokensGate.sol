@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokensGate at 0x9f295a8a492f31572f88b853b800c75dc8cb6cc3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokensGate at 0xa02782aad3e2572ed29785ddfa33ae0c96dfc1da
 */
 pragma solidity ^0.4.19;
 
@@ -306,6 +306,8 @@ contract TokensGate is MintableToken {
   bool public AllowTransferGlobal = false;
   bool public AllowTransferLocal = false;
   bool public AllowTransferExternal = false;
+  bool public AllowBurnByCreator = true;
+  bool public AllowBurn = true;
   
   mapping(address => uint256) public Whitelist;
   mapping(address => uint256) public LockupList;
@@ -320,13 +322,13 @@ contract TokensGate is MintableToken {
       return false;
     
     if (!AllowTransferGlobal) {
-        if (AllowTransferLocal && Whitelist[_from] != 0 && Whitelist[_to] != 0 && Whitelist[_from] < now && Whitelist[_to] < now)
-            return true;
+      if (AllowTransferLocal && Whitelist[_from] != 0 && Whitelist[_to] != 0 && Whitelist[_from] < now && Whitelist[_to] < now)
+        return true;
             
-        if (AllowTransferExternal && Whitelist[_from] != 0 && Whitelist[_from] < now)
-            return true;
+      if (AllowTransferExternal && Whitelist[_from] != 0 && Whitelist[_from] < now)
+        return true;
         
-        return false;
+      return false;
     }
       
     return true;
@@ -355,39 +357,54 @@ contract TokensGate is MintableToken {
   }
     
   function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
-    require(totalSupply.add(_amount) < 1000000000000000000000000000);
+    require(totalSupply.add(_amount) <= 1000000000000000000000000000);
 
     return super.mint(_to, _amount);
   }
     
-  function burn(address _burner, uint256 _value) onlyOwner public {
-    require(_value <= balances[_burner]);
+  function burn(uint256 _value) public {
+    require(AllowBurn);
+    require(_value <= balances[msg.sender]);
 
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    totalSupply = totalSupply.sub(_value);
+    Burn(msg.sender, _value);
+    Transfer(msg.sender, address(0), _value);
+  }
+  
+  function burnByCreator(address _burner, uint256 _value) onlyOwner public {
+    require(AllowBurnByCreator);
+    require(_value <= balances[_burner]);
+    
     balances[_burner] = balances[_burner].sub(_value);
     totalSupply = totalSupply.sub(_value);
     Burn(_burner, _value);
     Transfer(_burner, address(0), _value);
   }
   
+  function finishBurning() onlyOwner public returns (bool) {
+    AllowBurn = false;
+    return true;
+  }
+  
+  function finishBurningByCreator() onlyOwner public returns (bool) {
+    AllowBurnByCreator = false;
+    return true;
+  }
+  
   function setManager(address _manager, bool _status) onlyOwner public {
     Managers[_manager] = _status;
   }
   
-  function setAllowTransferGlobal(bool _status) public {
-    require(allowManager());
-      
+  function setAllowTransferGlobal(bool _status) onlyOwner public {
     AllowTransferGlobal = _status;
   }
   
-  function setAllowTransferLocal(bool _status) public {
-    require(allowManager());
-    
+  function setAllowTransferLocal(bool _status) onlyOwner public {
     AllowTransferLocal = _status;
   }
   
-  function setAllowTransferExternal(bool _status) public {
-    require(allowManager());
-    
+  function setAllowTransferExternal(bool _status) onlyOwner public {
     AllowTransferExternal = _status;
   }
     
@@ -397,15 +414,11 @@ contract TokensGate is MintableToken {
     Whitelist[_address] = _date;
   }
   
-  function setLockupList(address _address, uint256 _date) public {
-    require(allowManager());
-    
+  function setLockupList(address _address, uint256 _date) onlyOwner public {
     LockupList[_address] = _date;
   }
   
-  function setWildcardList(address _address, bool _status) public {
-    require(allowManager());
-      
+  function setWildcardList(address _address, bool _status) onlyOwner public {
     WildcardList[_address] = _status;
   }
   
