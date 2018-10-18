@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BO3KMain at 0x21ae174c592cbb476819344a895d0e9219f5cc79
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BO3KMain at 0x269a6ffb97325e8e371f067fea216c9f62848833
 */
 pragma solidity ^0.4.24;
 
@@ -76,14 +76,14 @@ contract BO3KMain is modularLong {
 
 	uint256 constant private DENOMINATOR = 1000;
 
-	uint256 constant private _nextRoundSettingTime = 1 hours;                
+	uint256 constant private _nextRoundSettingTime = 0 minutes;                
     uint256 constant private _flagBuyingInterval = 30 seconds;              
     uint256 constant private _maxDuration = 24 hours;
 
     uint256 constant private _officerCommission = 150;
 
     bool _activated = false;
-    bool mutex = false;
+    bool CoolingMutex = false;
 
     uint256 public roundID;
     uint public _teamID;
@@ -161,10 +161,10 @@ contract BO3KMain is modularLong {
 		if( isLegalTime( _now ) ) {
 
 			// main logic of buying
-			buyCore( refferedAddr );
+			uint256 flagAmount = buyCore( refferedAddr );
 
 			// 30 sec interval
-			updateTimer();
+			updateTimer( flagAmount );
 
 		} else {
 
@@ -182,7 +182,7 @@ contract BO3KMain is modularLong {
 
 
 
-	function buyCore( address refferedAddr) isActivated() isWithinLimits( msg.value ) private {
+	function buyCore( address refferedAddr) isActivated() isWithinLimits( msg.value ) private returns( uint256 ) {
 		
 		// flag formula
 		if( player[roundID][refferedAddr].isGeneral == false ) {
@@ -310,19 +310,22 @@ contract BO3KMain is modularLong {
 			round[roundID].totalFlags,
 			round[roundID].pot
 		);
+
+		return flagAmount;
 	}
 
 
-	function updateTimer() private {
+	function updateTimer( uint256 flagAmount ) private {
 		uint256 _now = now;
-		uint256 newTimeInterval = ( round[roundID].end ).add( _flagBuyingInterval ).sub( _now );
+		// uint256 newTimeInterval = ( round[roundID].end ).add( _flagBuyingInterval ).sub( _now );
+		uint256 newTimeInterval = ( round[roundID].end ).add( flagAmount.div(1000000000000000000).mul(10) ).sub( _now );
 
 		if( newTimeInterval > _maxDuration ) {
 			newTimeInterval = _maxDuration;
 		}
 
 		round[roundID].end = ( _now ).add( newTimeInterval );
-		round[roundID].updatedTimeRounds = (round[roundID].updatedTimeRounds).add(1);
+		round[roundID].updatedTimeRounds = (round[roundID].updatedTimeRounds).add(flagAmount.div(1000000000000000000));
 
 		emit BO3Kevents.onTimeAdding(
 			round[roundID].start,
@@ -351,6 +354,7 @@ contract BO3KMain is modularLong {
 		if( winnerPlayerID == address(0x0) ) {
 			Admin.transfer( potValue );
 			nextRoundValue -= nextRoundValue;
+			adminValue -= adminValue;
 
 		} else {
 			player[roundID][winnerPlayerID].win = ( player[roundID][winnerPlayerID].win ).add( winValue );
@@ -378,6 +382,7 @@ contract BO3KMain is modularLong {
 			round[roundID].end,
 			round[roundID].pot
 		);
+
 
 	}
 
