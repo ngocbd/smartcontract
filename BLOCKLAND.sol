@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BLOCKLAND at 0x9fcbf83d3e592bb22beabe4336ebcbd86f434ea7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BLOCKLAND at 0xda1bb6ac56222ccb8cf5d7e56c209286a226404b
 */
 pragma solidity ^0.4.18;
 
@@ -7,7 +7,7 @@ pragma solidity ^0.4.18;
 // 'BLOCKLAND' token contract
 //
 // Deployed to : 0x65F4c5399fE8df767c984E644eE054a9aCC5517B
-// Symbol      : BLK
+// Symbol      : BKL
 // Name        : BLOCKLAND
 // Total supply: 100000000000000000000000000
 // Decimals    : 18
@@ -116,7 +116,7 @@ contract BLOCKLAND is ERC20Interface, Owned, SafeMath {
     // Constructor
     // ------------------------------------------------------------------------
     function BLOCKLAND() public {
-        symbol = "BLK";
+        symbol = "BKL";
         name = "BLOCKLAND";
         decimals = 18;
         _totalSupply = 100000000000000000000000000;
