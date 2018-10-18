@@ -1,27 +1,22 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdropper at 0xff0110762d93a755b73874777525b48b08121963
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdropper at 0x58bbb46f57a5caad5ed524be5f17db891c52357a
 */
 pragma solidity ^0.4.11;
 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control 
- * functions, this simplifies the implementation of "user permissions". 
- */
 contract Ownable {
   address public owner;
 
   function Ownable() {
     owner = msg.sender;
   }
- 
+
   modifier onlyOwner() {
     if (msg.sender != owner) {
-      revert();
+      throw;
     }
     _;
   }
- 
+
   function transferOwnership(address newOwner) onlyOwner {
     if (newOwner != address(0)) {
       owner = newOwner;
@@ -36,7 +31,7 @@ contract ERC20Basic {
   function transfer(address to, uint value);
   event Transfer(address indexed from, address indexed to, uint value);
 }
- 
+
 contract ERC20 is ERC20Basic {
   function allowance(address owner, address spender) constant returns (uint);
   function transferFrom(address from, address to, uint value);
