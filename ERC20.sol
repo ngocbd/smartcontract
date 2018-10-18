@@ -1,7 +1,26 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20 at 0x0a43e3a29fc688b0b7bdf60846ec20ffac967010
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20 at 0x537c23b71d847eef947f150ac7e33b1854138d5c
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.25;
+
+// SWISS TURBO TOKEN
+//
+//PDF LINK TO BE INCORPORATED INSIDE THE CONTRACT: https://drive.google.com/file/d/1tnb7sV8Oes8Eu3Vv6sZZQF5VtFU2BH7l/view
+//
+//TOKEN NAME – SWTT 
+//
+//Company name - SWISS TURBO
+//
+//Total Token supply – 50000
+//
+//Tokens for sale – 50000
+//
+//Owner - 0xCD6011A9D3995A693F9964608D08EDbb48220225
+//
+// Website Url - https://swiss-turbo.com
+//
+//Email - info@swiss-turbo.com
+
 
 contract owned {
     address public owner;
@@ -20,12 +39,13 @@ interface tokenRecipient { function receiveApproval(address _from, uint256 _valu
 
 contract ERC20 is owned {
     // Public variables of the token
-    string public name = "Thabix";
-    string public symbol = "TBX";
+    string public name = "SWTT";
+    string public symbol = "SWTT";
     uint8 public decimals = 18;
-    uint256 public totalSupply = 6000000 * 10 ** uint256(decimals);
-
-
+    uint256 public totalSupply = 50000 * 10 ** uint256(decimals);
+    
+     string public contract_link = "https://drive.google.com/file/d/1tnb7sV8Oes8Eu3Vv6sZZQF5VtFU2BH7l/view"; 
+     
     // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
     mapping (address => mapping (address => uint256)) public allowance;
@@ -46,8 +66,8 @@ contract ERC20 is owned {
      * Initializes contract with initial supply tokens to the creator of the contract
      */
     
-    constructor (address _owner) public {
-         owner = _owner;
+    constructor () public {
+         owner = 0xCD6011A9D3995A693F9964608D08EDbb48220225;
          balanceOf[owner] = totalSupply;
     }
 
