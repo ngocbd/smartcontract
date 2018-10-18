@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PriceFeed at 0x4604646c55410eaa6cf43b04d26071e36bc227ef
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PriceFeed at 0x695bd54a75fa8e28183f9af30063ad444ca0ebfc
 */
 pragma solidity ^0.4.25;
 
 // ----------------------------------------------------------------------------
 // BokkyPooBah's Pricefeed from a single source
 //
-// Deployed to: 0x4604646C55410EAa6Cf43b04d26071E36bC227Ef
+// Deployed to: 0x695Bd54a75FA8e28183F9aF30063AD444ca0EBFc
 //
 // Enjoy. (c) BokkyPooBah / Bok Consulting Pty Ltd 2018. The MIT Licence.
 // ----------------------------------------------------------------------------
@@ -105,9 +105,9 @@ contract PriceFeed is PriceFeedInterface, Operated {
         emit SetRate(0, false, rate, live);
     }
     function setRate(uint _rate, bool _live) public onlyOperator {
-        emit SetRate(rate, live, _rate, _live);
         rate = _rate;
         live = _live;
+        emit SetRate(rate, live, _rate, _live);
     }
     function getRate() public view returns (uint _rate, bool _live) {
         return (rate, live);
