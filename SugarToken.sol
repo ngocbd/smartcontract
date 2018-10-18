@@ -1,169 +1,400 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SugarToken at 0xCB5A05beF3257613E984C17DbcF039952B6d883F
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SUGARToken at 0x3672a1d8a362c9a50db70df219e05ea3cab60df9
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.25;
 
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+/*
+ * Creator: SUGAR (Planetagro-Exchange) 
+ */
+
+/*
+ * Abstract Token Smart Contract
+ *
+ */
+
+ 
+ /*
+ * Safe Math Smart Contract. 
+ * https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/math/SafeMath.sol
+ */
+
+contract SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
     uint256 c = a * b;
-    assert(a == 0 || c / a == b);
+    assert(c / a == b);
     return c;
   }
 
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+  function safeDiv(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
 
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+  function safeSub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+  function safeAdd(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
     return c;
   }
 }
 
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) public constant returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
+
+
+
+/**
+ * ERC-20 standard token interface, as defined
+ * <a href="http://github.com/ethereum/EIPs/issues/20">here</a>.
+ */
+contract Token {
+  
+  function totalSupply() public constant returns (uint256 supply);
+  function balanceOf(address _owner) public constant returns (uint256 balance);
+  function transfer(address _to, uint256 _value) public returns (bool success);
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+  function approve(address _spender, uint256 _value) public returns (bool success);
+  function allowance(address _owner, address _spender) public constant returns (uint256 remaining);
+  event Transfer(address indexed _from, address indexed _to, uint256 _value);
+  event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
-contract BasicToken is ERC20Basic {
-  using SafeMath for uint256;
 
-  mapping(address => uint256) balances;
 
+/**
+ * Abstract Token Smart Contract that could be used as a base contract for
+ * ERC-20 token contracts.
+ */
+contract AbstractToken is Token, SafeMath {
   /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
-  function transfer(address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-
-    // SafeMath.sub will throw if there is not enough balance.
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-  /**
-  * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of.
-  * @return An uint256 representing the amount owned by the passed address.
-  */
-  function balanceOf(address _owner) public constant returns (uint256 balance) {
-    return balances[_owner];
-  }
-
-}
-
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-contract StandardToken is ERC20, BasicToken {
-
-  mapping (address => mapping (address => uint256)) allowed;
-
-
-  /**
-   * @dev Transfer tokens from one address to another
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amount of tokens to be transferred
+   * Create new Abstract Token contract.
    */
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-
-    uint256 _allowance = allowed[_from][msg.sender];
-
-    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
-    // require (_value <= _allowance);
-
-    balances[_from] = balances[_from].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    allowed[_from][msg.sender] = _allowance.sub(_value);
-    Transfer(_from, _to, _value);
-    return true;
+  constructor () public {
+    // Do nothing
   }
-
+  
   /**
-   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   * Get number of tokens currently belonging to given owner.
    *
-   * Beware that changing an allowance with this method brings the risk that someone may use both the old
-   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
-   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
-   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-   * @param _spender The address which will spend the funds.
-   * @param _value The amount of tokens to be spent.
+   * @param _owner address to get number of tokens currently belonging to the
+   *        owner of
+   * @return number of tokens currently belonging to the owner of given address
    */
-  function approve(address _spender, uint256 _value) public returns (bool) {
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
+  function balanceOf(address _owner) public constant returns (uint256 balance) {
+    return accounts [_owner];
   }
 
   /**
-   * @dev Function to check the amount of tokens that an owner allowed to a spender.
-   * @param _owner address The address which owns the funds.
-   * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifying the amount of tokens still available for the spender.
+   * Transfer given number of tokens from message sender to given recipient.
+   *
+   * @param _to address to transfer tokens to the owner of
+   * @param _value number of tokens to transfer to the owner of given address
+   * @return true if tokens were transferred successfully, false otherwise
+   * accounts [_to] + _value > accounts [_to] for overflow check
+   * which is already in safeMath
    */
-  function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
-    return allowed[_owner][_spender];
-  }
-
-  /**
-   * approve should be called when allowed[_spender] == 0. To increment
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   */
-  function increaseApproval (address _spender, uint _addedValue)
-    returns (bool success) {
-    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
-
-  function decreaseApproval (address _spender, uint _subtractedValue)
-    returns (bool success) {
-    uint oldValue = allowed[msg.sender][_spender];
-    if (_subtractedValue > oldValue) {
-      allowed[msg.sender][_spender] = 0;
-    } else {
-      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+  function transfer(address _to, uint256 _value) public returns (bool success) {
+    require(_to != address(0));
+    if (accounts [msg.sender] < _value) return false;
+    if (_value > 0 && msg.sender != _to) {
+      accounts [msg.sender] = safeSub (accounts [msg.sender], _value);
+      accounts [_to] = safeAdd (accounts [_to], _value);
     }
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    emit Transfer (msg.sender, _to, _value);
     return true;
   }
 
+  /**
+   * Transfer given number of tokens from given owner to given recipient.
+   *
+   * @param _from address to transfer tokens from the owner of
+   * @param _to address to transfer tokens to the owner of
+   * @param _value number of tokens to transfer from given owner to given
+   *        recipient
+   * @return true if tokens were transferred successfully, false otherwise
+   * accounts [_to] + _value > accounts [_to] for overflow check
+   * which is already in safeMath
+   */
+  function transferFrom(address _from, address _to, uint256 _value) public
+  returns (bool success) {
+    require(_to != address(0));
+    if (allowances [_from][msg.sender] < _value) return false;
+    if (accounts [_from] < _value) return false; 
+
+    if (_value > 0 && _from != _to) {
+	  allowances [_from][msg.sender] = safeSub (allowances [_from][msg.sender], _value);
+      accounts [_from] = safeSub (accounts [_from], _value);
+      accounts [_to] = safeAdd (accounts [_to], _value);
+    }
+    emit Transfer(_from, _to, _value);
+    return true;
+  }
+
+  /**
+   * Allow given spender to transfer given number of tokens from message sender.
+   * @param _spender address to allow the owner of to transfer tokens from message sender
+   * @param _value number of tokens to allow to transfer
+   * @return true if token transfer was successfully approved, false otherwise
+   */
+   function approve (address _spender, uint256 _value) public returns (bool success) {
+    allowances [msg.sender][_spender] = _value;
+    emit Approval (msg.sender, _spender, _value);
+    return true;
+  }
+
+  /**
+   * Tell how many tokens given spender is currently allowed to transfer from
+   * given owner.
+   *
+   * @param _owner address to get number of tokens allowed to be transferred
+   *        from the owner of
+   * @param _spender address to get number of tokens allowed to be transferred
+   *        by the owner of
+   * @return number of tokens given spender is currently allowed to transfer
+   *         from given owner
+   */
+  function allowance(address _owner, address _spender) public constant
+  returns (uint256 remaining) {
+    return allowances [_owner][_spender];
+  }
+
+  /**
+   * Mapping from addresses of token holders to the numbers of tokens belonging
+   * to these token holders.
+   */
+  mapping (address => uint256) accounts;
+
+  /**
+   * Mapping from addresses of token holders to the mapping of addresses of
+   * spenders to the allowances set by these token holders to these spenders.
+   */
+  mapping (address => mapping (address => uint256)) private allowances;
+  
 }
 
-contract SugarToken is StandardToken {
 
-  string public constant name = "Sugar Exchange";
-  string public constant symbol = "SGR";
-  uint8 public constant decimals = 8;
+/**
+ * Planetagro-Exchange smart contract.
+ */
+contract SUGARToken is AbstractToken {
+  /**
+   * Maximum allowed number of tokens in circulation.
+   * tokenSupply = tokensIActuallyWant * (10 ^ decimals)
+   */
+   
+   
+  uint256 constant MAX_TOKEN_COUNT = 1000000000 * (10**18);
+   
+  /**
+   * Address of the owner of this smart contract.
+   */
+  address private owner;
+  
+  /**
+   * Frozen account list holder
+   */
+  mapping (address => bool) private frozenAccount;
 
-  uint256 public constant INITIAL_SUPPLY = 80000000 * (10 ** uint256(decimals));
-
-  function SugarToken(address wallet) {
-    balances[wallet] = INITIAL_SUPPLY;
-    totalSupply = INITIAL_SUPPLY;
+  /**
+   * Current number of tokens in circulation.
+   */
+  uint256 tokenCount = 0;
+  
+ 
+  /**
+   * True if tokens transfers are currently frozen, false otherwise.
+   */
+  bool frozen = false;
+  
+ 
+  /**
+   * Create new token smart contract and make msg.sender the
+   * owner of this smart contract.
+   */
+  constructor () public {
+    owner = msg.sender;
   }
 
+  /**
+   * Get total number of tokens in circulation.
+   *
+   * @return total number of tokens in circulation
+   */
+  function totalSupply() public constant returns (uint256 supply) {
+    return tokenCount;
+  }
+
+  string constant public name = "Planetagro-Exchange";
+  string constant public symbol = "SUGAR";
+  uint8 constant public decimals = 18;
+  
+  /**
+   * Transfer given number of tokens from message sender to given recipient.
+   * @param _to address to transfer tokens to the owner of
+   * @param _value number of tokens to transfer to the owner of given address
+   * @return true if tokens were transferred successfully, false otherwise
+   */
+  function transfer(address _to, uint256 _value) public returns (bool success) {
+    require(!frozenAccount[msg.sender]);
+	if (frozen) return false;
+    else return AbstractToken.transfer (_to, _value);
+  }
+
+  /**
+   * Transfer given number of tokens from given owner to given recipient.
+   *
+   * @param _from address to transfer tokens from the owner of
+   * @param _to address to transfer tokens to the owner of
+   * @param _value number of tokens to transfer from given owner to given
+   *        recipient
+   * @return true if tokens were transferred successfully, false otherwise
+   */
+  function transferFrom(address _from, address _to, uint256 _value) public
+    returns (bool success) {
+	require(!frozenAccount[_from]);
+    if (frozen) return false;
+    else return AbstractToken.transferFrom (_from, _to, _value);
+  }
+
+   /**
+   * Change how many tokens given spender is allowed to transfer from message
+   * spender.  In order to prevent double spending of allowance,
+   * To change the approve amount you first have to reduce the addresses`
+   * allowance to zero by calling `approve(_spender, 0)` if it is not
+   * already 0 to mitigate the race condition described here:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   * @param _spender address to allow the owner of to transfer tokens from
+   *        message sender
+   * @param _value number of tokens to allow to transfer
+   * @return true if token transfer was successfully approved, false otherwise
+   */
+  function approve (address _spender, uint256 _value) public
+    returns (bool success) {
+	require(allowance (msg.sender, _spender) == 0 || _value == 0);
+    return AbstractToken.approve (_spender, _value);
+  }
+
+  /**
+   * Create _value new tokens and give new created tokens to msg.sender.
+   * May only be called by smart contract owner.
+   *
+   * @param _value number of tokens to create
+   * @return true if tokens were created successfully, false otherwise
+   */
+  function createTokens(uint256 _value) public
+    returns (bool success) {
+    require (msg.sender == owner);
+
+    if (_value > 0) {
+      if (_value > safeSub (MAX_TOKEN_COUNT, tokenCount)) return false;
+	  
+      accounts [msg.sender] = safeAdd (accounts [msg.sender], _value);
+      tokenCount = safeAdd (tokenCount, _value);
+	  
+	  // adding transfer event and _from address as null address
+	  emit Transfer(0x0, msg.sender, _value);
+	  
+	  return true;
+    }
+	
+	  return false;
+    
+  }
+  
+
+  /**
+   * Set new owner for the smart contract.
+   * May only be called by smart contract owner.
+   *
+   * @param _newOwner address of new owner of the smart contract
+   */
+  function setOwner(address _newOwner) public {
+    require (msg.sender == owner);
+
+    owner = _newOwner;
+  }
+
+  /**
+   * Freeze ALL token transfers.
+   * May only be called by smart contract owner.
+   */
+  function freezeTransfers () public {
+    require (msg.sender == owner);
+
+    if (!frozen) {
+      frozen = true;
+      emit Freeze ();
+    }
+  }
+
+  /**
+   * Unfreeze ALL token transfers.
+   * May only be called by smart contract owner.
+   */
+  function unfreezeTransfers () public {
+    require (msg.sender == owner);
+
+    if (frozen) {
+      frozen = false;
+      emit Unfreeze ();
+    }
+  }
+  
+  
+  /*A user is able to unintentionally send tokens to a contract 
+  * and if the contract is not prepared to refund them they will get stuck in the contract. 
+  * The same issue used to happen for Ether too but new Solidity versions added the payable modifier to
+  * prevent unintended Ether transfers. However, there’s no such mechanism for token transfers.
+  * so the below function is created
+  */
+  
+  function refundTokens(address _token, address _refund, uint256 _value) public {
+    require (msg.sender == owner);
+    require(_token != address(this));
+    AbstractToken token = AbstractToken(_token);
+    token.transfer(_refund, _value);
+    emit RefundTokens(_token, _refund, _value);
+  }
+  
+  /**
+   * Freeze specific account
+   * May only be called by smart contract owner.
+   */
+  function freezeAccount(address _target, bool freeze) public {
+      require (msg.sender == owner);
+	  require (msg.sender != _target);
+      frozenAccount[_target] = freeze;
+      emit FrozenFunds(_target, freeze);
+ }
+
+  /**
+   * Logged when token transfers were frozen.
+   */
+  event Freeze ();
+
+  /**
+   * Logged when token transfers were unfrozen.
+   */
+  event Unfreeze ();
+  
+  /**
+   * Logged when a particular account is frozen.
+   */
+  
+  event FrozenFunds(address target, bool frozen);
+
+
+  
+  /**
+   * when accidentally send other tokens are refunded
+   */
+  
+  event RefundTokens(address _token, address _refund, uint256 _value);
 }
