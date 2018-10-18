@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BECHAIN at 0xafca07564b2902232e5de6de6cea884fb967819a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BECHAIN at 0xbac81d25a969ca609254f50375a4ce57123c8fc9
 */
 pragma solidity ^0.4.19;
 
@@ -65,8 +65,8 @@ contract BECHAIN is ERC20 {
     string public constant symbol = "BCN";
     uint public constant decimals = 8;
     
-    uint256 public totalSupply = 100000000e8;
-    uint256 public totalDistributed = 10000000e8;
+        uint256 public totalSupply = 2000000000e8;
+    uint256 public totalDistributed = 200000000e8;
     uint256 public totalRemaining = totalSupply.sub(totalDistributed);
     uint256 public value;
 
@@ -95,9 +95,9 @@ contract BECHAIN is ERC20 {
         _;
     }
     
-    function BCN () public {
+    function BEN () public {
         owner = msg.sender;
-        value = 400e8;
+        value = 4000e8;
         distr(owner, totalDistributed);
     }
     
