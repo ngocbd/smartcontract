@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xf67118fe68ff5fd1460820c49c6cd5ff1d5d74eb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x0317ada015cf35244b9f9c7d1f8f05c3651833ff
 */
 pragma solidity ^0.4.24;
 
@@ -65,6 +65,7 @@ contract TokenAbout is Controlled {
     }
 
     function claimTokens(address[] tokens) onlyController public {
+        require(tokens.length <= 100, "tokens.length too long");
         address _token;
         uint256 balance;
         ERC20Token token;
@@ -128,16 +129,10 @@ contract Token is TokenI, TokenAbout {
 
     bool public transfersEnabled = true;
 
-    /* This notifies clients about the amount burnt */
     event Burn(address indexed from, uint256 value);
-    
-    /* This notifies clients about the amount frozen */
     event Freeze(address indexed from, uint256 value);
-    
-    /* This notifies clients about the amount unfrozen */
     event Unfreeze(address indexed from, uint256 value);
 
-    /* Initializes contract with initial supply tokens to the creator of the contract */
     constructor(uint256 initialSupply, string tokenName, string tokenSymbol, address initialOwner) public {
         name = tokenName;
         symbol = tokenSymbol;
@@ -229,7 +224,7 @@ contract Token is TokenI, TokenAbout {
     }
     
     function transferMulti(address[] _to, uint256[] _value) transable public returns (bool success, uint256 amount){
-        require(_to.length == _value.length && _to.length <= 1024);
+        require(_to.length == _value.length && _to.length <= 300, "transfer once should be less than 300, or will be slow");
         uint256 balanceOfSender = balanceOf[msg.sender];
         uint256 len = _to.length;
         for(uint256 j; j<len; j++){
@@ -250,7 +245,7 @@ contract Token is TokenI, TokenAbout {
     }
     
     function transferMultiSameValue(address[] _to, uint256 _value) transable public returns (bool){
-        require(_to.length <= 1024);
+        require(_to.length <= 300, "transfer once should be less than 300, or will be slow");
         uint256 len = _to.length;
         uint256 amount = _value.mul(len);
         balanceOf[msg.sender] = balanceOf[msg.sender].sub(amount);
@@ -264,12 +259,13 @@ contract Token is TokenI, TokenAbout {
     }
 
     function freeze(address _user, uint256[] _value, uint8[] _step) onlyController public returns (bool success) {
-        require(_value.length == _step.length);
+        require(_value.length == _step.length, "length of value and step must be equal");
+        require(_value.length <= 100, "lock step should less or equal than 100");
         uint256 amount; //????
         for(uint i; i<_value.length; i++){
             amount = amount.add(_value[i]);
         }
-        require(balanceOf[_user] >= amount);
+        require(balanceOf[_user] >= amount, "balance of user must bigger or equal than amount of all steps");
         balanceOf[_user] -= amount;
         freezeOfUser[_user] += amount;
         uint256 _valueI;
