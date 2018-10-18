@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CvcProxy at 0x4b4a7aa3d100676deed616e51a562e77e56b224a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CvcProxy at 0xabe63a04acb55f8c2ea3509ce10775623bd98f3b
 */
 pragma solidity ^0.4.24;
 
