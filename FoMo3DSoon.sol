@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3DSoon at 0x7D1f42AdED5895aF8e1618eB614879c49E5Cfba8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3DSoon at 0x44f44a9810Fe14501e9a7AA15471266dBc3e20a7
 */
 pragma solidity ^0.4.24;
 /**
@@ -179,9 +179,12 @@ contract FoMo3DSoon is F3Devents{
     using NameFilter for string;
     using F3DKeysCalcFast for uint256;
     
-	DiviesInterface constant private Divies = DiviesInterface(0xa5697bc0725c664a89a8178e81fbc187aca33d8b);
-    JIincForwarderInterface constant private Jekyll_Island_Inc = JIincForwarderInterface(0x42503c3dcca420adf53dff5bb1fb176b8773aaa0);
-	PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x962e2c933fd7bb3FCD9aFf882e1af4414ada6335);
+	// DiviesInterface constant private Divies = DiviesInterface(0xC0c001140319C5f114F8467295b1F22F86929Ad0);
+	DiviesInterface constant private Divies = DiviesInterface(0x10Adfd14161c880923acA3E94043E74b4665DfE5);
+    // JIincForwarderInterface constant private Jekyll_Island_Inc = JIincForwarderInterface(0xdd4950F977EE28D2C132f1353D1595035Db444EE);
+    JIincForwarderInterface constant private Jekyll_Island_Inc = JIincForwarderInterface(0x1f5654082761182b50460c0E8945324aC7c62D1d);
+	// PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xD60d353610D9a5Ca478769D371b53CEfAA7B6E4c);
+	PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xc4AD45a8808d577D8B08Ca5E4dD6939964EB645f);
 //==============================================================================
 //     _ _  _  |`. _     _ _ |_ | _  _  .
 //    (_(_)| |~|~|(_||_|| (_||_)|(/__\  .  (game settings)
@@ -1814,11 +1817,12 @@ contract FoMo3DSoon is F3Devents{
     {
         // only team just can activate 
         require(
-            msg.sender == 0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C ||
-            msg.sender == 0x8b4DA1827932D71759687f925D17F81Fc94e3A9D ||
-            msg.sender == 0x8e0d985f3Ec1857BEc39B76aAabDEa6B31B67d53 ||
-            msg.sender == 0x7ac74Fcc1a71b106F12c55ee8F802C9F672Ce40C ||
-			msg.sender == 0xF39e044e1AB204460e06E87c6dca2c6319fC69E3,
+            // msg.sender == 0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C ||
+            // msg.sender == 0x8b4DA1827932D71759687f925D17F81Fc94e3A9D ||
+            // msg.sender == 0x8e0d985f3Ec1857BEc39B76aAabDEa6B31B67d53 ||
+            // msg.sender == 0x7ac74Fcc1a71b106F12c55ee8F802C9F672Ce40C ||
+			// msg.sender == 0xF39e044e1AB204460e06E87c6dca2c6319fC69E3,
+			msg.sender == 0xD9A85b1eEe7718221713D5e8131d041DC417E901,
             "only team just can activate"
         );
 
