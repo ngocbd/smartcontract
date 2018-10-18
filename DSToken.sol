@@ -1,6 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DSToken at 0x89509d113b09b109a0ae2fb940091a60e8b73231
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DSToken at 0xaf55787f6f40f17e6de9987058817c558b8cef52
 */
+pragma solidity ^0.4.11;
+
 contract DSNote {
     event LogNote(
         bytes4   indexed  sig,
@@ -85,6 +87,23 @@ contract DSAuth is DSAuthEvents {
     function assert(bool x) internal {
         if (!x) throw;
     }
+}
+
+contract DSStop is DSAuth, DSNote {
+
+    bool public stopped;
+
+    modifier stoppable {
+        assert (!stopped);
+        _;
+    }
+    function stop() auth note {
+        stopped = true;
+    }
+    function start() auth note {
+        stopped = false;
+    }
+
 }
 
 contract DSMath {
@@ -173,15 +192,9 @@ contract DSMath {
     function wmul(uint128 x, uint128 y) constant internal returns (uint128 z) {
         z = cast((uint256(x) * y + WAD / 2) / WAD);
     }
-    function wmulfloor(uint128 x, uint128 y) constant internal returns (uint128 z) {
-        z = cast((uint256(x) * y) / WAD);
-    }
 
     function wdiv(uint128 x, uint128 y) constant internal returns (uint128 z) {
         z = cast((uint256(x) * WAD + y / 2) / y);
-    }
-    function wdivfloor(uint128 x, uint128 y) constant internal returns (uint128 z) {
-        z = cast((uint256(x) * WAD) / y);
     }
 
     function wmin(uint128 x, uint128 y) constant internal returns (uint128) {
@@ -320,24 +333,24 @@ contract DSTokenBase is ERC20, DSMath {
 
 }
 
-contract DSToken is DSTokenBase, DSAuth, DSNote {
+contract DSToken is DSTokenBase(0), DSStop {
 
     bytes32  public  symbol;
     uint256  public  decimals = 18; // standard token precision. override to customize
 
-    function DSToken(bytes32 symbol_, uint256 supply_) DSTokenBase(supply_) {
+    function DSToken(bytes32 symbol_) {
         symbol = symbol_;
     }
 
-    function transfer(address dst, uint wad) note returns (bool) {
+    function transfer(address dst, uint wad) stoppable note returns (bool) {
         return super.transfer(dst, wad);
     }
     function transferFrom(
         address src, address dst, uint wad
-    ) note returns (bool) {
+    ) stoppable note returns (bool) {
         return super.transferFrom(src, dst, wad);
     }
-    function approve(address guy, uint wad) note returns (bool) {
+    function approve(address guy, uint wad) stoppable note returns (bool) {
         return super.approve(guy, wad);
     }
 
@@ -348,7 +361,11 @@ contract DSToken is DSTokenBase, DSAuth, DSNote {
         return transferFrom(src, msg.sender, wad);
     }
 
-    function burn(uint128 wad) auth note {
+    function mint(uint128 wad) auth stoppable note {
+        _balances[msg.sender] = add(_balances[msg.sender], wad);
+        _supply = add(_supply, wad);
+    }
+    function burn(uint128 wad) auth stoppable note {
         _balances[msg.sender] = sub(_balances[msg.sender], wad);
         _supply = sub(_supply, wad);
     }
