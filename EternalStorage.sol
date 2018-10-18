@@ -1,130 +1,410 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EternalStorage at 0x0821d33c50d2d2d1381b5dfca34900bacad909a7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EternalStorage at 0x81c8213193b12b8b4781d20a251a24a137a9c9e6
 */
-pragma solidity 0.4.24;
+pragma solidity ^0.4.24;
 
-/// @dev `Owned` is a base level contract that assigns an `owner` that can be
-///  later changed
-contract Owned {
 
-    /// @dev `owner` is the only address that can call a function with this
-    /// modifier
-    modifier onlyOwner {
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+    address public owner;
+
+
+    event OwnershipRenounced(address indexed previousOwner);
+    event OwnershipTransferred(
+        address indexed previousOwner,
+        address indexed newOwner
+    );
+
+
+    /**
+     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+     * account.
+     */
+    constructor() public {
+        owner = msg.sender;
+    }
+
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
         require(msg.sender == owner);
         _;
     }
 
-    address public owner;
+    /**
+     * @dev Allows the current owner to relinquish control of the contract.
+     * @notice Renouncing to ownership will leave the contract without an owner.
+     * It will not be possible to call the functions with the `onlyOwner`
+     * modifier anymore.
+     */
+    function renounceOwnership() public onlyOwner {
+        emit OwnershipRenounced(owner);
+        owner = address(0);
+    }
 
-    /// @notice The Constructor assigns the message sender to be `owner`
-    function Owned() public {owner = msg.sender;}
+    /**
+     * @dev Allows the current owner to transfer control of the contract to a newOwner.
+     * @param _newOwner The address to transfer ownership to.
+     */
+    function transferOwnership(address _newOwner) public onlyOwner {
+        _transferOwnership(_newOwner);
+    }
 
-    /// @notice `owner` can step down and assign some other address to this role
-    /// @param _newOwner The address of the new owner. 0x0 can be used to create
-    ///  an unowned neutral vault, however that cannot be undone
-    function changeOwner(address _newOwner) public onlyOwner {
+    /**
+     * @dev Transfers control of the contract to a newOwner.
+     * @param _newOwner The address to transfer ownership to.
+     */
+    function _transferOwnership(address _newOwner) internal {
+        require(_newOwner != address(0));
+        emit OwnershipTransferred(owner, _newOwner);
         owner = _newOwner;
     }
 }
 
-contract Callable is Owned {
 
-    //sender => _allowed
-    mapping(address => bool) public callers;
+contract EternalStorage is Ownable {
 
-    //modifiers
-    modifier onlyCaller {
-        require(callers[msg.sender]);
+    struct Storage {
+        mapping(uint256 => uint256) _uint;
+        mapping(uint256 => address) _address;
+    }
+
+    Storage internal s;
+    address allowed;
+
+    constructor(uint _rF, address _r, address _f, address _a, address _t)
+
+    public {
+        setAddress(0, _a);
+        setAddress(1, _r);
+        setUint(1, _rF);
+        setAddress(2, _f);
+        setAddress(3, _t);
+    }
+
+    modifier onlyAllowed() {
+        require(msg.sender == owner || msg.sender == allowed);
         _;
     }
 
-    //management of the repositories
-    function updateCaller(address _caller, bool allowed) public onlyOwner {
-        callers[_caller] = allowed;
+    function identify(address _address) external onlyOwner {
+        allowed = _address;
+    }
+
+    /**
+     * @dev Allows the current owner to transfer control of the contract to a
+     * newOwner.
+     * @param newOwner The address to transfer ownership to.
+     */
+    function transferOwnership(address newOwner) public onlyOwner {
+        Ownable.transferOwnership(newOwner);
+    }
+
+    /**
+     * @dev Allows the owner to set a value for an unsigned integer variable.
+     * @param i Unsigned integer variable key
+     * @param v The value to be stored
+     */
+    function setUint(uint256 i, uint256 v) public onlyOwner {
+        s._uint[i] = v;
+    }
+
+    /**
+     * @dev Allows the owner to set a value for a address variable.
+     * @param i Unsigned integer variable key
+     * @param v The value to be stored
+     */
+    function setAddress(uint256 i, address v) public onlyOwner {
+        s._address[i] = v;
+    }
+
+    /**
+     * @dev Get the value stored of a uint variable by the hash name
+     * @param i Unsigned integer variable key
+     */
+    function getUint(uint256 i) external view onlyAllowed returns (uint256) {
+        return s._uint[i];
+    }
+
+    /**
+     * @dev Get the value stored of a address variable by the hash name
+     * @param i Unsigned integer variable key
+     */
+    function getAddress(uint256 i) external view onlyAllowed returns (address) {
+        return s._address[i];
+    }
+
+    function selfDestruct () external onlyOwner {
+        selfdestruct(owner);
     }
 }
 
-contract EternalStorage is Callable {
 
-    mapping(bytes32 => uint) uIntStorage;
-    mapping(bytes32 => string) stringStorage;
-    mapping(bytes32 => address) addressStorage;
-    mapping(bytes32 => bytes) bytesStorage;
-    mapping(bytes32 => bool) boolStorage;
-    mapping(bytes32 => int) intStorage;
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 {
+    function totalSupply() public view returns (uint256);
 
-    // *** Getter Methods ***
-    function getUint(bytes32 _key) external view returns (uint) {
-        return uIntStorage[_key];
+    function balanceOf(address _who) public view returns (uint256);
+
+    function allowance(address _owner, address _spender)
+    public view returns (uint256);
+
+    function transfer(address _to, uint256 _value) public returns (bool);
+
+    function approve(address _spender, uint256 _value)
+    public returns (bool);
+
+    function transferFrom(address _from, address _to, uint256 _value)
+    public returns (bool);
+
+    event Transfer(
+        address indexed from,
+        address indexed to,
+        uint256 value
+    );
+
+    event Approval(
+        address indexed owner,
+        address indexed spender,
+        uint256 value
+    );
+}
+
+
+contract Escrow is Ownable {
+
+    enum transactionStatus {
+        Default,
+        Pending,
+        PendingR1,
+        PendingR2,
+        Completed,
+        Canceled}
+
+    struct Transaction {
+        transactionStatus status;
+        uint baseAmt;
+        uint txnAmt;
+        uint sellerFee;
+        uint buyerFee;
+        uint buyerBalance;
+        address buyer;
+        uint token;
     }
 
-    function getString(bytes32 _key) external view returns (string) {
-        return stringStorage[_key];
+    mapping(address => Transaction) transactions;
+    mapping(address => uint) balance;
+    ERC20 base;
+    ERC20 token;
+    EternalStorage eternal;
+    uint rF;
+    address r;
+    address reserve;
+
+    constructor(ERC20 _base, address _s) public {
+
+        base = _base;
+        eternal = EternalStorage(_s);
+
     }
 
-    function getAddress(bytes32 _key) external view returns (address) {
-        return addressStorage[_key];
+    modifier onlyAllowed() {
+        require(msg.sender == owner || msg.sender == eternal.getAddress(0));
+        _;
     }
 
-    function getBytes(bytes32 _key) external view returns (bytes) {
-        return bytesStorage[_key];
+    function createTransaction (
+
+        address _tag,
+        uint _baseAmt,
+        uint _txnAmt,
+        uint _sellerFee,
+        uint _buyerFee) external payable {
+
+        Transaction storage transaction = transactions[_tag];
+        require(transaction.buyer == 0x0);
+        transactions[_tag] =
+        Transaction(
+            transactionStatus.Pending,
+            _baseAmt,
+            _txnAmt,
+            _sellerFee,
+            _buyerFee,
+            0,
+            msg.sender,
+            0);
+
+        uint buyerTotal = _txnAmt + _buyerFee;
+        require(transaction.buyerBalance + msg.value == buyerTotal);
+        transaction.buyerBalance += msg.value;
+        balance[msg.sender] += msg.value;
     }
 
-    function getBool(bytes32 _key) external view returns (bool) {
-        return boolStorage[_key];
+    function createTokenTransaction (
+
+        address _tag,
+        uint _baseAmt,
+        uint _txnAmt,
+        uint _sellerFee,
+        uint _buyerFee,
+        address _buyer,
+        uint _token) external onlyAllowed {
+
+        require(_token != 0);
+        require(eternal.getAddress(_token) != 0x0);
+        Transaction storage transaction = transactions[_tag];
+        require(transaction.buyer == 0x0);
+        transactions[_tag] =
+        Transaction(
+            transactionStatus.Pending,
+            _baseAmt,
+            _txnAmt,
+            _sellerFee,
+            _buyerFee,
+            0,
+            _buyer,
+            _token);
+
+        uint buyerTotal = _txnAmt + _buyerFee;
+        token = ERC20(eternal.getAddress(_token));
+        token.transferFrom(_buyer, address(this), buyerTotal);
+        transaction.buyerBalance += buyerTotal;
     }
 
-    function getInt(bytes32 _key) external view returns (int) {
-        return intStorage[_key];
+    function release(address _tag) external onlyAllowed {
+        releaseFunds(_tag);
     }
 
-    // *** Setter Methods ***
-    function setUint(bytes32 _key, uint _value) onlyCaller external {
-        uIntStorage[_key] = _value;
+    function releaseFunds (address _tag) private {
+        Transaction storage transaction = transactions[_tag];
+        require(transaction.status == transactionStatus.Pending);
+        uint buyerTotal = transaction.txnAmt + transaction.buyerFee;
+        uint buyerBalance = transaction.buyerBalance;
+        transaction.buyerBalance = 0;
+        require(buyerTotal == buyerBalance);
+        base.transferFrom(_tag, transaction.buyer, transaction.baseAmt);
+        uint totalFees = transaction.buyerFee + transaction.sellerFee;
+        uint sellerTotal = transaction.txnAmt - transaction.sellerFee;
+        transaction.txnAmt = 0;
+        transaction.sellerFee = 0;
+        if (transaction.token == 0) {
+            _tag.transfer(sellerTotal);
+            owner.transfer(totalFees);
+        } else {
+            token = ERC20(eternal.getAddress(transaction.token));
+            token.transfer(_tag, sellerTotal);
+            token.transfer(owner, totalFees);
+        }
+
+        transaction.status = transactionStatus.PendingR1;
+        recovery(_tag);
     }
 
-    function setString(bytes32 _key, string _value) onlyCaller external {
-        stringStorage[_key] = _value;
+    function recovery(address _tag) private {
+        r1(_tag);
+        r2(_tag);
     }
 
-    function setAddress(bytes32 _key, address _value) onlyCaller external {
-        addressStorage[_key] = _value;
+    function r1 (address _tag) private {
+        Transaction storage transaction = transactions[_tag];
+        require(transaction.status == transactionStatus.PendingR1);
+        transaction.status = transactionStatus.PendingR2;
+        base.transferFrom(reserve, _tag, rF);
     }
 
-    function setBytes(bytes32 _key, bytes _value) onlyCaller external {
-        bytesStorage[_key] = _value;
+    function r2 (address _tag) private {
+        Transaction storage transaction = transactions[_tag];
+        require(transaction.status == transactionStatus.PendingR2);
+        transaction.buyer = 0x0;
+        transaction.status = transactionStatus.Completed;
+        base.transferFrom(_tag, r, rF);
     }
 
-    function setBool(bytes32 _key, bool _value) onlyCaller external {
-        boolStorage[_key] = _value;
+    function cancel (address _tag) external onlyAllowed {
+        Transaction storage transaction = transactions[_tag];
+        if (transaction.token == 0) {
+            cancelTransaction(_tag);
+        } else {
+            cancelTokenTransaction(_tag);
+        }
     }
 
-    function setInt(bytes32 _key, int _value) onlyCaller external {
-        intStorage[_key] = _value;
+    function cancelTransaction (address _tag) private {
+        Transaction storage transaction = transactions[_tag];
+        require(transaction.status == transactionStatus.Pending);
+        uint refund = transaction.buyerBalance;
+        transaction.buyerBalance = 0;
+        address buyer = transaction.buyer;
+        transaction.buyer = 0x0;
+        buyer.transfer(refund);
+        transaction.status = transactionStatus.Canceled;
     }
 
-    // *** Delete Methods ***
-    function deleteUint(bytes32 _key) onlyCaller external {
-        delete uIntStorage[_key];
+    function cancelTokenTransaction (address _tag) private {
+        Transaction storage transaction = transactions[_tag];
+        require(transaction.status == transactionStatus.Pending);
+        token = ERC20(eternal.getAddress(transaction.token));
+        uint refund = transaction.buyerBalance;
+        transaction.buyerBalance = 0;
+        address buyer = transaction.buyer;
+        transaction.buyer = 0x0;
+        token.transfer(buyer, refund);
+        transaction.status = transactionStatus.Canceled;
     }
 
-    function deleteString(bytes32 _key) onlyCaller external {
-        delete stringStorage[_key];
+    function resync () external onlyOwner {
+        rF = eternal.getUint(1);
+        r = eternal.getAddress(1);
+        reserve = eternal.getAddress(2);
     }
 
-    function deleteAddress(bytes32 _key) onlyCaller external {
-        delete addressStorage[_key];
+    function selfDestruct () external onlyOwner {
+        selfdestruct(owner);
     }
 
-    function deleteBytes(bytes32 _key) onlyCaller external {
-        delete bytesStorage[_key];
+    function status (address _tag) external view onlyOwner returns (
+        transactionStatus _status,
+        uint _baseAmt,
+        uint _txnAmt,
+        uint _sellerFee,
+        uint _buyerFee,
+        uint _buyerBalance,
+        address _buyer,
+        uint _token) {
+
+        Transaction storage transaction = transactions[_tag];
+        return (
+        transaction.status,
+        transaction.baseAmt,
+        transaction.txnAmt,
+        transaction.sellerFee,
+        transaction.buyerFee,
+        transaction.buyerBalance,
+        transaction.buyer,
+        transaction.token
+        );
     }
 
-    function deleteBool(bytes32 _key) onlyCaller external {
-        delete boolStorage[_key];
+    function getAddress (uint i) external view onlyAllowed returns (address) {
+        return eternal.getAddress(i);
     }
 
-    function deleteInt(bytes32 _key) onlyCaller external {
-        delete intStorage[_key];
+    function variables () external view onlyAllowed returns (
+        address,
+        address,
+        address,
+        uint) {
+
+        address p = eternal.getAddress(0);
+        return (p, r, reserve, rF);
     }
+
 }
