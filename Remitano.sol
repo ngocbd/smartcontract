@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Remitano at 0x0baf42501c5a3dda287db7a822e364ea60c76a62
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Remitano at 0x2e6997b11c0cefbb3c7eb7e4c31dd35265847bea
 */
-pragma solidity ^0.4.25;
+pragma solidity ^0.4.24;
 
 interface IERC20 {
   function totalSupply() external view returns (uint256);
