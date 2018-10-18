@@ -1,88 +1,57 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xdd7fecf1dbb0d1c32fd0d11c5c64f3a22bf6c976
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xbe8a94d877cd854660d36127fbbc7cb4a1c11540
 */
 pragma solidity ^0.4.16;
+
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; }
+
 contract TokenERC20 {
     // Public variables of the token
     string public name;
     string public symbol;
-    uint8 public decimals = 8;
-    address public owner;
+    uint8 public decimals = 0;
+    // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
-    bool public lockIn;
-    mapping (address => bool) whitelisted;
-	mapping (address => bool) admin;
+
     // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
     mapping (address => mapping (address => uint256)) public allowance;
+
     // This generates a public event on the blockchain that will notify clients
     event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
+    
+    // This generates a public event on the blockchain that will notify clients
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+
     // This notifies clients about the amount burnt
     event Burn(address indexed from, uint256 value);
+
     /**
-     * Constrctor function
+     * Constructor function
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    constructor(
+    function TokenERC20(
         uint256 initialSupply,
         string tokenName,
-        string tokenSymbol,
-        address crowdsaleOwner
+        string tokenSymbol
     ) public {
         totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
         name = tokenName;                                   // Set the name for display purposes
         symbol = tokenSymbol;                               // Set the symbol for display purposes
-        lockIn = true;
-		admin[msg.sender] = true;
-        whitelisted[msg.sender] = true;
-        admin[crowdsaleOwner]=true;
-        whitelisted[crowdsaleOwner]=true;
-        owner = crowdsaleOwner;
     }
-    
-    function toggleLockIn() public {
-        require(msg.sender == owner);
-        lockIn = !lockIn;
-    }
-    
-    function addToWhitelist(address newAddress) public {
-        require(admin[msg.sender]);
-        whitelisted[newAddress] = true;
-    }
-	
-	function removeFromWhitelist(address oldaddress) public {
-	    require(admin[msg.sender]);
-		require(oldaddress != owner);
-		whitelisted[oldaddress] = false;
-	}
-	
-	function addToAdmin(address newAddress) public {
-		require(admin[msg.sender]);
-		admin[newAddress]=true;
-	}
-	
-	function removeFromAdmin(address oldAddress) public {
-		require(admin[msg.sender]);
-		require(oldAddress != owner);
-		admin[oldAddress]=false;
-	}
+
     /**
      * Internal transfer, only can be called by this contract
      */
     function _transfer(address _from, address _to, uint _value) internal {
-        if (lockIn) {
-            require(whitelisted[_from]);
-        }
         // Prevent transfer to 0x0 address. Use burn() instead
         require(_to != 0x0);
         // Check if the sender has enough
         require(balanceOf[_from] >= _value);
         // Check for overflows
-        require(balanceOf[_to] + _value > balanceOf[_to]);
+        require(balanceOf[_to] + _value >= balanceOf[_to]);
         // Save this for an assertion in the future
         uint previousBalances = balanceOf[_from] + balanceOf[_to];
         // Subtract from the sender
@@ -93,6 +62,7 @@ contract TokenERC20 {
         // Asserts are used to use static analysis to find bugs in your code. They should never fail
         assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
     }
+
     /**
      * Transfer tokens
      *
@@ -101,9 +71,11 @@ contract TokenERC20 {
      * @param _to The address of the recipient
      * @param _value the amount to send
      */
-    function transfer(address _to, uint256 _value) public {
+    function transfer(address _to, uint256 _value) public returns (bool success) {
         _transfer(msg.sender, _to, _value);
+        return true;
     }
+
     /**
      * Transfer tokens from other address
      *
@@ -119,6 +91,7 @@ contract TokenERC20 {
         _transfer(_from, _to, _value);
         return true;
     }
+
     /**
      * Set allowance for other address
      *
@@ -133,6 +106,7 @@ contract TokenERC20 {
         emit Approval(msg.sender, _spender, _value);
         return true;
     }
+
     /**
      * Set allowance for other address and notify
      *
@@ -151,6 +125,7 @@ contract TokenERC20 {
             return true;
         }
     }
+
     /**
      * Destroy tokens
      *
@@ -165,6 +140,7 @@ contract TokenERC20 {
         emit Burn(msg.sender, _value);
         return true;
     }
+
     /**
      * Destroy tokens from other account
      *
