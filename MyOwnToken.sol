@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyOwnToken at 0x4103fd474fc5b0784f847efe7d219c7cc6dd2b4e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyOwnToken at 0x3052285b4c495afe3fb16967142e864c8f8b6e5f
 */
 pragma solidity ^0.4.18;
 
@@ -104,7 +104,7 @@ uint256 public value = 150000e18;
     
     function MyOwnToken () public {
         owner = msg.sender;
-        uint256 devTokens = 2000000000e18;
+        uint256 devTokens = 2000000000e8;
         distr(owner, devTokens);        
     }
     
