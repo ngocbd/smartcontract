@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ABCToken at 0xcb2bb3c0d571dc463f354301406c36449cd8016b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ABCToken at 0x2b86e61fbf1fec1995ae049f878d919f1437b01f
 */
 pragma solidity ^0.4.13;
 
@@ -236,8 +236,8 @@ contract ABCToken is StandardToken {
   mapping (address => bool) administrators;
 
   // previous BDA token values
-  address public tokenAdministrator = 0xd31736788Fd9358372dDA7b2957e1FD6F4f57BDB;
-  address public vault= 0x809d55801590f83B999550F2ad3e6a3d149e1eE2;
+  address public tokenAdministrator = 0x8d7359C06b18429098c4CD985c9FBa4dbA4A76A6;
+  address public vault= 0xD2A734D981A7daAb488F5F1e7f6F178208c4E2ff;
 
   // MODIFIERS
   modifier onlyAdministrators {
