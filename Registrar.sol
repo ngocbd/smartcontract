@@ -1,323 +1,107 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Registrar at 0x9dc5ae542328b85fc979a7000ae8ceca62a3c00a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Registrar at 0x5268d516f57be82d12548577aac9d540340babe2
 */
 pragma solidity ^0.4.24;
 
-/**
- * @title Registrar
- */
-contract Registrar {
-	address private contractOwner;
-	bool public paused;
+// File: contracts/interfaces/IOwned.sol
 
-	struct Manifest {
-		address registrant;
-		bytes32 name;
-		uint256 version;
-		uint256 index;
-		bytes32 hashTypeName;
-		string checksum;
-		uint256 createdOn;
-	}
-	
-	struct HashType {
-	    bytes32 name;
-	    bool active;
-	}
-	
-	uint256 public numHashTypes;
-	mapping(bytes32 => Manifest) private manifests;
-	mapping(address => bytes32[]) private registrantManifests;
-	mapping(bytes32 => bytes32[]) private registrantNameManifests;
-	mapping(bytes32 => uint256) private registrantNameVersionCount;
-	mapping(bytes32 => uint256) public hashTypeIdLookup;
-	mapping(uint256 => HashType) public hashTypes;
-	
-	 /**
-	  * @dev Log when a manifest registration is successful
-	  */
-	event LogManifest(address indexed registrant, bytes32 indexed name, uint256 indexed version, bytes32 hashTypeName, string checksum);
+/*
+    Owned Contract Interface
+*/
+contract IOwned {
+    function transferOwnership(address _newOwner) public;
+    function acceptOwnership() public;
+    function transferOwnershipNow(address newContractOwner) public;
+}
+
+// File: contracts/utility/Owned.sol
+
+/*
+    This is the "owned" utility contract used by bancor with one additional function - transferOwnershipNow()
+    
+    The original unmodified version can be found here:
+    https://github.com/bancorprotocol/contracts/commit/63480ca28534830f184d3c4bf799c1f90d113846
+    
+    Provides support and utilities for contract ownership
+*/
+contract Owned is IOwned {
+    address public owner;
+    address public newOwner;
+
+    event OwnerUpdate(address indexed _prevOwner, address indexed _newOwner);
 
     /**
-	 * @dev Checks if contractOwner addresss is calling
-	 */
-	modifier onlyContractOwner {
-		require(msg.sender == contractOwner);
-		_;
-	}
+        @dev constructor
+    */
+    constructor() public {
+        owner = msg.sender;
+    }
 
-    /**
-	 * @dev Checks if contract is active
-	 */
-	modifier contractIsActive {
-		require(paused == false);
-		_;
-	}
-
-    /**
-     * @dev Checks if the values provided for this manifest are valid
-     */
-    modifier manifestIsValid(bytes32 name, bytes32 hashTypeName, string checksum, address registrant) {
-        require(name != bytes32(0x0) && 
-            hashTypes[hashTypeIdLookup[hashTypeName]].active == true &&
-            bytes(checksum).length != 0 &&
-            registrant != address(0x0) &&
-            manifests[keccak256(abi.encodePacked(registrant, name, nextVersion(registrant, name)))].name == bytes32(0x0)
-            );
+    // allows execution by the owner only
+    modifier ownerOnly {
+        require(msg.sender == owner);
         _;
     }
-    
-	/**
-	 * Constructor
-     */
-	constructor() public {
-		contractOwner = msg.sender;
-		addHashType('sha256');
-	}
 
-    /******************************************/
-    /*           OWNER ONLY METHODS           */
-    /******************************************/
-    
     /**
-     * @dev Allows contractOwner to add hashType
-     * @param _name The value to be added
-     */
-    function addHashType(bytes32 _name) public onlyContractOwner {
-        require(hashTypeIdLookup[_name] == 0);
-        numHashTypes++;
-        hashTypeIdLookup[_name] = numHashTypes;
-        HashType storage _hashType = hashTypes[numHashTypes];
-        
-        // Store info about this hashType
-        _hashType.name = _name;
-        _hashType.active = true;
+        @dev allows transferring the contract ownership
+        the new owner still needs to accept the transfer
+        can only be called by the contract owner
+        @param _newOwner    new contract owner
+    */
+    function transferOwnership(address _newOwner) public ownerOnly {
+        require(_newOwner != owner);
+        newOwner = _newOwner;
     }
-    
-	/**
-	 * @dev Allows contractOwner to activate/deactivate hashType
-	 * @param _name The name of the hashType
-	 * @param _active The value to be set
-	 */
-	function setActiveHashType(bytes32 _name, bool _active) public onlyContractOwner {
-        require(hashTypeIdLookup[_name] > 0);
-        hashTypes[hashTypeIdLookup[_name]].active = _active;
-	}
 
     /**
-     * @dev Allows contractOwner to pause the contract
-     * @param _paused The value to be set
-     */
-	function setPaused(bool _paused) public onlyContractOwner {
-		paused = _paused;
-	}
-    
-    /**
-	 * @dev Allows contractOwner to kill the contract
-	 */
-    function kill() public onlyContractOwner {
-		selfdestruct(contractOwner);
-	}
-
-    /******************************************/
-    /*            PUBLIC METHODS              */
-    /******************************************/
-	/**
-	 * @dev Function to determine the next version value of a manifest
-	 * @param _registrant The registrant address of the manifest
-	 * @param _name The name of the manifest
-	 * @return The next version value
-	 */
-	function nextVersion(address _registrant, bytes32 _name) public view returns (uint256) {
-	    bytes32 registrantNameIndex = keccak256(abi.encodePacked(_registrant, _name));
-	    return (registrantNameVersionCount[registrantNameIndex] + 1);
-	}
-	
-	/**
-	 * @dev Function to register a manifest
-	 * @param _name The name of the manifest
-	 * @param _hashTypeName The hashType of the manifest
-	 * @param _checksum The checksum of the manifest
-	 */
-	function register(bytes32 _name, bytes32 _hashTypeName, string _checksum) public 
-	    contractIsActive
-	    manifestIsValid(_name, _hashTypeName, _checksum, msg.sender) {
-
-	    // Generate registrant name index
-	    bytes32 registrantNameIndex = keccak256(abi.encodePacked(msg.sender, _name));
-	    
-	    // Increment the version for this manifest
-	    registrantNameVersionCount[registrantNameIndex]++;
-	    
-	    // Generate ID for this manifest
-	    bytes32 manifestId = keccak256(abi.encodePacked(msg.sender, _name, registrantNameVersionCount[registrantNameIndex]));
-	    
-        Manifest storage _manifest = manifests[manifestId];
-        
-        // Store info about this manifest
-        _manifest.registrant = msg.sender;
-        _manifest.name = _name;
-        _manifest.version = registrantNameVersionCount[registrantNameIndex];
-        _manifest.index = registrantNameManifests[registrantNameIndex].length;
-        _manifest.hashTypeName = _hashTypeName;
-        _manifest.checksum = _checksum;
-        _manifest.createdOn = now;
-        
-        registrantManifests[msg.sender].push(manifestId);
-        registrantNameManifests[registrantNameIndex].push(manifestId);
-
-	    emit LogManifest(msg.sender, _manifest.name, _manifest.version, _manifest.hashTypeName, _manifest.checksum);
-	}
+        @dev used by a new owner to accept an ownership transfer
+    */
+    function acceptOwnership() public {
+        require(msg.sender == newOwner);
+        emit OwnerUpdate(owner, newOwner);
+        owner = newOwner;
+        newOwner = address(0);
+    }
 
     /**
-     * @dev Function to get a manifest registration based on registrant address, manifest name and version
-     * @param _registrant The registrant address of the manifest
-     * @param _name The name of the manifest
-     * @param _version The version of the manifest
-     * @return The registrant address of the manifest
-     * @return The name of the manifest
-     * @return The version of the manifest
-     * @return The index of this manifest in registrantNameManifests
-     * @return The hashTypeName of the manifest
-     * @return The checksum of the manifest
-     * @return The created on date of the manifest
-     */
-	function getManifest(address _registrant, bytes32 _name, uint256 _version) public view 
-	    returns (address, bytes32, uint256, uint256, bytes32, string, uint256) {
-	        
-	    bytes32 manifestId = keccak256(abi.encodePacked(_registrant, _name, _version));
-	    require(manifests[manifestId].name != bytes32(0x0));
+        @dev transfers the contract ownership without needing the new owner to accept ownership
+        @param newContractOwner    new contract owner
+    */
+    function transferOwnershipNow(address newContractOwner) ownerOnly public {
+        require(newContractOwner != owner);
+        emit OwnerUpdate(owner, newContractOwner);
+        owner = newContractOwner;
+    }
 
-	    Manifest memory _manifest = manifests[manifestId];
-	    return (
-	        _manifest.registrant,
-	        _manifest.name,
-	        _manifest.version,
-	        _manifest.index,
-	        _manifest.hashTypeName,
-	        _manifest.checksum,
-	        _manifest.createdOn
-	   );
-	}
+}
 
-    /**
-     * @dev Function to get a manifest registration based on manifestId
-     * @param _manifestId The registration ID of the manifest
-     * @return The registrant address of the manifest
-     * @return The name of the manifest
-     * @return The version of the manifest
-     * @return The index of this manifest in registrantNameManifests
-     * @return The hashTypeName of the manifest
-     * @return The checksum of the manifest
-     * @return The created on date of the manifest
-     */
-	function getManifestById(bytes32 _manifestId) public view
-	    returns (address, bytes32, uint256, uint256, bytes32, string, uint256) {
-	    require(manifests[_manifestId].name != bytes32(0x0));
+// File: contracts/interfaces/IRegistrar.sol
 
-	    Manifest memory _manifest = manifests[_manifestId];
-	    return (
-	        _manifest.registrant,
-	        _manifest.name,
-	        _manifest.version,
-	        _manifest.index,
-	        _manifest.hashTypeName,
-	        _manifest.checksum,
-	        _manifest.createdOn
-	   );
-	}
+/*
+    Smart Token interface
+*/
+contract IRegistrar is IOwned {
+    function addNewAddress(address _newAddress) public;
+    function getAddresses() public view returns (address[]);
+}
 
-    /**
-     * @dev Function to get the latest manifest registration based on registrant address and manifest name
-     * @param _registrant The registrant address of the manifest
-     * @param _name The name of the manifest
-     * @return The registrant address of the manifest
-     * @return The name of the manifest
-     * @return The version of the manifest
-     * @return The index of this manifest in registrantNameManifests
-     * @return The hashTypeName of the manifest
-     * @return The checksum of the manifest
-     * @return The created on date of the manifest
-     */
-	function getLatestManifestByName(address _registrant, bytes32 _name) public view
-	    returns (address, bytes32, uint256, uint256, bytes32, string, uint256) {
-	        
-	    bytes32 registrantNameIndex = keccak256(abi.encodePacked(_registrant, _name));
-	    require(registrantNameManifests[registrantNameIndex].length > 0);
-	    
-	    bytes32 manifestId = registrantNameManifests[registrantNameIndex][registrantNameManifests[registrantNameIndex].length - 1];
-	    Manifest memory _manifest = manifests[manifestId];
+// File: contracts/Registrar.sol
 
-	    return (
-	        _manifest.registrant,
-	        _manifest.name,
-	        _manifest.version,
-	        _manifest.index,
-	        _manifest.hashTypeName,
-	        _manifest.checksum,
-	        _manifest.createdOn
-	   );
-	}
-	
-	/**
-     * @dev Function to get the latest manifest registration based on registrant address
-     * @param _registrant The registrant address of the manifest
-     * @return The registrant address of the manifest
-     * @return The name of the manifest
-     * @return The version of the manifest
-     * @return The index of this manifest in registrantNameManifests
-     * @return The hashTypeName of the manifest
-     * @return The checksum of the manifest
-     * @return The created on date of the manifest
-     */
-	function getLatestManifest(address _registrant) public view
-	    returns (address, bytes32, uint256, uint256, bytes32, string, uint256) {
-	    require(registrantManifests[_registrant].length > 0);
-	    
-	    bytes32 manifestId = registrantManifests[_registrant][registrantManifests[_registrant].length - 1];
-	    Manifest memory _manifest = manifests[manifestId];
+/**
+@notice Contains a record of all previous and current address of a community; For upgradeability.
+*/
+contract Registrar is Owned, IRegistrar {
 
-	    return (
-	        _manifest.registrant,
-	        _manifest.name,
-	        _manifest.version,
-	        _manifest.index,
-	        _manifest.hashTypeName,
-	        _manifest.checksum,
-	        _manifest.createdOn
-	   );
-	}
-	
-	/**
-     * @dev Function to get a list of manifest Ids based on registrant address
-     * @param _registrant The registrant address of the manifest
-     * @return Array of manifestIds
-     */
-	function getManifestIdsByRegistrant(address _registrant) public view returns (bytes32[]) {
-	    return registrantManifests[_registrant];
-	}
+    address[] addresses;
+    /// @notice Adds new community logic contract address to Registrar
+    /// @param _newAddress Address of community logic contract to upgrade to
+    function addNewAddress(address _newAddress) public ownerOnly {
+        addresses.push(_newAddress);
+    }
 
-    /**
-     * @dev Function to get a list of manifest Ids based on registrant address and manifest name
-     * @param _registrant The registrant address of the manifest
-     * @param _name The name of the manifest
-     * @return Array of registrationsIds
-     */
-	function getManifestIdsByName(address _registrant, bytes32 _name) public view returns (bytes32[]) {
-	    bytes32 registrantNameIndex = keccak256(abi.encodePacked(_registrant, _name));
-	    return registrantNameManifests[registrantNameIndex];
-	}
-	
-	/**
-     * @dev Function to get manifest Id based on registrant address, manifest name and version
-     * @param _registrant The registrant address of the manifest
-     * @param _name The name of the manifest
-     * @param _version The version of the manifest
-     * @return The manifestId of the manifest
-     */
-	function getManifestId(address _registrant, bytes32 _name, uint256 _version) public view returns (bytes32) {
-	    bytes32 manifestId = keccak256(abi.encodePacked(_registrant, _name, _version));
-	    require(manifests[manifestId].name != bytes32(0x0));
-	    return manifestId;
-	}
+    /// @return Array of community logic contract addresses
+    function getAddresses() public view returns (address[]) {
+        return addresses;
+    }
 }
