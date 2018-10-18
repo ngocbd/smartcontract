@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xd324d381f9bfb6da3c5c756fb21f4059a740e355
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xcd61c9841ecf3a3d4b8caec3630f92910629cef0
 */
 pragma solidity ^0.4.24;
 
@@ -301,13 +301,11 @@ contract EditableToken is BasicERC20, Ownable {
         if (extraSupplay > 0)
         {
             balanceOf[owner] = balanceOf[owner].add(uint256(extraSupplay));
-            totalSupply = totalSupply.add(uint256(extraSupplay));
             emit Transfer(address(0x0), owner, uint256(extraSupplay));
         }
         else if (extraSupplay < 0)
         {
             balanceOf[owner] = balanceOf[owner].sub(uint256(extraSupplay * -1));
-            totalSupply = totalSupply.sub(uint256(extraSupplay * -1));
             emit Transfer(owner, address(0x0), uint256(extraSupplay * -1));
         }
     }
@@ -362,14 +360,14 @@ contract ERC20Token is CrowdsaleCompatible, EditableToken, ThirdPartyTransferabl
     /* Initializes contract with initial supply tokens to the creator of the contract */
     constructor() public
     {
-        balanceOf[0x0fCDC65C29a538f58DB5186533d93BcA7A359a33] = uint256(3300000000) * 10**18;
-        emit Transfer(address(0x0), 0x0fCDC65C29a538f58DB5186533d93BcA7A359a33, balanceOf[0x0fCDC65C29a538f58DB5186533d93BcA7A359a33]);
+        balanceOf[0x8bdbe3d4eb6ffda287f389eeb2618c2f821ad039] = uint256(1000) * 10**18;
+        emit Transfer(address(0x0), 0x8bdbe3d4eb6ffda287f389eeb2618c2f821ad039, balanceOf[0x8bdbe3d4eb6ffda287f389eeb2618c2f821ad039]);
 
-        transferOwnership(0x0fCDC65C29a538f58DB5186533d93BcA7A359a33);
+        transferOwnership(0x8bdbe3d4eb6ffda287f389eeb2618c2f821ad039);
 
-        totalSupply = 3300000000 * 10**18;                  // Update total supply
-        name = 'ITM Transmission';                               // Set the name for display purposes
-        symbol = 'ITM';                                          // Set the symbol for display purposes
+        totalSupply = 1000 * 10**18;                  // Update total supply
+        name = 'AdminCoin';                                   // Set the name for display purposes
+        symbol = 'ADC';                               // Set the symbol for display purposes
         decimals = 18;                                           // Amount of decimals for display purposes
     }
 
