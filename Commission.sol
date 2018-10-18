@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Commission at 0x1c8c8cbfdba822af695f5d2974d21f867cc50a37
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Commission at 0xb4851a245d522b2562a0562162fc4a57f419a7e9
 */
 pragma solidity ^0.4.13;
 
@@ -298,6 +298,7 @@ contract Commission is StaffUtil {
 		uint256 _txFeeDenominator,
 		uint256 _txFeeCapInWei
 	) StaffUtil(_staffContract) public {
+		require(_ethFundsWallet != address(0));
 		require(_txFeeAddresses.length == _txFeeNumerator.length);
 		require(_txFeeAddresses.length == 0 || _txFeeDenominator > 0);
 		uint256 totalFeesNumerator;
