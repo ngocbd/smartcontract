@@ -1,31 +1,74 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleWallet at 0x610495793564aed0f9c7fc48dc4c7c9151d34fd6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleWallet at 0xde7c2911cac44d5949cbe80b0c7d38f7a476cbad
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.25;
+ 
+
+contract Ownable {
+  address public owner;
 
 
-contract SimpleWallet {
-    address public owner = msg.sender;
-    uint public depositsCount;
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+  constructor() public {
+    owner = 0x2C43dfBAc5FC1808Cb8ccEbCc9E24BEaB1aaa816;//msg.sender;
+  }
+
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    emit OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+
+
+contract SimpleWallet is Ownable {
+
+    address public wallet1 = 0xf038F656b511Bf37389b8Ae22D44fB3395327007;
+    address public wallet2 = 0xf038F656b511Bf37389b8Ae22D44fB3395327007;
     
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
-    }
+    address public newWallet1 = 0xf038F656b511Bf37389b8Ae22D44fB3395327007;
+    address public newWallet2 = 0xf038F656b511Bf37389b8Ae22D44fB3395327007;
     
-    function() public payable {
-        depositsCount++;
-    }
+    function setNewWallet1(address _newWallet1) public onlyOwner {
+        newWallet1 = _newWallet1;
+    }    
     
-    function withdrawAll() public onlyOwner {
-        withdraw(address(this).balance);
-    }
+    function setNewWallet2(address _newWallet2) public onlyOwner {
+        newWallet2 = _newWallet2;
+    }  
     
-    function withdraw(uint _value) public onlyOwner {
-        msg.sender.transfer(_value);
-    }
+    function setWallet1(address _wallet1) public {
+        require(msg.sender == wallet1);
+        require(newWallet1 == _wallet1);
+        
+        wallet1 = _wallet1;
+    }    
     
-    function sendMoney(address _target, uint _value, bytes _data) public onlyOwner {
-        _target.call.value(_value)(_data);
-    }
+    function setWallet2(address _wallet2) public {
+        require(msg.sender == wallet2);
+        require(newWallet2 == _wallet2);
+        
+        wallet2 = _wallet2;
+    }  
+    
+    
+    function withdraw() public{
+        require( (msg.sender == wallet1)||(msg.sender == wallet2) );
+        uint half = address(this).balance/2;
+        wallet1.send(half);
+        wallet2.send(half);
+    } 
+    
+      function () public payable {
+        
+      }     
+    
 }
