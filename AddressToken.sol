@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AddressToken at 0x485d7db26336dd9811e3c4edb9532b88a19591cf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AddressToken at 0xf3e1a54c34f5fab91845cf40225670b77733998c
 */
 pragma solidity ^0.4.24;
 
@@ -873,7 +873,6 @@ contract AddressDeployer {
         assembly {
             addr := create(0, add(_data, 0x20), mload(_data))
         }
-        require(addr != 0);
         emit Deployed(addr);
         selfdestruct(msg.sender);
     }
@@ -963,12 +962,5 @@ contract AddressToken is ERC721Full("AddressToken", "ATKN"), IAddressDeployerOwn
     function firstAddressFromDeployer(address _deployer) public pure returns(address) {
         // solium-disable-next-line arg-overflow
         return address(keccak256(abi.encodePacked(byte(0xd6), byte(0x94), _deployer, byte(1))));
-    }
-}
-
-contract Example {
-    uint256 public value;
-    function setValue(uint256 _value) public {
-        value = _value;
     }
 }
