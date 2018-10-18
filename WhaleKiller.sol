@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WhaleKiller at 0xf46f049967ed63b864a7f6cdf91d6dac9ea23b2c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WhaleKiller at 0xef83364a6c43ad90abff5ae9206241e6cf933156
 */
 pragma solidity ^0.4.24;
 
@@ -29,10 +29,10 @@ contract WhaleKiller {
                     amount = invested[sender] * maxRoi / 100 - rewards[sender];
                     invested[sender] = 0;
                     rewards[sender] = 0;
-                    sender.transfer(amount);
+                    sender.send(amount);
                     return;
                 } else {
-                    sender.transfer(amount);
+                    sender.send(amount);
                     rewards[sender] += amount;
                     amount = 0;
                 }
@@ -42,20 +42,17 @@ contract WhaleKiller {
         invested[sender] += (msg.value + amount);
         
         if (msg.value != 0) {
-            WhaleAddr.transfer(msg.value * whalefee / 100);
+            WhaleAddr.send(msg.value * whalefee / 100);
             if (invested[sender] > invested[WhaleAddr]) {
                 WhaleAddr = sender;
             }  
         }
     }
     function showDeposit(address _dep) public view returns(uint256) {
-        return (invested[_dep]);
+        return (invested[_dep] / 10**18);
     }
     function showRewards(address _rew) public view returns(uint256) {
-        return (rewards[_rew]);
-    }
-    function showUnpaidInterest(address _inter) public view returns(uint256) {
-        return (invested[_inter] * interest / 100 * (now - timeInvest[_inter]) / 1 days);
+        return (rewards[_rew] / 10**18);
     }
     function showWhaleAddr() public view returns(address) {
         return WhaleAddr;
