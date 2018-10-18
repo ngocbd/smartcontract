@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenTimelock at 0x23610d318bf20662a076cb1e3764256eb457f636
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenTimelock at 0xe9cac2e5146537cfb9a3a4dba66f8d475c2ce54e
 */
 pragma solidity ^0.4.24;
 
-// File: openzeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol
+// File: contracts\openzeppelin-solidity\token\ERC20\ERC20Basic.sol
 
-/**
- * @title ERC20Basic
+
+/* @title ERC20Basic
  * @dev Simpler version of ERC20 interface
  * See https://github.com/ethereum/EIPs/issues/179
  */
@@ -17,10 +17,9 @@ contract ERC20Basic {
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-// File: openzeppelin-solidity/contracts/token/ERC20/ERC20.sol
+// File: contracts\openzeppelin-solidity\token\ERC20\ERC20.sol
 
-/**
- * @title ERC20 interface
+/* @title ERC20 interface
  * @dev see https://github.com/ethereum/EIPs/issues/20
  */
 contract ERC20 is ERC20Basic {
@@ -38,10 +37,9 @@ contract ERC20 is ERC20Basic {
   );
 }
 
-// File: openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol
+// File: contracts\openzeppelin-solidity\token\ERC20\SafeERC20.sol
 
-/**
- * @title SafeERC20
+/* @title SafeERC20
  * @dev Wrappers around ERC20 operations that throw on failure.
  * To use this library you can add a `using SafeERC20 for ERC20;` statement to your contract,
  * which allows you to call the safe operations as `token.safeTransfer(...)`, etc.
@@ -79,10 +77,9 @@ library SafeERC20 {
   }
 }
 
-// File: openzeppelin-solidity/contracts/token/ERC20/TokenTimelock.sol
+// File: contracts\openzeppelin-solidity\token\ERC20\TokenTimelock.sol
 
-/**
- * @title TokenTimelock
+/* @title TokenTimelock
  * @dev TokenTimelock is a token holder contract that will allow a
  * beneficiary to extract the tokens after a given release time
  */
