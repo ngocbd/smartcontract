@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MortgageHelper at 0xb3d9444f88dc1c30f18c69ebd8ec6f1fa2706376
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MortgageHelper at 0xb1b95ee112302b5fcde22fa4a6b1131ff228fa2b
 */
 pragma solidity ^0.4.24;
 
@@ -790,7 +790,7 @@ contract MortgageManager is Cosigner, ERC721Base, SafeWithdraw, BytesUtils {
         require((loanAmount + deposit) >= ((landCost / 10) * 11), "Not enought total amount");
 
         // Pull the deposit and lock the tokens
-        require(mana.transferFrom(msg.sender, this, deposit), "Error pulling mana");
+        require(mana.transferFrom(msg.sender, this, deposit));
 
         // Create the liability
         id = mortgages.push(Mortgage({
@@ -1132,7 +1132,7 @@ contract MortgageHelper is Ownable {
         emit SetConverterRamp(converterRamp, _converterRamp);
         emit SetTokenConverter(tokenConverter, _tokenConverter);
     }
-
+    
     /**
         @dev Creates a loan using an array of parameters
 
@@ -1236,6 +1236,12 @@ contract MortgageHelper is Ownable {
         return true;
     }
 
+    function _tokenTransferFrom(Token token, address from, address to, uint256 amount) internal {
+        require(token.balanceOf(from) >= amount, "From balance is not enough");
+        require(token.allowance(from, address(this)) >= amount, "Allowance is not enough");
+        require(token.transferFrom(from, to, amount), "Transfer failed");
+    }
+
     /**
         @notice Request a loan and attachs a mortgage request
 
@@ -1275,7 +1281,7 @@ contract MortgageHelper is Ownable {
         uint256 requiredDeposit = ((landCost * requiredTotal) / 100) - nanoLoanEngine.getAmount(loanId);
         
         // Pull the required deposit amount
-        require(mana.transferFrom(msg.sender, this, requiredDeposit), "Error pulling MANA");
+        _tokenTransferFrom(mana, msg.sender, this, requiredDeposit);
         require(mana.approve(mortgageManager, requiredDeposit));
 
         // Create the mortgage request
