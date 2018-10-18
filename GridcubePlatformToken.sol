@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GridcubePlatformToken at 0x69a50b4989e00c1278a3135f60b4ccb49a97c465
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GridcubePlatformToken at 0x1e867d04fbb7434093071237813df00b3df6ee77
 */
-/*28 September 2018 v2.0
+/*03 October 2018 v4.0
 
                          -+/-           +oo/                             .ooo`
                         -NNNN.          hNNy                             :NNN.
@@ -20,17 +20,17 @@ yNNm/` .+NNNs  +NNN      hNNy  sNNm/` `/mNNy  sNNm+. `.-  `mNNh:.-oNNNs  :NNNs. 
 https://gridcube.com has a unique approach to deploying Blockchain technology. Instead of focusing on the blockchain itself,
 our breakthrough was discovering that the underlying infrastructure is just as important. Therefore,
 we developed a “Smart Cloud Manager”, a middleware software capable of deploying a blockchain network efficiently,
-fast, and optimized for cost. Gridcube Platform Token (GPT) Enables "Coding is Mining" Loyalty and Reward Program.
-Also works as a way of Payment for Gridcube Services. https://ito.gridcube.com
+fast, and optimized for cost. Gridcube Platform Token (GPT) Enables "Coding is Mining" Loyalty and Reward Program
+https://ito.gridcube.com. Also works as a way of Payment for Gridcube Services.
 
-28 September 2018 v2.0*/
+03 October 2018 v4.0*/
 
-pragma solidity ^0.4.25;
+pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
-// 'Gridcube' CROWDSALE token contract
+// 'Gridcube' token contract
 //
-// Deployed to : 0X69A50B4989E00C1278A3135F60B4CCB49A97C465
+// Deployed to : 0X1E867D04FBB7434093071237813DF00B3DF6EE77
 // Symbol      : GPT
 // Name        : Gridcube Platform Token
 // Total supply: 30 000 000
@@ -70,6 +70,7 @@ contract SafeMath {
 // ----------------------------------------------------------------------------
 contract ERC20Interface {
     function totalSupply() public constant returns (uint);
+    function currentSupply() public constant returns (uint);
     function balanceOf(address tokenOwner) public constant returns (uint balance);
     function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
     function transfer(address to, uint tokens) public returns (bool success);
@@ -100,7 +101,7 @@ contract Owned {
 
     event OwnershipTransferred(address indexed _from, address indexed _to);
 
-    constructor() public {
+    function Owned() public {
         owner = msg.sender;
     }
 
@@ -114,7 +115,7 @@ contract Owned {
     }
     function acceptOwnership() public {
         require(msg.sender == newOwner);
-        emit OwnershipTransferred(owner, newOwner);
+        OwnershipTransferred(owner, newOwner);
         owner = newOwner;
         newOwner = address(0);
     }
@@ -130,6 +131,7 @@ contract GridcubePlatformToken is ERC20Interface, Owned, SafeMath {
     string public  name;
     uint8 public decimals;
     uint public _totalSupply;
+    uint public _currentSupply;
     uint public startDate;
     uint public bonusEnds;
     uint public endDate;
@@ -141,13 +143,22 @@ contract GridcubePlatformToken is ERC20Interface, Owned, SafeMath {
     // ------------------------------------------------------------------------
     // Constructor
     // ------------------------------------------------------------------------
-    constructor() public {
+    function GridcubePlatformToken() public {
         symbol = "GPT";
         name = "Gridcube Platform Token";
         decimals = 18;
         bonusEnds = now + 2 weeks;
         endDate = now + 12 weeks;
         _totalSupply = 30000000000000000000000000;
+        address OwnerAdd = 0xb917cd85b61813ac1cd29ba0a8c37e0cd9f11162;
+        uint256 CommunityTokens = 10000000000000000000000000;
+        uint256 ProjectTokens = 10000000000000000000000000;
+        uint256 HoldTokens = CommunityTokens + ProjectTokens;
+        uint256 SaleTokens = safeSub(_totalSupply, HoldTokens);
+        balances[OwnerAdd] = HoldTokens;
+        Transfer(address(0), OwnerAdd, HoldTokens);
+        _currentSupply = SaleTokens;
+
       }
 
 
@@ -155,9 +166,15 @@ contract GridcubePlatformToken is ERC20Interface, Owned, SafeMath {
     // Total supply
     // ------------------------------------------------------------------------
     function totalSupply() public constant returns (uint) {
-        return _totalSupply  - balances[address(0)];
+        return _totalSupply;
     }
 
+    // ------------------------------------------------------------------------
+    // Current supply
+    // ------------------------------------------------------------------------
+    function currentSupply() public constant returns (uint) {
+        return _currentSupply  - balances[address(0)];
+    }
 
     // ------------------------------------------------------------------------
     // Get the token balance for account `tokenOwner`
@@ -175,7 +192,7 @@ contract GridcubePlatformToken is ERC20Interface, Owned, SafeMath {
     function transfer(address to, uint tokens) public returns (bool success) {
         balances[msg.sender] = safeSub(balances[msg.sender], tokens);
         balances[to] = safeAdd(balances[to], tokens);
-        emit Transfer(msg.sender, to, tokens);
+        Transfer(msg.sender, to, tokens);
         return true;
     }
 
@@ -190,7 +207,7 @@ contract GridcubePlatformToken is ERC20Interface, Owned, SafeMath {
     // ------------------------------------------------------------------------
     function approve(address spender, uint tokens) public returns (bool success) {
         allowed[msg.sender][spender] = tokens;
-        emit Approval(msg.sender, spender, tokens);
+        Approval(msg.sender, spender, tokens);
         return true;
     }
 
@@ -208,7 +225,7 @@ contract GridcubePlatformToken is ERC20Interface, Owned, SafeMath {
         balances[from] = safeSub(balances[from], tokens);
         allowed[from][msg.sender] = safeSub(allowed[from][msg.sender], tokens);
         balances[to] = safeAdd(balances[to], tokens);
-        emit Transfer(from, to, tokens);
+        Transfer(from, to, tokens);
         return true;
     }
 
@@ -229,25 +246,25 @@ contract GridcubePlatformToken is ERC20Interface, Owned, SafeMath {
     // ------------------------------------------------------------------------
     function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
         allowed[msg.sender][spender] = tokens;
-        emit Approval(msg.sender, spender, tokens);
+        Approval(msg.sender, spender, tokens);
         ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, this, data);
         return true;
     }
 
     // ------------------------------------------------------------------------
-    // 200 GRIDCUBE Tokens per 1 ETH
+    // 180 GRIDCUBE Tokens per 1 ETH
     // ------------------------------------------------------------------------
     function () public payable {
         require(now >= startDate && now <= endDate);
         uint tokens;
         if (now <= bonusEnds) {
-            tokens = msg.value * 220;
-        } else {
             tokens = msg.value * 200;
+        } else {
+            tokens = msg.value * 180;
         }
         balances[msg.sender] = safeAdd(balances[msg.sender], tokens);
-        _totalSupply = safeSub(_totalSupply, tokens);
-        emit Transfer(address(0), msg.sender, tokens);
+        _currentSupply = safeSub(_currentSupply, tokens);
+        Transfer(address(0), msg.sender, tokens);
         owner.transfer(msg.value);
     }
 
