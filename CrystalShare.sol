@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrystalShare at 0x59a8b4400ebfd61d42d8aade332076c220f72d42
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrystalShare at 0x9c5fb299116a0ba18dbd9afec81203f0b95f230c
 */
 pragma solidity ^0.4.25;
 
@@ -70,7 +70,7 @@ contract CrystalShare {
     bool init = false;
 	address public administrator;
 	// mini game
-    uint256 public HALF_TIME = 24 hours;
+    uint256 public HALF_TIME = 60 * 5;
     uint256 public round = 0;
     CryptoEngineerInterface public EngineerContract;
     CryptoMiningWarInterface public MiningWarContract;
