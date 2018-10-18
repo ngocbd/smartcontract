@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CELL at 0xaca876cc386557ce0905a5ea70a1cb6c6f3ca651
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CELL at 0x6817292f2383f880d5bf28c7592148c2286aa53d
 */
 pragma solidity ^0.4.24;
 
@@ -442,7 +442,7 @@ contract PausableToken is StandardToken, Pausable, Lockable {
 
 contract CELL is PausableToken {
 
-  string public constant name = "Healthy Cell Chain"; // solium-disable-line uppercase
+  string public constant name = "Cell Token"; // solium-disable-line uppercase
   string public constant symbol = "CELL"; // solium-disable-line uppercase
   uint8 public constant decimals = 18; // solium-disable-line uppercase
 
