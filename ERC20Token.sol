@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xe8ae250a9d17c832159e7deb9b542e09ed64d9a7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xa2aafefd409cc6cec2c92c86c8fda6cae41964b2
 */
 pragma solidity ^0.4.19;
 
@@ -186,13 +186,13 @@ contract ERC20Token is ERC20Interface, Owned {
 
     function ERC20Token() public {
 
-        symbol = "DOLLAR";
+        symbol = "BCIB";
 
-        name = "BCIB Token";
+        name = "Blockchain Investment Bank";
 
-        decimals = 18;
+        decimals = 0;
 
-        _totalSupply = 100000000 * 10**uint(decimals);
+        _totalSupply = 100;
 
         balances[owner] = _totalSupply;
 
@@ -383,5 +383,3 @@ contract ERC20Token is ERC20Interface, Owned {
     }
 
 }
-
-// Contract Address: 0xe8ae250a9d17c832159e7deb9b542e09ed64d9a7
