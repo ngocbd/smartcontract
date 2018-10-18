@@ -1,7 +1,46 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GAME at 0xe150b693404a433b1C822C113F3FA84fE8e2C255
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Game at 0x656db34fd512fb22ce16bbc621c58394ebb823c4
 */
-pragma solidity ^0.4.20;
+//etherate v.2.0
+//EtheRate – is the first in the world, an honest pool of crypto-rates, based on absolute randomness!
+//Official WEB-client: etherate.org
+//Talk to us on Discord.gg/nEnApvF
+/*
+??????????????????????????????????????????
+??????????????????????????????????????????
+??????????????????????????????????????????
+??????????????????????????????????????????
+??????????????????????????????????????????
+??????????????????????????????????????????
+*/
+//69 84 72 69 82 65 84 69
+
+pragma solidity ^0.4.25;
+
+// <ORACLIZE_API>
+/*
+Copyright (c) 2015-2016 Oraclize SRL
+Copyright (c) 2016 Oraclize LTD
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
+
+// This api is currently targeted at 0.4.18, please import oraclizeAPI_pre0.4.sol or oraclizeAPI_0.4 where necessary
+
+pragma solidity >=0.4.18;// Incompatible compiler version... please select one stated within pragma solidity or use different oraclizeAPI version
 
 contract OraclizeI {
     address public cbAddress;
@@ -1192,364 +1231,456 @@ contract usingOraclize {
     }
 
 }
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                                                                                  //
-//                                       SAFE MATH LIBRARY                                          //
-//                                                                                                  //
-//////////////////////////////////////////////////////////////////////////////////////////////////////
+// </ORACLIZE_API>
 
-library SafeMath {
-    function add(uint a, uint b) internal pure returns (uint c) {
-        c = a + b;
-        require(c >= a);
+contract Permissions
+{
+    //LOGS
+    event LOG_ChangePermissions(address indexed _called, address indexed _agent, uint8 _value);
+    event LOG_ChangeRegulator(address indexed _called, bool _value);
+    //LOGS*
+    //PARAMETRS
+        //ARRAYS
+    mapping(address => uint8) public agents;
+        //ARRAYS
+    bool public communityRegulator;
+    //PARAMETRS*
+    //MODIFIERS
+    modifier onlyADM()
+    {
+        require(agents[msg.sender] == 1);
+        _;
     }
-    function sub(uint a, uint b) internal pure returns (uint c) {
-        require(b <= a);
-        c = a - b;
+    //MODIFIERS*
+    //FUNCTIONS
+        //CHANGE FUNCTIONS
+    function changePermissions(address _agent, uint8 _value) public onlyADM()
+    {
+        require(msg.sender != _agent);
+        require(_value <= 1);
+        agents[_agent] = _value;
+        LOG_ChangePermissions(msg.sender, _agent, _value);
     }
-    function mul(uint a, uint b) internal pure returns (uint c) {
-        c = a * b;
-        require(a == 0 || c / a == b);
+    function changeRegulator(bool _value) public onlyADM()
+    {
+        communityRegulator = _value;
+        LOG_ChangeRegulator(msg.sender, _value);
     }
-    function div(uint a, uint b) internal pure returns (uint c) {
-        require(b > 0);
-        c = a / b;
+        //CHANGE FUNCTIONS*
+    //FUNCTIONS*
+    //CONSTRUSTOR
+    function Permissions()
+    {
+        agents[msg.sender] = 1;
     }
+    //CONSTRUCTOR*
 }
 
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                                                                                  //
-//                                       ERC20 INTERFACE                                            //
-//                                                                                                  //
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-
-contract ERC20Interface {
-    function totalSupply() public constant returns (uint);
-    function balanceOf(address tokenOwner) public constant returns (uint balance);
-    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
-    function transfer(address to, uint tokens) public returns (bool success);
-    function approve(address spender, uint tokens) public returns (bool success);
-    function transferFrom(address from, address to, uint tokens) public returns (bool success);
-
-    event Transfer(address indexed from, address indexed to, uint tokens);
-    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
-}
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                                                                                  //
-//                                      GAME EVENT INTERFACE                                        //
-//                                                                                                  //
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-
-contract GameEventInterface {
-    event BuyTickets(address game, address to, uint amount);
-    event Winner(address game, address to, uint prize, uint random_number, uint buyer_who_won);
-    event Jackpot(address game, address to, uint jackpot);
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                                                                                  //
-//                                    AWARD TOKEN INTERFACE                                         //
-//                                                                                                  //
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-
-contract AwardsTokensInterface {
-    function awardToken(address toAddress, uint amount) public;
-    function receiveFromGame() public payable;
-    function addGame(address gameAddress, uint amount) public;
-}
-
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                                                                                  //
-//                                       LOTTERY CONTRACT                                           //
-//                                                                                                  //
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-
-contract GAME is GameEventInterface, usingOraclize {
-    using SafeMath for uint;
-    
-    /////////////////////////----- VARIABLES -----////////////////////////////////////
-                                                                                    //
-    address public owner;                       //Owner of contract                 //
-    uint    public ticketPool;                  //tickets available                 //
-    uint    public ticketsBought;               //total tickets bought              //
-    uint    public buyerNumber;                 //index of buyer                    //
-    uint    public ticketPrice;                 //single ticket price               //
-    uint    public winnerPrize;                 //How much does winner get          //
-    uint    public jackpot;                     //Jackpot                           //
-    uint    public jackpotFactor;               //How many percent of the jackpot   //
-    uint    public jackpotCut;                  //How much to take to jackpot       //
-    uint    public jackpotChance;               //Chance to win the jackpot         //
-    uint    public tokenCut;                    //How much to send to token address //
-    AwardsTokensInterface     public token;     //Instance of token contract        //
-    AwardsTokensInterface     public bank;      //Instance of bank contract         //
-    AwardsTokensInterface     public bonus;     //Instance of BNS contract          //
-    mapping(uint => address)    buyers;         //buyers address                    //
-    mapping(uint => uint)       amounts;        //buyers amount of tickets bought   //
-                                                                                    //
-    uint public ledgerCount = 0;                                                    //
-                                                                                    //
-    //Modifier                                                                      //
-    modifier onlyOwner() {                                                          //
-        require(msg.sender == owner);                                               //
-        _;                                                                          //
-    }                                                                               //
-    //////////////////////////////////////////////////////////////////////////////////
-
-    
-    /////////////////////////----- CONSTRUCTOR -----//////////////////////////////////
-                                                                                    //
-    function GAME(                                                                  //
-        uint _ticketPool,                                                           //
-        uint _ticketPrice,                                                          //
-        uint _winnerPrize,                                                          //
-        uint _jackpotFactor,                                                        //
-        uint _jackpotCut,                                                           //
-        uint _tokenCut,                                                             //
-        uint _jackpotChance,                                                        //
-        address _ICO,                                                               //
-        address _BONUS                                                              //
-        ) public {                                                                  //
-            require(1000000%_ticketPool == 0);                                      //
-            require(_ICO != address(0));                                            //
-            require(_BONUS != address(0));                                          //
-            require(_ticketPool.mul(_ticketPrice) > _winnerPrize.add(_jackpotCut).add(_tokenCut));
-                                                                                    //
-            ticketPool         = _ticketPool;                                       //
-            ticketPrice        = _ticketPrice.mul(1000000000000);                   //
-            winnerPrize        = _winnerPrize.mul(1000000000000);                   //
-            jackpotFactor      = _jackpotFactor;                                    //
-            jackpotCut         = _jackpotCut.mul(1000000000000);                    //
-            tokenCut           = _tokenCut.mul(1000000000000);                      //
-            jackpotChance      = _jackpotChance;                                    //
-            jackpot            = 0;                                                 //
-            ticketsBought      = 0;                                                 //
-            buyerNumber        = 0;                                                 //
-            bank               = AwardsTokensInterface(_ICO);                       //
-            bonus              = AwardsTokensInterface(_BONUS);                     //
-            token              = AwardsTokensInterface(_BONUS);                     //
-            owner              = msg.sender;                                        //
-                                                                                    //
-                                                                                    //
-            oraclize_setProof(proofType_Ledger);                                    // *
-            queueFunds = 0;                                                         // *
-            queueIndex = 0;                                                         // *
-            queueLength = 0;                                                        // *
-    }                                                                               //
-    //////////////////////////////////////////////////////////////////////////////////
-    
-    
-    
-    ///////////////////////////////  FILL FROM QUEUE    //////////////////////////////
-                                                                                    //
-    uint    public              queueIndex;                                         //
-    uint    public              queueLength;                                        //
-    mapping(uint => uint)       queueAmount;                                        //
-    mapping(uint => address)    queueAddress;                                       //
-    uint    public              queueFunds;                                         //
-                                                                                    //
-    function fillFromQueue() internal {                                             //
-        uint openTicketsLeft = ticketPool.sub(ticketsBought);                       //
-                                                                                    //
-        //pool can handle all tickets the buyer requests                            //
-        if(queueAmount[queueIndex] > 0){                                            //
-            if(queueAmount[queueIndex] <= openTicketsLeft){                         //
-                ticketsBought          = ticketsBought.add(queueAmount[queueIndex]);//
-                buyers[buyerNumber]    = queueAddress[queueIndex];                  //
-                amounts[buyerNumber]   = queueAmount[queueIndex];                   //
-                                                                                    //
-                queueFunds = queueFunds.sub(ticketPrice.mul(queueAmount[queueIndex]));
-                                                                                    //
-                BuyTickets(address(this), queueAddress[queueIndex], queueAmount[queueIndex]);
-                token.awardToken(queueAddress[queueIndex], queueAmount[queueIndex]);//
-                                                                                    //
-                if(ticketsBought >= ticketPool){                                    //
-                     token.awardToken(queueAddress[queueIndex], 1);                 //
-                }                                                                   //
-                                                                                    //
-                queueAmount[queueIndex] = 0;                                        //
-                buyerNumber++;                                                      //
-                queueIndex++;                                                       //
-            }                                                                       //
-            //THE BUYERS HAS MORE TICKETS THAN AVAILABLE                            //
-            else{                                                                   //
-                ticketsBought          = 25;                                        //
-                buyers[buyerNumber]    = queueAddress[queueIndex];                  //
-                amounts[buyerNumber]   = openTicketsLeft;                           //
-                queueAmount[queueIndex] = queueAmount[queueIndex].sub(openTicketsLeft);
-                                                                                    //
-                queueFunds = queueFunds.sub(ticketPrice.mul(openTicketsLeft));      //
-                                                                                    //
-                BuyTickets(address(this), queueAddress[queueIndex], openTicketsLeft); 
-                token.awardToken(queueAddress[queueIndex], openTicketsLeft);        //
-                                                                                    //
-                if(ticketsBought >= ticketPool){                                    //
-                     token.awardToken(queueAddress[queueIndex], 1);                 //
-                }                                                                   //
-                                                                                    //
-                buyerNumber++;                                                      //
-            }                                                                       //
-                                                                                    //
-            if(ticketsBought >= ticketPool){                                        //
-                jackpot = jackpot.add(jackpotCut);                                  //
-                                                                                    //
-                ledgerCount = 0;                                                    //
-                getRandom();                                                        //
-            }                                                                       //
-            else{                                                                   //
-                if(queueAmount[queueIndex] > 0){                                    //
-                    fillFromQueue();                                                //
-                }                                                                   //
-            }                                                                       //
-        }                                                                           //
-    }                                                                               //
-                                                                                    //
-    //////////////////////////////////////////////////////////////////////////////////
-    
-    
-    
-    /////////////////////////----- BUY TICKETS -----//////////////////////////////////
-                                                                                    //
-    function buyTicket(uint in_amount) public payable {                             //
-        //Allow to buy remaining if there less left than requested                  // *
-        uint amount = in_amount;                                                    // *
-        if(in_amount > ticketPool.sub(ticketsBought)){                              // *
-            amount = ticketPool.sub(ticketsBought);                                 // *
-            queueAmount[queueLength] = in_amount.sub(amount);                       // *
-            queueAddress[queueLength] = msg.sender;                                 // *
-            queueFunds = queueFunds.add((in_amount.sub(amount)).mul(ticketPrice));  // *
-            queueLength = queueLength.add(1);                                       // *
-        }                                                                           // *
-                                                                                    //
-        require(msg.value == (ticketPrice.mul(in_amount)));                         //       
-        require(amount <= ticketPool.sub(ticketsBought));                           //
-        require(in_amount > 0);                                                     //
-                                                                                    //
-        if(amount > 0){                                                             //
-            //update state                                                          //
-            ticketsBought          = ticketsBought.add(amount);                     //
-            buyers[buyerNumber]    = msg.sender;                                    //
-            amounts[buyerNumber]   = amount;                                        //
-            buyerNumber++;                                                          //
-                                                                                    //
-            //store event                                                           //
-            BuyTickets(address(this), msg.sender, amount);                          //
-                                                                                    //
-            //Check if a winner should be found                                     //
-            if(ticketsBought >= ticketPool){                                        //
-                jackpot = jackpot.add(jackpotCut);                                  //
-                token.awardToken(msg.sender, 1);                                    //
-                                                                                    //
-                ledgerCount = 0;                                                    //
-                                                                                    //
-                getRandom();                                                        //
-            }                                                                       //
-            token.awardToken(msg.sender, amount);                                   //
-        }                                                                           //
-    }                                                                               //
-    //////////////////////////////////////////////////////////////////////////////////
-
-
-    /////////////////////////----- LEDGER RANDOM  -----///////////////////////////////
-    event LedgerFailed(string status);                                              //
-                                                                                    //
-    function __callback(bytes32 _queryId, string _result, bytes _proof) public {    //
-        require (msg.sender == oraclize_cbAddress());                               //
-                                                                                    //
-        if(oraclize_randomDS_proofVerify__returnCode(_queryId, _result, _proof) == 0){
-            uint randomNumber = uint(keccak256(_result));                           //
-            startRaffle((randomNumber % 1000000)+1);                                //
-        }                                                                           //
-        else if (ledgerCount <= 2){                                                 //
-            LedgerFailed("Requesting new");                                         //
-            ledgerCount = ledgerCount.add(1);                                       //
-            getRandom();                                                            //
-        }                                                                           //
-        else {                                                                      //
-            LedgerFailed("Stopping");                                               //
-        }                                                                           //
-                                                                                    //
-    }                                                                               //
-                                                                                    //
-    function getRandom() internal {                                                 //
-        uint N = 7;                                                                 //
-        uint delay = 0;                                                             //
-        uint callbackGas = 250000;                                                  //
-                                                                                    //
-        if(queueAmount[queueIndex] > 0){                                            //
-            callbackGas = 500000;                                                   //
-        }                                                                           //
-                                                                                    //
-        bytes32 queryId = oraclize_newRandomDSQuery(delay, N, callbackGas);         //
-    }                                                                               //
-                                                                                    //
-    //////////////////////////////////////////////////////////////////////////////////
-
-
-    /////////////////////////----- FIND WINNER -----//////////////////////////////////
-                                                                                    //
-                                                                                    //
-    function startRaffle(uint random) internal {                                    //
-        require(ticketsBought == ticketPool);                                       //
-        //Variables to find winner                                                  //
-        address winner  = owner;                                                    //
-        uint tempSum    = amounts[0];                                               //
-        uint count      = 0;                                                        //
-        uint windex     = (random % ticketPool).add(1);                             //
-                                                                                    //
-        //Loop throught ticket-buyers to find winner                                //
-        while(tempSum < windex){                                                    //
-            count++;                                                                //
-            tempSum = tempSum.add(amounts[count]);                                  //
-        }                                                                           //
-        //store winners address                                                     //
-        winner = buyers[count];                                                     //
-                                                                                    //
-        //Reset                                                                     //
-        buyerNumber     = 0;                                                        //
-        ticketsBought   = 0;                                                        //
-                                                                                    //
-        //Send jackpot to winner if the game has a jackpot and jackpot is relased   //
-        if (random <= ((jackpotChance.mul(1000000)).div(100)) && jackpotFactor > 0){//
-            Winner(address(this), winner, winnerPrize, random, count);              //
-            Jackpot(address(this), winner, (jackpot.mul(jackpotFactor)).div(100));  //
-            winner.transfer(winnerPrize.add((jackpot.mul(jackpotFactor)).div(100)));//
-            jackpot = jackpot.sub((jackpot.mul(jackpotFactor)).div(100));           //
-        }                                                                           //
-        else {                                                                      //
-            Winner(address(this), winner, winnerPrize, random, count);              //
-            winner.transfer(winnerPrize);                                           //
-        }                                                                           //
-                                                                                    //
-        //Send prize to winner and cut to contracts                                 //
-        bank.receiveFromGame.value(address(this).balance.sub((jackpot.add(tokenCut.add(queueFunds)))))();
-        bonus.receiveFromGame.value(tokenCut)();                                    //
-                                                                                    //
-        if(queueAmount[queueIndex] > 0){                                            // *
-            fillFromQueue();                                                        // *
-        }                                                                           // *
-    }                                                                               //
-    //////////////////////////////////////////////////////////////////////////////////
-    
-
-    ///////////////////////----- CONTROL FUNCTION -----///////////////////////////////
-                                                                                    //
-    //in case oraclize doesn't answer, force a roll                                 //
-    function forceRoll() public onlyOwner {                                         //
-        getRandom();                                                                //
-    }                                                                               //
-                                                                                    //
-    //Fail safe                                                                     //
-    function takeAll() public onlyOwner {                                           //
-        msg.sender.transfer(address(this).balance);                                 //
-    }                                                                               //
-    //////////////////////////////////////////////////////////////////////////////////
-    
-    function() public payable {
-        msg.sender.transfer(msg.value);
+contract Accounting is Permissions
+{
+    //LOGS
+    event LOG_AcceptWei(address indexed _from, uint256 _wei, uint8 indexed _type);
+    event LOG_WithdrawWei(address indexed _called, address indexed _to, uint256 _wei, uint8 indexed _type);
+    event LOG_ChangeOraclizeAccountingSettings(address indexed _called, uint256 _OAS_idOraclizeAccountingSettings,
+    uint256 _OAS_oraclizeRandomGas, uint256 _OAS_oraclizeRandomGwei);
+    //LOGS*
+    //PARAMETRS
+        //ACCOUNTING CONSTANTS (ACns)
+        uint256 constant public ACns_WeiInFinney = 1000000000000000;
+        uint256 constant public ACns_WeiInGwei = 1000000000;
+        //ACCOUNTING CONSTANTS (ACns)*
+        //ACCOUNTING PARAMETRS (AP)
+    uint256 public AP_totalBalanceCommissionWei;
+    uint256 public AP_totalBalanceDonateWei;
+    uint256 public AP_nowRoundBankBalanceWei;
+        //ACCOUNTING PARAMETRS (AP)*
+        //ORACLIZE ACCOUNTING SETTINGS (OAS)
+    uint256 public OAS_idOraclizeAccountingSettings;
+    uint256 public OAS_oraclizeRandomGas;
+    uint256 public OAS_oraclizeRandomGwei;
+        //ORACLIZE ACCOUNTING SETTINGS (OAS)*
+    //PARAMETRS*
+    //MODIFIERS
+    //MODIFIERS*
+    //FUNCTIONS
+		//PAYABLE FUNCTIONS
+    function () payable //Thank you very much ;-)
+    {
+        AP_totalBalanceDonateWei = AP_totalBalanceDonateWei + msg.value;
+        LOG_AcceptWei(msg.sender, msg.value, 1);
     }
+		//PAYABLE FUNCTIONS*
+        //ACTION FUNCTIONS
+    function withdrawTotalBalanceDonateWei(address _to) public onlyADM()
+    {
+        _to.transfer(AP_totalBalanceDonateWei);
+        LOG_WithdrawWei(msg.sender, _to, AP_totalBalanceDonateWei, 1);
+        AP_totalBalanceDonateWei = 0;
+    }
+    function withdrawTotalBalanceCommissionWei(address _to) public onlyADM()
+    {
+        _to.transfer(AP_totalBalanceCommissionWei);
+        LOG_WithdrawWei(msg.sender, _to, AP_totalBalanceCommissionWei, 2);
+        AP_totalBalanceCommissionWei = 0;
+    }
+        //ACTION FUNCTIONS*
+        //CHANGE FUNCTIONS
+    function changeOraclizeAccountingSettings(uint256 _OAS_oraclizeRandomGas) public onlyADM()
+    {
+        OAS_idOraclizeAccountingSettings++;
+        OAS_oraclizeRandomGas = _OAS_oraclizeRandomGas;
+        OAS_oraclizeRandomGwei = _OAS_oraclizeRandomGas * 20;
+        LOG_ChangeOraclizeAccountingSettings(msg.sender, OAS_idOraclizeAccountingSettings, OAS_oraclizeRandomGas, OAS_oraclizeRandomGwei);
+    }
+         //CHANGE FUNCTIONS*
+    //FUNCTIONS*
+    //CONSTRUSTOR
+    //CONSTRUCTOR*
 }
+
+contract GameBase is Accounting, usingOraclize
+{
+    //LOGS
+    event LOG_ChangeGameSettings
+    (address indexed _called, uint256 _GP_roundNum, uint256 _GS_idGameSettings,
+    uint256 _GS_betSizeFinney, uint256 _GS_maxAmountBets, uint256 _GS_minStartAgentAmountBets, uint256 _GS_maxAgentAmountBets, uint256 _GS_maxAmountBetsInOneTransaction,
+    uint8 _GS_commissionPct, bool _GS_commissionType, uint256 _GS_betTimeoutSec);
+    
+    event LOG_ChangeStatusGame(address indexed _called,  uint256 _GP_roundNum, uint8 _status);
+    //LOGS*
+    //PARAMETRS
+        //GAME SETTINGS (GS)
+    uint256 public GS_idGameSettings;
+    uint256 public GS_betSizeFinney;
+    uint256 public GS_maxAmountBets;
+    uint256 public GS_minStartAgentAmountBets;
+    uint256 public GS_maxAgentAmountBets;
+    uint256 public GS_maxAmountBetsInOneTransaction;
+    uint8 public GS_commissionPct;
+    bool public GS_commissionType;
+    uint256 public GS_betTimeoutSec;
+        //GAME SETTINGS (GS)*
+        //GAME PARAMETRS (GP)
+    uint256 public GP_roundNum;
+    uint256 public GP_amountBets;
+    uint256 public GP_lastBetTimeSec;
+    uint8 public GP_statusGame;
+            //GAME PARAMETRS ARRAYS (GPA)
+    mapping(address => uint256) internal GPA_agentAddressId;
+    address[] internal GPA_agentIdAddress;
+    uint256[] internal GPA_agentIdBetsSum;
+    uint256[] internal GPA_betNumAgentId;
+            //GAME PARAMETRS ARRAYS (GPA)*
+        //GAME PARAMETRS (GP)*
+    //PARAMETRS*
+    //MODIFIERS
+    modifier onlyNoBets()
+    {
+        require(GP_amountBets == 0);
+        _;
+    }
+    modifier stop()
+    {
+        require(GP_statusGame == 0);
+        _;
+    }
+    //MODIFIERS*
+    //FUNCTIONS
+        //ACTION FUNCTIONS
+    function withdrawAllWei(address _to) public onlyADM() onlyNoBets()
+    {
+        LOG_WithdrawWei(msg.sender, _to, this.balance, 3);
+        _to.transfer(this.balance);
+        AP_totalBalanceDonateWei = 0;
+        AP_totalBalanceCommissionWei = 0;
+    }
+        //ACTION FUNCTIONS*
+        //CHANGE FUNCTIONS
+    function changeGameSettings
+    (uint256 _GS_betSizeFinney, uint256 _GS_maxAmountBets, uint256 _GS_minStartAgentAmountBets, uint256 _GS_maxAgentAmountBets, uint256 _GS_maxAmountBetsInOneTransaction,
+    uint8 _GS_commissionPct, bool _GS_commissionType, uint256 _GS_betTimeoutSec) public onlyADM()  onlyNoBets()
+    {
+        require(OAS_oraclizeRandomGwei > 0);
+        require(_GS_betSizeFinney <= 10000);
+        require(_GS_maxAmountBets <= 1000000 && _GS_maxAmountBets >= 3);
+        require(_GS_maxAmountBetsInOneTransaction <= 150);
+        require(_GS_minStartAgentAmountBets <= _GS_maxAmountBetsInOneTransaction);
+        require(_GS_minStartAgentAmountBets <= _GS_maxAgentAmountBets);
+        require(_GS_maxAgentAmountBets < _GS_maxAmountBets);
+        require(_GS_commissionPct <= 99);
+        
+        GS_idGameSettings++;
+        GS_betSizeFinney = _GS_betSizeFinney;
+        GS_maxAmountBets = _GS_maxAmountBets;
+        GS_minStartAgentAmountBets = _GS_minStartAgentAmountBets;
+        GS_maxAgentAmountBets = _GS_maxAgentAmountBets;
+        GS_maxAmountBetsInOneTransaction = _GS_maxAmountBetsInOneTransaction;
+        GS_commissionPct = _GS_commissionPct;
+        GS_commissionType = _GS_commissionType;
+        GS_betTimeoutSec = _GS_betTimeoutSec;
+        
+        LOG_ChangeGameSettings
+        (msg.sender, GP_roundNum, GS_idGameSettings,
+        _GS_betSizeFinney, _GS_maxAmountBets, _GS_minStartAgentAmountBets, _GS_maxAgentAmountBets, _GS_maxAmountBetsInOneTransaction,
+        _GS_commissionPct, _GS_commissionType, _GS_betTimeoutSec);
+    }
+    function changeStatusGame(uint8 _value) public onlyADM() onlyNoBets()
+    {
+        require(_value <= 1);
+        GP_statusGame = _value;
+        LOG_ChangeStatusGame(msg.sender, GP_roundNum, _value);
+    }
+        //CHANGE FUNCTIONS*
+        //GET FUNCTIONS
+    function getAgentIdByAddress(address _agentAddress) public constant returns(uint256)
+    {
+        uint256 value;
+        uint256 id = GPA_agentAddressId[_agentAddress];
+        if (id != 0 && id <= GPA_agentIdAddress.length)
+        {
+            if (GPA_agentIdAddress[id - 1] == _agentAddress)
+            {
+                value = GPA_agentAddressId[_agentAddress];
+            }
+        }
+        return value;
+    }
+    function getAgentAdressById(uint256 _agentId) public constant returns(address)
+    {
+        address value;
+        if (_agentId > 0 && _agentId <= GPA_agentIdAddress.length)
+        {
+            value = GPA_agentIdAddress[_agentId - 1];
+        }
+        return value;
+    }
+    function getBetsSumByAgentId(uint256 _agentId) public constant returns(uint256)
+    {
+        uint256 value;
+        if (_agentId > 0 && _agentId <= GPA_agentIdBetsSum.length)
+        {
+            value = GPA_agentIdBetsSum[_agentId - 1];
+        }
+        return value;
+    }
+    function getAgentIdByPositionBet(uint256 _positionBet) public constant returns(uint256)
+    {
+        uint256 value;
+        if (_positionBet > 0 && _positionBet <= GPA_betNumAgentId.length)
+        {
+            value = GPA_betNumAgentId[_positionBet - 1];
+        }
+        return value;
+    }
+    function getAgentsAmount() public constant returns(uint256)
+    {
+        return GPA_agentIdAddress.length;
+    }
+        //GET FUNCTIONS*
+    //FUNCTIONS*
+    //CONSTRUSTOR
+    function GameBase()
+    {
+        GP_roundNum = 1;
+    }
+    //CONSTRUCTOR*
+}
+
+contract Game is GameBase
+{
+    //LOGS
+    event LOG_Request_CallbackOraclize(address indexed _called, uint256 _GP_roundNum, uint256 _OAS_idOraclizeAccountingSettings, bytes32 _queryId, uint8 _type);
+    
+    event LOG_ForciblyRequest_CallbackOraclize(address _called, uint256 _GP_roundNum, uint8 _confirmType);
+    
+    event LOG_CallbackOraclize(uint256 _GP_roundNum, bytes32 _queryId, bytes _proof);
+    
+    event LOG_Bet(address indexed _agent, uint256 _agentId, uint256 _GP_roundNum, uint256 _GS_idGameSettings,
+    uint256 _amountBets, uint256 _spentFinney);
+    
+    event LOG_Win(address indexed _agent, uint256 _agentId, uint256 _GP_roundNum, uint256 _GS_idGameSettings,
+    uint256 _GP_amountBets, uint256 _betsSum, uint256 _spentFinney,
+    uint256 _winWei, uint256 _luckyNumber);
+    
+    event LOG_Commision(uint256 _GP_roundNum, uint256 _GS_idGameSettings, uint256 _AP_nowRoundBankBalanceWei, uint256 _GS_commissionPct, uint256 _commisionWei);
+    //LOGS*
+    //PARAMETRS
+    //PARAMETRS*
+    //FUNCTIONS
+        //ACTION FUNCTIONS
+    function bet() payable public
+    {
+        require(GP_statusGame == 1);
+        
+        uint256 amountBets;
+        amountBets = (msg.value / ACns_WeiInFinney) / GS_betSizeFinney;
+        require(amountBets > 0);
+        
+        uint256 agentId;
+        agentId = getAgentIdByAddress(msg.sender);
+        require(amountBets >= GS_minStartAgentAmountBets || agentId != 0);
+        
+        if ((amountBets + GP_amountBets) > GS_maxAmountBets)
+        {
+            amountBets = GS_maxAmountBets - GP_amountBets;    
+        }
+        if ((amountBets + getBetsSumByAgentId(agentId)) > GS_maxAgentAmountBets)
+        {
+            amountBets = GS_maxAgentAmountBets - getBetsSumByAgentId(agentId);   
+        }
+        if (amountBets > GS_maxAmountBetsInOneTransaction)
+        {
+            amountBets = GS_maxAmountBetsInOneTransaction;
+        }
+    
+        require(amountBets > 0);
+        
+        if (agentId == 0)
+        {
+            GPA_agentIdAddress.push(msg.sender);
+            agentId = GPA_agentIdAddress.length;
+            GPA_agentAddressId[msg.sender] = agentId;
+            GPA_agentIdBetsSum.push(0);
+        }
+        
+        GPA_agentIdBetsSum[agentId - 1] = getBetsSumByAgentId(agentId) + amountBets;
+        
+        while (GPA_betNumAgentId.length < GP_amountBets + amountBets)
+        {
+            GPA_betNumAgentId.push(agentId);
+        }
+        
+        uint256 amountBetsSizeWei = amountBets * GS_betSizeFinney * ACns_WeiInFinney;
+       
+        LOG_AcceptWei(msg.sender, msg.value, 2);
+        LOG_WithdrawWei(msg.sender, msg.sender, msg.value - amountBetsSizeWei, 4);
+        msg.sender.transfer(msg.value - amountBetsSizeWei);
+        
+        LOG_Bet(msg.sender, agentId, GP_roundNum, GS_idGameSettings, amountBets, amountBets * GS_betSizeFinney);
+        
+        AP_nowRoundBankBalanceWei = AP_nowRoundBankBalanceWei + amountBetsSizeWei;
+        
+        GP_amountBets = GP_amountBets + amountBets;
+        
+        GP_lastBetTimeSec = block.timestamp;
+        
+        if (GP_amountBets > GS_maxAmountBets - GS_minStartAgentAmountBets)
+        {
+            uint256 oraclizeRandomWei = OAS_oraclizeRandomGwei * ACns_WeiInGwei;
+            
+            if (AP_nowRoundBankBalanceWei > oraclizeRandomWei)
+            {
+                GP_statusGame = 2;
+                LOG_ChangeStatusGame(msg.sender, GP_roundNum, GP_statusGame);
+                
+                AP_nowRoundBankBalanceWei = AP_nowRoundBankBalanceWei - oraclizeRandomWei;
+            
+                request_callback(1);
+            }
+            else
+            {
+                GP_statusGame = 3;
+                LOG_ChangeStatusGame(msg.sender, GP_roundNum, GP_statusGame);
+            }
+        }
+    }
+    function play(uint256 _luckyNumber) private
+    {
+        uint256 winnerId = getAgentIdByPositionBet(_luckyNumber);
+        address winnerAddress = getAgentAdressById(winnerId);
+        uint256 commissionSizeWei;
+        
+        if (GS_commissionType)
+        {
+            commissionSizeWei = AP_nowRoundBankBalanceWei / 100 * GS_commissionPct;
+        }
+        else
+        {
+            commissionSizeWei = (GP_amountBets - getBetsSumByAgentId(winnerId)) * (GS_betSizeFinney * ACns_WeiInFinney) / 100 * GS_commissionPct;
+        }
+        
+        AP_totalBalanceCommissionWei = AP_totalBalanceCommissionWei + commissionSizeWei;
+        AP_nowRoundBankBalanceWei = AP_nowRoundBankBalanceWei - commissionSizeWei;
+        
+        LOG_Commision(GP_roundNum, GS_idGameSettings, AP_nowRoundBankBalanceWei, GS_commissionPct, commissionSizeWei);
+        
+        winnerAddress.transfer(AP_nowRoundBankBalanceWei);
+        
+        LOG_WithdrawWei(msg.sender, winnerAddress, AP_nowRoundBankBalanceWei, 5);
+        
+        LOG_Win(winnerAddress, winnerId, GP_roundNum, GS_idGameSettings,
+        GP_amountBets, getBetsSumByAgentId(winnerId), getBetsSumByAgentId(winnerId) * GS_betSizeFinney, AP_nowRoundBankBalanceWei, _luckyNumber);
+        
+        GP_statusGame = 1;
+        GP_amountBets = 0;
+        GP_roundNum++;
+        AP_nowRoundBankBalanceWei = 0;
+        delete GPA_agentIdAddress;
+        delete GPA_agentIdBetsSum;
+        delete GPA_betNumAgentId;
+    }
+    function thisIsTheEnd(address _to) public onlyADM() onlyNoBets()
+    {
+        selfdestruct(_to);
+    }
+        //ACTION FUNCTIONS*
+        //ORACLIZE QUERIES
+    function request_callback(uint8 _type) private
+    {
+        bytes32 queryId = oraclize_newRandomDSQuery(0, 7, OAS_oraclizeRandomGas);
+        LOG_Request_CallbackOraclize(msg.sender, GP_roundNum, OAS_idOraclizeAccountingSettings, queryId, _type);
+    }
+    function forciblyRequest_callback() payable public
+    {
+        uint8 confirm;
+        if (GP_statusGame == 3 && (agents[msg.sender] == 1 || communityRegulator))
+        {
+            confirm = 1;
+        }
+        if (GP_statusGame == 2 && (agents[msg.sender] == 1 || communityRegulator))
+        {
+            confirm = 2;
+        }
+        if (GP_statusGame == 1 && (block.timestamp > GP_lastBetTimeSec + GS_betTimeoutSec) && (agents[msg.sender] == 1 || communityRegulator))
+        {
+            confirm = 3;
+        }
+        
+        if (confirm > 0)
+        {
+            uint256 oraclizeRandomWei = OAS_oraclizeRandomGwei * ACns_WeiInGwei;
+            require(msg.value >= oraclizeRandomWei);
+            msg.sender.transfer(msg.value - oraclizeRandomWei);
+            if (confirm != 2)
+            {
+                GP_statusGame = 2;
+                LOG_ChangeStatusGame(msg.sender, GP_roundNum, GP_statusGame); 
+            }
+            LOG_ForciblyRequest_CallbackOraclize(msg.sender, GP_roundNum, confirm);
+            request_callback(2);
+        }
+    }
+    function __callback(bytes32 _queryId, string _result, bytes _proof) public
+    {
+        require(msg.sender == oraclize_cbAddress());
+        require (oraclize_randomDS_proofVerify__returnCode(_queryId, _result, _proof) == 0);
+        require(GP_statusGame == 2);
+        LOG_CallbackOraclize(GP_roundNum, _queryId, _proof);
+        play(uint(sha3(_result)) % GP_amountBets + 1);
+    }
+    function startRequest_callback() payable public onlyADM() onlyNoBets() stop()
+    {
+        bytes32 queryId = oraclize_newRandomDSQuery(0, 7, 100000);
+        LOG_Request_CallbackOraclize(msg.sender, 0, 100000, queryId, 0);
+    }
+        //ORACLIZE QUERIES*
+    //CONSTRUSTOR
+    function Game()
+    {
+        oraclize_setProof(proofType_Ledger);
+    }
+    //CONSTRUSTOR*
+}
+
+//Official Blog: medium.com/etherate
+//© EtheRate Core Team
