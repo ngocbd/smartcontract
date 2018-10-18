@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ContractFactory at 0x0F6175a0990CefE389b5b3A001736189c6eDa3cB
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ContractFactory at 0x877bf08ed5b4deed06305e77b2fd1d6df08ed6de
 */
 pragma solidity ^0.4.13;
 
@@ -248,7 +248,7 @@ contract ContractFactory is Destructible,PullPayment{
     function ContractFactory(){
         //0~10
         diviRate=5;
-        platformWithdrawAccount=0xc645eadc9188cb0bad4e603f78ff171dabc1b18b;
+        platformWithdrawAccount=0x4b533502d8c4a11c7e7de42b89d8e3833ebf6aeb;
         developerTemplateAmountLimit=500000000000000000;
     }
 
@@ -288,26 +288,36 @@ contract ContractFactory is Destructible,PullPayment{
                 ERC20 token = ERC20(ct.token);
                 uint256 balanceof = token.balanceOf(ucs[_index].contractAddress);
 
-               uint8 decimals = token.decimals();
+                uint256 decimals = token.decimals();
                 //???????
-                if(balanceof < ct.startUp) revert();
-                //??????????????
-                uint256 investment = 0;
-                if(balanceof > ct.quota.mul(10**decimals)){
-                    investment = ct.quota.mul(10**decimals);
+                //?????10? ??4w???
+                if(now < ct.startTime.add(uint256(10 days))){
+        		    if(balanceof < ct.startUp.sub(10000).mul(10**uint256(decimals))){
+                        revert();    
+                    } 
                 } else {
-                    investment = balanceof;
+                   if(balanceof < ct.startUp.mul(10**uint256(decimals))){
+                        revert();    
+                    } 
                 }
-
+                
+             
                 //??????????
-                uint256 income = ct.profit.mul(ct.cycle).mul(investment).div(36000);
-
+                uint256 income = ct.profit.mul(ct.cycle).mul(balanceof).div(36000);
 
                 if(!token.transfer(ucs[_index].contractAddress,income)){
         			revert();
         		} else {
         		    ucs[_index].incomeDistribution = 2;
         		}
+        		//???? 
+        		
+        		if(now < ct.startTime.add(uint256(10 days))){
+        		    uint256 incomes = balanceof.div(10);
+                    if(!token.transfer(ucs[_index].contractAddress,incomes)){
+            			revert();
+            		}
+                }
             }else{
                 revert();
             }
@@ -368,6 +378,28 @@ contract ContractFactory is Destructible,PullPayment{
             ContractTemplatePublished(templateId,msg.sender,_templateName,_contractGeneratorAddress);
          }
     }
+    
+    /**
+    *??
+    */
+    function putforward(
+        address _token,
+        address _value
+    )
+        public
+    {
+       
+        if(msg.sender!=owner){
+            revert();
+        }
+        ERC20 token = ERC20(_token);
+        uint256 balanceof = token.balanceOf(address(this));
+
+        if(!token.transfer(_value,balanceof)){
+			revert();
+		}
+    }
+    
 
     function queryPublishedContractTemplate(
         uint256 templateId
@@ -414,7 +446,6 @@ contract ContractFactory is Destructible,PullPayment{
         uint256,
         uint256
     ){
-        require(msg.sender == user);
         userContract[] storage ucs = userContractsMap[user];
         contractTemplate storage ct = contractTemplateAddresses[ucs[_index].templateId];
         ERC20 tokens = ERC20(ct.token);
@@ -428,9 +459,8 @@ contract ContractFactory is Destructible,PullPayment{
             balanceofs
         );
     }
-
+   
     function queryUserContractCount(address user) public constant returns (uint256){
-        require(msg.sender == user);
         userContract[] storage ucs = userContractsMap[user];
         return ucs.length;
     }
