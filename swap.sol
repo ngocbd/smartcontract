@@ -1,108 +1,95 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SWAP at 0xe995E03275dAfDb7CC1Fa17C6BBC21bFED379fdd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Swap at 0x4bd14c9b1f4d3027b54aa8e4bcf8ad217ca5e75a
 */
-pragma solidity ^0.4.18;
+pragma solidity 0.4.24;
+/**
+* Token swapper contract for CLASSY tokens
+*/
 
-contract TokenInterface{
-    uint256 public totalSupply;
-    uint256 public price;
-    uint256 public decimals;
-    function () public payable;
-    function balanceOf(address _owner) view public returns(uint256);
-    function transfer(address _to, uint256 _value) public returns(bool);
+library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
 }
 
-contract SWAP{
-    
-    string public name="SWAP";
-    string public symbol="SWAP";
-    
-    uint256 public totalSupply; 
-    uint256 public price = 50;
-    uint256 public decimals = 18; 
+interface Token {
 
-    address MyETHWallet;
-    function SWAP() public {  
-        MyETHWallet = msg.sender;
-        name="SWAP";
-        symbol="SWAP";
-    }
+  function balanceOf(address _owner) external constant returns (uint256 balance);
+  function transfer(address _to, uint256 _value) external returns (bool success);
+  function transferFrom(address _from, address _to, uint256 _value) external returns (bool success);
+  function approve(address _spender, uint256 _value) external returns (bool success);
+  function allowance(address _owner, address _spender) external constant returns (uint256 remaining);
+  event Transfer(address indexed _from, address indexed _to, uint256 _value);
+  event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
-    modifier onlyValidAddress(address _to){
-        require(_to != address(0x00));
-        _;
-    }
-    mapping (address => uint256) balances; 
-    mapping (address => mapping (address => uint256)) public allowance; //phu cap
+}
 
-    function setPrice(uint256 _price) public returns (uint256){
-        price = _price;
-        return price;
-    }
+interface ANYtoken {
+  function balanceOf(address _owner) external constant returns (uint256 balance);
+  function transfer(address _to, uint256 _value) external;
+}
 
-    function setDecimals(uint256 _decimals) public returns (uint256){
-        decimals = _decimals;
-        return decimals;
-    }
-    
-    function balanceOf(address _owner) view public returns(uint256){
-        return balances[_owner];
-    }
-    
-    //t?o ra m?t s? ki?n công khai trên blockchain s? thông báo cho khách hàng
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Withdraw(address to, uint amount); //rut tien
+contract Swap {
 
-    function _transfer(address _from, address _to, uint _value) internal {
-        require(_to != 0x0);
-        require(balances[_from] >= _value);
-        require(balances[_to] + _value >= balances[_to]);
-        
-        uint previousBalances = balances[_from] + balances[_to];
-        
-        balances[_from] -= _value;
-        balances[_to] += _value;
-        emit Transfer(_from, _to, _value);
-        
-        assert(balances[_from] + balances[_to] == previousBalances);
-    }
+  using SafeMath for uint;
 
-    function transfer(address _to, uint256 _value) public {
-        _transfer(msg.sender, _to, _value);
-    }
+  Token public tokenA;
+  Token public tokenB;
 
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        require(_value <= allowance[_from][msg.sender]);  
-        allowance[_from][msg.sender] -= _value;
-        _transfer(_from, _to, _value);
-        return true;
-    }
+  address public admin;
 
-    function approve(address _spender, uint256 _value) public
-        returns (bool success) {
-        allowance[msg.sender][_spender] = _value;
-        return true;
-    }
-   
-    function () public payable {
-        uint256 token = (msg.value*price)/10**decimals; //1 eth = 10^18 wei
-        totalSupply += token;
-        balances[msg.sender] = token;
-    }
-    
-    
-    modifier onlyMyETHWallet(){
-        require(msg.sender == MyETHWallet);
-        _;
-    }
-    
-    function withdrawEtherOnlyOwner() external onlyMyETHWallet{
-        msg.sender.transfer(address(this).balance);
-        emit Withdraw(msg.sender,address(this).balance);
-    }
+  constructor() public {
 
-    function sendEthToAddress(address _address, uint256 _value) external onlyValidAddress(_address){
-        _address.transfer(_value);
-        emit Withdraw(_address,_value);
-    }
+    tokenA = Token(0x30CC0e266cF33B8eaC6A99cBD98E39b890cfD69b);
+    tokenB = Token(0x8Cc3B3E4F62070afb2f0Dfece7228376626c1b0C);
+    admin = 0x71bAe8D36266F6a2115aa7E18A395e4676528100;
+
+  }
+
+  function changeAdmin(address newAdmin) public returns (bool){
+
+    require(msg.sender == admin, "You are not allowed to do this");
+
+    admin = newAdmin;
+
+    return true;
+
+  }
+
+  function receiveApproval(address sender, uint value, address cont, bytes data) public returns (bool) {
+
+    require(cont == address(tokenA),"This is not the expected caller");
+
+    require(tokenA.transferFrom(sender,address(this),value),"An error ocurred whe getting the old tokens");
+
+    uint toTransfer = value.mul(1e2); //Decimals correction
+    require(tokenB.transfer(sender,toTransfer), "Not enough tokens on contract to swap");
+
+    return true;
+
+  }
+
+  function tokenRecovery(address token) public returns (bool) {
+
+    require(msg.sender == admin, "You are not allowed to do this");
+
+    ANYtoken toGet = ANYtoken(token);
+
+    uint balance = toGet.balanceOf(address(this));
+
+    toGet.transfer(msg.sender,balance);
+
+    return true;
+
+  }
+
 }
