@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VisualFodderCoin at 0x1fafefd04a1bfa34d7bace106bf9dc51e6f7a471
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VisualFodderCoin at 0xa5e83c9a22fa75ba20aeba4a4e734c91e8f1d356
 */
 // Abstract contract for the full ERC 20 Token standard
 // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.25;
 
 
 contract EIP20Interface {
@@ -59,7 +59,7 @@ Implements EIP20 token standard: https://github.com/ethereum/EIPs/blob/master/EI
 .*/
 
 
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.25;
 
 contract VisualFodderCoin is EIP20Interface {
 
@@ -72,21 +72,15 @@ contract VisualFodderCoin is EIP20Interface {
     They allow one to customise the token contract & in no way influences the core functionality.
     Some wallets/interfaces might not even bother to look at this information.
     */
-    string public name;                   //fancy name: eg Simon Bucks
-    uint8 public decimals;                //How many decimals to show.
-    string public symbol;                 //An identifier: eg SBX
+    string public constant name = "VisualFodderCoin";            //Set the name for display purposes
+    string public constant symbol = "VFC";              // Set the symbol for display purposes
+    uint8 public constant decimals = 18;                //How many decimals to show.
+    uint256 public constant INITIAL_SUPPLY = 10000000 * (10 ** uint256(decimals));
 
-    function VisualFodderCoin(
-        uint256 _initialAmount,
-        string _tokenName,
-        uint8 _decimalUnits,
-        string _tokenSymbol
-    ) public {
-        balances[msg.sender] = _initialAmount;               // Give the creator all initial tokens
-        totalSupply = _initialAmount;                        // Update total supply
-        name = _tokenName;                                   // Set the name for display purposes
-        decimals = _decimalUnits;                            // Amount of decimals for display purposes
-        symbol = _tokenSymbol;                               // Set the symbol for display purposes
+    function VisualFodderCoin() public {
+        balances[msg.sender] = INITIAL_SUPPLY;               // Give the creator all initial tokens
+        totalSupply = INITIAL_SUPPLY;                        // Update total supply
+        emit Transfer(address(0), msg.sender, INITIAL_SUPPLY);
     }
 
     function transfer(address _to, uint256 _value) public returns (bool success) {
