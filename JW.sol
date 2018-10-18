@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JW at 0xE6de3695e05E30733D012479137D444e4e9717e6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JW at 0x6cD574E51524FE7AC6175bff2c449aaB482bC5b4
 */
 pragma solidity ^0.4.21;
 library SafeMath {
@@ -97,9 +97,4 @@ contract JW is Ownable{
     function kill(address _adr) public onlyOwner{
         selfdestruct(_adr);
     }
-	
-	function GetEthBal(address _adr) public view returns(uint256){
-	 return UsEthBalance[_adr].EthAmount;
-	}
-	
 }
