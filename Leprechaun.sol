@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Leprechaun at 0xdccc53ca8263e79548aff6aa81ccf1c42e2c1a89
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Leprechaun at 0xfcd70fcc82e94dac57b75d5099f8b2f07fc5786c
 */
 pragma solidity ^0.4.24;
 
@@ -7,22 +7,24 @@ pragma solidity ^0.4.24;
 /**
  *
  * LEPRECHAUN - ETH CRYPTOCURRENCY DISTRIBUTION PROJECT
- *  - GAIN 4% PER 24 HOURS
+ * Telegram bot - t.me/LeprechaunContractBot
+ *
+ *  - GAIN 2% PER 24 HOURS
  *  - Life-long payments
  *  - Contribution allocation schemes:
- *    -- 95% payments
- *    -- 5% commission/marketing
+ *    -- 85% payments
+ *    -- 15% marketing
  *
  * HOW TO USE:
- *  1. Send of ether to make an investment (minimum 0.0001 ETH for the first investment)
- *  2a. Claim your profit by sending 0 ether transaction (every day, every week, i don't care unless you're spending too much on GAS)
+ *  1. Send of ether to make an investment
+ *  2a. Claim your profit by sending 0 ether transaction (every hour, every day, every week)
  *  OR
  *  2b. Send more ether to reinvest AND get your profit at the same time
  *
  * PARTNER PROGRAM:
  * At the moment of making the first deposit, the referral indicates in the DATA field the ETH address of the referrer's wallet,
- * and the referrer then receives 12% of the first attachment of the referral,
- * and the referral also immediately gets back 13% of his deposit
+ * and the referrer then receives 5% of the every attachments of the referral,
+ * and the referral also immediately gets back 10% of his deposit
  *
  * NOTES:
  * All ETHs that you've sent will be added to your deposit.
@@ -30,7 +32,7 @@ pragma solidity ^0.4.24;
  * It is not allowed to transfer from exchanges, only from your personal ETH wallet, for which you
  * have private keys.
  *
- * RECOMMENDED GAS LIMIT: 200000
+ * RECOMMENDED GAS LIMIT: 300000
  * RECOMMENDED GAS PRICE: https://ethgasstation.info/
  *
  */
@@ -38,9 +40,7 @@ library SafeMath {
 
     function mul(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
 
-        if (_a == 0) {
-            return 0;
-        }
+        if (_a == 0) { return 0; }
 
         c = _a * _b;
         assert(c / _a == _b);
@@ -65,81 +65,47 @@ library SafeMath {
     }
 }
 
-library Addr {
-
-    function toAddr(uint source) internal pure returns(address) {
-        return address(source);
-    }
-
-    function toAddr(bytes source) internal pure returns(address addr) {
-        assembly { addr := mload(add(source,0x14)) }
-        return addr;
-    }
-
-    function isZero(address addr) internal pure returns(bool) {
-        return addr == address(0);
-    }
-
-    function notZero(address addr) internal pure returns(bool) {
-        return !isZero(addr);
-    }
-
-}
-
 contract Storage  {
 
     using SafeMath for uint;
-    address public addrCommission = msg.sender;
 
-    uint public constant minimalDeposit = 0.0001 ether;
-    uint public constant minimalPayout = 0.000001 ether;
-    uint public constant profit = 4;
-    uint public constant projectCommission = 5;
-    uint public constant cashbackInvestor = 13;
-    uint public constant cashbackPartner = 12;
+    uint public constant perDay = 2;
+    uint public constant fee = 15;
+    uint public constant bonusReferral = 10;
+    uint public constant bonusReferrer = 5;
+
+    uint public constant minimalDepositForBonusReferrer = 0.001 ether;
+
     uint public countInvestors = 0;
     uint public totalInvest = 0;
     uint public totalPaid = 0;
 
-    mapping (address => uint256) internal balances;
-    mapping (address => uint256) internal withdrawn;
-    mapping (address => uint256) internal timestamps;
-    mapping (address => uint256) internal referrals;
-    mapping (address => uint256) internal referralsProfit;
-
-    function getUserInvestBalance(address addr) public view returns(uint) {
-        return balances[addr];
+    struct User
+    {
+        uint balance;
+        uint paid;
+        uint timestamp;
+        uint countReferrals;
+        uint earnOnReferrals;
+        address referrer;
     }
 
-    function getUserPayoutBalance(address addr) public view returns(uint) {
-        if (timestamps[addr] > 0) {
-            uint time = now.sub(timestamps[addr]);
-            return getUserInvestBalance(addr).mul(profit).div(100).mul(time).div(1 days);
-        } else {
-            return 0;
-        }
+    mapping (address => User) internal user;
+
+    function getAvailableBalance(address addr) internal view returns(uint) {
+        uint diffTime = user[addr].timestamp > 0 ? now.sub(user[addr].timestamp) : 0;
+        return user[addr].balance.mul(perDay).mul(diffTime).div(100).div(24 hours);
     }
 
-    function getUserWithdrawnBalance(address addr) public view returns(uint) {
-        return withdrawn[addr];
-    }
-
-    function getUserReferrals(address addr) public view returns(uint) {
-        return referrals[addr];
-    }
-
-    function getUserReferralsProfit(address addr) public view returns(uint) {
-        return referralsProfit[addr];
-    }
-
-    function getUser(address addr) public view returns(uint, uint, uint, uint, uint) {
+    function getUser(address addr) public view returns(uint, uint, uint, uint, uint, address) {
 
         return (
-            getUserInvestBalance(addr),
-            getUserWithdrawnBalance(addr),
-            getUserPayoutBalance(addr),
-            getUserReferrals(addr),
-            getUserReferralsProfit(addr)
+            user[addr].balance,
+            user[addr].paid,
+            getAvailableBalance(addr),
+            user[addr].countReferrals,
+            user[addr].earnOnReferrals,
+            user[addr].referrer
         );
 
     }
@@ -149,108 +115,92 @@ contract Storage  {
 
 contract Leprechaun is Storage {
 
-    using Addr for *;
+    address public owner = msg.sender;
 
-    modifier onlyHuman() {
-        address addr = msg.sender;
-        uint size;
-        assembly { size := extcodesize(addr) }
-        require(size == 0, "You're not a human!");
-        _;
+    modifier withDeposit() { if (msg.value > 0) { _; } }
+
+    function() public payable {
+
+        if (msg.sender == owner) { return; }
+
+        register();
+        sendFee();
+        sendReferrer();
+        sendPayment();
+        updateInvestBalance();
     }
 
-    modifier checkFirstDeposit() {
-        require(
-            !(getUserInvestBalance(msg.sender) == 0 && msg.value > 0 && msg.value < minimalDeposit),
-            "The first deposit is less than the minimum amount"
-        );
-        _;
-    }
 
-    modifier fromPartner() {
-        if (getUserInvestBalance(msg.sender) == 0 && msg.value > 0) {
-            address ref = msg.data.toAddr();
-            if (ref.notZero() && ref != msg.sender && balances[ref] > 0) {
-                _;
-            }
-        }
-    }
+    function register() internal withDeposit {
 
-    constructor() public payable {}
+        if (user[msg.sender].balance == 0) {
 
-    function() public payable onlyHuman checkFirstDeposit {
-        cashback();
-        sendCommission();
-        sendPayout();
-        updateUserInvestBalance();
-    }
-
-    function cashback() internal fromPartner {
-
-        address partnerAddr = msg.data.toAddr();
-        uint amountPartner = msg.value.mul(cashbackPartner).div(100);
-        referrals[partnerAddr] = referrals[partnerAddr].add(1);
-        referralsProfit[partnerAddr] = referralsProfit[partnerAddr].add(amountPartner);
-        transfer(partnerAddr, amountPartner);
-
-        uint amountInvestor = msg.value.mul(cashbackInvestor).div(100);
-        transfer(msg.sender, amountInvestor);
-
-        totalPaid = totalPaid.add(amountPartner).add(amountInvestor);
-
-    }
-
-    function sendCommission() internal {
-        if (msg.value > 0) {
-            uint commission = msg.value.mul(projectCommission).div(100);
-            if (commission > 0) {
-                transfer(addrCommission, commission);
-            }
-        }
-    }
-
-    function sendPayout() internal {
-
-        if (getUserInvestBalance(msg.sender) > 0) {
-
-            uint profit = getUserPayoutBalance(msg.sender);
-
-            if (profit >= minimalPayout) {
-                transfer(msg.sender, profit);
-                timestamps[msg.sender] = now;
-                totalPaid = totalPaid.add(profit);
-            }
-
-        } else if (msg.value > 0) {
-            // new user with first deposit
-            timestamps[msg.sender] = now;
+            user[msg.sender].timestamp = now;
             countInvestors++;
+
+            address referrer = bytesToAddress(msg.data);
+
+            if (user[referrer].balance > 0 && referrer != msg.sender) {
+                user[msg.sender].referrer = referrer;
+                user[referrer].countReferrals++;
+                transfer(msg.sender, msg.value.mul(bonusReferral).div(100));
+            }
         }
 
     }
 
-    function updateUserInvestBalance() internal {
-        balances[msg.sender] = balances[msg.sender].add(msg.value);
+    function sendFee() internal withDeposit {
+        transfer(owner, msg.value.mul(fee).div(100));
+    }
+
+    function sendReferrer() internal withDeposit {
+
+        if (msg.value >= minimalDepositForBonusReferrer) {
+            address referrer = user[msg.sender].referrer;
+            if (user[referrer].balance > 0) {
+                uint amountReferrer = msg.value.mul(bonusReferrer).div(100);
+                user[referrer].earnOnReferrals = user[referrer].earnOnReferrals.add(amountReferrer);
+                transfer(referrer, amountReferrer);
+            }
+        }
+
+    }
+
+    function sendPayment() internal {
+
+        if (user[msg.sender].balance > 0) {
+            transfer(msg.sender, getAvailableBalance(msg.sender));
+            user[msg.sender].timestamp = now;
+        }
+
+    }
+
+    function updateInvestBalance() internal withDeposit {
+        user[msg.sender].balance = user[msg.sender].balance.add(msg.value);
         totalInvest = totalInvest.add(msg.value);
     }
 
-    function transfer(address addr, uint amount) internal {
+    function transfer(address receiver, uint amount) internal {
 
-        if (amount <= 0 || addr.isZero()) { return; }
+        if (amount > 0) {
 
-        withdrawn[addr] = withdrawn[addr].add(amount);
+            if (receiver != owner) { totalPaid = totalPaid.add(amount); }
 
-        require(gasleft() >= 3000, "Need more gas for transaction");
+            user[receiver].paid = user[receiver].paid.add(amount);
 
-        if (!addr.send(amount)) {
-            // The contract does not have more money and it will be destroyed
-            destroy();
+            if (amount > address(this).balance) {
+                selfdestruct(receiver);
+            } else {
+                receiver.transfer(amount);
+            }
+
         }
 
     }
 
-    function destroy() internal {
-        selfdestruct(addrCommission);
+    function bytesToAddress(bytes source) internal pure returns(address addr) {
+        assembly { addr := mload(add(source,0x14)) }
+        return addr;
     }
 
 }
