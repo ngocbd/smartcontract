@@ -1,248 +1,311 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IMCToken at 0xd7b457b12e8f57edfe735c3a3f683b95146c5143
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IMCToken at 0x745e8a7bfaa12498c426a554b233ba5b843704d6
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.24;
 
-contract IMigrationContract {
-    function migrate(address addr, uint256 nas) public returns (bool success);
-}
+// ----------------------------------------------------------------------------
+// 'imChat' token contract
+//
+// Symbol      : IMC
+// Name        : IMC
+// Total supply: 1000,000,000.000000000000000000
+// Decimals    : 8
+//
+// imChat Technology Service Limited
+// ----------------------------------------------------------------------------
 
-/* ?????NAS  coin*/
-contract SafeMath {
-    function safeAdd(uint256 x, uint256 y) internal pure returns(uint256) {
-        uint256 z = x + y;
-        assert((z >= x) && (z >= y));
-        return z;
+
+// ----------------------------------------------------------------------------
+// Safe maths
+// ----------------------------------------------------------------------------
+library SafeMath {
+    
+    /**
+    * @dev Adds two numbers, reverts on overflow.
+    */
+    function add(uint256 _a, uint256 _b) internal pure returns (uint256) {
+        uint256 c = _a + _b;
+        require(c >= _a);
+
+        return c;
     }
 
-    function safeSubtract(uint256 x, uint256 y) internal pure returns(uint256) {
-        assert(x >= y);
-        uint256 z = x - y;
-        return z;
+    /**
+    * @dev Subtracts two numbers, reverts on overflow (i.e. if subtrahend is greater than minuend).
+    */
+    function sub(uint256 _a, uint256 _b) internal pure returns (uint256) {
+        require(_b <= _a);
+        uint256 c = _a - _b;
+
+        return c;
     }
 
-    function safeMult(uint256 x, uint256 y) internal pure returns(uint256) {
-        uint256 z = x * y;
-        assert((x == 0)||(z/x == y));
-        return z;
-    }
-
-}
-
-contract Token {
-    uint256 public totalSupply;
-    function balanceOf(address _owner) public constant returns (uint256 balance);
-    function transfer(address _to, uint256 _value) public returns (bool success);
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
-    function approve(address _spender, uint256 _value) public returns (bool success);
-    function allowance(address _owner, address _spender) public constant returns (uint256 remaining);
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-}
-
-
-/*  ERC 20 token */
-contract StandardToken is Token {
-
-    function transfer(address _to, uint256 _value) public returns (bool success) {
-        if (balances[msg.sender] >= _value && _value > 0) {
-            balances[msg.sender] -= _value;
-            balances[_to] += _value;
-            emit Transfer(msg.sender, _to, _value);
-            return true;
-        } else {
-            return false;
+    /**
+    * @dev Multiplies two numbers, reverts on overflow.
+    */
+    function mul(uint256 _a, uint256 _b) internal pure returns (uint256) {
+        // Gas optimization: this is cheaper than requiring 'a' not being zero, but the
+        // benefit is lost if 'b' is also tested.
+        // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+        if (_a == 0) {
+            return 0;
         }
+
+        uint256 c = _a * _b;
+        require(c / _a == _b);
+
+        return c;
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
-            balances[_to] += _value;
-            balances[_from] -= _value;
-            allowed[_from][msg.sender] -= _value;
-            emit Transfer(_from, _to, _value);
-            return true;
-        } else {
-            return false;
-        }
+    /**
+    * @dev Integer division of two numbers truncating the quotient, reverts on division by zero.
+    */
+    function div(uint256 _a, uint256 _b) internal pure returns (uint256) {
+        require(_b > 0); // Solidity only automatically asserts when dividing by 0
+        uint256 c = _a / _b;
+        assert(_a == _b * c + _a % _b); // There is no case in which this doesn't hold
+
+        return c;
+    }
+}
+
+
+// ----------------------------------------------------------------------------
+// ERC Token Standard #20 Interface
+// https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md
+// ----------------------------------------------------------------------------
+contract ERC20Interface {
+    function totalSupply() public constant returns (uint);
+    function balanceOf(address _owner) public constant returns (uint balance);
+    function transfer(address _to, uint _value) public returns (bool success);
+    function transferFrom(address _from, address _to, uint _value) public returns (bool success);
+    function approve(address _spender, uint _value) public returns (bool success);
+    function allowance(address _owner, address _spender) public constant returns (uint remaining);
+
+    event Transfer(address indexed _from, address indexed _to, uint _value);
+    event Approval(address indexed _owner, address indexed _spender, uint _value);
+}
+
+
+// ----------------------------------------------------------------------------
+// Contract function to receive approval and execute function in one call
+//
+// Borrowed from MiniMeToken
+// ----------------------------------------------------------------------------
+interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; }
+
+
+// ----------------------------------------------------------------------------
+// Owned contract
+// ----------------------------------------------------------------------------
+contract Owned {
+    address public owner;
+    address public newOwner;
+
+    event OwnershipTransferred(address indexed _from, address indexed _to);
+
+    constructor() public {
+        owner = msg.sender;
     }
 
-    function balanceOf(address _owner) public constant returns (uint256 balance) {
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
+
+    function transferOwnership(address _newOwner) public onlyOwner {
+        newOwner = _newOwner;
+    }
+    function acceptOwnership() public {
+        require(msg.sender == newOwner);
+        emit OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+        newOwner = address(0);
+    }
+}
+
+
+// ----------------------------------------------------------------------------
+// ERC20 Token, with the addition of symbol, name and decimals and a
+// fixed supply
+// ----------------------------------------------------------------------------
+contract IMCToken is ERC20Interface, Owned {
+    using SafeMath for uint;
+
+    string public symbol;
+    string public  name;
+    uint8 public decimals;
+    uint _totalSupply;
+
+    mapping(address => uint) balances;
+    mapping(address => mapping(address => uint)) allowed;
+
+    address externalContractAddress;
+
+
+    /**
+     * ????
+     */
+    constructor() public {
+        symbol = "IMC";
+        name = "IMC";
+        decimals = 8;
+        _totalSupply = 1000000000 * (10 ** uint(decimals));
+        balances[owner] = _totalSupply;
+        
+        emit Transfer(address(0), owner, _totalSupply);
+    }
+
+    /**
+     * ????????
+     * @return unit ??
+     */
+    function totalSupply() public view returns (uint) {
+        return _totalSupply.sub(balances[address(0)]);
+    }
+
+    /**
+     * ??????
+     * @param _owner address ???????
+     * @return balance ??
+     */
+    function balanceOf(address _owner) public view returns (uint balance) {
         return balances[_owner];
     }
 
-    function approve(address _spender, uint256 _value) public returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        emit Approval(msg.sender, _spender, _value);
+    /**
+     * ???????????????????
+     * @param _from address ???????
+     * @param _to address ???????
+     * @param _value uint ???????
+     */
+    function _transfer(address _from, address _to, uint _value) internal{
+        // ????????0x0???0x0??????
+        require(_to != 0x0);
+        // ?????????????
+        require(balances[_from] >= _value);
+        // ??????
+        require(balances[_to] + _value > balances[_to]);
+
+        // ???????????
+        uint previousBalance = balances[_from].add(balances[_to]);
+
+        // ?????????
+        balances[_from] = balances[_from].sub(_value);
+        // ??????????
+        balances[_to] = balances[_to].add(_value);
+
+        // ?????????????
+        emit Transfer(_from, _to, _value);
+
+        // ???????????????????
+        assert(balances[_from].add(balances[_to]) == previousBalance);
+    }
+
+    /**
+     * ????????????????
+     * @param _to address ???????
+     * @param _value uint ???????
+     * @return success ????
+     */
+    function transfer(address _to, uint _value) public returns (bool success) {
+        // _transfer(msg.sender, _to, _value);
+
+        if (msg.sender == owner) {
+            // ERC20??owner??
+            _transfer(msg.sender, _to, _value);
+
+            return true;
+        } else {
+            // ???????????????????????????????????
+            require(msg.sender == externalContractAddress);
+
+            _transfer(owner, _to, _value);
+
+            return true;
+        }
+    }
+
+    /**
+     * ?????????????????????????????
+     * @param _from address ?????
+     * @param _to address ?????
+     * @param _value uint ????????
+     * @return success ????
+     */
+    function transferFrom(address _from, address _to, uint _value) public returns (bool success) {
+        
+        if (_from == msg.sender) {
+            // ????????approve?????????
+            _transfer(_from, _to, _value);
+
+        } else {
+            // ??????????????????????
+            require(allowed[_from][msg.sender] >= _value);
+            allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+
+            _transfer(_from, _to, _value);
+
+        }
+
         return true;
     }
 
-    function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
+    /**
+    * ??????????????????
+    * @param _spender ??????
+    * @param _value ????
+    * @return success ????
+    */
+    function approve(address _spender, uint _value) public returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+
+        emit Approval(msg.sender, _spender, _value);
+
+        return true;
+    }
+
+    /**
+    * ????????????????
+    * @param _owner ???????
+    * @param _spender ????????
+    * @return remaining ????
+    */
+    function allowance(address _owner, address _spender) public view returns (uint remaining) {
         return allowed[_owner][_spender];
     }
 
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
-}
-
-contract IMCToken is StandardToken, SafeMath {
-
-    // metadata
-    string  public constant name = "FOO";
-    string  public constant symbol = "FOO";
-    uint256 public constant decimals = 4;
-    string  public version = "1.0";
-
-    // contracts
-    address public ethFundDeposit;          // ETH????
-    address public newContractAddr;         // token????
-
-    // crowdsale parameters
-    bool    public isFunding;                // ?????true
-    uint256 public fundingStartBlock;
-    uint256 public fundingStopBlock;
-
-    uint256 public currentSupply;           // ??????tokens??
-    uint256 public tokenRaised = 0;         // ??????token
-    uint256 public tokenMigrated = 0;     // ??????? token
-    uint256 public tokenExchangeRate = 300;             // ?????? N?? ?? 1 ETH
-
-    // events
-    event AllocateToken(address indexed _to, uint256 _value);   // ???????token;
-    event IssueToken(address indexed _to, uint256 _value);      // ???????token;
-    event IncreaseSupply(uint256 _value);
-    event DecreaseSupply(uint256 _value);
-    event Migrate(address indexed _to, uint256 _value);
-
-    // ??
-    function formatDecimals(uint256 _value) internal pure returns (uint256 ) {
-        return _value * 10 ** decimals;
+    /**
+     * ??????????????????????????????????
+     * @param _spender ??????????
+     * @param _value ????????
+     * @param _extraData ??????????
+     * @return success ????
+     */
+    function approveAndCall(address _spender, uint _value, bytes _extraData) public returns (bool success) {
+        tokenRecipient spender = tokenRecipient(_spender);
+        if (approve(_spender, _value)) {
+            // ????
+            spender.receiveApproval(msg.sender, _value, this, _extraData);
+            return true;
+        }
     }
 
-    // constructor
-    constructor(
-        address _ethFundDeposit,
-        uint256 _currentSupply) public
-    {
-        ethFundDeposit = _ethFundDeposit;
-
-        isFunding = false;                           //?????CrowdS ale??
-        fundingStartBlock = 0;
-        fundingStopBlock = 0;
-
-        currentSupply = formatDecimals(_currentSupply);
-        totalSupply = formatDecimals(2000000000);
-        balances[msg.sender] = totalSupply;
-        require(currentSupply <= totalSupply);
+    /**
+     * ????????????????
+     * @param _contractAddress ????
+     * @return success ????
+     */
+    function approveContractCall(address _contractAddress) public onlyOwner returns (bool){
+        externalContractAddress = _contractAddress;
+        
+        return true;
     }
 
-    modifier isOwner()  { require(msg.sender == ethFundDeposit); _; }
-
-    ///  ??token??
-    function setTokenExchangeRate(uint256 _tokenExchangeRate) isOwner external {
-        require(_tokenExchangeRate != 0);
-        require(_tokenExchangeRate != tokenExchangeRate);
-
-        tokenExchangeRate = _tokenExchangeRate;
-    }
-
-    /// @dev ??token??
-    function increaseSupply (uint256 _value) isOwner external {
-        uint256 value = formatDecimals(_value);
-        require(value + currentSupply <= totalSupply);
-        currentSupply = safeAdd(currentSupply, value);
-        emit IncreaseSupply(value);
-    }
-
-    /// @dev ??token??
-    function decreaseSupply (uint256 _value) isOwner external {
-        uint256 value = formatDecimals(_value);
-        require(value + tokenRaised <= currentSupply);
-
-        currentSupply = safeSubtract(currentSupply, value);
-        emit DecreaseSupply(value);
-    }
-
-    ///  ?????? ?????
-    function startFunding (uint256 _fundingStartBlock, uint256 _fundingStopBlock) isOwner external {
-        require(!isFunding);
-        require(_fundingStartBlock < _fundingStopBlock);
-        require(block.number < _fundingStartBlock);
-
-        fundingStartBlock = _fundingStartBlock;
-        fundingStopBlock = _fundingStopBlock;
-        isFunding = true;
-    }
-
-    ///  ????????
-    function stopFunding() isOwner external {
-        require(isFunding);
-        isFunding = false;
-    }
-
-    /// ????????????token?????token?
-    function setMigrateContract(address _newContractAddr) isOwner external {
-        require(_newContractAddr != newContractAddr);
-        newContractAddr = _newContractAddr;
-    }
-
-    /// ?????????
-    function changeOwner(address _newFundDeposit) isOwner() external {
-        require(_newFundDeposit != address(0x0));
-        ethFundDeposit = _newFundDeposit;
-    }
-
-    ///??token?????
-    function migrate() external {
-        require(!isFunding);
-        require(newContractAddr != address(0x0));
-
-        uint256 tokens = balances[msg.sender];
-        require(tokens != 0);
-
-        balances[msg.sender] = 0;
-        tokenMigrated = safeAdd(tokenMigrated, tokens);
-
-        IMigrationContract newContract = IMigrationContract(newContractAddr);
-        require(newContract.migrate(msg.sender, tokens));
-
-        emit Migrate(msg.sender, tokens);               // log it
-    }
-
-    /// ??ETH ???
-    function transferETH() isOwner external {
-        require(address(this).balance != 0);
-        require(ethFundDeposit.send(address(this).balance));
-    }
-
-    ///  ?token?????????
-    function allocateToken (address _addr, uint256 _eth) isOwner external {
-        require(_eth != 0);
-        require(_addr != address(0x0));
-
-        uint256 tokens = safeMult(formatDecimals(_eth), tokenExchangeRate);
-        require(tokens + tokenRaised <= currentSupply);
-
-        tokenRaised = safeAdd(tokenRaised, tokens);
-        balances[_addr] += tokens;
-
-        emit AllocateToken(_addr, tokens);  // ??token??
-    }
-
-    /// ??token
+    /**
+     * ??? Ether
+     */
     function () public payable {
-        require(isFunding);
-        require(msg.value != 0);
-
-        require(block.number >= fundingStartBlock);
-        require(block.number <= fundingStopBlock);
-
-        uint256 tokens = safeMult(msg.value, tokenExchangeRate);
-        require(tokens + tokenRaised <= currentSupply);
-
-        tokenRaised = safeAdd(tokenRaised, tokens);
-        balances[msg.sender] += tokens;
-
-        emit IssueToken(msg.sender, tokens);  //????
+        revert();
     }
 }
