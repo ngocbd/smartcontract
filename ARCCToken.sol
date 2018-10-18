@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ARCCToken at 0xac2df171965c8adafd5cc923fca5a7f86e599172
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ARCCToken at 0x677c1978f6eeb35fd3536696dadd1fef41106dd3
 */
 pragma solidity ^0.4.12;
  
