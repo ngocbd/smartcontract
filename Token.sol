@@ -1,6 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xa8aab6f77aecc5a2b8b7a389d09796760d78fe66
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x896063611d328e0afad8ffd7bb3a9a8306032ada
 */
+/*! abs.sol | (c) 2018 Develop by BelovITLab LLC (smartcontract.ru), author @stupidlovejoy | License: MIT */
+
 pragma solidity 0.4.24;
 
 library SafeMath {
@@ -324,10 +326,10 @@ contract Manageable is Ownable {
 
 
 /*
-    CRB Token
+    ABS Token
 */
 contract Token is CappedToken, BurnableToken, Withdrawable {
-    constructor() CappedToken(250000000e8) StandardToken("?RB token", "?RB", 8) public {
+    constructor() CappedToken(146880432e7) StandardToken("ABSOLUTME", "ABS", 7) public {
         
     }
 }
@@ -353,8 +355,8 @@ contract Crowdsale is Manageable, Withdrawable, Pausable {
     function closeCrowdsale(address _to) onlyOwner public {
         require(!crowdsaleClosed);
 
-        token.transferOwnership(_to);
         token.finishMinting();
+        token.transferOwnership(_to);
         crowdsaleClosed = true;
 
         emit CrowdsaleClose();
