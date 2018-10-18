@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0x4f86182ff4704330b0f169ed897d608b367015b7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0x2082ee2696658f8fd38b837986e02ac8541855da
 */
 pragma solidity ^0.4.24;
 
@@ -39,7 +39,7 @@ contract PlayerBook is Ownable {
     using SafeMath for uint256;
     using NameFilter for string;
 
-    FoundationInterface private foundation = FoundationInterface(0xc91CA445AcdAe9EebAf003A64088cA29A694C3ae);
+    FoundationInterface private foundation = FoundationInterface(0x2Ad0EbB0FFa7A9c698Ae7F1d23BD7d86FF0ae386);
 
     uint256 public registrationFee_ = 10 finney;
     mapping(uint256 => PlayerBookReceiverInterface) public games_;
@@ -92,10 +92,10 @@ contract PlayerBook is Ownable {
     }
 
     constructor() public {
-        plyr_[1].addr = 0xD023964aE2f127c7f35dC5dD66BB5FbED3BC7E61;
+        plyr_[1].addr = 0xC464F4001C76558AD802bBA405A9E0658dcb1F75;
         plyr_[1].name = "asia";
         plyr_[1].names = 1;
-        pIDxAddr_[0xD023964aE2f127c7f35dC5dD66BB5FbED3BC7E61] = 1;
+        pIDxAddr_[0xC464F4001C76558AD802bBA405A9E0658dcb1F75] = 1;
         pIDxName_["asia"] = 1;
         plyrNames_[1]["asia"] = true;
         plyrNameList_[1][1] = "asia";
