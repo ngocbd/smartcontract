@@ -1,9 +1,20 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Win1Million at 0xf5c7df686a3937ab70e9eddfe73f7ce32cb1764f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Win1Million at 0xd7e2ba67eda20e4d055fa4b73b658b0eb6d6b379
 */
 pragma solidity ^0.4.22;
+//
+// complied with 0.4.24+commit.e67f0147.Emscripten.clang
+// 2018-09-07
+// With Optimization enabled
+//
+// Contact support@win1million.app
+//
+// Play at: https://win1million.app
+// 
+// Provably fair prize game where you can win $1m!
+//
+//
 
-pragma solidity ^0.4.22;
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
@@ -40,10 +51,14 @@ contract Win1Million {
     
     address owner;
     address bankAddress;
+    address charityAddress;
     
     bool gamePaused = false;
-    uint256 public houseEdge = 5;
+    uint256 public housePercent = 2;
+    uint256 public charityPercent = 2;
     uint256 public bankBalance;
+    uint256 public charityBalance;
+    uint256 public totalCharitySent = 0;
     uint256 public minGamePlayAmount = 30000000000000000;
     
     modifier onlyOwner() {
@@ -133,8 +148,7 @@ contract Win1Million {
     // will be acceptable and not be over the game limit...
     // Should not be used to send Ether!
     function playGameCheckBid(uint256 barId) public whenNotPaused payable {
-        uint256 houseAmt = (msg.value.div(100)).mul(houseEdge);
-        uint256 gameAmt = (msg.value.div(100)).mul(100-houseEdge);
+        uint256 gameAmt = (msg.value.div(100)).mul(100-(housePercent+charityPercent));
         uint256 currentGameId = gameBars[barId].CurrentGameId;
         
         if(gameBars[barId].CurrentGameId == 0) {
@@ -161,8 +175,9 @@ contract Win1Million {
         require(msg.value >= minGamePlayAmount);
         
         // check if a game is in play for this bar...
-        uint256 houseAmt = (msg.value.div(100)).mul(houseEdge);
-        uint256 gameAmt = (msg.value.div(100)).mul(100-houseEdge);
+        uint256 houseAmt = (msg.value.div(100)).mul(housePercent);
+        uint256 charityAmt = (msg.value.div(100)).mul(charityPercent);
+        uint256 gameAmt = (msg.value.div(100)).mul(100-(housePercent+charityPercent));
         uint256 currentGameId = 0;
         
         
@@ -197,6 +212,7 @@ contract Win1Million {
         games[currentGameId].PlayerBidMap[msg.sender] = games[currentGameId].PlayerBidMap[msg.sender].add(gameAmt);
         
         bankBalance+=houseAmt;
+        charityBalance+=charityAmt;
         
         if(games[currentGameId].CurrentTotal >= gameBars[barId].Limit) {
 
@@ -262,7 +278,7 @@ contract Win1Million {
             
         );
     // players can cancel their participation in a game as long as it hasn't completed
-    // they lose their houseEdge fee (And pay any gas of course)
+    // they lose their housePercent fee (And pay any gas of course)
     function player_cancelGame(uint256 barId) public {
         address _playerAddr = msg.sender;
         uint256 _gameId = gameBars[barId].CurrentGameId;
@@ -330,8 +346,8 @@ contract Win1Million {
     function private_UpdateGameBarLimit(uint256 barId, uint256 _limit) public onlyOwner {
         gameBars[barId].Limit = _limit;
     }
-    function private_setHouseEdge(uint256 _houseEdge) public onlyOwner {
-        houseEdge = _houseEdge;
+    function private_setHousePercent(uint256 _housePercent) public onlyOwner {
+        housePercent = _housePercent;
     }
     function private_setMinGamePlayAmount(uint256 _minGamePlayAmount) onlyOwner {
         minGamePlayAmount = _minGamePlayAmount;
@@ -349,7 +365,41 @@ contract Win1Million {
             bankBalance-=_amount;
         }
     }
-    
+    function private_setCharityAddress(address _charityAddress) public onlyOwner {
+        charityAddress = _charityAddress;
+    }
+
+    event charityDonation(
+            address indexed charityAddress,
+            string charityName,
+            uint256 amountDonated,
+            uint256 timestamp
+        );
+    function private_sendCharityFunds(string _charityName) public onlyOwner {
+        if(charityAddress.send(charityBalance)) {
+            totalCharitySent += charityBalance;
+            emit charityDonation(
+                    charityAddress,
+                    _charityName,
+                    charityBalance,
+                    now
+                );
+            charityBalance = 0;
+        }
+    }
+    function private_sendCharityFunds(string _charityName, uint256 _amount) public onlyOwner {
+        require(_amount <= charityBalance);
+        if(charityAddress.send(_amount)) {
+            charityBalance -= _amount;
+            totalCharitySent += _amount;
+            emit charityDonation(
+                    charityAddress,
+                    _charityName,
+                    _amount,
+                    now
+                );
+        }
+    }
     
     function compareStrings (string a, string b) internal pure returns (bool){
         return keccak256(a) == keccak256(b);
