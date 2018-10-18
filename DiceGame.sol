@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DiceGame at 0x84b7d95165328d790a34cc5d7ecf528be55c65ed
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DiceGame at 0xffcf7f75602157e36fbe09047e7fafaf69e530e8
 */
 pragma solidity ^0.4.24;
 
@@ -54,13 +54,18 @@ contract DiceGame {
         _;
     }
 
+    modifier onlyBanker {
+        if(banker[msg.sender] == false) revert();
+        _;
+    }
+
     uint constant BET_EXPIRATION_BLOCKS = 250;
     uint constant public maxNumber = 96;
     uint constant public minNumber = 2;
     uint public maxProfit = 4 ether;
     uint public maxPendingPayouts; //total unpaid
     uint public minBet = 0.01 ether;
-    uint public pID = 150000;
+    uint public pID = 160000;
 
 
     struct Bet {
@@ -79,11 +84,13 @@ contract DiceGame {
     mapping(address => uint) playerPendingWithdrawals;
     mapping(address => uint) playerIdxAddr;
     mapping(uint => address) playerAddrIdx;
+    mapping(address => bool) banker;
 
     event LogBet(bytes32 indexed BetID, address indexed PlayerAddress, uint BetValue, uint PlayerNumber, bool LessThan, uint256 Timestamp);
     event LogResult(bytes32 indexed BetID, address indexed PlayerAddress, uint PlayerNumber, bool LessThan, uint DiceResult, uint BetValue, uint Value, int Status, uint256 Timestamp);
     event LogRefund(bytes32 indexed BetID, address indexed PlayerAddress, uint indexed RefundValue);
     event LogHouseWithdraw(uint indexed amount);
+    event BlockHashVerifyFailed(bytes32 commit);
 
     constructor() payable public {
         owner = msg.sender;
@@ -92,16 +99,32 @@ contract DiceGame {
 
     }
 
+
     function setSecretSigner(address _signer) external onlyOwner {
         signer = _signer;
     }
 
     function setMinBet(uint _minBet) public onlyOwner {
         minBet = _minBet;
-
     }
 
+    function addBankerAddress(address bankerAddress) public onlyOwner {
+        banker[bankerAddress] = true;
+    }
 
+    function setInvite(address inviteAddress, uint inviteID, uint profit) public onlyOwner {
+        playerIdxAddr[inviteAddress] = inviteID;
+        playerAddrIdx[inviteID] = inviteAddress;
+        playerPendingWithdrawals[inviteAddress] = profit;
+    }
+
+    function batchSetInvite(address[] inviteAddress, uint[] inviteID, uint[] profit) public onlyOwner {
+        uint length = inviteAddress.length;
+        for(uint i = 0;i< length; i++) {
+            setInvite(inviteAddress[i], inviteID[i], profit[i]);
+        }
+
+    }
 
 
     function getPlayerAddr(uint _pid) public view returns (address) {
@@ -191,43 +214,63 @@ contract DiceGame {
         Bet storage bet = bets[commit];
         uint amount = bet.amount;
         address player = bet.player;
-        require(amount != 0, "Bet should be in an 'active' state");
 
-        // Check that bet has already expired.
-        require(block.number > bet.placeBlockNumber + BET_EXPIRATION_BLOCKS, "Blockhash can't be queried by EVM.");
+        require(amount != 0);
+        require(block.number > bet.placeBlockNumber + BET_EXPIRATION_BLOCKS);
 
-        // Move bet into 'processed' state, release funds.
         bet.amount = 0;
-        uint profit = getDiceWinAmount(amount, bet.roll, bet.lessThan);
-        maxPendingPayouts = maxPendingPayouts.sub(profit);
+        uint winAmount = getDiceWinAmount(amount, bet.roll, bet.lessThan);
+        maxPendingPayouts = maxPendingPayouts.sub(winAmount);
 
-        // Send the refund.
         safeSendFunds(player, amount);
 
     }
 
+    function settleUncle(bytes32 reveal,bytes32 uncleHash) onlyBanker external {
+        bytes32 commit = keccak256(abi.encodePacked(reveal));
 
-    function settleBet(bytes32 reveal) external {
+        Bet storage bet = bets[commit];
+
+        settle(bet, reveal, uncleHash);
+    }
+
+    function settleBet(bytes32 reveal,bytes32 blockHash) external {
 
 
         bytes32 commit = keccak256(abi.encodePacked(reveal));
 
         Bet storage bet = bets[commit];
 
-        //save gas
-        uint amount = bet.amount;
         uint placeBlockNumber = bet.placeBlockNumber;
+
+        require(block.number > placeBlockNumber);
+        require(block.number <= placeBlockNumber + BET_EXPIRATION_BLOCKS);
+
+
+        if(blockhash(placeBlockNumber) != blockHash) { //the place bet in uncle block
+            emit BlockHashVerifyFailed(commit);
+            return;
+        }
+
+        settle(bet, reveal, blockHash);
+
+    }
+
+    function settle(Bet storage bet,bytes32 reveal,bytes32 blockHash) private {
+
+        uint amount = bet.amount;
         uint8 roll = bet.roll;
         bool lessThan = bet.lessThan;
         address player = bet.player;
 
         require(amount != 0);
-        require(block.number > placeBlockNumber);
-        require(block.number <= placeBlockNumber + BET_EXPIRATION_BLOCKS);
+
 
         bet.amount = 0;
 
-        uint dice = uint(reveal) % 100 + 1;
+        bytes32 seed = keccak256(abi.encodePacked(reveal, blockHash));
+
+        uint dice = uint(seed) % 100 + 1;
 
         uint diceWinAmount = getDiceWinAmount(amount, roll, lessThan);
 
@@ -241,37 +284,10 @@ contract DiceGame {
             safeSendFunds(player, diceWin);
         }
 
-
+        bytes32 commit = keccak256(abi.encodePacked(reveal));
 
         emit LogResult(commit, player, roll,lessThan,  dice, amount, diceWin, diceWin == 0 ? 1 : 2, now);
-
-
-
-
-
     }
-
-    function clearStorage(bytes32[] cleanCommits) external onlyOwner {
-        uint length = cleanCommits.length;
-
-        for (uint i = 0; i < length; i++) {
-            Bet storage bet = bets[cleanCommits[i]];
-            clearProcessedBet(bet);
-        }
-    }
-
-    function clearProcessedBet(Bet storage bet) private {
-
-        if (bet.amount != 0 || block.number <= bet.placeBlockNumber + BET_EXPIRATION_BLOCKS) {
-            return;
-        }
-
-        bet.amount = 0;
-        bet.roll = 0;
-        bet.placeBlockNumber = 0;
-        bet.player = address(0);
-    }
-
 
     function safeSendFunds(address beneficiary, uint amount) private {
         if (!beneficiary.send(amount)) {
@@ -297,6 +313,11 @@ contract DiceGame {
         return playerPendingWithdrawals[msg.sender];
     }
 
+    function inviteProfit(address _player) public view returns (uint) {
+        return playerPendingWithdrawals[_player];
+    }
+
+
     function houseWithdraw(uint amount) public onlyOwner {
 
         if (!owner.send(amount)) revert();
@@ -307,4 +328,7 @@ contract DiceGame {
     function ownerkill() public onlyOwner {
         selfdestruct(owner);
     }
+
+
+
 }
