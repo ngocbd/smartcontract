@@ -1,106 +1,90 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AMGTToken at 0x8902194de54133c3e2e96131529d235c7803c5aa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AMGTToken at 0xe50ff1a43c414233db9d173cc01b2386b0dd9b7c
 */
-pragma solidity ^0.4.8;
-contract Token{
-    // token???????public??????getter????????totalSupply().
-    uint256 public totalSupply;
+pragma solidity ^0.4.11;
 
-    /// ????_owner??token??? 
-    function balanceOf(address _owner) constant returns (uint256 balance);
+contract AMGTToken {
 
-    //??????????_to??????_value?token
-    function transfer(address _to, uint256 _value) returns (bool success);
+    string public name = "AmazingTokenTest";      //  token name
+    string public symbol = "AMGT";           //  token symbol
+    uint256 public decimals = 6;            //  token digit
 
-    //???_from????_to????_value?token??approve??????
-    function transferFrom(address _from, address _to, uint256 _value) returns   
-    (bool success);
+    mapping (address => uint256) public balanceOf;
+    mapping (address => mapping (address => uint256)) public allowance;
 
-    //??????????_spender????????????_value?token
-    function approve(address _spender, uint256 _value) returns (bool success);
+    uint256 public totalSupply = 0;
+    bool public stopped = false;
 
-    //????_spender?????_owner???token???
-    function allowance(address _owner, address _spender) constant returns 
-    (uint256 remaining);
+    uint256 constant valueFounder = 1000000000000000;
+    address owner = 0x0;
 
-    //????????????? 
+    modifier isOwner {
+        assert(owner == msg.sender);
+        _;
+    }
+
+    modifier isRunning {
+        assert (!stopped);
+        _;
+    }
+
+    modifier validAddress {
+        assert(0x0 != msg.sender);
+        _;
+    }
+
+    function AMGTToken() {
+        owner = msg.sender;
+        totalSupply = valueFounder;
+        balanceOf[owner] = valueFounder;
+    }
+
+    function transfer(address _to, uint256 _value) isRunning validAddress returns (bool success) {
+        require(balanceOf[msg.sender] >= _value);
+        require(balanceOf[_to] + _value >= balanceOf[_to]);
+        balanceOf[msg.sender] -= _value;
+        balanceOf[_to] += _value;
+        Transfer(msg.sender, _to, _value);
+        return true;
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) isRunning validAddress returns (bool success) {
+        require(balanceOf[_from] >= _value);
+        require(balanceOf[_to] + _value >= balanceOf[_to]);
+        require(allowance[_from][msg.sender] >= _value);
+        balanceOf[_to] += _value;
+        balanceOf[_from] -= _value;
+        allowance[_from][msg.sender] -= _value;
+        Transfer(_from, _to, _value);
+        return true;
+    }
+
+    function approve(address _spender, uint256 _value) isRunning validAddress returns (bool success) {
+        require(_value == 0 || allowance[msg.sender][_spender] == 0);
+        allowance[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    function stop() isOwner {
+        stopped = true;
+    }
+
+    function start() isOwner {
+        stopped = false;
+    }
+
+    function setName(string _name) isOwner {
+        name = _name;
+    }
+
+    function burn(uint256 _value) {
+        require(balanceOf[msg.sender] >= _value);
+        balanceOf[msg.sender] -= _value;
+        balanceOf[0x0] += _value;
+        Transfer(msg.sender, 0x0, _value);
+    }
+
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
-
-    //???approve(address _spender, uint256 _value)????????????
-    event Approval(address indexed _owner, address indexed _spender, uint256 
-    _value);
-}
-
-contract StandardToken is Token {
-    function transfer(address _to, uint256 _value) returns (bool success) {
-        //??totalSupply ??????? (2^256 - 1).
-        //??????????????token??????????????????
-        //require(balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]);
-        require(balances[msg.sender] >= _value);
-        balances[msg.sender] -= _value;//???????????token??_value
-        balances[_to] += _value;//???????token??_value
-        Transfer(msg.sender, _to, _value);//????????
-        return true;
-    }
-
-
-    function transferFrom(address _from, address _to, uint256 _value) returns 
-    (bool success) {
-        //require(balances[_from] >= _value && allowed[_from][msg.sender] >= 
-        // _value && balances[_to] + _value > balances[_to]);
-        require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value);
-        balances[_to] += _value;//??????token??_value
-        balances[_from] -= _value; //????_from??token??_value
-        allowed[_from][msg.sender] -= _value;//??????????_from????????_value
-        Transfer(_from, _to, _value);//????????
-        return true;
-    }
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-        return balances[_owner];
-    }
-
-
-    function approve(address _spender, uint256 _value) returns (bool success)   
-    {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-        return allowed[_owner][_spender];//??_spender?_owner????token?
-    }
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
-}
-
-contract AMGTToken is StandardToken { 
-
-    /* Public variables of the token */
-    string public name;                   //??: eg Simon Bucks
-    uint8 public decimals;               //????????How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
-    string public symbol;               //token??: eg SBX
-    string public version = 'H0.1';    //??
-
-    function AMGTToken(uint256 _initialAmount, string _tokenName, uint8 _decimalUnits, string _tokenSymbol) {
-        balances[msg.sender] = _initialAmount; // ??token?????????
-        totalSupply = _initialAmount;         // ??????
-        name = _tokenName;                   // token??
-        decimals = _decimalUnits;           // ????
-        symbol = _tokenSymbol;             // token??
-    }
-
-    /* Approves and then calls the receiving contract */
-    
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
-        //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
-        //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
-        require(_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData));
-        return true;
-    }
-
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
