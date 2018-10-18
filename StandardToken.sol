@@ -1,219 +1,138 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StandardToken at 0xa9f6e3e1f9eb08c3dbf833dde2db1fcfe52ab8d2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StandardToken at 0xfe2b5546f64f67261fa0e3bf5d1a566c6eae51d8
 */
-pragma solidity ^0.4.11;
-/**
- * Math operations with safety checks
- */
-library SafeMath {
-  function mul(uint a, uint b) internal pure returns (uint) {
-    uint c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
+pragma solidity ^0.4.4;
 
-  function div(uint a, uint b) internal pure returns (uint) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
+contract Token {
 
-  function sub(uint a, uint b) internal pure returns (uint) {
-    assert(b <= a);
-    return a - b;
-  }
+    /// @return total amount of tokens
+    function totalSupply() constant returns (uint256 supply) {}
 
-  function add(uint a, uint b) internal pure returns (uint) {
-    uint c = a + b;
-    assert(c >= a);
-    return c;
-  }
+    /// @param _owner The address from which the balance will be retrieved
+    /// @return The balance
+    function balanceOf(address _owner) constant returns (uint256 balance) {}
 
-  function max64(uint64 a, uint64 b) internal pure  returns (uint64) {
-    return a >= b ? a : b;
-  }
+    /// @notice send `_value` token to `_to` from `msg.sender`
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transfer(address _to, uint256 _value) returns (bool success) {}
 
-  function min64(uint64 a, uint64 b) internal pure returns (uint64) {
-    return a < b ? a : b;
-  }
+    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
+    /// @param _from The address of the sender
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
 
-  function max256(uint256 a, uint256 b) internal pure returns (uint256) {
-    return a >= b ? a : b;
-  }
+    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @param _value The amount of wei to be approved for transfer
+    /// @return Whether the approval was successful or not
+    function approve(address _spender, uint256 _value) returns (bool success) {}
 
-  function min256(uint256 a, uint256 b) internal pure returns (uint256) {
-    return a < b ? a : b;
-  }
+    /// @param _owner The address of the account owning tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @return Amount of remaining tokens allowed to spent
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
 
-  
-}
-contract ERC20Interface {
-    function totalSupply() public view returns (uint supply);
-    function balanceOf( address owner ) public view returns (uint value);
-    function allowance( address owner, address spender ) public view returns (uint _allowance);
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
-    function transfer( address to, uint value) public returns (bool success);
-    function transferFrom( address from, address to, uint value) public returns (bool success);
-    function approve( address spender, uint value ) public returns (bool success);
-
-    event Transfer( address indexed from, address indexed to, uint value);
-    event Approval( address indexed owner, address indexed spender, uint value);
 }
 
-contract StandardAuth is ERC20Interface {
-    address      public  owner;
+contract StandardToken is Token {
 
-    constructor() public {
-        owner = msg.sender;
-    }
-
-    function setOwner(address _newOwner) public onlyOwner{
-        owner = _newOwner;
-    }
-
-    modifier onlyOwner() {
-      require(msg.sender == owner);
-      _;
-    }
-}
-
-contract StandardToken is StandardAuth {
-    using SafeMath for uint;
-
-    mapping(address => uint) balances;
-    mapping(address => mapping (address => uint256)) allowed;
-    mapping(address => bool) optionPoolMembers;
-    mapping(address => uint) optionPoolMemberApproveTotal;
-    string public name;
-    string public symbol;
-    uint8 public decimals = 9;
-    uint256 public totalSupply;
-    uint256 public optionPoolLockTotal = 500000000;
-    uint [2][7] public optionPoolMembersUnlockPlans = [
-        [1596211200,15],    //2020-08-01 00:00:00 unlock 15%
-        [1612108800,30],    //2021-02-01 00:00:00 unlock 30%
-        [1627747200,45],    //2021-08-01 00:00:00 unlock 45%
-        [1643644800,60],    //2022-02-01 00:00:00 unlock 60%
-        [1659283200,75],    //2022-08-01 00:00:00 unlock 75%
-        [1675180800,90],    //2023-02-01 00:00:00 unlock 90%
-        [1690819200,100]    //2023-08-01 00:00:00 unlock 100%
-    ];
-    
-    constructor(uint256 _initialAmount, string _tokenName, string _tokenSymbol) public  {
-        balances[msg.sender] = _initialAmount;               
-        totalSupply = _initialAmount;                        
-        name = _tokenName;                                   
-        symbol = _tokenSymbol;
-        optionPoolMembers[0x36b4F89608B5a5d5bd675b13a9d1075eCb64C2B5] = true;
-        optionPoolMembers[0xDdcEb1A0c975Da8f0E0c457e06D6eBfb175570A7] = true;
-        optionPoolMembers[0x46b6bA8ff5b91FF6B76964e143f3573767a20c1C] = true;
-        optionPoolMembers[0xBF95141188dB8FDeFe85Ce2412407A9266d96dA3] = true;
+    function transfer(address _to, uint256 _value) returns (bool success) {
+        //Default assumes totalSupply can't be over max (2^256 - 1).
+        //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
+        //Replace the if with this one instead.
+        //if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+        if (balances[msg.sender] >= _value && _value > 0) {
+            balances[msg.sender] -= _value;
+            balances[_to] += _value;
+            Transfer(msg.sender, _to, _value);
+            return true;
+        } else { return false; }
     }
 
-    modifier verifyTheLock(uint _value) {
-        if(optionPoolMembers[msg.sender] == true) {
-            if(balances[msg.sender] - optionPoolMemberApproveTotal[msg.sender] - _value < optionPoolMembersLockTotalOf(msg.sender)) {
-                revert();
-            } else {
-                _;
-            }
-        } else {
-            _;
-        }
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+        //same as above. Replace this line with the following if you want to protect against wrapping uints.
+        //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
+            balances[_to] += _value;
+            balances[_from] -= _value;
+            allowed[_from][msg.sender] -= _value;
+            Transfer(_from, _to, _value);
+            return true;
+        } else { return false; }
     }
-    
-    // Function to access name of token .
-    function name() public view returns (string _name) {
-        return name;
-    }
-    // Function to access symbol of token .
-    function symbol() public view returns (string _symbol) {
-        return symbol;
-    }
-    // Function to access decimals of token .
-    function decimals() public view returns (uint8 _decimals) {
-        return decimals;
-    }
-    // Function to access total supply of tokens .
-    function totalSupply() public view returns (uint _totalSupply) {
-        return totalSupply;
-    }
-    function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
-        return allowed[_owner][_spender];
-    }
-    function balanceOf(address _owner) public view returns (uint balance) {
+
+    function balanceOf(address _owner) constant returns (uint256 balance) {
         return balances[_owner];
     }
-    function verifyOptionPoolMembers(address _add) public view returns (bool _verifyResults) {
-        return optionPoolMembers[_add];
-    }
-    
-    function optionPoolMembersLockTotalOf(address _memAdd) public view returns (uint _optionPoolMembersLockTotal) {
-        if(optionPoolMembers[_memAdd] != true){
-            return 0;
-        }
-        
-        uint unlockPercent = 0;
-        
-        for (uint8 i = 0; i < optionPoolMembersUnlockPlans.length; i++) {
-            if(now >= optionPoolMembersUnlockPlans[i][0]) {
-                unlockPercent = optionPoolMembersUnlockPlans[i][1];
-            } else {
-                break;
-            }
-        }
-        
-        return optionPoolLockTotal * (100 - unlockPercent) / 100;
-    }
-    
-    function transfer(address _to, uint _value) public verifyTheLock(_value) returns (bool success) {
-        assert(_value > 0);
-        assert(balances[msg.sender] >= _value);
-        assert(msg.sender != _to);
-        
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        
-        emit Transfer(msg.sender, _to, _value);
 
-        return true;
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        assert(balances[_from] >= _value);
-        assert(allowed[_from][msg.sender] >= _value);
-
-        if(optionPoolMembers[_from] == true) {
-            optionPoolMemberApproveTotal[_from] = optionPoolMemberApproveTotal[_from].sub(_value);
-        }
-        
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        balances[_from] = balances[_from].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        emit Transfer(_from, _to, _value);
-
-        return true;
-        
-    }
-
-    function approve(address _spender, uint256 _value) public verifyTheLock(_value) returns (bool success) {
-        assert(_value > 0);
-        assert(msg.sender != _spender);
-        
-        if(optionPoolMembers[msg.sender] == true) {
-            
-            if(allowed[msg.sender][_spender] > 0){
-                optionPoolMemberApproveTotal[msg.sender] = optionPoolMemberApproveTotal[msg.sender].sub(allowed[msg.sender][_spender]);
-            }
-            
-            optionPoolMemberApproveTotal[msg.sender] = optionPoolMemberApproveTotal[msg.sender].add(_value);
-        }
-        
+    function approve(address _spender, uint256 _value) returns (bool success) {
         allowed[msg.sender][_spender] = _value;
-        emit Approval(msg.sender, _spender, _value);
-        
+        Approval(msg.sender, _spender, _value);
         return true;
     }
 
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+      return allowed[_owner][_spender];
+    }
+
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
+    uint256 public totalSupply;
+}
+
+contract boardcoin is StandardToken { 
+
+    /* Public variables of the token */
+
+    string public name;
+    uint8 public decimals;
+    string public symbol;
+    string public version = 'H1.0'; 
+    uint256 public unitsOneEthCanBuy;
+    uint256 public totalEthInWei; 
+    address public fundsWallet;
+
+    //constructor function 
+    function boardcoin() {
+        balances[msg.sender] = 10000000000000000000000000000;
+        totalSupply = 10000000000000000000000000000;
+        name = "Board Coin";
+        decimals = 18;
+        symbol = "BRDC";
+        unitsOneEthCanBuy = 10000000;
+        fundsWallet = msg.sender;
+    }
+
+    function() payable{
+        totalEthInWei = totalEthInWei + msg.value;
+        uint256 amount = msg.value * unitsOneEthCanBuy;
+        require(balances[fundsWallet] >= amount);
+
+        balances[fundsWallet] = balances[fundsWallet] - amount;
+        balances[msg.sender] = balances[msg.sender] + amount;
+
+        Transfer(fundsWallet, msg.sender, amount); // Broadcast a message to the blockchain
+
+        //Transfer ether to fundsWallet
+        fundsWallet.transfer(msg.value);                               
+    }
+
+    /* Approves and then calls the receiving contract */
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+
+        //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
+        //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
+        //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
+        if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
+        return true;
+    }
 }
