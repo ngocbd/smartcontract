@@ -1,49 +1,112 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bridge at 0x1b85e0f97c5b3f5f815475f67d9df162cf35d3dc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bridge at 0xc7c79f7d8b02c5a573e7bfde8e392bc532eabe99
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.23;
+
+
+contract ERC20Basic {
+    function totalSupply() public view returns (uint256);
+    function balanceOf(address who) public view returns (uint256);
+    function transfer(address to, uint256 value) public returns (bool);
+    event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+contract ERC20 is ERC20Basic {
+    function allowance(address owner, address spender)
+        public view returns (uint256);
+
+    function transferFrom(address from, address to, uint256 value)
+        public returns (bool);
+
+    function approve(address spender, uint256 value) public returns (bool);
+    event Approval(
+    address indexed owner,
+    address indexed spender,
+    uint256 value
+    );
+}
+
 
 library SafeMath {
 
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
+    function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        if (a == 0) {
+            return 0;
+        }
+        c = a * b;
+        assert(c / a == b);
+        return c;
     }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
 
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a / b;
+    }
 
-  /**
-  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
 
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
+    function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        c = a + b;
+        assert(c >= a);
+        return c;
+    }
+}
+
+
+contract BasicToken is ERC20Basic {
+    using SafeMath for uint256;
+
+    mapping(address => uint256) balances;
+
+    uint256 totalSupply_;
+
+    function totalSupply() public view returns (uint256) {
+        return totalSupply_;
+    }
+
+    function transfer(address _to, uint256 _value) public returns (bool) {
+        require(_to != address(0));
+        require(_value <= balances[msg.sender]);
+
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        emit Transfer(msg.sender, _to, _value);
+        return true;
+    }
+  
+    function balanceOf(address _owner) public view returns (uint256) {
+        return balances[_owner];
+    }
+
+}
+
+
+
+contract DefaultToken is BasicToken {
+
+  string public name;
+  string public symbol;
+  uint8 public decimals;
+
+  constructor(string _name, string _symbol, uint8 _decimals) public {
+    name = _name;
+    symbol = _symbol;
+    decimals = _decimals;
   }
 }
+
+
+
+// Wings Controller Interface
+contract IWingsController {
+  uint256 public ethRewardPart;
+  uint256 public tokenRewardPart;
+
+  function fitCollectedValueIntoRange(uint256 _totalCollected) public view returns (uint256);
+}
+
 
 contract HasManager {
   address public manager;
@@ -59,30 +122,22 @@ contract HasManager {
   }
 }
 
-contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-contract IWingsController {
-  uint256 public ethRewardPart;
-  uint256 public tokenRewardPart;
-}
-
 contract Ownable {
   address public owner;
 
 
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+  event OwnershipRenounced(address indexed previousOwner);
+  event OwnershipTransferred(
+    address indexed previousOwner,
+    address indexed newOwner
+  );
 
 
   /**
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() public {
+  constructor() public {
     owner = msg.sender;
   }
 
@@ -95,17 +150,37 @@ contract Ownable {
   }
 
   /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
+   * @dev Allows the current owner to relinquish control of the contract.
+   * @notice Renouncing to ownership will leave the contract without an owner.
+   * It will not be possible to call the functions with the `onlyOwner`
+   * modifier anymore.
    */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
+  function renounceOwnership() public onlyOwner {
+    emit OwnershipRenounced(owner);
+    owner = address(0);
   }
 
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address _newOwner) public onlyOwner {
+    _transferOwnership(_newOwner);
+  }
+
+  /**
+   * @dev Transfers control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function _transferOwnership(address _newOwner) internal {
+    require(_newOwner != address(0));
+    emit OwnershipTransferred(owner, _newOwner);
+    owner = _newOwner;
+  }
 }
 
+
+// Crowdsale contracts interface
 contract ICrowdsaleProcessor is Ownable, HasManager {
   modifier whenCrowdsaleAlive() {
     require(isActive());
@@ -157,8 +232,11 @@ contract ICrowdsaleProcessor is Ownable, HasManager {
   // Becomes true if cancelled by owner
   bool public stopped;
 
-  // Total collected Ethereum: must be updated every time tokens has been sold
+  // Total collected forecast question currency
   uint256 public totalCollected;
+
+  // Total collected Ether
+  uint256 public totalCollectedETH;
 
   // Total amount of project's token sold: must be updated every time tokens has been sold
   uint256 public totalSold;
@@ -212,60 +290,8 @@ contract ICrowdsaleProcessor is Ownable, HasManager {
   function isSuccessful() public constant returns (bool);
 }
 
-contract BasicToken is ERC20Basic {
-  using SafeMath for uint256;
 
-  mapping(address => uint256) balances;
-
-  uint256 totalSupply_;
-
-  /**
-  * @dev total number of tokens in existence
-  */
-  function totalSupply() public view returns (uint256) {
-    return totalSupply_;
-  }
-
-  /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
-  function transfer(address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[msg.sender]);
-
-    // SafeMath.sub will throw if there is not enough balance.
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-  /**
-  * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of.
-  * @return An uint256 representing the amount owned by the passed address.
-  */
-  function balanceOf(address _owner) public view returns (uint256 balance) {
-    return balances[_owner];
-  }
-
-}
-
-contract DefaultToken is BasicToken {
-
-  string public name;
-  string public symbol;
-  uint8 public decimals;
-
-  constructor(string _name, string _symbol, uint8 _decimals) {
-    name = _name;
-    symbol = _symbol;
-    decimals = _decimals;
-  }
-}
-
+// Basic crowdsale implementation both for regualt and 3rdparty Crowdsale contracts
 contract BasicCrowdsale is ICrowdsaleProcessor {
   event CROWDSALE_START(uint256 startTimestamp, uint256 endTimestamp, address fundingAddress);
 
@@ -394,6 +420,10 @@ contract BasicCrowdsale is ICrowdsaleProcessor {
   }
 }
 
+
+/*
+  Standalone Bridge
+*/
 contract Bridge is BasicCrowdsale {
 
   using SafeMath for uint256;
@@ -409,15 +439,15 @@ contract Bridge is BasicCrowdsale {
 
   // Constructor
   constructor(
-    uint256 _minimalGoal,
-    uint256 _hardCap,
-    address _token
-  )
+    //uint256 _minimalGoal,
+    //uint256 _hardCap,
+    //address _token
+  ) public
     BasicCrowdsale(msg.sender, msg.sender) // owner, manager
   {
-    minimalGoal = _minimalGoal;
-    hardCap = _hardCap;
-    token = DefaultToken(_token);
+    minimalGoal = 1;
+    hardCap = 1;
+    token = DefaultToken(0x9998Db897783603c9344ED2678AB1B5D73d0f7C3);
   }
 
   /*
@@ -457,14 +487,15 @@ contract Bridge is BasicCrowdsale {
   }
 
   // Update information about collected ETH and sold tokens amount
-  function notifySale(uint256 _ethAmount, uint256 _tokensAmount)
+  function notifySale(uint256 _amount, uint256 _ethAmount, uint256 _tokensAmount)
     public
     hasBeenStarted()
     hasntStopped()
     whenCrowdsaleAlive()
     onlyOwner()
   {
-    totalCollected = totalCollected.add(_ethAmount);
+    totalCollected = totalCollected.add(_amount);
+    totalCollectedETH = totalCollectedETH.add(_ethAmount);
     totalSold = totalSold.add(_tokensAmount);
   }
 
@@ -526,9 +557,20 @@ contract Bridge is BasicCrowdsale {
   function calculateRewards() public view returns (uint256, uint256) {
     uint256 tokenRewardPart = IWingsController(manager).tokenRewardPart();
     uint256 ethRewardPart = IWingsController(manager).ethRewardPart();
+    uint256 ethReward;
+    bool hasEthReward = (ethRewardPart != 0);
 
     uint256 tokenReward = totalSold.mul(tokenRewardPart) / 1000000;
-    uint256 ethReward = (ethRewardPart == 0) ? 0 : (totalCollected.mul(ethRewardPart) / 1000000);
+
+    if (totalCollectedETH != 0) {
+      totalCollected = totalCollectedETH;
+    }
+
+    totalCollected = IWingsController(manager).fitCollectedValueIntoRange(totalCollected);
+
+    if (hasEthReward) {
+      ethReward = totalCollected.mul(ethRewardPart) / 1000000;
+    }
 
     return (ethReward, tokenReward);
   }
@@ -538,5 +580,19 @@ contract Bridge is BasicCrowdsale {
     token = DefaultToken(_newToken);
 
     emit CUSTOM_CROWDSALE_TOKEN_ADDED(address(token), uint8(token.decimals()));
+  }
+
+  // Gives owner ability to withdraw eth and wings from Bridge contract balance in case if some error during reward calculation occured
+  function withdraw() public onlyOwner() {
+    uint256 ethBalance = address(this).balance;
+    uint256 tokenBalance = token.balanceOf(address(this));
+
+    if (ethBalance > 0) {
+      require(msg.sender.send(ethBalance));
+    }
+
+    if (tokenBalance > 0) {
+      require(token.transfer(msg.sender, tokenBalance));
+    }
   }
 }
