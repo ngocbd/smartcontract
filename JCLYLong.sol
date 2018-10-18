@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JCLYLong at 0x5d94d1d382fcaaaa6567f979cfaaf91a1e5b9878
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JCLYLong at 0x7ebd56cc7c1d14788ed09179f67cdcf2778c6535
 */
 pragma solidity ^0.4.24;
 
@@ -237,7 +237,7 @@ contract JCLYLong is Pausable  {
 
     function migrateBasicData(uint256 allMaskGu, uint256 allGuGiven,
         uint256 airDropPot, uint256 airDropTracker, uint256 leekStealPot, uint256 leekStealTracker, uint256 leekStealToday, 
-        uint256 pID, uint256 rID)
+        uint256 pID, uint256 rID, uint256 phID)
         withinMigrationPeriod
         onlyOwner
         public
@@ -251,6 +251,7 @@ contract JCLYLong is Pausable  {
         leekStealToday_ = leekStealToday;
         pID_ = pID;
         rID_ = rID;
+        phID_ = phID;
     }
 
     function migratePlayerData1(uint256 _pID, address addr, uint256 win,
