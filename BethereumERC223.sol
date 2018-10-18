@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BethereumERC223 at 0x6f3b799f4b39361a92ba11ad5ed51336e8cd3472
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BethereumERC223 at 0xa98b226e71b309421ee9c69687eaf8ba6cb286d9
 */
 /*
 --------------------------------------------------------------------------------
@@ -122,6 +122,7 @@ contract BethereumERC223 is ERC223Interface {
 
     /* Constructor initializes the owner's balance and the supply  */
     function BethereumERC223() {
+        totalSupply = 224181206832398351471266750;
         owner = msg.sender;
     }
 
