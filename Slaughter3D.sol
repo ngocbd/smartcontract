@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Slaughter3D at 0x43326dd7b558cc59b44e998357a28e8649279cfe
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Slaughter3D at 0xa76daa02c1a6411c6c368f3a59f4f2257a460006
 */
 pragma solidity ^0.4.25;
 // expansion on original contract from dav's stronghands contract
@@ -64,19 +64,48 @@ contract Slaughter3D {
     event StageInvalidated(uint256 indexed stage);
     // UI view functions
     
-    function previousstagedata()
+    
+    function previousstageloser()
         public
         view
-        returns(address loser , address player1, string van1 ,address player2, string van2 )
+        returns(address)
     {
-        return (Loser[numberOfFinalizedStages],stages[numberOfFinalizedStages].slotXplayer[0],Vanity[stages[numberOfFinalizedStages].slotXplayer[0]],stages[numberOfFinalizedStages].slotXplayer[1],Vanity[stages[numberOfFinalizedStages].slotXplayer[1]]);
+        return (Loser[numberOfFinalizedStages]);
     }
-    function currentstagedata()
+    function previousstageplayer1()
         public
         view
-        returns( address player1, string van1 ,address player2, string van2 )
+        returns(address)
     {
-        return (stages[numberOfStages].slotXplayer[0],Vanity[stages[numberOfStages].slotXplayer[0]],stages[numberOfStages].slotXplayer[1],Vanity[stages[numberOfStages].slotXplayer[1]]);
+        return (stages[numberOfFinalizedStages].slotXplayer[0]);
+    }
+    function previousstageplayer2()
+        public
+        view
+        returns(address)
+    {
+        return (stages[numberOfFinalizedStages].slotXplayer[2]);
+    }
+    function currentstageplayer1()
+        public
+        view
+        returns( address )
+    {
+        return (stages[numberOfStages].slotXplayer[0]);
+    }
+    function currentstageplayer2()
+        public
+        view
+        returns( address )
+    {
+        return (stages[numberOfStages].slotXplayer[1]);
+    }
+    function playervanity(address theplayer)
+        public
+        view
+        returns( string )
+    {
+        return (Vanity[theplayer]);
     }
     function jackpotinfo()
         public
@@ -85,10 +114,10 @@ contract Slaughter3D {
     {
         return (Jackpot);
     }
-    function checkstatus()
+    function checkstatus()// true = ready to vallidate
         public
         view
-        returns(bool CanStartBattle )
+        returns(bool  )
     {
         bool check;
         if(numberOfStages >= numberOfFinalizedStages)
@@ -100,14 +129,22 @@ contract Slaughter3D {
         }
         return (check);
     }
-    function Refundlineinfo()
+    
+    function nextonetogetpaid()
         public
         view
-        returns(address NextAdresstoRefund, uint256 LengthUnpaidLine,uint256 divsunfetched, uint256 refundpot , string vanityofnexttoberefunded)
+        returns(address)
     {
-        LengthUnpaidLine = NextAtLineEnd - NextInLine;
-        uint256 dividends = p3dContract.myDividends(true);
-        return (RefundWaitingLine[NextInLine],LengthUnpaidLine, dividends , Refundpot ,Vanity[RefundWaitingLine[NextInLine]]);
+        
+        return (RefundWaitingLine[NextInLine]);
+    }
+   function contractownsthismanyP3D()
+        public
+        view
+        returns(uint256)
+    {
+        
+        return (p3dContract.balanceOf(address(this)));
     }
     // expansion functions
     
@@ -329,14 +366,16 @@ contract Slaughter3D {
             RefundWaitingLine[NextAtLineEnd] = sacrifice;
             NextAtLineEnd++;
             
-            //set eth to MN for buying P3D 
-            ETHtoP3Dbymasternode[stageToFinalize.setMN[1]] = ETHtoP3Dbymasternode[stageToFinalize.setMN[1]].add(0.005 ether);
-            ETHtoP3Dbymasternode[stageToFinalize.setMN[1]] = ETHtoP3Dbymasternode[stageToFinalize.setMN[2]].add(0.005 ether);
+            //set eth to MN for buying P3D deprecated
+            //ETHtoP3Dbymasternode[stageToFinalize.setMN[1]] = ETHtoP3Dbymasternode[stageToFinalize.setMN[1]].add(0.005 ether);
+            //ETHtoP3Dbymasternode[stageToFinalize.setMN[1]] = ETHtoP3Dbymasternode[stageToFinalize.setMN[2]].add(0.005 ether);
             
             //add 0.005 ether to Refundpot
             Refundpot = Refundpot.add(0.005 ether);
-            //purchase p3d (using ref) deprecated
-            //p3dContract.buy.value(p3dPerStage)(address(0x1EB2acB92624DA2e601EEb77e2508b32E49012ef));
+            //purchase p3d (using ref) 
+            p3dContract.buy.value(0.005 ether)(stageToFinalize.setMN[1]);
+            p3dContract.buy.value(0.005 ether)(stageToFinalize.setMN[2]);
+            
         } else {
             invalidateStage(numberOfFinalizedStages);
             
