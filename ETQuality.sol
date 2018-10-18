@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETQuality at 0xdd2e1cdce3b4e0ed01700aa19fcedbdd7bb6d37c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETQuality at 0x94d787cac6bfc4ec509a0f34aa7bc2fb68848c5e
 */
-pragma solidity ^0.4.4;
+pragma solidity ^0.4.24;
 
 contract Token {
 
@@ -121,9 +121,9 @@ contract ETQuality is StandardToken {
         ) {
         balances[msg.sender] = 1000000000000000000000000000;               // Give the creator all initial tokens (100000 for example)
         totalSupply = 1000000000000000000000000000;                        // Update total supply (100000 for example)
-        name = "Ether Quality";                                   // Set the name for display purposes
+        name = "ZeroPlastic";                                   // Set the name for display purposes
         decimals = 18;                            // Amount of decimals for display purposes
-        symbol = "ETQ";                               // Set the symbol for display purposes
+        symbol = "ZPC";                                // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
