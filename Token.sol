@@ -1,8 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x896063611d328e0afad8ffd7bb3a9a8306032ada
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xc8eebe0bacd5719d0c96962152ebd453c2be6fe9
 */
-/*! abs.sol | (c) 2018 Develop by BelovITLab LLC (smartcontract.ru), author @stupidlovejoy | License: MIT */
-
 pragma solidity 0.4.24;
 
 library SafeMath {
@@ -326,10 +324,10 @@ contract Manageable is Ownable {
 
 
 /*
-    ABS Token
+    CRB Token
 */
 contract Token is CappedToken, BurnableToken, Withdrawable {
-    constructor() CappedToken(146880432e7) StandardToken("ABSOLUTME", "ABS", 7) public {
+    constructor() CappedToken(250000000e8) StandardToken("?RB token", "?RB", 8) public {
         
     }
 }
