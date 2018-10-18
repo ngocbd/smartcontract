@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZeroGoldPOWMining at 0x1720db04cff1b232626ad8e67858715ea6e333a7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZeroGoldPOWMining at 0xe3a5d0f9aab65000a304d6057ef2b69d5eb35eb6
 */
 pragma solidity ^0.4.24;
 
@@ -112,9 +112,7 @@ contract ERC918Interface {
     event Mint(address indexed from, uint reward_amount, uint epochCount, bytes32 newChallengeNumber);
 
     address public lastRewardTo;
-    uint public lastRewardAmount;
     uint public lastRewardEthBlockNumber;
-    bytes32 public challengeNumber;
 }
 
 /*******************************************************************************
@@ -132,14 +130,6 @@ contract ZeroGoldPOWMining is Owned {
     /* Initialize the Mining Leader contract. */
     ERC918Interface public miningLeader;
     
-    /* Initialize the Mint Helper. */
-    address public mintHelper = 0x0;
-
-    modifier onlyMintHelper {
-        require(msg.sender == mintHelper);
-        _;
-    }
-    
     /* Reward divisor. */
     // NOTE A value of 20 means the reward is 1/20 (5%) 
     //      of current tokens held in the quarry. 
@@ -148,19 +138,20 @@ contract ZeroGoldPOWMining is Owned {
     /* Number of times this has been mined. */
     uint epochCount = 0;
     
-    /* Initialize last reward value. */
-    uint public lastRewardAmount = 0;
+    /* Amount of pending rewards (merged but not yet transferred). */
+    uint unclaimedRewards = 0;
+    
+    /* MintHelper approved rewards (to be claimed in transfer). */
+    mapping(address => uint) mintHelperRewards;
 
+    /* Solved solutions (to prevent duplicate rewards). */
     mapping(bytes32 => bytes32) solutionForChallenge;
 
     event Mint(address indexed from, uint reward_amount, uint epochCount, bytes32 newChallengeNumber);
 
-    constructor(address _miningLeader, address _mintHelper) public  {
-        /* Initialize the mining leader. */
+    constructor(address _miningLeader) public  {
+        /* Initialize the mining leader (eg 0xBitcoin). */
         miningLeader = ERC918Interface(_miningLeader);
-
-        /* Initialize the mint helper (address ONLY). */
-        mintHelper = _mintHelper;
 
         /* Initialize the ZeroGold contract. */
         // NOTE We hard-code the address here, since it should never change.
@@ -169,117 +160,126 @@ contract ZeroGoldPOWMining is Owned {
 
     /**
      * Merge
-     * (called from our mining leader)
+     * (called from ANY MintHelper)
      * 
-     * Ensure that mergeMint() can only be called once per Parent::mint().
+     * Ensure that mergeMint() can only be called once per MintHelper.
      * Do this by ensuring that the "new" challenge number from 
-     * Parent::challenge post mint can be called once and that this block time 
+     * MiningLeader::challenge post mint can be called once and that this block time 
      * is the same as this mint, and the caller is msg.sender.
-     * 
-     * Only allow one reward for each challenge. Do this by calculating what 
-     * the new challenge will be in _startNewMiningEpoch, and verify that 
-     * it is not that value this checks happen in the local contract, not in the parent
-     * 
      */
-    function merge() external onlyMintHelper returns (bool success) {
-        /* Retrieve the future challenge number from mining leader. */
-        bytes32 futureChallengeNumber = blockhash(block.number - 1);
-
-        /* Retrieve the challenge number from the mining leader. */
-        bytes32 challengeNumber = miningLeader.getChallengeNumber();
-
-        /* Verify the next challenge is different from the current. */
-        if (challengeNumber == futureChallengeNumber) {
-            // NOTE This is likely the second time that merge() has been
-            //      called in a transaction, so return false (don't revert).
-            return false; 
-        }
-
-        /* Verify Parent::lastRewardTo == msg.sender. */
+    function merge() external returns (bool success) {
+        /* Verify MiningLeader::lastRewardTo == msg.sender. */
         if (miningLeader.lastRewardTo() != msg.sender) {
             // NOTE A different address called mint last 
             //      so return false (don't revert).
             return false;
         }
             
-        /* Verify Parent::lastRewardEthBlockNumber == block.number. */
+        /* Verify MiningLeader::lastRewardEthBlockNumber == block.number. */
         if (miningLeader.lastRewardEthBlockNumber() != block.number) {
-            // NOTE parent::mint() was called in a different block number 
+            // NOTE MiningLeader::mint() was called in a different block number 
             //      so return false (don't revert).
             return false;
         }
 
         // We now update the solutionForChallenge hashmap with the value of 
-        // parent::challengeNumber when a solution is merge minted. Only allow 
-        // one reward for each challenge based on parent::challengeNumber.
-        bytes32 parentChallengeNumber = miningLeader.challengeNumber();
-        bytes32 solution = solutionForChallenge[parentChallengeNumber];
+        // MiningLeader::challengeNumber when a solution is merge minted. Only allow 
+        // one reward for each challenge based on MiningLeader::challengeNumber.
+        bytes32 challengeNumber = miningLeader.getChallengeNumber();
+        bytes32 solution = solutionForChallenge[challengeNumber];
         if (solution != 0x0) return false; // prevent the same answer from awarding twice
         
         bytes32 digest = 'merge';
-        solutionForChallenge[parentChallengeNumber] = digest;
+        solutionForChallenge[challengeNumber] = digest;
 
         // We may safely run the relevant logic to give an award to the sender, 
         // and update the contract.
         
-        /* Retrieve the reward value. */
-        uint rewardAmount = getRewardAmount();
+        /* Retrieve the reward amount. */
+        uint reward = getRewardAmount();
+        
+        /* Increase the value of unclaimed rewards. */
+        unclaimedRewards = unclaimedRewards.add(reward);
+
+        /* Increase the MintHelper's reward amount. */
+        mintHelperRewards[msg.sender] = mintHelperRewards[msg.sender].add(reward);
 
         /* Retrieve our ZeroGold balance. */
         uint balance = zeroGold.balanceOf(address(this));
 
-        /* Verify that we are not trying to transfer more than we HODL. */
-        assert(rewardAmount <= balance);
+        /* Verify that we will NOT try to transfer more than we HODL. */
+        assert(mintHelperRewards[msg.sender] <= balance);
 
-        /* Set last reward amount. */
-        // NOTE `lastRewardAmount` is called from MintHelper during `merge` 
-        //      to assign `merge_totalReward`.
-        lastRewardAmount = rewardAmount;
-        
         /* Increment the epoch count. */
         epochCount = epochCount.add(1);
 
         // NOTE: Use 0 to indicate a merge mine.
-        emit Mint(msg.sender, rewardAmount, epochCount, 0);
+        emit Mint(msg.sender, mintHelperRewards[msg.sender], epochCount, 0);
 
         return true;
     }
 
-    /* Transfer the ZeroGold reward to our mining leader's payout wallets. */
-    // NOTE This function will be called twice by MintHelper.merge(), 
-    //      once for `minterWallet` and once for `payoutsWallet`.
+    /**
+     * Transfer
+     * (called from ANY MintHelper)
+     * 
+     * Transfers the "approved" ZeroGold rewards to the MintHelpers's 
+     * payout wallets. 
+     * 
+     * NOTE: This function will be called twice by MintHelper.merge(), 
+     *       once for `minterWallet` and once for `payoutsWallet`.
+     */
     function transfer(
         address _wallet, 
         uint _reward
-    ) external onlyMintHelper returns (bool) {
-        /* Verify our mining leader isn't trying to over reward its wallets. */
-        if (_reward > lastRewardAmount) {
+    ) external returns (bool) {
+        /* Require a positive transfer value. */
+        if (_reward <= 0) {
             return false;
         }
-            
-        /* Reduce the last reward amount. */
-        lastRewardAmount = lastRewardAmount.sub(_reward);
 
-        /* Transfer the ZeroGold to mining leader. */
+        /* Verify our MintHelper isn't trying to over reward itself. */
+        if (_reward > mintHelperRewards[msg.sender]) {
+            return false;
+        }
+
+        /* Reduce the MintHelper's reward amount. */
+        mintHelperRewards[msg.sender] = mintHelperRewards[msg.sender].sub(_reward);
+        
+        /* Reduce the unclaimed rewards amount. */
+        unclaimedRewards = unclaimedRewards.sub(_reward);
+
+        /* Safely transfer ZeroGold reward to MintHelper's specified wallet. */
+        // FIXME MintHelper can transfer rewards to ANY wallet, and NOT
+        //       necessarily the wallet that pool miners will benefit from.
+        //       How "should we" restrict/verify the specified wallet??
         zeroGold.transfer(_wallet, _reward);
     }
 
     /* Calculate the current reward value. */
-    function getRewardAmount() public constant returns (uint) {
-        /* Retrieve the balance of the mineable token. */
+    function getRewardAmount() public view returns (uint) {
+        /* Retrieve the ZeroGold balance available in this mineable contract. */
         uint totalBalance = zeroGold.balanceOf(address(this));
+        
+        /* Calculate the available balance (minus unclaimed rewards). */
+        uint availableBalance = totalBalance.sub(unclaimedRewards);
 
-        return totalBalance.div(rewardDivisor);
+        /* Calculate the reward amount. */
+        uint rewardAmount = availableBalance.div(rewardDivisor);
+
+        return rewardAmount;
     }
-
+    
+    /* Retrieves the "TOTAL" reward amount available to this MintHelper. */
+    // NOTE `lastRewardAmount()` is called from MintHelper during the `merge` 
+    //      to assign the `merge_totalReward` value.
+    function lastRewardAmount() external view returns (uint) {
+        return mintHelperRewards[msg.sender];
+    }
+    
     /* Set the mining leader. */
     function setMiningLeader(address _miningLeader) external onlyOwner {
         miningLeader = ERC918Interface(_miningLeader);
-    }
-
-    /* Set the mint helper. */
-    function setMintHelper(address _mintHelper) external onlyOwner {
-        mintHelper = _mintHelper;
     }
 
     /* Set the reward divisor. */
