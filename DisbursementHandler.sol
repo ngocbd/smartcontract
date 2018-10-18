@@ -1,8 +1,20 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DisbursementHandler at 0xb9727ca27ea06f8b764ac4cf51bc8b206847e6d4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DisbursementHandler at 0x9a3cda6ca020d892773e939840b70a015926e4a7
 */
 pragma solidity 0.4.24;
 
+// File: @tokenfoundry/sale-contracts/contracts/interfaces/DisbursementHandlerI.sol
+
+interface DisbursementHandlerI {
+    function withdraw(address _beneficiary, uint256 _index) external;
+}
+
+// File: openzeppelin-solidity/contracts/math/SafeMath.sol
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
 
   /**
@@ -49,28 +61,8 @@ library SafeMath {
   }
 }
 
+// File: openzeppelin-solidity/contracts/ownership/Ownable.sol
 
-/**
- * @title Math
- * @dev Assorted math operations
- */
-library Math {
-  function max64(uint64 a, uint64 b) internal pure returns (uint64) {
-    return a >= b ? a : b;
-  }
-
-  function min64(uint64 a, uint64 b) internal pure returns (uint64) {
-    return a < b ? a : b;
-  }
-
-  function max256(uint256 a, uint256 b) internal pure returns (uint256) {
-    return a >= b ? a : b;
-  }
-
-  function min256(uint256 a, uint256 b) internal pure returns (uint256) {
-    return a < b ? a : b;
-  }
-}
 /**
  * @title Ownable
  * @dev The Ownable contract has an owner address, and provides basic authorization control
@@ -130,6 +122,8 @@ contract Ownable {
   }
 }
 
+// File: openzeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol
+
 /**
  * @title ERC20Basic
  * @dev Simpler version of ERC20 interface
@@ -142,6 +136,7 @@ contract ERC20Basic {
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
+// File: openzeppelin-solidity/contracts/token/ERC20/ERC20.sol
 
 /**
  * @title ERC20 interface
@@ -162,6 +157,7 @@ contract ERC20 is ERC20Basic {
   );
 }
 
+// File: openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol
 
 /**
  * @title SafeERC20
@@ -190,11 +186,7 @@ library SafeERC20 {
   }
 }
 
-
-interface DisbursementHandlerI {
-    function withdraw(address _beneficiary, uint256 _index) external;
-}
-
+// File: @tokenfoundry/sale-contracts/contracts/DisbursementHandler.sol
 
 /// @title Disbursement handler - Manages time locked disbursements of ERC20 tokens
 contract DisbursementHandler is DisbursementHandlerI, Ownable {
@@ -216,9 +208,47 @@ contract DisbursementHandler is DisbursementHandlerI, Ownable {
     uint256 public totalAmount;
     mapping(address => Disbursement[]) public disbursements;
 
+    bool public closed;
+
+    modifier isOpen {
+        require(!closed, "Disbursement Handler is closed");
+        _;
+    }
+
+    modifier isClosed {
+        require(closed, "Disbursement Handler is open");
+        _;
+    }
+
+
     constructor(ERC20 _token) public {
-        require(_token != address(0));
+        require(_token != address(0), "Token cannot have address 0");
         token = _token;
+    }
+
+    /// @dev Called to create disbursements.
+    /// @param _beneficiaries The addresses of the beneficiaries.
+    /// @param _values The number of tokens to be locked for each disbursement.
+    /// @param _timestamps Funds will be locked until this timestamp for each disbursement.
+    function setupDisbursements(
+        address[] _beneficiaries,
+        uint256[] _values,
+        uint256[] _timestamps
+    )
+        external
+        onlyOwner
+        isOpen
+    {
+        require((_beneficiaries.length == _values.length) && (_beneficiaries.length == _timestamps.length), "Arrays not of equal length");
+        require(_beneficiaries.length > 0, "Arrays must have length > 0");
+
+        for (uint256 i = 0; i < _beneficiaries.length; i++) {
+            setupDisbursement(_beneficiaries[i], _values[i], _timestamps[i]);
+        }
+    }
+
+    function close() external onlyOwner isOpen {
+        closed = true;
     }
 
     /// @dev Called by the sale contract to create a disbursement.
@@ -230,10 +260,9 @@ contract DisbursementHandler is DisbursementHandlerI, Ownable {
         uint256 _value,
         uint256 _timestamp
     )
-        external
-        onlyOwner
+        internal
     {
-        require(block.timestamp < _timestamp);
+        require(block.timestamp < _timestamp, "Disbursement timestamp in the past");
         disbursements[_beneficiary].push(Disbursement(_timestamp, _value));
         totalAmount = totalAmount.add(_value);
         emit Setup(_beneficiary, _timestamp, _value);
@@ -244,12 +273,13 @@ contract DisbursementHandler is DisbursementHandlerI, Ownable {
     /// @param _index The index of the disbursement
     function withdraw(address _beneficiary, uint256 _index)
         external
+        isClosed
     {
         Disbursement[] storage beneficiaryDisbursements = disbursements[_beneficiary];
-        require(_index < beneficiaryDisbursements.length);
+        require(_index < beneficiaryDisbursements.length, "Supplied index out of disbursement range");
 
         Disbursement memory disbursement = beneficiaryDisbursements[_index];
-        require(disbursement.timestamp < now && disbursement.value > 0);
+        require(disbursement.timestamp < now && disbursement.value > 0, "Disbursement timestamp not reached, or disbursement value of 0");
 
         // Remove the withdrawn disbursement
         delete beneficiaryDisbursements[_index];
