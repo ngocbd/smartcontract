@@ -1,15 +1,97 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleTokenExt at 0x76de4dd2c611ed274aa1e8c304426c65cee507f1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleTokenExt at 0x1bb2b4ecd392ed83b8507cb8ea291c98ac066158
 */
-// Created using Token Wizard https://github.com/poanetwork/token-wizard by POA Network 
+// ---Trixchain Powered by POA Network---
 pragma solidity ^0.4.11;
+/*
+Name         : Trixchain
+Symbol       : TRIX
+Total Supply : 1.000.000.000.000 TRIX
+Decimals     : 18 
+Contract     : 0x1bb2b4ecd392ed83b8507cb8ea291c98ac066158
 
+Chat Group   : https://t.me/joinchat/Jc2Vrkb0C11mxRmFnVploQ
+Channel      : https://t.me/trixchainchannel
 
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
+TOKENSALE DETAILS
+
+Total Supply ---------: 1.000.000.000.000 TRIX
+Tokensale             : 250.000.000.000 TRIX
+Future Project -------: 250.000.000.000 TRIX
+Foundation            : 75.000.000.000 TRIX 
+Team -----------------: 25.000.000.000 TRIX 
+Monthly Holder Reward : 400.000.000.000 TRIX 
+
+*With Our Mecanism , All TRIX Holder will get monthly reward for more than 20 Years* 
+After Tokensale Finished TRIX will list on exchange, our first target TRIX will list on Okex , Hotbit , Cryptopia , Mercatox , idex 
+
+Official website , Official twitter and official twitter will launch on December 2018 
+-----------------------------
+TOKENSALE PHASE 1 
+TOKENSALE CONTRACT ADDRESS for PHASE 1 
+"  0x5df18eF4055c807082797b44A09323e31e66AeF6  "
+
+DATE : Oct 3,2018  to  Nov 3,2018
+Rate 1 ETH = 50.000.000 TRIX + Bonus 100%
+No Minimum Contribution
+How to Contribute : 
+Use Myetherwallet :
+Send ETH to TOKENSALE CONTRACT ADDRESS for PHASE 1 
+Example : Send 1 ETH to 0x5df18eF4055c807082797b44A09323e31e66AeF6 
+Gas Price always check on ethgasstation.info
+Gas Limits : 150.000
+Data : 0xa6f2ae3a
+Warning You Should input the Data "0xa6f2ae3a" or you will fail send the transaction 
+Use Metamask :
+Open Your Metamask and access the link below :
+https://wizard.oracles.org/invest?addr=0x5df18eF4055c807082797b44A09323e31e66AeF6&networkID=1
+
+------------------------------
+
+TOKENSALE PHASE 2
+TOKENSALE CONTRACT ADDRESS for PHASE 2 
+"  0xba2D53ef55876F2247FBAA669c10bf9F2800D61E  "
+
+DATE : Nov 4,2018 to Dec 15,2018 
+Rate 1 ETH = 50.000.000 TRIX + Bonus 50%
+No Minimum Contribution
+How to Contribute : 
+Use Myetherwallet :
+Send ETH to TOKENSALE CONTRACT ADDRESS for PHASE 2 
+Example : Send 1 ETH to 0xba2D53ef55876F2247FBAA669c10bf9F2800D61E 
+Gas Price always check on ethgasstation.info
+Gas Limits : 150.000
+Data : 0xa6f2ae3a
+Warning You Should input the Data "0xa6f2ae3a" or you will fail send the transaction 
+Use Metamask :
+Open Your Metamask and access the link below :
+https://wizard.oracles.org/invest?addr=0xba2D53ef55876F2247FBAA669c10bf9F2800D61E&networkID=1
+
+------------------------------
+
+TOKENSALE PHASE 3 
+TOKENSALE CONTRACT ADDRESS for PHASE 3 
+"  0x1e1B917E8F1F882f481A1c7CFB0a5b1C75946Cef  "
+
+DATE : Dec 16,2018  to  Jan 30,2019
+Rate 1 ETH = 50.000.000 TRIX (no bonus)
+No Minimum Contribution
+How to Contribute : 
+Use Myetherwallet :
+Send ETH to TOKENSALE CONTRACT ADDRESS for PHASE 3 
+Example : Send 1 ETH to 0x1e1B917E8F1F882f481A1c7CFB0a5b1C75946Cef 
+Gas Price always check on ethgasstation.info
+Gas Limits : 150.000
+Data : 0xa6f2ae3a
+Warning You Should input the Data "0xa6f2ae3a" or you will fail send the transaction 
+Use Metamask :
+Open Your Metamask and access the link below :
+https://wizard.oracles.org/invest?addr=0x1e1B917E8F1F882f481A1c7CFB0a5b1C75946Cef&networkID=1
+
+------------------------------
+
+*/
+
 contract ERC20Basic {
   uint256 public totalSupply;
   function balanceOf(address who) public constant returns (uint256);
@@ -17,42 +99,21 @@ contract ERC20Basic {
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
 contract Ownable {
   address public owner;
 
 
   event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
   function Ownable() {
     owner = msg.sender;
   }
 
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
   modifier onlyOwner() {
     require(msg.sender == owner);
     _;
   }
 
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
   function transferOwnership(address newOwner) onlyOwner public {
     require(newOwner != address(0));
     OwnershipTransferred(owner, newOwner);
@@ -60,10 +121,6 @@ contract Ownable {
   }
 
 }
-// Temporarily have SafeMath here until all contracts have been migrated to SafeMathLib version from OpenZeppelin
-
-
-
 
 /**
  * Math operations with safety checks
@@ -110,33 +167,8 @@ contract SafeMath {
   }
 
 }
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
 
 
-
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
-
-
-
-
-
-
-
-
-
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
 contract ERC20 is ERC20Basic {
   function allowance(address owner, address spender) public constant returns (uint256);
   function transferFrom(address from, address to, uint256 value) public returns (bool);
@@ -145,14 +177,6 @@ contract ERC20 is ERC20Basic {
 }
 
 
-
-
-/**
- * Standard ERC20 token with Short Hand Attack and approve() race condition mitigation.
- *
- * Based on code by FirstBlood:
- * https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
- */
 contract StandardToken is ERC20, SafeMath {
 
   /* Token supply got increased and a new owner received these tokens */
@@ -192,10 +216,6 @@ contract StandardToken is ERC20, SafeMath {
 
   function approve(address _spender, uint _value) returns (bool success) {
 
-    // To change the approve amount you first have to reduce the addresses`
-    //  allowance to zero by calling `approve(_spender, 0)` if it is not
-    //  already 0 to mitigate the race condition described here:
-    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
     if ((_value != 0) && (allowed[msg.sender][_spender] != 0)) throw;
 
     allowed[msg.sender][_spender] = _value;
@@ -209,35 +229,11 @@ contract StandardToken is ERC20, SafeMath {
 
 }
 
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
 
-
-
-
-
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
-
-
-
-/**
- * Upgrade agent interface inspired by Lunyr.
- *
- * Upgrade agent transfers tokens to a new contract.
- * Upgrade agent itself can be the token contract, or just a middle man contract doing the heavy lifting.
- */
 contract UpgradeAgent {
 
   uint public originalSupply;
 
-  /** Interface marker */
   function isUpgradeAgent() public constant returns (bool) {
     return true;
   }
@@ -263,15 +259,6 @@ contract UpgradeableToken is StandardToken {
   /** How many tokens we have upgraded by now. */
   uint256 public totalUpgraded;
 
-  /**
-   * Upgrade states.
-   *
-   * - NotAllowed: The child contract has not reached a condition where the upgrade can bgun
-   * - WaitingForAgent: Token allows upgrade, but we don't have a new agent yet
-   * - ReadyToUpgrade: The agent is set, but not a single token has been upgraded yet
-   * - Upgrading: Upgrade agent is set and the balance holders can upgrade their tokens
-   *
-   */
   enum UpgradeState {Unknown, NotAllowed, WaitingForAgent, ReadyToUpgrade, Upgrading}
 
   /**
@@ -372,17 +359,6 @@ contract UpgradeableToken is StandardToken {
 
 }
 
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
-
-
-
-
-
-
 
 /**
  * Define interface for releasing the token transfer after a successful crowdsale.
@@ -420,7 +396,6 @@ contract ReleasableToken is ERC20, Ownable {
    */
   function setReleaseAgent(address addr) onlyOwner inReleaseState(false) public {
 
-    // We don't do interface check here as we might want to a normal wallet address to act as a release agent
     releaseAgent = addr;
   }
 
@@ -468,33 +443,6 @@ contract ReleasableToken is ERC20, Ownable {
 
 }
 
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
-
-
-
-
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
-
-
-
-/**
- * Safe unsigned safe math.
- *
- * https://blog.aragon.one/library-driven-development-in-solidity-2bebcaf88736#.750gwtwli
- *
- * Originally from https://raw.githubusercontent.com/AragonOne/zeppelin-solidity/master/contracts/SafeMathLib.sol
- *
- * Maintained here until merged to mainline zeppelin-solidity.
- *
- */
 library SafeMathLibExt {
 
   function times(uint a, uint b) returns (uint) {
