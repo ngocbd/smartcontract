@@ -1,18 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract test at 0xd0b4e64c323186340ed2d8168ddae8f18677560e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Test at 0xb8653e2b71b3f9ac56efc0c3dd00cf71c9c0a238
 */
-pragma solidity ^0.4.24;
-
-contract test {
-    
-    function sub1(uint256 _a, uint256 _b) public pure returns (uint256 result) {
-        require(_a >= _b);
-        return _a - _b;
-    }
-    
-    function sub2(uint256 _a, uint256 _b) public pure returns (uint256 result) {
-        require(_a >= _b, "_a cannot be less than _b");
-        return _a - _b;
-    }
-    
-}
+pragma solidity ^0.4.23;
+contract Test {}
