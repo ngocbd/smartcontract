@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract nexus at 0x34d36647ff0f2163db7cbf4b00e93aa4c34ee204
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NEXUS at 0xf669d2963fd7daef7bfacbbe35392066ee08f9cb
 */
 pragma solidity ^0.4.18;
 
@@ -67,7 +67,7 @@ contract ERC20 is ERC20Basic {
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-contract nexus is ERC20 {
+contract NEXUS is ERC20 {
     
     using SafeMath for uint256;
     address owner = msg.sender;
@@ -75,14 +75,14 @@ contract nexus is ERC20 {
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;    
 
-    string public constant name = "nexus";
+    string public constant name = "NEXUS";
     string public constant symbol = "NXS";
     uint public constant decimals = 8;
     
     uint256 public totalSupply = 10000000000e8;
     uint256 public totalDistributed = 0;        
-    uint256 public tokensPerEth = 33333333e8;
-    uint256 public constant minContribution = 1 ether / 1000; // 0.001 Ether
+    uint256 public tokensPerEth = 20000000e8;
+    uint256 public constant minContribution = 1 ether / 100; // 0.01 Ether
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
@@ -123,7 +123,7 @@ contract nexus is ERC20 {
     
 
     function finishDistribution() onlyOwner canDistr public returns (bool) {
-        distributionFinished = true;
+        distributionFinished = false;
         emit DistrFinished();
         return true;
     }
