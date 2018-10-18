@@ -1,32 +1,32 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WhitelistSale at 0xc4837c8d8ba13644d877112ab148dc8b526a7ad2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WhitelistSale at 0x6df3def177d51a9727d539b8dfa908ab34ffd07a
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.24;
 
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a * b;
     assert(a == 0 || c / a == b);
     return c;
   }
 
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
 
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
     return c;
@@ -34,10 +34,10 @@ library SafeMath {
 }
 
 contract ERC20Constant {
-    function balanceOf( address who ) constant returns (uint value);
+    function balanceOf( address who ) view public returns (uint value);
 }
 contract ERC20Stateful {
-    function transfer( address to, uint value) returns (bool ok);
+    function transfer( address to, uint value) public returns (bool ok);
 }
 contract ERC20Events {
     event Transfer(address indexed from, address indexed to, uint value);
@@ -47,160 +47,198 @@ contract ERC20 is ERC20Constant, ERC20Stateful, ERC20Events {}
 contract Owned {
     address public owner;
 
-    function Owned() {
+    constructor() public {
         owner = msg.sender;
     }
 
     modifier onlyOwner {
-        require(msg.sender == owner);
+        require(msg.sender == owner,"owner only");
         _;
     }
 
-    function transferOwnership(address newOwner) onlyOwner {
+    function transferOwnership(address newOwner) public onlyOwner {
         owner = newOwner;
     }
 }
 
 contract WhitelistSale is Owned {
 
-    ERC20 public manaToken;
+    ERC20 public blocToken;
 
-    // Amount of MANA received per ETH
-    uint256 public manaPerEth;
+    uint256 public blocPerEth;
+    
+    bool running;
 
-    // Sales start at this timestamp
-    uint256 public initialTimestamp;
-
-    // The sale goes on through 6 days. Each day, users are allowed to buy up to a certain amount of MANA.
-
-    // This mapping stores the addresses for whitelisted users
     mapping(address => bool) public whitelisted;
 
-    // Used to calculate the current limit
     mapping(address => uint256) public bought;
-
-    // The initial values allowed per day are copied from this array
-    uint256[6] public limitPerDay;
-
-    // Forwarding address
+    
+    mapping(address => uint256) public userLimitAmount;
+    
+    mapping(address => bool) public whitelistUserGettedBloc;
+        
+    mapping(address => bool) public whitelistUserGettedEthBack;
+    
+    uint256 rebackRate; // 0-10000
+    uint256 constant MaxRate = 10000; 
     address public receiver;
-
-    // The sale does not continue if this flag is set to true -- in case of emergency 
-    bool public handbreak;
+    address[] private whitelistUsers;
+    uint256 constant public maxGasPrice = 50000000000;
 
     event LogWithdrawal(uint256 _value);
     event LogBought(uint orderInMana);
-    event LogUserAdded(address user);
+    // event LogUserAdded(address user);
     event LogUserRemoved(address user);
-    event LogUpdatedLimitPerDay(uint8 _day, uint256 amount);
-    event LogUpdatedInitialTimestamp(uint256 _initialTimestamp);
 
-    function WhitelistSale (
-        ERC20 _manaToken,
-        uint256 _initialTimestamp,
+    constructor(
         address _receiver
-    )
-        Owned()
+    ) public Owned()
     {
-        manaToken        = _manaToken;
-        initialTimestamp = _initialTimestamp;
+        blocToken;
         receiver         = _receiver;
-
-        manaPerEth       = 11954;
-        limitPerDay[0]   = 3.3 ether;
-        limitPerDay[1]   = 10 ether   + limitPerDay[0];
-        limitPerDay[2]   = 30 ether   + limitPerDay[1];
-        limitPerDay[3]   = 90 ether   + limitPerDay[2];
-        limitPerDay[4]   = 450 ether  + limitPerDay[3];
-        limitPerDay[5]   = 1500 ether + limitPerDay[4];
-
-        handbreak        = false;
+        blocPerEth       = 0;
+        whitelistUsers   = new address[](0);
+        rebackRate       = 0;
+        running          = true;
+    }
+    
+    function getRebackRate() public view returns (uint256 rate) {
+        return rebackRate;
+    }
+    
+    function changePerEthToBlocNumber(uint256 _value)  public onlyOwner {
+        require(_value > 0,"ratio must > 0");
+        blocPerEth = _value;
+    }
+    
+    function changeRebackRate(uint256 _rate)  public onlyOwner {
+        require(_rate > 0,"refundrate must > 0");
+        require(_rate < MaxRate,"refundrate must < 10000");
+        rebackRate = _rate;
+    }
+    
+    function changeBlocTokenAdress(ERC20 _tokenContractAddress)  public onlyOwner {
+        blocToken = _tokenContractAddress;
+    }
+    
+    function withdrawEth(uint256 _value)  public onlyOwner {
+        require(receiver != address(0),"receiver not set");
+        receiver.transfer(_value);
     }
 
-    // Pause the sale
-    function activateHandbreak() onlyOwner {
-        handbreak = true;
+    function withdrawBloc(uint256 _value)  public onlyOwner  returns (bool ok) {
+        require(blocToken != address(0),"token contract not set");
+        return withdrawToken(blocToken, _value);
     }
 
-    // Withdraw Mana (only owner)
-    function withdrawMana(uint256 _value) onlyOwner returns (bool ok) {
-        return withdrawToken(manaToken, _value);
+    function withdrawToken(address _token, uint256 _value) private onlyOwner  returns (bool ok) {
+        bool result = ERC20(_token).transfer(owner,_value);
+        if (result) emit LogWithdrawal(_value);
+        return result;
     }
 
-    // Withdraw any ERC20 token (just in case)
-    function withdrawToken(address _token, uint256 _value) onlyOwner returns (bool ok) {
-        return ERC20(_token).transfer(owner,_value);
-        LogWithdrawal(_value);
-    }
-
-    // Withdraw proceeds
-    function withdraw(uint256 _value) onlyOwner {
-        require(this.balance >= _value);
-        owner.transfer(_value);
-        LogWithdrawal(_value);
-    }
-
-    // Change address where funds are received
-    function changeReceiver(address _receiver) onlyOwner {
-        require(_receiver != 0);
+    function changeReceiver(address _receiver) public onlyOwner {
+        require(_receiver != address(0),"empty receiver");
         receiver = _receiver;
     }
-
-    // Calculate which day into the sale are we.
-    function getDay() public returns (uint256) {
-        return SafeMath.sub(block.timestamp, initialTimestamp) / 1 days;
+    
+    function changeBlocPerEth(uint256 _value) public onlyOwner {
+        require(_value != 0,"ratio should > 0");
+        blocPerEth = _value;
     }
-
-    modifier onlyIfActive {
-        require(!handbreak);
-        require(getDay() >= 0);
-        require(getDay() < 6);
+    
+    function changeRuningState(bool _value) public onlyOwner {
+        running = _value;
+    }
+    
+    modifier onlyIsRuning {
+        require(running,"KYC over");
         _;
     }
 
-    function buy(address beneficiary) payable onlyIfActive {
-        require(beneficiary != 0);
-        require(whitelisted[msg.sender]);
+    function buy() private onlyIsRuning {
+        require(whitelisted[msg.sender],"not whitelisted");
+        require(whitelistUserGettedBloc[msg.sender] == false,"token already sent");
+        require(msg.value >= 0.2 ether,"must greater or equal to 0.2 eth");
 
-        uint day = getDay();
-        uint256 allowedForSender = limitPerDay[day] - bought[msg.sender];
-
-        if (msg.value > allowedForSender) revert();
-
-        uint256 balanceInMana = manaToken.balanceOf(address(this));
-
-        uint orderInMana = msg.value * manaPerEth;
-        if (orderInMana > balanceInMana) revert();
-
+        uint256 allowedForSender = SafeMath.sub(userLimitAmount[msg.sender], bought[msg.sender]);
+        if (msg.value > allowedForSender) revert("over limit amount");
+        // receiver.transfer(msg.value);
         bought[msg.sender] = SafeMath.add(bought[msg.sender], msg.value);
-        receiver.transfer(msg.value);
-        manaToken.transfer(beneficiary, orderInMana);
-
-        LogBought(orderInMana);
     }
+    
+    function transferBlocToUser(address userAddress) public onlyOwner {
+        require(rebackRate < MaxRate,"refundrate overflow");
+        require(blocPerEth > 0,"token ratio not set");
+        require(whitelistUserGettedBloc[userAddress] == false,"token already sent");
+        require(bought[userAddress] > 0,"not bought");
+             
+        uint256 bountPerEth = SafeMath.mul( blocPerEth , (MaxRate - rebackRate));
+        uint orderInBloc = SafeMath.mul(SafeMath.div(bought[userAddress],MaxRate),bountPerEth) ;
+            
+        uint256 balanceInBloc = blocToken.balanceOf(address(this));
+        if (orderInBloc > balanceInBloc) revert("not enough token");
+        if (blocToken.transfer(userAddress, orderInBloc)) whitelistUserGettedBloc[userAddress] = true;
+    }
+    
+    function transferEthBackToUser(address userAddress) public onlyOwner {
+        require(rebackRate > 0,"refundrate not set");
+        require(whitelistUserGettedEthBack[userAddress] == false,"token already sent");
+        require(bought[userAddress] > 0,"not bought");
+             
+        uint backEthNumber = SafeMath.mul(SafeMath.div(bought[userAddress],MaxRate),rebackRate) ;
+        whitelistUserGettedEthBack[userAddress] = true;
+        userAddress.transfer(backEthNumber);
+    }
+    
 
-    // Add a user to the whitelist
-    function addUser(address user) onlyOwner {
+    function addUser(address user,uint amount) public onlyOwner onlyIsRuning {
+        if (whitelisted[user] == true) {
+            if (userLimitAmount[user] != amount) {
+                userLimitAmount[user] = amount;
+            }
+            return;
+        }
+        
         whitelisted[user] = true;
-        LogUserAdded(user);
+        whitelistUsers.push(user);
+        userLimitAmount[user] = amount;
+        whitelistUserGettedBloc[user] = false;
+        whitelistUserGettedEthBack[user] = false;
+        // emit LogUserAdded(user);
     }
 
-    // Remove an user from the whitelist
-    function removeUser(address user) onlyOwner {
+    function removeUser(address user) public onlyOwner onlyIsRuning {
         whitelisted[user] = false;
-        LogUserRemoved(user);
+        emit LogUserRemoved(user);
     }
 
-    // Batch add users
-    function addManyUsers(address[] users) onlyOwner {
-        require(users.length < 10000);
+    function addManyUsers(address[] users,uint[] amounts) public onlyOwner onlyIsRuning {
+        require(users.length < 10000,"list too long");
+        require(users.length == amounts.length, "users' length != amounts' length");
+        
         for (uint index = 0; index < users.length; index++) {
-             whitelisted[users[index]] = true;
-             LogUserAdded(users[index]);
+            addUser(users[index],amounts[index]);
         }
     }
 
-    function() payable {
-        buy(msg.sender);
+    function() public payable onlyIsRuning {
+        require(tx.gasprice <= maxGasPrice,"gas price must not greater than 50GWei");
+        buy();
+    }
+    
+    function getWhiteUsers() public view onlyOwner returns(address[] whitelistUsersResult) {
+        return whitelistUsers;
+    }
+
+
+    function getWhiteUsersFrom(uint index, uint size) public view onlyOwner returns(address[] whitelistUsersResult) {
+        address[] memory slice = new address[](size);
+        uint idx = 0;
+        for (uint i = index; idx < size && i < whitelistUsers.length; i++) {
+            slice[idx] = whitelistUsers[i];
+            idx++;
+        }
+        return slice;
     }
 }
