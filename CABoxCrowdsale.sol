@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CABoxCrowdsale at 0x322a440b61ef7466e640659b39470d57847666f8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CABoxCrowdsale at 0xc135cbf6b4057b720e4aa7788b90adbe074a4ee7
 */
 pragma solidity ^0.4.18;
 
@@ -262,7 +262,7 @@ contract CABoxToken is BurnableToken, Ownable {
     string public constant symbol = "CAB";
     uint8 public constant decimals = 18;
     
-    uint256 public constant INITIAL_SUPPLY = 500 * 1000000 * (10 ** uint256(decimals));
+    uint256 public constant INITIAL_SUPPLY = 999 * 1000000 * (10 ** uint256(decimals));
 
     /**
      * @dev Constructor that gives msg.sender all of existing tokens.
@@ -287,10 +287,6 @@ contract CABoxCrowdsale is Ownable{
 
   // The token being sold
   CABoxToken public token;
-
-  // start and end timestamps where investments are allowed (both inclusive)
-  uint256 public startTime;
-  uint256 public endTime;
     
   // address where funds are collected
   address public wallet;
@@ -313,9 +309,7 @@ contract CABoxCrowdsale is Ownable{
 
   function CABoxCrowdsale() public {
     token = createTokenContract();
-    startTime = 1535155200;
-    endTime = 1540771200;
-    wallet = 0x9BeAbD0aeB08d18612d41210aFEafD08fb84E9E8;
+    wallet = 0x0570a6eDFbcFf6B89f848A2ca7F81B3C3Ec72D05;
     devWallet = 0x13dF1d8F51324a237552E87cebC3f501baE2e972;
   }
 
@@ -348,21 +342,9 @@ contract CABoxCrowdsale is Ownable{
   }
   
   function getBonusRate() internal view returns (uint256) {
-        uint64[5] memory tokenRates = [uint64(24000),uint64(20000),uint64(16000),uint64(12000),uint64(8000)];
-    
-        // apply bonus for time
-        uint64[5] memory timeStartsBoundaries = [uint64(1535155200),uint64(1538352000),uint64(1538956800),uint64(1539561600),uint64(1540166400)];
-        uint64[5] memory timeEndsBoundaries = [uint64(1538352000),uint64(1538956800),uint64(1539561600),uint64(1540166400),uint64(1540771200)];
-        uint[5] memory timeRates = [uint(500),uint(250),uint(200),uint(150),uint(100)];
-    
-        uint256 bonusRate = tokenRates[0];
-    
-        for (uint i = 0; i < 5; i++) {
-            bool timeInBound = (timeStartsBoundaries[i] <= now) && (now < timeEndsBoundaries[i]);
-            if (timeInBound) {
-                bonusRate = tokenRates[i] + tokenRates[i] * timeRates[i] / 1000;
-            }
-        }
+        uint64 tokenRate = 24000; // 1ETH = 24000CAB
+        uint bonus = 400; // bonus = 40%
+        uint256 bonusRate = tokenRate + tokenRate * bonus / 1000;
         
         return bonusRate;
   }
@@ -377,16 +359,8 @@ contract CABoxCrowdsale is Ownable{
   // @return true if the transaction can buy tokens
   function validPurchase() internal view returns (bool) {
     bool nonZeroPurchase = msg.value != 0;
-    bool withinPeriod = now >= startTime && now <= endTime;
     
-    return nonZeroPurchase && withinPeriod;
-  }
-  
-  // @return true if crowdsale event has ended
-  function hasEnded() public view returns (bool) {
-      bool timeEnded = now > endTime;
-
-      return timeEnded;
+    return nonZeroPurchase;
   }
   
   // update token contract
@@ -395,12 +369,5 @@ contract CABoxCrowdsale is Ownable{
       token.transferOwnership(_tokenAddress);
 
       TokenContractUpdated(true);
-  }
-  
-  // transfer tokens
-  function transferTokens(address _to, uint256 _amount) onlyOwner {
-      require(_to != address(0));
-      
-      token.transfer(_to, _amount);
   }
 }
