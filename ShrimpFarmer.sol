@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ShrimpFarmer at 0xfd7c7c43bedfda1e7a50e15766c617ee3e10ce66
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ShrimpFarmer at 0xb4d95449f1d4a793c7d32ab23a52ab58af5fe095
 */
 pragma solidity ^0.4.18; // solhint-disable-line
 
@@ -25,7 +25,7 @@ contract EthVerifyCore{
 }
 contract ShrimpFarmer is ApproveAndCallFallBack{
     using SafeMath for uint;
-    address vrfAddress=0x5BD574410F3A2dA202bABBa1609330Db02aD64C2;//0x5BD574410F3A2dA202bABBa1609330Db02aD64C2;
+    address vrfAddress=0x5BD574410F3A2dA202bABBa1609330Db02aD64C2;
     VerifyToken vrfcontract=VerifyToken(vrfAddress);
 
     //257977574257854071311765966
@@ -33,28 +33,31 @@ contract ShrimpFarmer is ApproveAndCallFallBack{
     //uint256 EGGS_PER_SHRIMP_PER_SECOND=1;
     uint256 public EGGS_TO_HATCH_1SHRIMP=86400;//86400
     uint public VRF_EGG_COST=(1000000000000000000*300)/EGGS_TO_HATCH_1SHRIMP;
-    //uint256 public STARTING_SHRIMP=300;
+    uint256 public STARTING_SHRIMP=300;
     uint256 PSN=100000000000000;
     uint256 PSNH=50000000000000;
-    uint public POT_DRAIN_TIME=12 hours;//24 hours;
-    uint public HATCH_COOLDOWN=6 hours;//6 hours;
+    uint public potDrainTime=2 hours;//
+    uint public POT_DRAIN_INCREMENT=1 hours;
+    uint public POT_DRAIN_MAX=3 days;
+    uint public HATCH_COOLDOWN_MAX=6 hours;//6 hours;
     bool public initialized=false;
     //bool public completed=false;
 
     address public ceoAddress;
     address public dev2;
+    mapping (address => uint256) public hatchCooldown;//the amount of time you must wait now varies per user
     mapping (address => uint256) public hatcheryShrimp;
     mapping (address => uint256) public claimedEggs;
     mapping (address => uint256) public lastHatch;
     mapping (address => bool) public hasClaimedFree;
     uint256 public marketEggs;
-    EthVerifyCore public ethVerify=EthVerifyCore(0x1c307A39511C16F74783fCd0091a921ec29A0b51);//0x1c307A39511C16F74783fCd0091a921ec29A0b51);
+    EthVerifyCore public ethVerify=EthVerifyCore(0x1c307A39511C16F74783fCd0091a921ec29A0b51);
 
     uint public lastBidTime;//last time someone bid for the pot
     address public currentWinner;
-    //uint public potEth=0;
+    uint public potEth=0;//eth specifically set aside for the pot
     uint public totalHatcheryShrimp=0;
-    uint public prizeEth=0;//eth specifically set aside for the pot
+    uint public prizeEth=0;
 
     function ShrimpFarmer() public{
         ceoAddress=msg.sender;
@@ -63,7 +66,7 @@ contract ShrimpFarmer is ApproveAndCallFallBack{
         currentWinner=msg.sender;
     }
     function finalizeIfNecessary() public{
-      if(lastBidTime.add(POT_DRAIN_TIME)<now){
+      if(lastBidTime.add(potDrainTime)<now){
         currentWinner.transfer(this.balance);//winner gets everything
         initialized=false;
         //completed=true;
@@ -73,18 +76,32 @@ contract ShrimpFarmer is ApproveAndCallFallBack{
         return totalHatcheryShrimp.div(100);
     }
     function stealPot() public {
-      finalizeIfNecessary();
+
       if(initialized){
           _hatchEggs(0);
           uint cost=getPotCost();
           hatcheryShrimp[msg.sender]=hatcheryShrimp[msg.sender].sub(cost);//cost is 1% of total shrimp
-          totalHatcheryShrimp=totalHatcheryShrimp.add(cost);
-          lastBidTime=now;
-          currentWinner=msg.sender;
+          totalHatcheryShrimp=totalHatcheryShrimp.sub(cost);
+          setNewPotWinner();
+          hatchCooldown[msg.sender]=0;
       }
     }
+    function setNewPotWinner() private {
+      finalizeIfNecessary();
+      if(initialized && msg.sender!=currentWinner){
+        potDrainTime=lastBidTime.add(potDrainTime).sub(now).add(POT_DRAIN_INCREMENT);//time left plus one hour
+        if(potDrainTime>POT_DRAIN_MAX){
+          potDrainTime=POT_DRAIN_MAX;
+        }
+        lastBidTime=now;
+        currentWinner=msg.sender;
+      }
+    }
+    function isHatchOnCooldown() public view returns(bool){
+      return lastHatch[msg.sender].add(hatchCooldown[msg.sender])<now;
+    }
     function hatchEggs(address ref) public{
-      require(lastHatch[msg.sender].add(HATCH_COOLDOWN)<now);
+      require(isHatchOnCooldown());
       _hatchEggs(ref);
     }
     function _hatchEggs(address ref) private{
@@ -96,7 +113,7 @@ contract ShrimpFarmer is ApproveAndCallFallBack{
         totalHatcheryShrimp=totalHatcheryShrimp.add(newShrimp);
         claimedEggs[msg.sender]=0;
         lastHatch[msg.sender]=now;
-
+        hatchCooldown[msg.sender]=HATCH_COOLDOWN_MAX;
         //send referral eggs
         require(ref!=msg.sender);
         if(ref!=0){
@@ -105,9 +122,25 @@ contract ShrimpFarmer is ApproveAndCallFallBack{
         //boost market to nerf shrimp hoarding
         marketEggs=SafeMath.add(marketEggs,SafeMath.div(eggsUsed,7));
     }
-
+    function getHatchCooldown(uint eggs) public view returns(uint){
+      uint targetEggs=marketEggs.div(50);
+      if(eggs>=targetEggs){
+        return HATCH_COOLDOWN_MAX;
+      }
+      return (HATCH_COOLDOWN_MAX.mul(eggs)).div(targetEggs);
+    }
+    function reduceHatchCooldown(address addr,uint eggs) private{
+      uint reduction=getHatchCooldown(eggs);
+      if(reduction>=hatchCooldown[addr]){
+        hatchCooldown[addr]=0;
+      }
+      else{
+        hatchCooldown[addr]=hatchCooldown[addr].sub(reduction);
+      }
+    }
     function sellEggs() public{
         require(initialized);
+        finalizeIfNecessary();
         uint256 hasEggs=getMyEggs();
         uint256 eggValue=calculateEggSell(hasEggs);
         //uint256 fee=devFee(eggValue);
@@ -127,6 +160,15 @@ contract ShrimpFarmer is ApproveAndCallFallBack{
         ceoAddress.transfer(devFee(msg.value));
         dev2.transfer(devFee2(msg.value));
         claimedEggs[msg.sender]=SafeMath.add(claimedEggs[msg.sender],eggsBought);
+        reduceHatchCooldown(msg.sender,eggsBought); //reduce the hatching cooldown based on eggs bought
+
+        //steal the pot if bought enough
+        uint potEggCost=getPotCost().mul(EGGS_TO_HATCH_1SHRIMP);//the equivalent number of eggs to the pot cost in shrimp
+        if(eggsBought>potEggCost){
+          //hatcheryShrimp[msg.sender]=hatcheryShrimp[msg.sender].add(getPotCost());//to compensate for the shrimp that will be lost when calling the following
+          //stealPot();
+          setNewPotWinner();
+        }
     }
     //magic trade balancing algorithm
     function calculateTrade(uint256 rt,uint256 rs, uint256 bs) public view returns(uint256){
@@ -159,16 +201,12 @@ contract ShrimpFarmer is ApproveAndCallFallBack{
         marketEggs=eggs;
         lastBidTime=now;
     }
-    //to correct a mistake necessitating a redeploy of the contract
-    function setPreShrimp(address holder,uint shrimp){
-      require(!initialized);
-      require(msg.sender==ceoAddress);
-      claimedEggs[holder]=shrimp*EGGS_TO_HATCH_1SHRIMP;
-    }
     //Tokens are exchanged for shrimp by sending them to this contract with ApproveAndCall
     function receiveApproval(address from, uint256 tokens, address token, bytes data) public{
         require(!initialized);
         require(msg.sender==vrfAddress);
+        require(ethVerify.verifiedUsers(from));//you must now be verified for this
+        require(claimedEggs[from].add(tokens.div(VRF_EGG_COST))<=1001*EGGS_TO_HATCH_1SHRIMP);//you may now trade for a max of 1000 eggs
         vrfcontract.transferFrom(from,this,tokens);
         claimedEggs[from]=claimedEggs[from].add(tokens.div(VRF_EGG_COST));
     }
@@ -176,17 +214,20 @@ contract ShrimpFarmer is ApproveAndCallFallBack{
     function () public payable {}
 
     function claimFreeEggs() public{
+//  RE ENABLE THIS BEFORE DEPLOYING MAINNET
         require(ethVerify.verifiedUsers(msg.sender));
         require(initialized);
         require(!hasClaimedFree[msg.sender]);
         claimedEggs[msg.sender]=claimedEggs[msg.sender].add(getFreeEggs());
+        _hatchEggs(0);
+        hatchCooldown[msg.sender]=0;
         hasClaimedFree[msg.sender]=true;
         //require(hatcheryShrimp[msg.sender]==0);
         //lastHatch[msg.sender]=now;
         //hatcheryShrimp[msg.sender]=hatcheryShrimp[msg.sender].add(STARTING_SHRIMP);
     }
     function getFreeEggs() public view returns(uint){
-        return min(calculateEggBuySimple(this.balance.div(100)),calculateEggBuySimple(0.05 ether));
+        return min(calculateEggBuySimple(this.balance.div(400)),calculateEggBuySimple(0.01 ether));
     }
     function getBalance() public view returns(uint256){
         return this.balance;
