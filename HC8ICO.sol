@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HC8ICO at 0xd9153cfdfb5ec8f82c5e647deb379b10d402d7e4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HC8ICO at 0x0f2af372c7a332e092f6249020eefbce2e5215e8
 */
 /*************************************************************************
  * This contract has been merged with solidify
  * https://github.com/tiesnetwork/solidify
  *************************************************************************/
  
- pragma solidity ^0.4.18;
+ pragma solidity ^0.4.22;
 
 
 /*************************************************************************
@@ -425,7 +425,7 @@ contract HC8ICO {
     uint public constant tokensCap = 99 * mln * multiplier;
 
     //ICO success
-    uint public constant minSuccess = 2 * mln * multiplier;
+    uint public constant minSuccess = 50 * multiplier;
 
     // Amount of sold tokens
     uint public totalSupply = 0;
@@ -441,7 +441,7 @@ contract HC8ICO {
     uint private constant rateDivider = 1;
 
     // initial price in wei
-    uint public priceInWei = 2481641572 / rateDivider;
+    uint public priceInWei = 3105962723;
 
 
     // robot address
