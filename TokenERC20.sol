@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x797142c60d87F55D44117Cde8d1f5Fd1F56F0001
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xcf0f0b683c438d9a7958e9c82b097efe1e11e9f0
 */
 pragma solidity ^0.4.16;
 
@@ -31,7 +31,7 @@ contract TokenERC20 {
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    constructor(
+    function TokenERC20(
         uint256 initialSupply,
         string tokenName,
         string tokenSymbol
