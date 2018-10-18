@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PavoToken at 0xf73c0d5f7438221381e04565b5266a55ca6cda73
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PavoToken at 0x4cd15f56ca1122ebe8f584f33660aa228829edc5
 */
 pragma solidity ^0.4.16;
 
@@ -279,7 +279,7 @@ contract AbstractToken is Token, SafeMath {
 
 
 /**
- * Pavo token smart contract.
+ * Pavo2 token smart contract.
  */
 contract PavoToken is AbstractToken {
   /**
@@ -298,7 +298,7 @@ contract PavoToken is AbstractToken {
   bool frozen = false;
 
   /**
-   * Create new Pavo token smart contract, with given number of tokens issued
+   * Create new Pavo2 token smart contract, with given number of tokens issued
    * and given to msg.sender, and make msg.sender the owner of this smart
    * contract.
    *
@@ -325,7 +325,7 @@ contract PavoToken is AbstractToken {
    * @return name of this token
    */
   function name () public pure returns (string result) {
-    return "Pavo Coin";
+    return "Pavo";
   }
 
   /**
@@ -343,7 +343,7 @@ contract PavoToken is AbstractToken {
    * @return number of decimals for this token
    */
   function decimals () public pure returns (uint8 result) {
-    return 8;
+    return 6;
   }
 
   /**
