@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZCFees at 0x9d79c6e2a0222b9ac7bfabc447209c58fe9e0dcc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZCFees at 0xac48fdb546c5738ebc2863d16f24862c88a72a5d
 */
 pragma solidity ^0.4.24;
 
@@ -153,9 +153,6 @@ contract ZCFees {
         uint256 endBalance;
     }
 
-    uint256 public totalRewards;
-    uint256 public totalFees;
-
     mapping (uint256 => PaymentHistory) payments;
     address public tokenAddress;
     PeriodUtil public periodUtil;
@@ -279,13 +276,11 @@ contract ZCFees {
         uint256 tokensToBurn = tokensToClear.mul(BURN_PER).div(100);
         ERC20Burnable(tokenAddress).burn(tokensToBurn);
 
-        uint256 tokensToFeesWallet = tokensToClear.sub(tokensToBurn);
-        totalFees = totalFees.add(tokensToFeesWallet);
-        assert(ERC20Burnable(tokenAddress).transfer(feesWallet, tokensToFeesWallet));
+        assert(ERC20Burnable(tokenAddress).transfer(feesWallet, tokensToClear.sub(tokensToBurn)));
         lastPeriodCycleExecIdx = lastPeriodCycleExecIdx + 1;
         lastYearPeriod.endBalance = 0;
 
-        emit YearEndClearance(lastPeriodCycleExecIdx, tokensToFeesWallet, tokensToBurn);
+        emit YearEndClearance(lastPeriodCycleExecIdx, tokensToClear);
     }
 
     /**
@@ -360,9 +355,6 @@ contract ZCFees {
         currPayment.fees = feesPay;
         currPayment.reward = rewardPay;
 
-        totalFees = totalFees.add(feesPay);
-        totalRewards = totalRewards.add(rewardPay);
-
         assert(ERC20Burnable(tokenAddress).transfer(rewardWallet, rewardPay));
         assert(ERC20Burnable(tokenAddress).transfer(feesWallet, feesPay));
 
@@ -384,9 +376,8 @@ contract ZCFees {
     * @dev Event when year end clearance happens
     * @param yearIdx Year the clearance happend for
     * @param feesPay Amount of tokens paid in fees
-    * @param burned Amount of tokens burned
     */
-    event YearEndClearance(uint256 yearIdx, uint256 feesPay, uint256 burned);
+    event YearEndClearance(uint256 yearIdx, uint256 feesPay);
 
 
     /**
