@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Legendary at 0x0140ac0f46cca38a6ebdf14fcf699fb6b5912c8d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Legendary at 0x169a1de803ede52c02384f8a3bf6fc9ff9e09344
 */
 pragma solidity ^0.4.18;
 
@@ -77,7 +77,7 @@ contract Legendary is ERC20 {
     mapping (address => mapping (address => uint256)) allowed;    
 
     string public constant name = "Legendary Coin";
-    string public constant symbol = "GEND";
+    string public constant symbol = "LEG";
     uint public constant decimals = 8;
     
     uint256 public totalSupply = 10000000000e8;
