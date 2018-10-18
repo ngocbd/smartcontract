@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x555eb0C063F0328972daF5a2885F8c7725C5A7d2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x8600951620E90b1a46c7049C8eC88E3dC59B1E33
 */
 contract Token {
 
