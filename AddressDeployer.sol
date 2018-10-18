@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AddressDeployer at 0xfc52c22f62f4daffb262f488b0c87ef9dd07a4ec
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AddressDeployer at 0x9f69b9ef74669262f55cca4650add92ae6a56349
 */
 pragma solidity ^0.4.24;
 
@@ -35,6 +35,6 @@ contract AddressDeployer {
         }
         require(addr != 0);
         emit Deployed(addr);
-        //selfdestruct(msg.sender); // For some reason not works properly! Will fix in update!
+        selfdestruct(msg.sender);
     }
 }
