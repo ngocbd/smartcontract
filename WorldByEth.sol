@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WorldByEth at 0xa1997e5476538e841cdf0a5d0990bf09a4932675
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WorldByEth at 0xb619e84adddd3e336c5dda1e1b40719c846d9030
 */
 pragma solidity ^0.4.24;
 
@@ -16,6 +16,7 @@ contract WorldByEth {
     address public comaddr = 0x9ca974f2c49d68bd5958978e81151e6831290f57;
     mapping(uint256 => uint256) public pot_;
     mapping(uint256 => mapping(uint256 => Ctry)) public ctry_;
+    uint public ctynum = 0;
     uint public gap = 1 hours;
     uint public timeleft;
     address public lastplayer = 0x9ca974f2c49d68bd5958978e81151e6831290f57;
@@ -50,7 +51,7 @@ contract WorldByEth {
         pID_++;
         rID_++;
         validplayers.length = 0;
-        timeleft = now + 24 hours;
+        timeleft = now + gap;
     }
 
     function getvalid()
@@ -59,18 +60,6 @@ contract WorldByEth {
         return validplayers;
     }
     
-    function changemem(uint id, bytes32 mem)
-    isHuman
-    public
-    payable
-    {
-        require(msg.value >= 0.1 ether);
-        require(msg.sender == ctry_[rID_][id].owner);
-        com_ += msg.value;
-        if (mem != ""){
-            ctry_[rID_][id].mem = mem;
-        }
-    }
 
     function buy(uint id, bytes32 mem)
     isHuman
@@ -141,22 +130,12 @@ contract WorldByEth {
         com_ += msg.value;
     }
 
-    modifier onlyDevs() {
-        require(
-            msg.sender == 0x9ca974f2c49d68bd5958978e81151e6831290f57,
-            "only team just can activate"
-        );
-        _;
-    }
-
-    // upgrade withdraw com_ and clear it to 0
+    //testing
     function withcom()
-    onlyDevs
     public
     {
         if (com_ <= address(this).balance){
             comaddr.transfer(com_);
-            com_ = 0;
         }else{
             comaddr.transfer(address(this).balance);
         }
