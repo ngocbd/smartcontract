@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ExToke at 0x757d2774b72dbc66cc47e1e277f3bab7eba5b4bb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ExToke at 0x54a7c606ea45f9b20cff8dbe232cdf6146cb7d26
 */
 pragma solidity ^0.4.25;
 
@@ -72,8 +72,6 @@ contract ExToke {
 
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed owner, address indexed spender, uint256 value);
-    event Withdraw(address indexed from, uint256 value);
-    event Swap(address indexed from, uint256 value);
 
     mapping(address => mapping(address => uint256)) public allowance;
 
@@ -138,7 +136,6 @@ contract ExToke {
         uint256 amount = scaledDividendBalanceOf[msg.sender] / scaling;
         scaledDividendBalanceOf[msg.sender] %= scaling;  // retain the remainder
         balanceOf[msg.sender] += amount;
-        emit Withdraw(msg.sender, amount);
         return true;
     }
 
@@ -158,7 +155,6 @@ contract ExToke {
             balanceOf[msg.sender] += sendAmount * 3;
             tokenSwapSupply -= sendAmount * 3;
         }
-        emit Swap(msg.sender, sendAmount);
         return true;
     }
 
