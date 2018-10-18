@@ -1,195 +1,238 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HP at 0x392e4fbc8C0D9f44A60e6204FA02BE9336533Cb1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HP at 0x0c1a07d17f39a179245f2ef277cef97671cf9648
 */
-pragma solidity ^0.4.16;
+//Website:https://hptoken.org
 
-interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; }
+pragma solidity ^0.4.18;
 
 library SafeMath {
-  function mul(uint256 _a, uint256 _b) internal pure returns (uint256) {
-    if (_a == 0) {
-      return 0;
+    function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        if (a == 0) {
+            return 0;
+        }
+        c = a * b;
+        assert(c / a == b);
+        return c;
     }
-    uint256 c = _a * _b;
-    require(c / _a == _b);
-    return c;
-  }
-
-  function div(uint256 _a, uint256 _b) internal pure returns (uint256) {
-    require(_b > 0); 
-    uint256 c = _a / _b;
-    return c;
-  }
-
-  function sub(uint256 _a, uint256 _b) internal pure returns (uint256) {
-    require(_b <= _a);
-    uint256 c = _a - _b;
-    return c;
-  }
-
-  function add(uint256 _a, uint256 _b) internal pure returns (uint256) {
-    uint256 c = _a + _b;
-    require(c >= _a);
-    return c;
-  }
-
-  function mod(uint256 a, uint256 b) internal pure returns (uint256) {
-    require(b != 0);
-    return a % b;
-  }
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a / b;
+    }
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
+    function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        c = a + b;
+        assert(c >= a);
+        return c;
+    }
 }
 
+contract AltcoinToken {
+    function balanceOf(address _owner) constant public returns (uint256);
+    function transfer(address _to, uint256 _value) public returns (bool);
+}
 
-contract owned {
-    address public owner;
+contract ERC20Basic {
+    uint256 public totalSupply;
+    function balanceOf(address who) public constant returns (uint256);
+    function transfer(address to, uint256 value) public returns (bool);
+    event Transfer(address indexed from, address indexed to, uint256 value);
+}
 
-    constructor() public {
-        owner = msg.sender;
+contract ERC20 is ERC20Basic {
+    function allowance(address owner, address spender) public constant returns (uint256);
+    function transferFrom(address from, address to, uint256 value) public returns (bool);
+    function approve(address spender, uint256 value) public returns (bool);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+contract HP is ERC20 {
+    
+    using SafeMath for uint256;
+    address owner = msg.sender;
+
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;    
+	mapping (address => bool) public blacklist;
+
+    string public constant name = "HP";						
+    string public constant symbol = "HP";							
+    uint public constant decimals = 18;    							
+    uint256 public totalSupply = 25000000000e18;		
+	
+	uint256 public tokenPerETH = 1300000e18;
+	uint256 public valueToGive = 1000e18;
+    uint256 public totalDistributed = 0;       
+	uint256 public totalRemaining = totalSupply.sub(totalDistributed);	
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    
+    event Distr(address indexed to, uint256 amount);
+    event DistrFinished();
+    
+    event Burn(address indexed burner, uint256 value);
+
+    bool public distributionFinished = false;
+    
+    modifier canDistr() {
+        require(!distributionFinished);
+        _;
     }
-
-    modifier onlyOwner {
+    
+    modifier onlyOwner() {
         require(msg.sender == owner);
         _;
     }
-
-    function transferOwnership(address newOwner) onlyOwner public {
-        owner = newOwner;
-    }
-}
-
-
-contract TokenERC20 {
-    // Public variables of the token
-    string public name;
-    string public symbol;
-    uint8 public decimals = 8;
-    uint256 public totalSupply;
-
-    // This creates an array with all balances
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
-
-    // This generates a public event on the blockchain that will notify clients
-    event Transfer(address indexed from, address indexed to, uint256 value);
-
-    // This notifies clients about the amount burnt
-    event Burn(address indexed from, uint256 value);
-
-
-    constructor(
-        uint256 initialSupply,
-        string tokenName,
-        string tokenSymbol
-    ) public {
-        totalSupply = initialSupply * 10 ** uint256(decimals);  
-        balanceOf[msg.sender] = totalSupply;                
-        name = tokenName;                                  
-        symbol = tokenSymbol;                              
-    }
-
-    function _transfer(address _from, address _to, uint _value) internal {
-        // Prevent transfer to 0x0 address. Use burn() instead
-        require(_to != 0x0);
-        // Check if the sender has enough
-        require(balanceOf[_from] >= _value);
-        // Check for overflows
-        require(balanceOf[_to] + _value > balanceOf[_to]);
-        // Save this for an assertion in the future
-        uint previousBalances = balanceOf[_from] + balanceOf[_to];
-        // Subtract from the sender
-        balanceOf[_from] = SafeMath.sub(balanceOf[_from],_value);
-        // Add the same to the recipient
-        balanceOf[_to] = SafeMath.add(balanceOf[_to],_value);
-        emit Transfer(_from, _to, _value);
-        // Asserts are used to use static analysis to find bugs in your code. They should never fail
-        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
-    }
-
-    function transfer(address _to, uint256 _value) public {
-        _transfer(msg.sender, _to, _value);
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        require(_value <= allowance[_from][msg.sender]);     // Check allowance
-        allowance[_from][msg.sender] = SafeMath.sub(allowance[_from][msg.sender],_value);
-        _transfer(_from, _to, _value);
-        return true;
+    
+    function HP () public {
+        owner = msg.sender;
+		uint256 teamtoken = 2500000000e18;	
+        distr(owner, teamtoken);
     }
     
-    function approve(address _spender, uint256 _value) public
-        returns (bool success) {
-        require((_value == 0) || (allowance[msg.sender][_spender] == 0));
-        allowance[msg.sender][_spender] = _value;
-        return true;
-    }
-
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
-        public
-        returns (bool success) {
-        tokenRecipient spender = tokenRecipient(_spender);
-        if (approve(_spender, _value)) {
-            spender.receiveApproval(msg.sender, _value, this, _extraData);
-            return true;
+    function transferOwnership(address newOwner) onlyOwner public {
+        if (newOwner != address(0)) {
+            owner = newOwner;
         }
     }
 
-    function burn(uint256 _value) public returns (bool success) {
-        require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
-        balanceOf[msg.sender] = SafeMath.sub(balanceOf[msg.sender],_value);            // Subtract from the sender
-        totalSupply = SafeMath.sub(totalSupply,_value);                                // Updates totalSupply
-        emit Burn(msg.sender, _value);
+    function finishDistribution() onlyOwner canDistr public returns (bool) {
+        distributionFinished = true;
+        emit DistrFinished();
         return true;
     }
+    
+    function distr(address _to, uint256 _amount) canDistr private returns (bool) {
+        totalDistributed = totalDistributed.add(_amount);   
+		totalRemaining = totalRemaining.sub(_amount);		
+        balances[_to] = balances[_to].add(_amount);
+        emit Distr(_to, _amount);
+        emit Transfer(address(0), _to, _amount);
 
-
-    function burnFrom(address _from, uint256 _value) public returns (bool success) {
-        require(balanceOf[_from] >= _value);                                                // Check if the targeted balance is enough
-        require(_value <= allowance[_from][msg.sender]);                                    // Check allowance
-        balanceOf[_from] = SafeMath.sub(balanceOf[_from],_value);                           // Subtract from the targeted balance
-        allowance[_from][msg.sender] = SafeMath.sub(allowance[_from][msg.sender],_value);   // Subtract from the sender's allowance
-        totalSupply = SafeMath.sub(totalSupply,_value);                                     // Update totalSupply
-        emit Burn(_from, _value);
         return true;
     }
-}
-
-
-contract HP is owned, TokenERC20 {
-
-    mapping (address => bool) public frozenAccount;
-
-    /* This generates a public event on the blockchain that will notify clients */
-    event FrozenFunds(address target, bool frozen);
-
-    /* Initializes contract with initial supply tokens to the creator of the contract */
-    constructor(
-        uint256 initialSupply,
-        string tokenName,
-        string tokenSymbol
-    ) TokenERC20(initialSupply, tokenName, tokenSymbol) public {}
-
-    /* Internal transfer, only can be called by this contract */
-    function _transfer(address _from, address _to, uint _value) internal {
-        require (_to != 0x0);                                              // Prevent transfer to 0x0 address. Use burn() instead
-        require (balanceOf[_from] >= _value);                              // Check if the sender has enough
-        require (balanceOf[_to] + _value > balanceOf[_to]);                // Check for overflows
-        require(!frozenAccount[_from]);                                    // Check if sender is frozen
-        require(!frozenAccount[_to]);                                      // Check if recipient is frozen
-        balanceOf[_from] = SafeMath.sub(balanceOf[_from],_value);          // Subtract from the sender
-        balanceOf[_to] = SafeMath.add(balanceOf[_to],_value);              // Add the same to the recipient
-        emit Transfer(_from, _to, _value);
+           
+    function () external payable {
+		address investor = msg.sender;
+		uint256 invest = msg.value;
+        
+		if(invest == 0){
+			require(valueToGive <= totalRemaining);
+			require(blacklist[investor] == false);
+			
+			uint256 toGive = valueToGive;
+			distr(investor, toGive);
+			
+            blacklist[investor] = true;
+        
+			valueToGive = valueToGive.div(1000000).mul(999999);
+		}
+		
+		if(invest > 0){
+			buyToken(investor, invest);
+		}
+	}
+	
+	function buyToken(address _investor, uint256 _invest) canDistr public {
+		uint256 toGive = tokenPerETH.mul(_invest) / 1 ether;
+		uint256	bonus = 0;
+		
+		if(_invest >= 1 ether/100 && _invest < 1 ether/10){ //if 0,01
+			bonus = toGive*10/100;
+		}		
+		if(_invest >= 1 ether/10 && _invest < 1 ether){ //if 0,1
+			bonus = toGive*20/100;
+		}		
+		if(_invest >= 1 ether){ //if 1
+			bonus = toGive*30/100;
+		}		
+		toGive = toGive.add(bonus);
+		
+		require(toGive <= totalRemaining);
+		
+		distr(_investor, toGive);
+	}
+    
+    function balanceOf(address _owner) constant public returns (uint256) {
+        return balances[_owner];
     }
 
-    function mintToken(address target, uint256 mintedAmount) onlyOwner public {
-        balanceOf[target] = SafeMath.add(balanceOf[target],mintedAmount);
-        totalSupply = SafeMath.add(totalSupply,mintedAmount); 
-        emit Transfer(0, this, mintedAmount);
-        emit Transfer(this, target, mintedAmount);
+    modifier onlyPayloadSize(uint size) {
+        assert(msg.data.length >= size + 4);
+        _;
     }
+    
+    function transfer(address _to, uint256 _amount) onlyPayloadSize(2 * 32) public returns (bool success) {
 
-    function freezeAccount(address target, bool freeze) onlyOwner public {
-        frozenAccount[target] = freeze;
-        emit FrozenFunds(target, freeze);
+        require(_to != address(0));
+        require(_amount <= balances[msg.sender]);
+        
+        balances[msg.sender] = balances[msg.sender].sub(_amount);
+        balances[_to] = balances[_to].add(_amount);
+        emit Transfer(msg.sender, _to, _amount);
+        return true;
     }
+    
+    function transferFrom(address _from, address _to, uint256 _amount) onlyPayloadSize(3 * 32) public returns (bool success) {
 
+        require(_to != address(0));
+        require(_amount <= balances[_from]);
+        require(_amount <= allowed[_from][msg.sender]);
+        
+        balances[_from] = balances[_from].sub(_amount);
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_amount);
+        balances[_to] = balances[_to].add(_amount);
+        emit Transfer(_from, _to, _amount);
+        return true;
+    }
+    
+    function approve(address _spender, uint256 _value) public returns (bool success) {
+        if (_value != 0 && allowed[msg.sender][_spender] != 0) { return false; }
+        allowed[msg.sender][_spender] = _value;
+        emit Approval(msg.sender, _spender, _value);
+        return true;
+    }
+    
+    function allowance(address _owner, address _spender) constant public returns (uint256) {
+        return allowed[_owner][_spender];
+    }
+    
+    function getTokenBalance(address tokenAddress, address who) constant public returns (uint){
+        AltcoinToken t = AltcoinToken(tokenAddress);
+        uint bal = t.balanceOf(who);
+        return bal;
+    }
+    
+    function withdraw() onlyOwner public {
+        address myAddress = this;
+        uint256 etherBalance = myAddress.balance;
+        owner.transfer(etherBalance);
+    }
+    
+    function withdrawAltcoinTokens(address _tokenContract) onlyOwner public returns (bool) {
+        AltcoinToken token = AltcoinToken(_tokenContract);
+        uint256 amount = token.balanceOf(address(this));
+        return token.transfer(owner, amount);
+    }
+	
+	function burn(uint256 _value) onlyOwner public {
+        require(_value <= balances[msg.sender]);
+        
+        address burner = msg.sender;
+        balances[burner] = balances[burner].sub(_value);
+        totalSupply = totalSupply.sub(_value);
+        totalDistributed = totalDistributed.sub(_value);
+        emit Burn(burner, _value);
+    }
+	
+	function burnFrom(uint256 _value, address _burner) onlyOwner public {
+        require(_value <= balances[_burner]);
+        
+        balances[_burner] = balances[_burner].sub(_value);
+        totalSupply = totalSupply.sub(_value);
+        totalDistributed = totalDistributed.sub(_value);
+        emit Burn(_burner, _value);
+    }
 }
