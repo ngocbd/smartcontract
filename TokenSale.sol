@@ -1,18 +1,229 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSale at 0x9527fcc8963ab8dccf50cf6731e0abcd6bf262ba
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSale at 0x9d713e0a2f6a1c9650083ebca27f4520cd2cde8e
 */
-pragma solidity ^0.4.24;
+/**
+ * Copyright (c) 2018 blockimmo AG license@blockimmo.ch
+ * Non-Profit Open Software License 3.0 (NPOSL-3.0)
+ * https://opensource.org/licenses/NPOSL-3.0
+ */
+ 
 
+pragma solidity 0.4.25;
+
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
+    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+    if (_a == 0) {
+      return 0;
+    }
+
+    c = _a * _b;
+    assert(c / _a == _b);
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 _a, uint256 _b) internal pure returns (uint256) {
+    // assert(_b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = _a / _b;
+    // assert(_a == _b * c + _a % _b); // There is no case in which this doesn't hold
+    return _a / _b;
+  }
+
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 _a, uint256 _b) internal pure returns (uint256) {
+    assert(_b <= _a);
+    return _a - _b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
+    c = _a + _b;
+    assert(c >= _a);
+    return c;
+  }
+}
+
+
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * See https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address _who) public view returns (uint256);
+  function transfer(address _to, uint256 _value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address _owner, address _spender)
+    public view returns (uint256);
+
+  function transferFrom(address _from, address _to, uint256 _value)
+    public returns (bool);
+
+  function approve(address _spender, uint256 _value) public returns (bool);
+  event Approval(
+    address indexed owner,
+    address indexed spender,
+    uint256 value
+  );
+}
+
+
+/**
+ * @title SafeERC20
+ * @dev Wrappers around ERC20 operations that throw on failure.
+ * To use this library you can add a `using SafeERC20 for ERC20;` statement to your contract,
+ * which allows you to call the safe operations as `token.safeTransfer(...)`, etc.
+ */
+library SafeERC20 {
+  function safeTransfer(
+    ERC20Basic _token,
+    address _to,
+    uint256 _value
+  )
+    internal
+  {
+    require(_token.transfer(_to, _value));
+  }
+
+  function safeTransferFrom(
+    ERC20 _token,
+    address _from,
+    address _to,
+    uint256 _value
+  )
+    internal
+  {
+    require(_token.transferFrom(_from, _to, _value));
+  }
+
+  function safeApprove(
+    ERC20 _token,
+    address _spender,
+    uint256 _value
+  )
+    internal
+  {
+    require(_token.approve(_spender, _value));
+  }
+}
+
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipRenounced(address indexed previousOwner);
+  event OwnershipTransferred(
+    address indexed previousOwner,
+    address indexed newOwner
+  );
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  constructor() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to relinquish control of the contract.
+   * @notice Renouncing to ownership will leave the contract without an owner.
+   * It will not be possible to call the functions with the `onlyOwner`
+   * modifier anymore.
+   */
+  function renounceOwnership() public onlyOwner {
+    emit OwnershipRenounced(owner);
+    owner = address(0);
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address _newOwner) public onlyOwner {
+    _transferOwnership(_newOwner);
+  }
+
+  /**
+   * @dev Transfers control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function _transferOwnership(address _newOwner) internal {
+    require(_newOwner != address(0));
+    emit OwnershipTransferred(owner, _newOwner);
+    owner = _newOwner;
+  }
+}
+
+
+/**
+ * @title Crowdsale
+ * @dev Crowdsale is a base contract for managing a token crowdsale,
+ * allowing investors to purchase tokens with ether. This contract implements
+ * such functionality in its most fundamental form and can be extended to provide additional
+ * functionality and/or custom behavior.
+ * The external interface represents the basic interface for purchasing tokens, and conform
+ * the base architecture for crowdsales. They are *not* intended to be modified / overridden.
+ * The internal interface conforms the extensible and modifiable surface of crowdsales. Override
+ * the methods to add functionality. Consider using 'super' where appropriate to concatenate
+ * behavior.
+ */
 contract Crowdsale {
   using SafeMath for uint256;
+  using SafeERC20 for ERC20;
 
   // The token being sold
-  ERC20Interface public token;
+  ERC20 public token;
 
   // Address where funds are collected
   address public wallet;
 
-  // How many token units a buyer gets per wei
+  // How many token units a buyer gets per wei.
+  // The rate is the conversion between wei and the smallest and indivisible token unit.
+  // So, if you are using a rate of 1 with a DetailedERC20 token with 3 decimals called TOK
+  // 1 wei will give you 1 unit, or 0.001 TOK.
   uint256 public rate;
 
   // Amount of wei raised
@@ -25,14 +236,19 @@ contract Crowdsale {
    * @param value weis paid for purchase
    * @param amount amount of tokens purchased
    */
-  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
+  event TokenPurchase(
+    address indexed purchaser,
+    address indexed beneficiary,
+    uint256 value,
+    uint256 amount
+  );
 
   /**
    * @param _rate Number of token units a buyer gets per wei
    * @param _wallet Address where collected funds will be forwarded to
    * @param _token Address of the token being sold
    */
-  constructor(uint256 _rate, address _wallet, ERC20Interface _token) public {
+  constructor(uint256 _rate, address _wallet, ERC20 _token) public {
     require(_rate > 0);
     require(_wallet != address(0));
     require(_token != address(0));
@@ -69,7 +285,12 @@ contract Crowdsale {
     weiRaised = weiRaised.add(weiAmount);
 
     _processPurchase(_beneficiary, tokens);
-    emit TokenPurchase(msg.sender, _beneficiary, weiAmount, tokens);
+    emit TokenPurchase(
+      msg.sender,
+      _beneficiary,
+      weiAmount,
+      tokens
+    );
 
     _updatePurchasingState(_beneficiary, weiAmount);
 
@@ -82,11 +303,19 @@ contract Crowdsale {
   // -----------------------------------------
 
   /**
-   * @dev Validation of an incoming purchase. Use require statements to revert state when conditions are not met. Use super to concatenate validations.
+   * @dev Validation of an incoming purchase. Use require statements to revert state when conditions are not met. Use `super` in contracts that inherit from Crowdsale to extend their validations.
+   * Example from CappedCrowdsale.sol's _preValidatePurchase method: 
+   *   super._preValidatePurchase(_beneficiary, _weiAmount);
+   *   require(weiRaised.add(_weiAmount) <= cap);
    * @param _beneficiary Address performing the token purchase
    * @param _weiAmount Value in wei involved in the purchase
    */
-  function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) internal {
+  function _preValidatePurchase(
+    address _beneficiary,
+    uint256 _weiAmount
+  )
+    internal
+  {
     require(_beneficiary != address(0));
     require(_weiAmount != 0);
   }
@@ -96,7 +325,12 @@ contract Crowdsale {
    * @param _beneficiary Address performing the token purchase
    * @param _weiAmount Value in wei involved in the purchase
    */
-  function _postValidatePurchase(address _beneficiary, uint256 _weiAmount) internal {
+  function _postValidatePurchase(
+    address _beneficiary,
+    uint256 _weiAmount
+  )
+    internal
+  {
     // optional override
   }
 
@@ -105,8 +339,13 @@ contract Crowdsale {
    * @param _beneficiary Address performing the token purchase
    * @param _tokenAmount Number of tokens to be emitted
    */
-  function _deliverTokens(address _beneficiary, uint256 _tokenAmount) internal {
-    token.transfer(_beneficiary, _tokenAmount);
+  function _deliverTokens(
+    address _beneficiary,
+    uint256 _tokenAmount
+  )
+    internal
+  {
+    token.safeTransfer(_beneficiary, _tokenAmount);
   }
 
   /**
@@ -114,7 +353,12 @@ contract Crowdsale {
    * @param _beneficiary Address receiving the tokens
    * @param _tokenAmount Number of tokens to be purchased
    */
-  function _processPurchase(address _beneficiary, uint256 _tokenAmount) internal {
+  function _processPurchase(
+    address _beneficiary,
+    uint256 _tokenAmount
+  )
+    internal
+  {
     _deliverTokens(_beneficiary, _tokenAmount);
   }
 
@@ -123,7 +367,12 @@ contract Crowdsale {
    * @param _beneficiary Address receiving the tokens
    * @param _weiAmount Value in wei involved in the purchase
    */
-  function _updatePurchasingState(address _beneficiary, uint256 _weiAmount) internal {
+  function _updatePurchasingState(
+    address _beneficiary,
+    uint256 _weiAmount
+  )
+    internal
+  {
     // optional override
   }
 
@@ -132,7 +381,9 @@ contract Crowdsale {
    * @param _weiAmount Value in wei to be converted into tokens
    * @return Number of tokens that can be purchased with the specified _weiAmount
    */
-  function _getTokenAmount(uint256 _weiAmount) internal view returns (uint256) {
+  function _getTokenAmount(uint256 _weiAmount)
+    internal view returns (uint256)
+  {
     return _weiAmount.mul(rate);
   }
 
@@ -144,529 +395,11 @@ contract Crowdsale {
   }
 }
 
-contract ERC20Interface {
-  function totalSupply() external view returns (uint256);
-  function balanceOf(address who) external view returns (uint256);
-  function transfer(address to, uint256 value) external returns (bool);
-  function allowance(address owner, address spender) external view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) external returns (bool);
-  function approve(address spender, uint256 value) external returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
 
-contract ERC20Standard is ERC20Interface {
-  using SafeMath for uint256;
-
-  mapping(address => uint256) balances;
-  mapping (address => mapping (address => uint256)) internal allowed;
-
-  uint256 totalSupply_;
-
-  /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
-  function transfer(address _to, uint256 _value) external returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[msg.sender]);
-
-    // SafeMath.sub will throw if there is not enough balance.
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    emit Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-  /**
-   * @dev Transfer tokens from one address to another
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amount of tokens to be transferred
-   */
-  function transferFrom(address _from, address _to, uint256 _value) external returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[_from]);
-    require(_value <= allowed[_from][msg.sender]);
-
-    balances[_from] = balances[_from].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    emit Transfer(_from, _to, _value);
-    return true;
-  }
-
-  /**
-   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   *
-   * Beware that changing an allowance with this method brings the risk that someone may use both the old
-   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
-   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
-   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-   * 
-   * To avoid this issue, allowances are only allowed to be changed between zero and non-zero.
-   *
-   * @param _spender The address which will spend the funds.
-   * @param _value The amount of tokens to be spent.
-   */
-  function approve(address _spender, uint256 _value) external returns (bool) {
-    require(allowed[msg.sender][_spender] == 0 || _value == 0);
-    allowed[msg.sender][_spender] = _value;
-    emit Approval(msg.sender, _spender, _value);
-    return true;
-  }
-
-  /**
-  * @dev total number of tokens in existence
-  */
-  function totalSupply() external view returns (uint256) {
-    return totalSupply_;
-  }
-
-  /**
-  * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of.
-  * @return An uint256 representing the amount owned by the passed address.
-  */
-  function balanceOf(address _owner) external view returns (uint256 balance) {
-    return balances[_owner];
-  }
-
-  /**
-   * @dev Function to check the amount of tokens that an owner allowed to a spender.
-   * @param _owner address The address which owns the funds.
-   * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifying the amount of tokens still available for the spender.
-   */
-  function allowance(address _owner, address _spender) external view returns (uint256) {
-    return allowed[_owner][_spender];
-  }
-
-  /**
-   * @dev Increase the amount of tokens that an owner allowed to a spender.
-   *
-   * approve should be called when allowed[_spender] == 0. To increment
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   * @param _spender The address which will spend the funds.
-   * @param _addedValue The amount of tokens to increase the allowance by.
-   */
-  function increaseApproval(address _spender, uint _addedValue) external returns (bool) {
-    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
-
-  /**
-   * @dev Decrease the amount of tokens that an owner allowed to a spender.
-   *
-   * approve should be called when allowed[_spender] == 0. To decrement
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   * @param _spender The address which will spend the funds.
-   * @param _subtractedValue The amount of tokens to decrease the allowance by.
-   */
-  function decreaseApproval(address _spender, uint _subtractedValue) external returns (bool) {
-    uint oldValue = allowed[msg.sender][_spender];
-    if (_subtractedValue > oldValue) {
-      allowed[msg.sender][_spender] = 0;
-    } else {
-      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
-    }
-    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
-
-}
-
-contract ERC223Interface {
-    function totalSupply() external view returns (uint256);
-    function balanceOf(address who) external view returns (uint256);
-    function transfer(address to, uint256 value) external returns (bool);
-    function transfer(address to, uint256 value, bytes data) external returns (bool);
-    event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-contract ERC223ReceivingContract { 
 /**
- * @dev Standard ERC223 function that will handle incoming token transfers.
- *
- * @param _from  Token sender address.
- * @param _value Amount of tokens.
- * @param _data  Transaction metadata.
+ * @title TimedCrowdsale
+ * @dev Crowdsale accepting contributions only within a time frame.
  */
-    function tokenFallback(address _from, uint _value, bytes _data) public;
-}
-
-contract ERC223Standard is ERC223Interface, ERC20Standard {
-    using SafeMath for uint256;
-
-    /**
-     * @dev Transfer the specified amount of tokens to the specified address.
-     *      Invokes the `tokenFallback` function if the recipient is a contract.
-     *      The token transfer fails if the recipient is a contract
-     *      but does not implement the `tokenFallback` function
-     *      or the fallback function to receive funds.
-     *
-     * @param _to    Receiver address.
-     * @param _value Amount of tokens that will be transferred.
-     * @param _data  Transaction metadata.
-     */
-    function transfer(address _to, uint256 _value, bytes _data) external returns(bool){
-        // Standard function transfer similar to ERC20 transfer with no _data .
-        // Added due to backwards compatibility reasons .
-        uint256 codeLength;
-
-        assembly {
-            // Retrieve the size of the code on target address, this needs assembly .
-            codeLength := extcodesize(_to)
-        }
-
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        if(codeLength>0) {
-            ERC223ReceivingContract receiver = ERC223ReceivingContract(_to);
-            receiver.tokenFallback(msg.sender, _value, _data);
-        }
-        emit Transfer(msg.sender, _to, _value);
-    }
-    
-    /**
-     * @dev Transfer the specified amount of tokens to the specified address.
-     *      This function works the same with the previous one
-     *      but doesn't contain `_data` param.
-     *      Added due to backwards compatibility reasons.
-     *
-     * @param _to    Receiver address.
-     * @param _value Amount of tokens that will be transferred.
-     */
-    function transfer(address _to, uint256 _value) external returns(bool){
-        uint256 codeLength;
-        bytes memory empty;
-
-        assembly {
-            // Retrieve the size of the code on target address, this needs assembly .
-            codeLength := extcodesize(_to)
-        }
-
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        if(codeLength>0) {
-            ERC223ReceivingContract receiver = ERC223ReceivingContract(_to);
-            receiver.tokenFallback(msg.sender, _value, empty);
-        }
-        emit Transfer(msg.sender, _to, _value);
-        return true;
-    }
- 
-}
-
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  constructor() public {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-}
-
-contract MintableToken is ERC223Standard, Ownable {
-  event Mint(address indexed to, uint256 amount);
-  event MintFinished();
-
-  bool public mintingFinished = false;
-
-  modifier canMint() {
-    require(!mintingFinished);
-    _;
-  }
-
-  /**
-   * @dev Function to mint tokens
-   * @param _to The address that will receive the minted tokens.
-   * @param _amount The amount of tokens to mint.
-   * @return A boolean that indicates if the operation was successful.
-   */
-  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
-    totalSupply_ = totalSupply_.add(_amount);
-    balances[_to] = balances[_to].add(_amount);
-    emit Mint(_to, _amount);
-    emit Transfer(address(0), _to, _amount);
-    return true;
-  }
-
-  /**
-   * @dev Function to stop minting new tokens.
-   * @return True if the operation was successful.
-   */
-  function finishMinting() onlyOwner canMint public returns (bool) {
-    mintingFinished = true;
-    emit MintFinished();
-    return true;
-  }
-}
-
-contract PoolAndSaleInterface {
-    address public tokenSaleAddr;
-    address public votingAddr;
-    address public votingTokenAddr;
-    uint256 public tap;
-    uint256 public initialTap;
-    uint256 public initialRelease;
-
-    function setTokenSaleContract(address _tokenSaleAddr) external;
-    function startProject() external;
-}
-
-library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
-    }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    // uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return a / b;
-  }
-
-  /**
-  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
-contract TimeLockPool{
-    using SafeMath for uint256;
-
-    struct LockedBalance {
-      uint256 balance;
-      uint256 releaseTime;
-    }
-
-    /*
-      structure: lockedBalnces[owner][token] = LockedBalance(balance, releaseTime);
-      token address = '0x0' stands for ETH (unit = wei)
-    */
-    mapping (address => mapping (address => LockedBalance[])) public lockedBalances;
-
-    event Deposit(
-        address indexed owner,
-        address indexed tokenAddr,
-        uint256 amount,
-        uint256 releaseTime
-    );
-
-    event Withdraw(
-        address indexed owner,
-        address indexed tokenAddr,
-        uint256 amount
-    );
-
-    /// @dev Constructor. 
-    /// @return 
-    constructor() public {}
-
-    /// @dev Deposit tokens to specific account with time-lock.
-    /// @param tokenAddr The contract address of a ERC20/ERC223 token.
-    /// @param account The owner of deposited tokens.
-    /// @param amount Amount to deposit.
-    /// @param releaseTime Time-lock period.
-    /// @return True if it is successful, revert otherwise.
-    function depositERC20 (
-        address tokenAddr,
-        address account,
-        uint256 amount,
-        uint256 releaseTime
-    ) external returns (bool) {
-        require(account != address(0x0));
-        require(tokenAddr != 0x0);
-        require(msg.value == 0);
-        require(amount > 0);
-        require(ERC20Interface(tokenAddr).transferFrom(msg.sender, this, amount));
-
-        lockedBalances[account][tokenAddr].push(LockedBalance(amount, releaseTime));
-        emit Deposit(account, tokenAddr, amount, releaseTime);
-
-        return true;
-    }
-
-    /// @dev Deposit ETH to specific account with time-lock.
-    /// @param account The owner of deposited tokens.
-    /// @param releaseTime Timestamp to release the fund.
-    /// @return True if it is successful, revert otherwise.
-    function depositETH (
-        address account,
-        uint256 releaseTime
-    ) external payable returns (bool) {
-        require(account != address(0x0));
-        address tokenAddr = address(0x0);
-        uint256 amount = msg.value;
-        require(amount > 0);
-
-        lockedBalances[account][tokenAddr].push(LockedBalance(amount, releaseTime));
-        emit Deposit(account, tokenAddr, amount, releaseTime);
-
-        return true;
-    }
-
-    /// @dev Release the available balance of an account.
-    /// @param account An account to receive tokens.
-    /// @param tokenAddr An address of ERC20/ERC223 token.
-    /// @param index_from Starting index of records to withdraw.
-    /// @param index_to Ending index of records to withdraw.
-    /// @return True if it is successful, revert otherwise.
-    function withdraw (address account, address tokenAddr, uint256 index_from, uint256 index_to) external returns (bool) {
-        require(account != address(0x0));
-
-        uint256 release_amount = 0;
-        for (uint256 i = index_from; i < lockedBalances[account][tokenAddr].length && i < index_to + 1; i++) {
-            if (lockedBalances[account][tokenAddr][i].balance > 0 &&
-                lockedBalances[account][tokenAddr][i].releaseTime <= block.timestamp) {
-
-                release_amount = release_amount.add(lockedBalances[account][tokenAddr][i].balance);
-                lockedBalances[account][tokenAddr][i].balance = 0;
-            }
-        }
-
-        require(release_amount > 0);
-
-        if (tokenAddr == 0x0) {
-            if (!account.send(release_amount)) {
-                revert();
-            }
-            emit Withdraw(account, tokenAddr, release_amount);
-            return true;
-        } else {
-            if (!ERC20Interface(tokenAddr).transfer(account, release_amount)) {
-                revert();
-            }
-            emit Withdraw(account, tokenAddr, release_amount);
-            return true;
-        }
-    }
-
-    /// @dev Returns total amount of balances which already passed release time.
-    /// @param account An account to receive tokens.
-    /// @param tokenAddr An address of ERC20/ERC223 token.
-    /// @return Available balance of specified token.
-    function getAvailableBalanceOf (address account, address tokenAddr) 
-        external
-        view
-        returns (uint256)
-    {
-        require(account != address(0x0));
-
-        uint256 balance = 0;
-        for(uint256 i = 0; i < lockedBalances[account][tokenAddr].length; i++) {
-            if (lockedBalances[account][tokenAddr][i].releaseTime <= block.timestamp) {
-                balance = balance.add(lockedBalances[account][tokenAddr][i].balance);
-            }
-        }
-        return balance;
-    }
-
-    /// @dev Returns total amount of balances which are still locked.
-    /// @param account An account to receive tokens.
-    /// @param tokenAddr An address of ERC20/ERC223 token.
-    /// @return Locked balance of specified token.
-    function getLockedBalanceOf (address account, address tokenAddr)
-        external
-        view
-        returns (uint256) 
-    {
-        require(account != address(0x0));
-
-        uint256 balance = 0;
-        for(uint256 i = 0; i < lockedBalances[account][tokenAddr].length; i++) {
-            if(lockedBalances[account][tokenAddr][i].releaseTime > block.timestamp) {
-                balance = balance.add(lockedBalances[account][tokenAddr][i].balance);
-            }
-        }
-        return balance;
-    }
-
-    /// @dev Returns next release time of locked balances.
-    /// @param account An account to receive tokens.
-    /// @param tokenAddr An address of ERC20/ERC223 token.
-    /// @return Timestamp of next release.
-    function getNextReleaseTimeOf (address account, address tokenAddr)
-        external
-        view
-        returns (uint256) 
-    {
-        require(account != address(0x0));
-
-        uint256 nextRelease = 2**256 - 1;
-        for (uint256 i = 0; i < lockedBalances[account][tokenAddr].length; i++) {
-            if (lockedBalances[account][tokenAddr][i].releaseTime > block.timestamp &&
-               lockedBalances[account][tokenAddr][i].releaseTime < nextRelease) {
-
-                nextRelease = lockedBalances[account][tokenAddr][i].releaseTime;
-            }
-        }
-
-        /* returns 0 if there are no more locked balances. */
-        if (nextRelease == 2**256 - 1) {
-            nextRelease = 0;
-        }
-        return nextRelease;
-    }
-}
-
 contract TimedCrowdsale is Crowdsale {
   using SafeMath for uint256;
 
@@ -677,6 +410,7 @@ contract TimedCrowdsale is Crowdsale {
    * @dev Reverts if not in crowdsale time range.
    */
   modifier onlyWhileOpen {
+    // solium-disable-next-line security/no-block-members
     require(block.timestamp >= openingTime && block.timestamp <= closingTime);
     _;
   }
@@ -687,6 +421,7 @@ contract TimedCrowdsale is Crowdsale {
    * @param _closingTime Crowdsale closing time
    */
   constructor(uint256 _openingTime, uint256 _closingTime) public {
+    // solium-disable-next-line security/no-block-members
     require(_openingTime >= block.timestamp);
     require(_closingTime >= _openingTime);
 
@@ -699,6 +434,7 @@ contract TimedCrowdsale is Crowdsale {
    * @return Whether crowdsale period has elapsed
    */
   function hasClosed() public view returns (bool) {
+    // solium-disable-next-line security/no-block-members
     return block.timestamp > closingTime;
   }
 
@@ -707,13 +443,62 @@ contract TimedCrowdsale is Crowdsale {
    * @param _beneficiary Token purchaser
    * @param _weiAmount Amount of wei contributed
    */
-  function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) internal onlyWhileOpen {
+  function _preValidatePurchase(
+    address _beneficiary,
+    uint256 _weiAmount
+  )
+    internal
+    onlyWhileOpen
+  {
     super._preValidatePurchase(_beneficiary, _weiAmount);
   }
 
 }
 
-contract FinalizableCrowdsale is TimedCrowdsale, Ownable {
+
+/**
+ * @title PostDeliveryCrowdsale
+ * @dev Crowdsale that locks tokens from withdrawal until it ends.
+ */
+contract PostDeliveryCrowdsale is TimedCrowdsale {
+  using SafeMath for uint256;
+
+  mapping(address => uint256) public balances;
+
+  /**
+   * @dev Withdraw tokens only after crowdsale ends.
+   */
+  function withdrawTokens() public {
+    require(hasClosed());
+    uint256 amount = balances[msg.sender];
+    require(amount > 0);
+    balances[msg.sender] = 0;
+    _deliverTokens(msg.sender, amount);
+  }
+
+  /**
+   * @dev Overrides parent by storing balances instead of issuing tokens right away.
+   * @param _beneficiary Token purchaser
+   * @param _tokenAmount Amount of tokens purchased
+   */
+  function _processPurchase(
+    address _beneficiary,
+    uint256 _tokenAmount
+  )
+    internal
+  {
+    balances[_beneficiary] = balances[_beneficiary].add(_tokenAmount);
+  }
+
+}
+
+
+/**
+ * @title FinalizableCrowdsale
+ * @dev Extension of Crowdsale where an owner can do extra work
+ * after finishing.
+ */
+contract FinalizableCrowdsale is Ownable, TimedCrowdsale {
   using SafeMath for uint256;
 
   bool public isFinalized = false;
@@ -724,7 +509,7 @@ contract FinalizableCrowdsale is TimedCrowdsale, Ownable {
    * @dev Must be called after crowdsale ends, to do some extra finalization
    * work. Calls the contract's finalization function.
    */
-  function finalize() onlyOwner public {
+  function finalize() public onlyOwner {
     require(!isFinalized);
     require(hasClosed());
 
@@ -744,478 +529,358 @@ contract FinalizableCrowdsale is TimedCrowdsale, Ownable {
 
 }
 
-contract TokenController is Ownable {
-    using SafeMath for uint256;
 
-    MintableToken public targetToken;
-    address public votingAddr;
-    address public tokensaleManagerAddr;
+/**
+ * @title Escrow
+ * @dev Base escrow contract, holds funds destinated to a payee until they
+ * withdraw them. The contract that uses the escrow as its payment method
+ * should be its owner, and provide public methods redirecting to the escrow's
+ * deposit and withdraw.
+ */
+contract Escrow is Ownable {
+  using SafeMath for uint256;
 
-    State public state;
+  event Deposited(address indexed payee, uint256 weiAmount);
+  event Withdrawn(address indexed payee, uint256 weiAmount);
 
-    enum State {
-        Init,
-        Tokensale,
-        Public
-    }
+  mapping(address => uint256) private deposits;
 
-    /// @dev The deployer must change the ownership of the target token to this contract.
-    /// @param _targetToken : The target token this contract manage the rights to mint.
-    /// @return 
-    constructor (
-        MintableToken _targetToken
-    ) public {
-        targetToken = MintableToken(_targetToken);
-        state = State.Init;
-    }
+  function depositsOf(address _payee) public view returns (uint256) {
+    return deposits[_payee];
+  }
 
-    /// @dev Mint and distribute specified amount of tokens to an address.
-    /// @param to An address that receive the minted tokens.
-    /// @param amount Amount to mint.
-    /// @return True if the distribution is successful, revert otherwise.
-    function mint (address to, uint256 amount) external returns (bool) {
-        /*
-          being called from voting contract will be available in the future
-          ex. if (state == State.Public && msg.sender == votingAddr) 
-        */
+  /**
+  * @dev Stores the sent amount as credit to be withdrawn.
+  * @param _payee The destination address of the funds.
+  */
+  function deposit(address _payee) public onlyOwner payable {
+    uint256 amount = msg.value;
+    deposits[_payee] = deposits[_payee].add(amount);
 
-        if ((state == State.Init && msg.sender == owner) ||
-            (state == State.Tokensale && msg.sender == tokensaleManagerAddr)) {
-            return targetToken.mint(to, amount);
-        }
+    emit Deposited(_payee, amount);
+  }
 
-        revert();
-    }
+  /**
+  * @dev Withdraw accumulated balance for a payee.
+  * @param _payee The address whose funds will be withdrawn and transferred to.
+  */
+  function withdraw(address _payee) public onlyOwner {
+    uint256 payment = deposits[_payee];
+    assert(address(this).balance >= payment);
 
-    /// @dev Change the phase from "Init" to "Tokensale".
-    /// @param _tokensaleManagerAddr A contract address of token-sale.
-    /// @return True if the change of the phase is successful, revert otherwise.
-    function openTokensale (address _tokensaleManagerAddr)
-        external
-        onlyOwner
-        returns (bool)
-    {
-        /* check if the owner of the target token is set to this contract */
-        require(MintableToken(targetToken).owner() == address(this));
-        require(state == State.Init);
-        require(_tokensaleManagerAddr != address(0x0));
+    deposits[_payee] = 0;
 
-        tokensaleManagerAddr = _tokensaleManagerAddr;
-        state = State.Tokensale;
-        return true;
-    }
+    _payee.transfer(payment);
 
-    /// @dev Change the phase from "Tokensale" to "Public". This function will be
-    ///      cahnged in the future to receive an address of voting contract as an
-    ///      argument in order to handle the result of minting proposal.
-    /// @return True if the change of the phase is successful, revert otherwise.
-    function closeTokensale () external returns (bool) {
-        require(state == State.Tokensale && msg.sender == tokensaleManagerAddr);
-
-        state = State.Public;
-        return true;
-    }
-
-    /// @dev Check if the state is "Init" or not.
-    /// @return True if the state is "Init", false otherwise.
-    function isStateInit () external view returns (bool) {
-        return (state == State.Init);
-    }
-
-    /// @dev Check if the state is "Tokensale" or not.
-    /// @return True if the state is "Tokensale", false otherwise.
-    function isStateTokensale () external view returns (bool) {
-        return (state == State.Tokensale);
-    }
-
-    /// @dev Check if the state is "Public" or not.
-    /// @return True if the state is "Public", false otherwise.
-    function isStatePublic () external view returns (bool) {
-        return (state == State.Public);
-    }
+    emit Withdrawn(_payee, payment);
+  }
 }
 
-contract TokenSaleManager is Ownable {
-    using SafeMath for uint256;
 
-    ERC20Interface public token;
-    address public poolAddr;
-    address public tokenControllerAddr;
-    address public timeLockPoolAddr;
-    address[] public tokenSales;
-    mapping( address => bool ) public tokenSaleIndex;
-    bool public isStarted = false;
-    bool public isFinalized = false;
+/**
+ * @title ConditionalEscrow
+ * @dev Base abstract escrow to only allow withdrawal if a condition is met.
+ */
+contract ConditionalEscrow is Escrow {
+  /**
+  * @dev Returns whether an address is allowed to withdraw their funds. To be
+  * implemented by derived contracts.
+  * @param _payee The destination address of the funds.
+  */
+  function withdrawalAllowed(address _payee) public view returns (bool);
 
-    modifier onlyDaicoPool {
-        require(msg.sender == poolAddr);
-        _;
-    }
-
-    modifier onlyTokenSale {
-        require(tokenSaleIndex[msg.sender]);
-        _;
-    }
-
-    /// @dev Constructor. It set the DaicoPool to receive the starting signal from this contract.
-    /// @param _tokenControllerAddr The contract address of TokenController.
-    /// @param _timeLockPoolAddr The contract address of a TimeLockPool.
-    /// @param _daicoPoolAddr The contract address of DaicoPool.
-    /// @param _token The contract address of a ERC20 token.
-    constructor (
-        address _tokenControllerAddr,
-        address _timeLockPoolAddr,
-        address _daicoPoolAddr,
-        ERC20Interface _token
-    ) public {
-        require(_tokenControllerAddr != address(0x0));
-        tokenControllerAddr = _tokenControllerAddr;
-
-        require(_timeLockPoolAddr != address(0x0));
-        timeLockPoolAddr = _timeLockPoolAddr;
-
-        token = _token;
-
-        poolAddr = _daicoPoolAddr;
-        require(PoolAndSaleInterface(poolAddr).votingTokenAddr() == address(token));
-        PoolAndSaleInterface(poolAddr).setTokenSaleContract(this);
-
-    }
-
-    /// @dev This contract doen't receive any ETH.
-    function() external payable {
-        revert();
-    }
-
-    /// @dev Add a new token sale with specific parameters. New sale should start
-    /// @dev after the previous one closed.
-    /// @param openingTime A timestamp of the date this sale will start.
-    /// @param closingTime A timestamp of the date this sale will end.
-    /// @param tokensCap Number of tokens to be sold. Can be 0 if it accepts carryover.
-    /// @param rate Number of tokens issued with 1 ETH. [minimal unit of the token / ETH]  
-    /// @param carryover If true, unsold tokens will be carryovered to next sale. 
-    /// @param timeLockRate Specified rate of issued tokens will be locked. ex. 50 = 50%
-    /// @param timeLockEnd A timestamp of the date locked tokens will be released.
-    /// @param minAcceptableWei Minimum contribution.
-    function addTokenSale (
-        uint256 openingTime,
-        uint256 closingTime,
-        uint256 tokensCap,
-        uint256 rate,
-        bool carryover,
-        uint256 timeLockRate,
-        uint256 timeLockEnd,
-        uint256 minAcceptableWei
-    ) external onlyOwner {
-        require(!isStarted);
-        require(
-            tokenSales.length == 0 ||
-            TimedCrowdsale(tokenSales[tokenSales.length-1]).closingTime() < openingTime
-        );
-
-        require(TokenController(tokenControllerAddr).state() == TokenController.State.Init);
-
-        tokenSales.push(new TokenSale(
-            rate,
-            token,
-            poolAddr,
-            openingTime,
-            closingTime,
-            tokensCap,
-            timeLockRate,
-            timeLockEnd,
-            carryover,
-            minAcceptableWei
-        ));
-        tokenSaleIndex[tokenSales[tokenSales.length-1]] = true;
-
-    }
-
-    /// @dev Initialize the tokensales. No other sales can be added after initialization.
-    /// @return True if successful, revert otherwise.
-    function initialize () external onlyOwner returns (bool) {
-        require(!isStarted);
-        TokenSale(tokenSales[0]).initialize(0);
-        isStarted = true;
-    }
-
-    /// @dev Request TokenController to mint new tokens. This function is only called by 
-    /// @dev token sales.
-    /// @param _beneficiary The address to receive the new tokens.
-    /// @param _tokenAmount Token amount to be minted.
-    /// @return True if successful, revert otherwise.
-    function mint (
-        address _beneficiary,
-        uint256 _tokenAmount
-    ) external onlyTokenSale returns(bool) {
-        require(isStarted && !isFinalized);
-        require(TokenController(tokenControllerAddr).mint(_beneficiary, _tokenAmount));
-        return true;
-    }
-
-    /// @dev Mint new tokens with time-lock. This function is only called by token sales.
-    /// @param _beneficiary The address to receive the new tokens.
-    /// @param _tokenAmount Token amount to be minted.
-    /// @param _releaseTime A timestamp of the date locked tokens will be released.
-    /// @return True if successful, revert otherwise.
-    function mintTimeLocked (
-        address _beneficiary,
-        uint256 _tokenAmount,
-        uint256 _releaseTime
-    ) external onlyTokenSale returns(bool) {
-        require(isStarted && !isFinalized);
-        require(TokenController(tokenControllerAddr).mint(this, _tokenAmount));
-        require(ERC20Interface(token).approve(timeLockPoolAddr, _tokenAmount));
-        require(TimeLockPool(timeLockPoolAddr).depositERC20(
-            token,
-            _beneficiary,
-            _tokenAmount,
-            _releaseTime
-        ));
-        return true;
-    }
-
-    /// @dev Adds single address to whitelist of all token sales.
-    /// @param _beneficiary Address to be added to the whitelist
-    function addToWhitelist(address _beneficiary) external onlyOwner {
-        require(isStarted);
-        for (uint256 i = 0; i < tokenSales.length; i++ ) {
-            WhitelistedCrowdsale(tokenSales[i]).addToWhitelist(_beneficiary);
-        }
-    }
-
-    /// @dev Adds multiple addresses to whitelist of all token sales.
-    /// @param _beneficiaries Addresses to be added to the whitelist
-    function addManyToWhitelist(address[] _beneficiaries) external onlyOwner {
-        require(isStarted);
-        for (uint256 i = 0; i < tokenSales.length; i++ ) {
-            WhitelistedCrowdsale(tokenSales[i]).addManyToWhitelist(_beneficiaries);
-        }
-    }
-
-
-    /// @dev Finalize the specific token sale. Can be done if end date has come or 
-    /// @dev all tokens has been sold out. It process carryover if it is set.
-    /// @param _indexTokenSale index of the target token sale. 
-    function finalize (uint256 _indexTokenSale) external {
-        require(isStarted && !isFinalized);
-        TokenSale ts = TokenSale(tokenSales[_indexTokenSale]);
-
-        if (ts.canFinalize()) {
-            ts.finalize();
-            uint256 carryoverAmount = 0;
-            if (ts.carryover() &&
-                ts.tokensCap() > ts.tokensMinted() &&
-                _indexTokenSale.add(1) < tokenSales.length) {
-                carryoverAmount = ts.tokensCap().sub(ts.tokensMinted());
-            } 
-            if(_indexTokenSale.add(1) < tokenSales.length) {
-                TokenSale(tokenSales[_indexTokenSale.add(1)]).initialize(carryoverAmount);
-            }
-        }
-
-    }
-
-    /// @dev Finalize the manager. Can be done if all token sales are already finalized.
-    /// @dev It makes the DaicoPool open the TAP.
-    function finalizeTokenSaleManager () external{
-        require(isStarted && !isFinalized);
-        for (uint256 i = 0; i < tokenSales.length; i++ ) {
-            require(FinalizableCrowdsale(tokenSales[i]).isFinalized());
-        }
-        require(TokenController(tokenControllerAddr).closeTokensale());
-        isFinalized = true;
-        PoolAndSaleInterface(poolAddr).startProject();
-    }
+  function withdraw(address _payee) public {
+    require(withdrawalAllowed(_payee));
+    super.withdraw(_payee);
+  }
 }
 
-contract WhitelistedCrowdsale is Crowdsale, Ownable {
 
-  mapping(address => bool) public whitelist;
+/**
+ * @title RefundEscrow
+ * @dev Escrow that holds funds for a beneficiary, deposited from multiple parties.
+ * The contract owner may close the deposit period, and allow for either withdrawal
+ * by the beneficiary, or refunds to the depositors.
+ */
+contract RefundEscrow is Ownable, ConditionalEscrow {
+  enum State { Active, Refunding, Closed }
+
+  event Closed();
+  event RefundsEnabled();
+
+  State public state;
+  address public beneficiary;
 
   /**
-   * @dev Reverts if beneficiary is not whitelisted. Can be used when extending this contract.
+   * @dev Constructor.
+   * @param _beneficiary The beneficiary of the deposits.
    */
-  modifier isWhitelisted(address _beneficiary) {
-    require(whitelist[_beneficiary]);
-    _;
+  constructor(address _beneficiary) public {
+    require(_beneficiary != address(0));
+    beneficiary = _beneficiary;
+    state = State.Active;
   }
 
   /**
-   * @dev Adds single address to whitelist.
-   * @param _beneficiary Address to be added to the whitelist
+   * @dev Stores funds that may later be refunded.
+   * @param _refundee The address funds will be sent to if a refund occurs.
    */
-  function addToWhitelist(address _beneficiary) external onlyOwner {
-    whitelist[_beneficiary] = true;
+  function deposit(address _refundee) public payable {
+    require(state == State.Active);
+    super.deposit(_refundee);
   }
 
   /**
-   * @dev Adds list of addresses to whitelist. Not overloaded due to limitations with truffle testing.
-   * @param _beneficiaries Addresses to be added to the whitelist
+   * @dev Allows for the beneficiary to withdraw their funds, rejecting
+   * further deposits.
    */
-  function addManyToWhitelist(address[] _beneficiaries) external onlyOwner {
-    for (uint256 i = 0; i < _beneficiaries.length; i++) {
-      whitelist[_beneficiaries[i]] = true;
+  function close() public onlyOwner {
+    require(state == State.Active);
+    state = State.Closed;
+    emit Closed();
+  }
+
+  /**
+   * @dev Allows for refunds to take place, rejecting further deposits.
+   */
+  function enableRefunds() public onlyOwner {
+    require(state == State.Active);
+    state = State.Refunding;
+    emit RefundsEnabled();
+  }
+
+  /**
+   * @dev Withdraws the beneficiary's funds.
+   */
+  function beneficiaryWithdraw() public {
+    require(state == State.Closed);
+    beneficiary.transfer(address(this).balance);
+  }
+
+  /**
+   * @dev Returns whether refundees can withdraw their deposits (be refunded).
+   */
+  function withdrawalAllowed(address _payee) public view returns (bool) {
+    return state == State.Refunding;
+  }
+}
+
+
+/**
+ * @title RefundableCrowdsale
+ * @dev Extension of Crowdsale contract that adds a funding goal, and
+ * the possibility of users getting a refund if goal is not met.
+ */
+contract RefundableCrowdsale is FinalizableCrowdsale {
+  using SafeMath for uint256;
+
+  // minimum amount of funds to be raised in weis
+  uint256 public goal;
+
+  // refund escrow used to hold funds while crowdsale is running
+  RefundEscrow private escrow;
+
+  /**
+   * @dev Constructor, creates RefundEscrow.
+   * @param _goal Funding goal
+   */
+  constructor(uint256 _goal) public {
+    require(_goal > 0);
+    escrow = new RefundEscrow(wallet);
+    goal = _goal;
+  }
+
+  /**
+   * @dev Investors can claim refunds here if crowdsale is unsuccessful
+   */
+  function claimRefund() public {
+    require(isFinalized);
+    require(!goalReached());
+
+    escrow.withdraw(msg.sender);
+  }
+
+  /**
+   * @dev Checks whether funding goal was reached.
+   * @return Whether funding goal was reached
+   */
+  function goalReached() public view returns (bool) {
+    return weiRaised >= goal;
+  }
+
+  /**
+   * @dev escrow finalization task, called when owner calls finalize()
+   */
+  function finalization() internal {
+    if (goalReached()) {
+      escrow.close();
+      escrow.beneficiaryWithdraw();
+    } else {
+      escrow.enableRefunds();
+    }
+
+    super.finalization();
+  }
+
+  /**
+   * @dev Overrides Crowdsale fund forwarding, sending funds to escrow.
+   */
+  function _forwardFunds() internal {
+    escrow.deposit.value(msg.value)(msg.sender);
+  }
+
+}
+
+
+contract MedianizerInterface {
+  function read() public view returns (bytes32);
+}
+
+
+contract WhitelistInterface {
+  function checkRole(address _operator, string _role) public view;
+  function hasRole(address _operator, string _role) public view returns (bool);
+}
+
+
+contract WhitelistProxyInterface {
+  function whitelist() public view returns (WhitelistInterface);
+}
+
+
+/**
+ * @title TokenSale
+ * @dev Distribute tokens to investors in exchange for Ether.
+ *
+ * This is the primary mechanism for outright sales of commercial investment properties (and blockimmo's STO, where shares
+ * of our company are represented as `TokenizedProperty`) (official pending FINMA approval).
+ *
+ * Selling:
+ *   1. Deploy `TokenizedProperty`. Initially all tokens and ownership of this property will be assigned to the 'deployer'
+ *   2. Deploy `ShareholderDAO` and transfer the property's (1) ownership to it
+ *   3. Configure and deploy a `TokenSale`
+ *     - After completing (1, 2, 3) blockimmo will verify the property as legitimate in `LandRegistry`
+ *     - blockimmo will then authorize `this` to the `Whitelist` before seller can proceed to (4)
+ *   4. Transfer tokens of `TokenizedProperty` (1) to be sold to `this` (3)
+ *   5. Investors are able to buy tokens while the sale is open. 'Deployer' calls `finalize` to complete the sale
+ *
+ * Note: blockimmo will be responsible for managing initial sales on our platform. This means we will be configuring
+ *       and deploying all contracts for sellers. This provides an extra layer of control/security until we've refined
+ *       these processes and proven them in the real-world.
+ *       Later sales will use SplitPayment contracts to route funds, with examples in the tests.
+ *
+ * Unsold tokens (of a successful sale) are redistributed proportionally to investors via Airdrop, as described in:
+ * https://medium.com/FundFantasy/airdropping-vs-burning-part-1-613a9c6ebf1c
+ *
+ * If a sale's soft-cap is not reached (and the seller does not `accept` a lower price), investors will be refunded Ether and the seller refunded tokens.
+ *
+ * For stable token sales (soft and hard-cap in USD instead of Wei), we rely on MakerDAO's on-chain ETH/USD conversion rate
+ * https://developer.makerdao.com/feeds/
+ * This approach to mitigating Ether volatility seems to best when analyzing trade-offs, short of selling directly in FIAT.
+ */
+contract TokenSale is RefundableCrowdsale, PostDeliveryCrowdsale {
+  using SafeMath for uint256;
+  using SafeERC20 for ERC20;
+
+  address public constant MEDIANIZER_ADDRESS = 0x729D19f657BD0614b4985Cf1D82531c67569197B;  // 0x0f5ea0a652e851678ebf77b69484bfcd31f9459b;
+  address public constant WHITELIST_PROXY_ADDRESS = 0x7223b032180CDb06Be7a3D634B1E10032111F367;  // 0xc4c7497fbe1a886841a195a5d622cd60053c1376;
+
+  MedianizerInterface private medianizer = MedianizerInterface(MEDIANIZER_ADDRESS);
+  WhitelistProxyInterface private whitelistProxy = WhitelistProxyInterface(WHITELIST_PROXY_ADDRESS);
+
+  uint256 public cap;
+  bool public goalReachedOnFinalize;
+  uint256 public totalTokens;
+  uint256 public totalTokensSold = 0;
+  bool public usd;
+
+  mapping(address => uint256) public usdInvestment;
+
+  constructor(
+    uint256 _openingTime,
+    uint256 _closingTime,
+    uint256 _rate,
+    address _wallet,
+    uint256 _cap,
+    ERC20 _token,
+    uint256 _goal,
+    bool _usd  // if true, both `goal` and `cap` are in units of USD. if false, in ETH
+  )
+    public
+    Crowdsale(_rate, _wallet, _token)
+    TimedCrowdsale(_openingTime, _closingTime)
+    RefundableCrowdsale(_goal)
+    PostDeliveryCrowdsale()
+  {
+    require(_cap > 0, "cap is not > 0");
+    require(_goal < _cap, "goal is not < cap");
+    cap = _cap;
+    usd = _usd;
+  }
+
+  function capReached() public view returns (bool) {
+    return _reached(cap);
+  }
+
+  function goalReached() public view returns (bool) {
+    if (isFinalized) {
+      return goalReachedOnFinalize;
+    } else {
+      return _reached(goal);
     }
   }
 
-  /**
-   * @dev Removes single address from whitelist.
-   * @param _beneficiary Address to be removed to the whitelist
-   */
-  function removeFromWhitelist(address _beneficiary) external onlyOwner {
-    whitelist[_beneficiary] = false;
+  function withdrawTokens() public {  // airdrop remaining tokens to investors proportionally
+    uint256 extra = totalTokens.sub(totalTokensSold).mul(balances[msg.sender]) / totalTokensSold;
+    balances[msg.sender] = balances[msg.sender].add(extra);
+    super.withdrawTokens();
   }
 
-  /**
-   * @dev Extend parent behavior requiring beneficiary to be in whitelist.
-   * @param _beneficiary Token beneficiary
-   * @param _weiAmount Amount of wei contributed
-   */
-  function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) internal isWhitelisted(_beneficiary) {
+  function finalization() internal {  // ether refunds enabled for investors, refund tokens to seller
+    totalTokens = token.balanceOf(address(this));
+    goalReachedOnFinalize = goalReached();
+    if (!goalReachedOnFinalize) {
+      token.safeTransfer(owner, totalTokens);
+    }
+    super.finalization();
+  }
+
+  function _getUsdAmount(uint256 _weiAmount) internal view returns (uint256) {
+    uint256 usdPerEth = uint256(medianizer.read());
+    return _weiAmount.mul(usdPerEth).div(1e18).div(1e18);
+  }
+
+  function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) internal {
+    require(_weiAmount >= 1e18);
     super._preValidatePurchase(_beneficiary, _weiAmount);
+
+    WhitelistInterface whitelist = whitelistProxy.whitelist();
+
+    usdInvestment[_beneficiary] = usdInvestment[_beneficiary].add(_getUsdAmount(_weiAmount));
+    if (!whitelist.hasRole(_beneficiary, "uncapped")) {
+      require(usdInvestment[_beneficiary] <= 100000);
+      whitelist.checkRole(_beneficiary, "authorized");
+    }
+
+    if (usd) {
+      require(_getUsdAmount(weiRaised.add(_weiAmount)) <= cap, "usd raised must not exceed cap");
+    } else {
+      require(weiRaised.add(_weiAmount) <= cap, "wei raised must not exceed cap");
+    }
   }
 
-}
+  function _processPurchase(address _beneficiary, uint256 _tokenAmount) internal {
+    totalTokensSold = totalTokensSold.add(_tokenAmount);
+    require(totalTokensSold <= token.balanceOf(address(this)), "totalTokensSold raised must not exceed balanceOf `this`");
 
-contract TokenSale is FinalizableCrowdsale,
-                      WhitelistedCrowdsale {
-    using SafeMath for uint256;
+    super._processPurchase(_beneficiary, _tokenAmount);
+  }
 
-    address public managerAddr; 
-    address public poolAddr;
-    bool public isInitialized = false;
-    uint256 public timeLockRate;
-    uint256 public timeLockEnd;
-    uint256 public tokensMinted = 0;
-    uint256 public tokensCap;
-    uint256 public minAcceptableWei;
-    bool public carryover;
-
-    modifier onlyManager{
-        require(msg.sender == managerAddr);
-        _;
+  function _reached(uint256 _target) internal view returns (bool) {
+    if (usd) {
+      return _getUsdAmount(weiRaised) >= _target;
+    } else {
+      return weiRaised >= _target;
     }
-
-    /// @dev Constructor.
-    /// @param _rate Number of tokens issued with 1 ETH. [minimal unit of the token / ETH]
-    /// @param _token The contract address of a ERC20 token.
-    /// @param _poolAddr The contract address of DaicoPool.
-    /// @param _openingTime A timestamp of the date this sale will start.
-    /// @param _closingTime A timestamp of the date this sale will end.
-    /// @param _tokensCap Number of tokens to be sold. Can be 0 if it accepts carryover.
-    /// @param _timeLockRate Specified rate of issued tokens will be locked. ex. 50 = 50%
-    /// @param _timeLockEnd A timestamp of the date locked tokens will be released.
-    /// @param _carryover If true, unsold tokens will be carryovered to next sale. 
-    /// @param _minAcceptableWei Minimum contribution.
-    /// @return 
-    constructor (
-        uint256 _rate, /* The unit of rate is [nano tokens / ETH] in this contract */
-        ERC20Interface _token,
-        address _poolAddr,
-        uint256 _openingTime,
-        uint256 _closingTime,
-        uint256 _tokensCap,
-        uint256 _timeLockRate,
-        uint256 _timeLockEnd,
-        bool _carryover,
-        uint256 _minAcceptableWei
-    ) public Crowdsale(_rate, _poolAddr, _token) TimedCrowdsale(_openingTime, _closingTime) {
-        require(_timeLockRate >= 0 && _timeLockRate <=100);
-        require(_poolAddr != address(0x0));
-
-        managerAddr = msg.sender;
-        poolAddr = _poolAddr;
-        timeLockRate = _timeLockRate;
-        timeLockEnd = _timeLockEnd;
-        tokensCap = _tokensCap;
-        carryover = _carryover;
-        minAcceptableWei = _minAcceptableWei;
-    }
-
-    /// @dev Initialize the sale. If carryoverAmount is given, it added the tokens to be sold.
-    /// @param carryoverAmount Amount of tokens to be added to capTokens.
-    /// @return 
-    function initialize(uint256 carryoverAmount) external onlyManager {
-        require(!isInitialized);
-        isInitialized = true;
-        tokensCap = tokensCap.add(carryoverAmount);
-    }
-
-    /// @dev Finalize the sale. It transfers all the funds it has. Can be repeated.
-    /// @return 
-    function finalize() onlyOwner public {
-        //require(!isFinalized);
-        require(isInitialized);
-        require(canFinalize());
-
-        finalization();
-        emit Finalized();
-
-        isFinalized = true;
-    }
-
-    /// @dev Check if the sale can be finalized.
-    /// @return True if closing time has come or tokens are sold out.
-    function canFinalize() public view returns(bool) {
-        return (hasClosed() || (isInitialized && tokensCap <= tokensMinted));
-    }
-
-
-    /// @dev It transfers all the funds it has.
-    /// @return 
-    function finalization() internal {
-        if(address(this).balance > 0){
-            poolAddr.transfer(address(this).balance);
-        }
-    }
-
-    /**
-     * @dev Overrides delivery by minting tokens upon purchase.
-     * @param _beneficiary Token purchaser
-     * @param _tokenAmount Number of tokens to be minted
-     */
-    function _deliverTokens(address _beneficiary, uint256 _tokenAmount) internal {
-        //require(tokensMinted.add(_tokenAmount) <= tokensCap);
-        require(tokensMinted < tokensCap);
-
-        uint256 time_locked = _tokenAmount.mul(timeLockRate).div(100); 
-        uint256 instant = _tokenAmount.sub(time_locked);
-
-        if (instant > 0) {
-            require(TokenSaleManager(managerAddr).mint(_beneficiary, instant));
-        }
-        if (time_locked > 0) {
-            require(TokenSaleManager(managerAddr).mintTimeLocked(
-                _beneficiary,
-                time_locked,
-                timeLockEnd
-            ));
-        }
-  
-        tokensMinted = tokensMinted.add(_tokenAmount);
-    }
-
-    /// @dev Overrides _forwardFunds to do nothing. 
-    function _forwardFunds() internal {}
-
-    /// @dev Overrides _preValidatePurchase to check minimam contribution and initialization.
-    /// @param _beneficiary Token purchaser
-    /// @param _weiAmount weiAmount to pay
-    function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) internal {
-        super._preValidatePurchase(_beneficiary, _weiAmount);
-        require(isInitialized);
-        require(_weiAmount >= minAcceptableWei);
-    }
-
-    /**
-     * @dev Overridden in order to change the unit of rate with [nano toekns / ETH]
-     * instead of original [minimal unit of the token / wei].
-     * @param _weiAmount Value in wei to be converted into tokens
-     * @return Number of tokens that can be purchased with the specified _weiAmount
-     */
-    function _getTokenAmount(uint256 _weiAmount) internal view returns (uint256) {
-      return _weiAmount.mul(rate).div(10**18); //The unit of rate is [nano tokens / ETH].
-    }
-
+  }
 }
