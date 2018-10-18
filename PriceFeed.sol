@@ -1,298 +1,115 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PriceFeed at 0x335ebc47adc461e411a0ca992562a66995314229
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PriceFeed at 0x4604646c55410eaa6cf43b04d26071e36bc227ef
 */
-// hevm: flattened sources of src/price-feed.sol
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.25;
 
-////// lib/ds-thing/lib/ds-auth/src/auth.sol
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
+// ----------------------------------------------------------------------------
+// BokkyPooBah's Pricefeed from a single source
+//
+// Deployed to: 0x4604646C55410EAa6Cf43b04d26071E36bC227Ef
+//
+// Enjoy. (c) BokkyPooBah / Bok Consulting Pty Ltd 2018. The MIT Licence.
+// ----------------------------------------------------------------------------
 
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
 
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-/* pragma solidity ^0.4.23; */
+// ----------------------------------------------------------------------------
+// Owned contract
+// ----------------------------------------------------------------------------
+contract Owned {
+    address public owner;
+    address public newOwner;
+    bool private initialised;
 
-contract DSAuthority {
-    function canCall(
-        address src, address dst, bytes4 sig
-    ) public view returns (bool);
-}
+    event OwnershipTransferred(address indexed _from, address indexed _to);
 
-contract DSAuthEvents {
-    event LogSetAuthority (address indexed authority);
-    event LogSetOwner     (address indexed owner);
-}
-
-contract DSAuth is DSAuthEvents {
-    DSAuthority  public  authority;
-    address      public  owner;
-
-    constructor() public {
-        owner = msg.sender;
-        emit LogSetOwner(msg.sender);
-    }
-
-    function setOwner(address owner_)
-        public
-        auth
-    {
-        owner = owner_;
-        emit LogSetOwner(owner);
-    }
-
-    function setAuthority(DSAuthority authority_)
-        public
-        auth
-    {
-        authority = authority_;
-        emit LogSetAuthority(authority);
-    }
-
-    modifier auth {
-        require(isAuthorized(msg.sender, msg.sig));
+    modifier onlyOwner {
+        require(msg.sender == owner);
         _;
     }
 
-    function isAuthorized(address src, bytes4 sig) internal view returns (bool) {
-        if (src == address(this)) {
-            return true;
-        } else if (src == owner) {
-            return true;
-        } else if (authority == DSAuthority(0)) {
-            return false;
-        } else {
-            return authority.canCall(src, this, sig);
-        }
+    function initOwned(address _owner) internal {
+        require(!initialised);
+        owner = _owner;
+        initialised = true;
+    }
+    function transferOwnership(address _newOwner) public onlyOwner {
+        newOwner = _newOwner;
+    }
+    function acceptOwnership() public {
+        require(msg.sender == newOwner);
+        emit OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+        newOwner = address(0);
+    }
+    function transferOwnershipImmediately(address _newOwner) public onlyOwner {
+        emit OwnershipTransferred(owner, _newOwner);
+        owner = _newOwner;
     }
 }
 
-////// lib/ds-thing/lib/ds-math/src/math.sol
-/// math.sol -- mixin for inline numerical wizardry
 
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
+// ----------------------------------------------------------------------------
+// Maintain a list of operators that are permissioned to execute certain
+// functions
+// ----------------------------------------------------------------------------
+contract Operated is Owned {
+    mapping(address => bool) public operators;
 
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
+    event OperatorAdded(address _operator);
+    event OperatorRemoved(address _operator);
 
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-/* pragma solidity ^0.4.13; */
-
-contract DSMath {
-    function add(uint x, uint y) internal pure returns (uint z) {
-        require((z = x + y) >= x);
-    }
-    function sub(uint x, uint y) internal pure returns (uint z) {
-        require((z = x - y) <= x);
-    }
-    function mul(uint x, uint y) internal pure returns (uint z) {
-        require(y == 0 || (z = x * y) / y == x);
-    }
-
-    function min(uint x, uint y) internal pure returns (uint z) {
-        return x <= y ? x : y;
-    }
-    function max(uint x, uint y) internal pure returns (uint z) {
-        return x >= y ? x : y;
-    }
-    function imin(int x, int y) internal pure returns (int z) {
-        return x <= y ? x : y;
-    }
-    function imax(int x, int y) internal pure returns (int z) {
-        return x >= y ? x : y;
-    }
-
-    uint constant WAD = 10 ** 18;
-    uint constant RAY = 10 ** 27;
-
-    function wmul(uint x, uint y) internal pure returns (uint z) {
-        z = add(mul(x, y), WAD / 2) / WAD;
-    }
-    function rmul(uint x, uint y) internal pure returns (uint z) {
-        z = add(mul(x, y), RAY / 2) / RAY;
-    }
-    function wdiv(uint x, uint y) internal pure returns (uint z) {
-        z = add(mul(x, WAD), y / 2) / y;
-    }
-    function rdiv(uint x, uint y) internal pure returns (uint z) {
-        z = add(mul(x, RAY), y / 2) / y;
-    }
-
-    // This famous algorithm is called "exponentiation by squaring"
-    // and calculates x^n with x as fixed-point and n as regular unsigned.
-    //
-    // It's O(log n), instead of O(n) for naive repeated multiplication.
-    //
-    // These facts are why it works:
-    //
-    //  If n is even, then x^n = (x^2)^(n/2).
-    //  If n is odd,  then x^n = x * x^(n-1),
-    //   and applying the equation for even x gives
-    //    x^n = x * (x^2)^((n-1) / 2).
-    //
-    //  Also, EVM division is flooring and
-    //    floor[(n-1) / 2] = floor[n / 2].
-    //
-    function rpow(uint x, uint n) internal pure returns (uint z) {
-        z = n % 2 != 0 ? x : RAY;
-
-        for (n /= 2; n != 0; n /= 2) {
-            x = rmul(x, x);
-
-            if (n % 2 != 0) {
-                z = rmul(z, x);
-            }
-        }
-    }
-}
-
-////// lib/ds-thing/lib/ds-note/src/note.sol
-/// note.sol -- the `note' modifier, for logging calls as events
-
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-/* pragma solidity ^0.4.23; */
-
-contract DSNote {
-    event LogNote(
-        bytes4   indexed  sig,
-        address  indexed  guy,
-        bytes32  indexed  foo,
-        bytes32  indexed  bar,
-        uint              wad,
-        bytes             fax
-    ) anonymous;
-
-    modifier note {
-        bytes32 foo;
-        bytes32 bar;
-
-        assembly {
-            foo := calldataload(4)
-            bar := calldataload(36)
-        }
-
-        emit LogNote(msg.sig, msg.sender, foo, bar, msg.value, msg.data);
-
+    modifier onlyOperator() {
+        require(operators[msg.sender] || owner == msg.sender);
         _;
     }
+
+    function initOperated(address _owner) internal {
+        initOwned(_owner);
+    }
+    function addOperator(address _operator) public onlyOwner {
+        require(!operators[_operator]);
+        operators[_operator] = true;
+        emit OperatorAdded(_operator);
+    }
+    function removeOperator(address _operator) public onlyOwner {
+        require(operators[_operator]);
+        delete operators[_operator];
+        emit OperatorRemoved(_operator);
+    }
 }
 
-////// lib/ds-thing/src/thing.sol
-// thing.sol - `auth` with handy mixins. your things should be DSThings
-
-// Copyright (C) 2017  DappHub, LLC
-
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-/* pragma solidity ^0.4.23; */
-
-/* import 'ds-auth/auth.sol'; */
-/* import 'ds-note/note.sol'; */
-/* import 'ds-math/math.sol'; */
-
-contract DSThing is DSAuth, DSNote, DSMath {
-
-    function S(string s) internal pure returns (bytes4) {
-        return bytes4(keccak256(abi.encodePacked(s)));
-    }
-
+// ----------------------------------------------------------------------------
+// PriceFeed Interface - _live is true if the rate is valid, false if invalid
+// ----------------------------------------------------------------------------
+contract PriceFeedInterface {
+    function getRate() public view returns (uint _rate, bool _live);
 }
 
-////// src/price-feed.sol
-/// price-feed.sol - ds-value like that also pokes a medianizer
 
-// Copyright (C) 2017, 2018  DappHub, LLC
+// ----------------------------------------------------------------------------
+// Pricefeed from a single source
+// ----------------------------------------------------------------------------
+contract PriceFeed is PriceFeedInterface, Operated {
+    string public name;
+    uint public rate;
+    bool public live;
 
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
+    event SetRate(uint oldRate, bool oldLive, uint newRate, bool newLive);
 
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-/* pragma solidity ^0.4.23; */
-
-/* import "ds-thing/thing.sol"; */
-
-interface Medianizer {
-    function poke() external;
-}
-
-contract PriceFeed is DSThing {
-
-    uint128       val;
-    uint32 public zzz;
-
-    function peek() external view returns (bytes32,bool)
-    {
-        return (bytes32(val), now < zzz);
+    constructor(string _name, uint _rate, bool _live) public {
+        initOperated(msg.sender);
+        name = _name;
+        rate = _rate;
+        live = _live;
+        emit SetRate(0, false, rate, live);
     }
-
-    function read() external view returns (bytes32)
-    {
-        require(now < zzz);
-        return bytes32(val);
+    function setRate(uint _rate, bool _live) public onlyOperator {
+        emit SetRate(rate, live, _rate, _live);
+        rate = _rate;
+        live = _live;
     }
-
-    function poke(uint128 val_, uint32 zzz_) external note auth
-    {
-        val = val_;
-        zzz = zzz_;
+    function getRate() public view returns (uint _rate, bool _live) {
+        return (rate, live);
     }
-
-    function post(uint128 val_, uint32 zzz_, Medianizer med_) external note auth
-    {
-        val = val_;
-        zzz = zzz_;
-        med_.poke();
-    }
-
-    function void() external note auth
-    {
-        zzz = 0;
-    }
-
 }
