@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BCoin at 0xf0601e3a55c6628438ec7f1a31efdbe4be1e709c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BCoin at 0x4d482dd54b9384d70e6c660814cf09c102f8d22e
 */
 pragma solidity 0.4.25;
 
@@ -51,7 +51,7 @@ contract BCoin is IERC20 {
   string public symbol = "BCN";
   uint8 public constant decimals = 18;
   uint256 public constant decimalFactor = 1000000000000000000;
-  uint256 public constant totalSupply = 300000000 * decimalFactor;
+  uint256 public constant totalSupply = 300000 * decimalFactor;
   mapping (address => uint256) balances;
   mapping (address => mapping (address => uint256)) internal allowed;
 
