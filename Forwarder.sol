@@ -1,343 +1,355 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Forwarder at 0x8f59323d8400cc0dee71ee91f92961989d508160
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Forwarder at 0x0feb3ce318e239a230383fd3484fa1018e1efaa0
 */
-pragma solidity 0.4.24;
+pragma solidity ^0.4.14;
 
 /**
- * DO NOT SEND ETH TO THIS CONTRACT ON MAINNET.  ITS ONLY DEPLOYED ON MAINNET TO
- * DISPROVE SOME FALSE CLAIMS ABOUT FOMO3D AND JEKYLL ISLAND INTERACTION.  YOU 
- * CAN TEST ALL THE PAYABLE FUNCTIONS SENDING 0 ETH.  OR BETTER YET COPY THIS TO 
- * THE TESTNETS.
- * 
- * IF YOU SEND ETH TO THIS CONTRACT IT CANNOT BE RECOVERED.  THERE IS NO WITHDRAW.
- * 
- * THE CHECK BALANCE FUNCTIONS ARE FOR WHEN TESTING ON TESTNET TO SHOW THAT ALTHOUGH 
- * THE CORP BANK COULD BE FORCED TO REVERT TX'S OR TRY AND BURN UP ALL/MOST GAS
- * FOMO3D STILL MOVES ON WITHOUT RISK OF LOCKING UP.  AND IN CASES OF REVERT OR  
- * OOG INSIDE CORP BANK.  ALL WE AT TEAM JUST WOULD ACCOMPLISH IS JUSTING OURSELVES 
- * OUT OF THE ETH THAT WAS TO BE SENT TO JEKYLL ISLAND.  FOREVER LEAVING IT UNCLAIMABLE
- * IN FOMO3D CONTACT.  SO WE CAN ONLY HARM OURSELVES IF WE TRIED SUCH A USELESS 
- * THING.  AND FOMO3D WILL CONTINUE ON, UNAFFECTED
+ * Contract that exposes the needed erc20 token functions
  */
 
-// this is deployed on mainnet at:  0x38aEfE9e8E0Fc938475bfC6d7E52aE28D39FEBD8
-contract Fomo3d {
-    // create some data tracking vars for testing
-    bool public depositSuccessful_;
-    uint256 public successfulTransactions_;
-    uint256 public gasBefore_;
-    uint256 public gasAfter_;
-    
-    // create forwarder instance
-    Forwarder Jekyll_Island_Inc;
-    
-    // take addr for forwarder in constructor arguments
-    constructor(address _addr)
-        public
-    {
-        // set up forwarder to point to its contract location
-        Jekyll_Island_Inc = Forwarder(_addr);
-    }
-
-    // some fomo3d function that deposits to Forwarder
-    function someFunction()
-        public
-        payable
-    {
-        // grab gas left
-        gasBefore_ = gasleft();
-        
-        // deposit to forwarder, uses low level call so forwards all gas
-        if (!address(Jekyll_Island_Inc).call.value(msg.value)(bytes4(keccak256("deposit()"))))  
-        {
-            // give fomo3d work to do that needs gas. what better way than storage 
-            // write calls, since their so costly.
-            depositSuccessful_ = false;
-            gasAfter_ = gasleft();
-        } else {
-            depositSuccessful_ = true;
-            successfulTransactions_++;
-            gasAfter_ = gasleft();
-        }
-    }
-    
-    // some fomo3d function that deposits to Forwarder
-    function someFunction2()
-        public
-        payable
-    {
-        // grab gas left
-        gasBefore_ = gasleft();
-        
-        // deposit to forwarder, uses low level call so forwards all gas
-        if (!address(Jekyll_Island_Inc).call.value(msg.value)(bytes4(keccak256("deposit2()"))))  
-        {
-            // give fomo3d work to do that needs gas. what better way than storage 
-            // write calls, since their so costly.
-            depositSuccessful_ = false;
-            gasAfter_ = gasleft();
-        } else {
-            depositSuccessful_ = true;
-            successfulTransactions_++;
-            gasAfter_ = gasleft();
-        }
-    }
-    
-    // some fomo3d function that deposits to Forwarder
-    function someFunction3()
-        public
-        payable
-    {
-        // grab gas left
-        gasBefore_ = gasleft();
-        
-        // deposit to forwarder, uses low level call so forwards all gas
-        if (!address(Jekyll_Island_Inc).call.value(msg.value)(bytes4(keccak256("deposit3()"))))  
-        {
-            // give fomo3d work to do that needs gas. what better way than storage 
-            // write calls, since their so costly.
-            depositSuccessful_ = false;
-            gasAfter_ = gasleft();
-        } else {
-            depositSuccessful_ = true;
-            successfulTransactions_++;
-            gasAfter_ = gasleft();
-        }
-    }
-    
-    // some fomo3d function that deposits to Forwarder
-    function someFunction4()
-        public
-        payable
-    {
-        // grab gas left
-        gasBefore_ = gasleft();
-        
-        // deposit to forwarder, uses low level call so forwards all gas
-        if (!address(Jekyll_Island_Inc).call.value(msg.value)(bytes4(keccak256("deposit4()"))))  
-        {
-            // give fomo3d work to do that needs gas. what better way than storage 
-            // write calls, since their so costly.
-            depositSuccessful_ = false;
-            gasAfter_ = gasleft();
-        } else {
-            depositSuccessful_ = true;
-            successfulTransactions_++;
-            gasAfter_ = gasleft();
-        }
-    }
-    
-    // for data tracking lets make a function to check this contracts balance
-    function checkBalance()
-        public
-        view
-        returns(uint256)
-    {
-        return(address(this).balance);
-    }
-    
+contract ERC20Interface {
+  // Send _value amount of tokens to address _to
+  function transfer(address _to, uint256 _value) returns (bool success);
+  // Get the account balance of another account with address _owner
+  function balanceOf(address _owner) constant returns (uint256 balance);
 }
 
-
-// heres a sample forwarder with a copy of the jekyll island forwarder (requirements on 
-// msg.sender removed for simplicity since its irrelevant to testing this.  and some
-// tracking vars added for test.)
-
-// this is deployed on mainnet at:  0x8F59323d8400CC0deE71ee91f92961989D508160
+/**
+ * Contract that will forward any incoming Ether to its creator
+ */
 contract Forwarder {
-    // lets create some tracking vars 
-    bool public depositSuccessful_;
-    uint256 public successfulTransactions_;
-    uint256 public gasBefore_;
-    uint256 public gasAfter_;
-    
-    // create an instance of the jekyll island bank 
-    Bank currentCorpBank_;
-    
-    // take an address in the constructor arguments to set up bank with 
-    constructor(address _addr)
-        public
-    {
-        // point the created instance to the address given
-        currentCorpBank_ = Bank(_addr);
+  // Address to which any funds sent to this contract will be forwarded
+  address public parentAddress;
+  event ForwarderDeposited(address from, uint value, bytes data);
+
+  event TokensFlushed(
+    address tokenContractAddress, // The contract address of the token
+    uint value // Amount of token sent
+  );
+
+  /**
+   * Create the contract, and set the destination address to that of the creator
+   */
+  function Forwarder() {
+    parentAddress = msg.sender;
+  }
+
+  /**
+   * Modifier that will execute internal code block only if the sender is a parent of the forwarder contract
+   */
+  modifier onlyParent {
+    if (msg.sender != parentAddress) {
+      throw;
     }
-    
-    function deposit()
-        public 
-        payable
-        returns(bool)
-    {
-        // grab gas at start
-        gasBefore_ = gasleft();
-        
-        if (currentCorpBank_.deposit.value(msg.value)(msg.sender) == true) {
-            depositSuccessful_ = true;    
-            successfulTransactions_++;
-            gasAfter_ = gasleft();
-            return(true);
-        } else {
-            depositSuccessful_ = false;
-            gasAfter_ = gasleft();
-            return(false);
-        }
+    _;
+  }
+
+  /**
+   * Default function; Gets called when Ether is deposited, and forwards it to the destination address
+   */
+  function() payable {
+    if (!parentAddress.call.value(msg.value)(msg.data))
+      throw;
+    // Fire off the deposited event if we can forward it  
+    ForwarderDeposited(msg.sender, msg.value, msg.data);
+  }
+
+  /**
+   * Execute a token transfer of the full balance from the forwarder token to the main wallet contract
+   * @param tokenContractAddress the address of the erc20 token contract
+   */
+  function flushTokens(address tokenContractAddress) onlyParent {
+    ERC20Interface instance = ERC20Interface(tokenContractAddress);
+    var forwarderAddress = address(this);
+    var forwarderBalance = instance.balanceOf(forwarderAddress);
+    if (forwarderBalance == 0) {
+      return;
     }
-    
-    function deposit2()
-        public 
-        payable
-        returns(bool)
-    {
-        // grab gas at start
-        gasBefore_ = gasleft();
-        
-        if (currentCorpBank_.deposit2.value(msg.value)(msg.sender) == true) {
-            depositSuccessful_ = true;    
-            successfulTransactions_++;
-            gasAfter_ = gasleft();
-            return(true);
-        } else {
-            depositSuccessful_ = false;
-            gasAfter_ = gasleft();
-            return(false);
-        }
+    if (!instance.transfer(parentAddress, forwarderBalance)) {
+      throw;
     }
-    
-    function deposit3()
-        public 
-        payable
-        returns(bool)
-    {
-        // grab gas at start
-        gasBefore_ = gasleft();
-        
-        if (currentCorpBank_.deposit3.value(msg.value)(msg.sender) == true) {
-            depositSuccessful_ = true;    
-            successfulTransactions_++;
-            gasAfter_ = gasleft();
-            return(true);
-        } else {
-            depositSuccessful_ = false;
-            gasAfter_ = gasleft();
-            return(false);
-        }
-    }
-    
-    function deposit4()
-        public 
-        payable
-        returns(bool)
-    {
-        // grab gas at start
-        gasBefore_ = gasleft();
-        
-        if (currentCorpBank_.deposit4.value(msg.value)(msg.sender) == true) {
-            depositSuccessful_ = true;    
-            successfulTransactions_++;
-            gasAfter_ = gasleft();
-            return(true);
-        } else {
-            depositSuccessful_ = false;
-            gasAfter_ = gasleft();
-            return(false);
-        }
-    }
-    
-    // for data tracking lets make a function to check this contracts balance
-    function checkBalance()
-        public
-        view
-        returns(uint256)
-    {
-        return(address(this).balance);
-    }
-    
+    TokensFlushed(tokenContractAddress, forwarderBalance);
+  }
+
+  /**
+   * It is possible that funds were sent to this address before the contract was deployed.
+   * We can flush those funds to the destination address.
+   */
+  function flush() {
+    if (!parentAddress.call.value(this.balance)())
+      throw;
+  }
 }
 
-// heres the bank with various ways someone could try and migrate to a bank that 
-// screws the tx.  to show none of them effect fomo3d.
+/**
+ * Basic multi-signer wallet designed for use in a co-signing environment where 2 signatures are required to move funds.
+ * Typically used in a 2-of-3 signing configuration. Uses ecrecover to allow for 2 signatures in a single transaction.
+ */
+contract WalletSimple {
+  // Events
+  event Deposited(address from, uint value, bytes data);
+  event SafeModeActivated(address msgSender);
+  event Transacted(
+    address msgSender, // Address of the sender of the message initiating the transaction
+    address otherSigner, // Address of the signer (second signature) used to initiate the transaction
+    bytes32 operation, // Operation hash (sha3 of toAddress, value, data, expireTime, sequenceId)
+    address toAddress, // The address the transaction was sent to
+    uint value, // Amount of Wei sent to the address
+    bytes data // Data sent when invoking the transaction
+  );
+  event TokenTransacted(
+    address msgSender, // Address of the sender of the message initiating the transaction
+    address otherSigner, // Address of the signer (second signature) used to initiate the transaction
+    bytes32 operation, // Operation hash (sha3 of toAddress, value, tokenContractAddress, expireTime, sequenceId)
+    address toAddress, // The address the transaction was sent to
+    uint value, // Amount of token sent
+    address tokenContractAddress // The contract address of the token
+  );
 
-// this is deployed on mainnet at:  0x0C2DBC98581e553C4E978Dd699571a5DED408a4F
-contract Bank {
-    // lets use storage writes to this to burn up all gas
-    uint256 public i = 1000000;
-    uint256 public x;
-    address public fomo3d;
-    
-    /**
-     * this version will use up most gas.  but return just enough to make it back
-     * to fomo3d.  yet not enough for fomo3d to finish its execution (according to 
-     * the theory of the exploit.  which when you run this you'll find due to my 
-     * use of ! in the call from fomo3d to forwarder, and the use of a normal function 
-     * call from forwarder to bank, this fails to stop fomo3d from continuing)
-     */
-    function deposit(address _fomo3daddress)
-        external
-        payable
-        returns(bool)
-    {
-        // burn all gas leaving just enough to get back to fomo3d  and it to do
-        // a write call in a attempt to make Fomo3d OOG (doesn't work cause fomo3d 
-        // protects itself from this behavior)
-        while (i > 41000)
-        {
-            i = gasleft();
-        }
-        
-        return(true);
+  // Public fields
+  address[] public signers; // The addresses that can co-sign transactions on the wallet
+  bool public safeMode = false; // When active, wallet may only send to signer addresses
+
+  // Internal fields
+  uint constant SEQUENCE_ID_WINDOW_SIZE = 10;
+  uint[10] recentSequenceIds;
+
+  /**
+   * Modifier that will execute internal code block only if the sender is an authorized signer on this wallet
+   */
+  modifier onlysigner {
+    if (!isSigner(msg.sender)) {
+      throw;
     }
-    
-    /**
-     * this version just tries a plain revert.  (pssst... fomo3d doesn't care)
-     */
-    function deposit2(address _fomo3daddress)
-        external
-        payable
-        returns(bool)
-    {
-        // straight up revert (since we use low level call in fomo3d it doesn't 
-        // care if we revert the internal tx to bank.  this behavior would only 
-        // screw over team just, not effect fomo3d)
-        revert();
+    _;
+  }
+
+  /**
+   * Set up a simple multi-sig wallet by specifying the signers allowed to be used on this wallet.
+   * 2 signers will be required to send a transaction from this wallet.
+   * Note: The sender is NOT automatically added to the list of signers.
+   * Signers CANNOT be changed once they are set
+   *
+   * @param allowedSigners An array of signers on the wallet
+   */
+  function WalletSimple(address[] allowedSigners) {
+    if (allowedSigners.length != 3) {
+      // Invalid number of signers
+      throw;
     }
-    
-    /**
-     * this one tries an infinite loop (another fail.  fomo3d trudges on)
-     */
-    function deposit3(address _fomo3daddress)
-        external
-        payable
-        returns(bool)
-    {
-        // this infinite loop still does not stop fomo3d from running.
-        while(1 == 1) {
-            x++;
-            fomo3d = _fomo3daddress;
-        }
-        return(true);
+    signers = allowedSigners;
+  }
+
+  /**
+   * Gets called when a transaction is received without calling a method
+   */
+  function() payable {
+    if (msg.value > 0) {
+      // Fire deposited event if we are receiving funds
+      Deposited(msg.sender, msg.value, msg.data);
     }
+  }
+
+  /**
+   * Create a new contract (and also address) that forwards funds to this contract
+   * returns address of newly created forwarder address
+   */
+  function createForwarder() onlysigner returns (address) {
+    return new Forwarder();
+  }
+
+  /**
+   * Execute a multi-signature transaction from this wallet using 2 signers: one from msg.sender and the other from ecrecover.
+   * The signature is a signed form (using eth.sign) of tightly packed toAddress, value, data, expireTime and sequenceId
+   * Sequence IDs are numbers starting from 1. They are used to prevent replay attacks and may not be repeated.
+   *
+   * @param toAddress the destination address to send an outgoing transaction
+   * @param value the amount in Wei to be sent
+   * @param data the data to send to the toAddress when invoking the transaction
+   * @param expireTime the number of seconds since 1970 for which this transaction is valid
+   * @param sequenceId the unique sequence id obtainable from getNextSequenceId
+   * @param signature the result of eth.sign on the operationHash sha3(toAddress, value, data, expireTime, sequenceId)
+   */
+  function sendMultiSig(address toAddress, uint value, bytes data, uint expireTime, uint sequenceId, bytes signature) onlysigner {
+    // Verify the other signer
+    var operationHash = sha3("ETHER", toAddress, value, data, expireTime, sequenceId);
     
-    /**
-     * this one just runs a set length loops that OOG's (and.. again.. fomo3d still works)
-     */
-    function deposit4(address _fomo3daddress)
-        public
-        payable
-        returns(bool)
-    {
-        // burn all gas (fomo3d still keeps going)
-        for (uint256 i = 0; i <= 1000; i++)
-        {
-            x++;
-            fomo3d = _fomo3daddress;
-        }
+    var otherSigner = verifyMultiSig(toAddress, operationHash, signature, expireTime, sequenceId);
+
+    // Success, send the transaction
+    if (!(toAddress.call.value(value)(data))) {
+      // Failed executing transaction
+      throw;
     }
+    Transacted(msg.sender, otherSigner, operationHash, toAddress, value, data);
+  }
+  
+  /**
+   * Execute a multi-signature token transfer from this wallet using 2 signers: one from msg.sender and the other from ecrecover.
+   * The signature is a signed form (using eth.sign) of tightly packed toAddress, value, tokenContractAddress, expireTime and sequenceId
+   * Sequence IDs are numbers starting from 1. They are used to prevent replay attacks and may not be repeated.
+   *
+   * @param toAddress the destination address to send an outgoing transaction
+   * @param value the amount in tokens to be sent
+   * @param tokenContractAddress the address of the erc20 token contract
+   * @param expireTime the number of seconds since 1970 for which this transaction is valid
+   * @param sequenceId the unique sequence id obtainable from getNextSequenceId
+   * @param signature the result of eth.sign on the operationHash sha3(toAddress, value, tokenContractAddress, expireTime, sequenceId)
+   */
+  function sendMultiSigToken(address toAddress, uint value, address tokenContractAddress, uint expireTime, uint sequenceId, bytes signature) onlysigner {
+    // Verify the other signer
+    var operationHash = sha3("ERC20", toAddress, value, tokenContractAddress, expireTime, sequenceId);
     
-    // for data tracking lets make a function to check this contracts balance
-    function checkBalance()
-        public
-        view
-        returns(uint256)
-    {
-        return(address(this).balance);
+    var otherSigner = verifyMultiSig(toAddress, operationHash, signature, expireTime, sequenceId);
+    
+    ERC20Interface instance = ERC20Interface(tokenContractAddress);
+    if (!instance.transfer(toAddress, value)) {
+        throw;
     }
+    TokenTransacted(msg.sender, otherSigner, operationHash, toAddress, value, tokenContractAddress);
+  }
+
+  /**
+   * Execute a token flush from one of the forwarder addresses. This transfer needs only a single signature and can be done by any signer
+   *
+   * @param forwarderAddress the address of the forwarder address to flush the tokens from
+   * @param tokenContractAddress the address of the erc20 token contract
+   */
+  function flushForwarderTokens(address forwarderAddress, address tokenContractAddress) onlysigner {    
+    Forwarder forwarder = Forwarder(forwarderAddress);
+    forwarder.flushTokens(tokenContractAddress);
+  }  
+  
+  /**
+   * Do common multisig verification for both eth sends and erc20token transfers
+   *
+   * @param toAddress the destination address to send an outgoing transaction
+   * @param operationHash the sha3 of the toAddress, value, data/tokenContractAddress and expireTime
+   * @param signature the tightly packed signature of r, s, and v as an array of 65 bytes (returned by eth.sign)
+   * @param expireTime the number of seconds since 1970 for which this transaction is valid
+   * @param sequenceId the unique sequence id obtainable from getNextSequenceId
+   * returns address of the address to send tokens or eth to
+   */
+  function verifyMultiSig(address toAddress, bytes32 operationHash, bytes signature, uint expireTime, uint sequenceId) private returns (address) {
+
+    var otherSigner = recoverAddressFromSignature(operationHash, signature);
+
+    // Verify if we are in safe mode. In safe mode, the wallet can only send to signers
+    if (safeMode && !isSigner(toAddress)) {
+      // We are in safe mode and the toAddress is not a signer. Disallow!
+      throw;
+    }
+    // Verify that the transaction has not expired
+    if (expireTime < block.timestamp) {
+      // Transaction expired
+      throw;
+    }
+
+    // Try to insert the sequence ID. Will throw if the sequence id was invalid
+    tryInsertSequenceId(sequenceId);
+
+    if (!isSigner(otherSigner)) {
+      // Other signer not on this wallet or operation does not match arguments
+      throw;
+    }
+    if (otherSigner == msg.sender) {
+      // Cannot approve own transaction
+      throw;
+    }
+
+    return otherSigner;
+  }
+
+  /**
+   * Irrevocably puts contract into safe mode. When in this mode, transactions may only be sent to signing addresses.
+   */
+  function activateSafeMode() onlysigner {
+    safeMode = true;
+    SafeModeActivated(msg.sender);
+  }
+
+  /**
+   * Determine if an address is a signer on this wallet
+   * @param signer address to check
+   * returns boolean indicating whether address is signer or not
+   */
+  function isSigner(address signer) returns (bool) {
+    // Iterate through all signers on the wallet and
+    for (uint i = 0; i < signers.length; i++) {
+      if (signers[i] == signer) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Gets the second signer's address using ecrecover
+   * @param operationHash the sha3 of the toAddress, value, data/tokenContractAddress and expireTime
+   * @param signature the tightly packed signature of r, s, and v as an array of 65 bytes (returned by eth.sign)
+   * returns address recovered from the signature
+   */
+  function recoverAddressFromSignature(bytes32 operationHash, bytes signature) private returns (address) {
+    if (signature.length != 65) {
+      throw;
+    }
+    // We need to unpack the signature, which is given as an array of 65 bytes (from eth.sign)
+    bytes32 r;
+    bytes32 s;
+    uint8 v;
+    assembly {
+      r := mload(add(signature, 32))
+      s := mload(add(signature, 64))
+      v := and(mload(add(signature, 65)), 255)
+    }
+    if (v < 27) {
+      v += 27; // Ethereum versions are 27 or 28 as opposed to 0 or 1 which is submitted by some signing libs
+    }
+    return ecrecover(operationHash, v, r, s);
+  }
+
+  /**
+   * Verify that the sequence id has not been used before and inserts it. Throws if the sequence ID was not accepted.
+   * We collect a window of up to 10 recent sequence ids, and allow any sequence id that is not in the window and
+   * greater than the minimum element in the window.
+   * @param sequenceId to insert into array of stored ids
+   */
+  function tryInsertSequenceId(uint sequenceId) onlysigner private {
+    // Keep a pointer to the lowest value element in the window
+    uint lowestValueIndex = 0;
+    for (uint i = 0; i < SEQUENCE_ID_WINDOW_SIZE; i++) {
+      if (recentSequenceIds[i] == sequenceId) {
+        // This sequence ID has been used before. Disallow!
+        throw;
+      }
+      if (recentSequenceIds[i] < recentSequenceIds[lowestValueIndex]) {
+        lowestValueIndex = i;
+      }
+    }
+    if (sequenceId < recentSequenceIds[lowestValueIndex]) {
+      // The sequence ID being used is lower than the lowest value in the window
+      // so we cannot accept it as it may have been used before
+      throw;
+    }
+    if (sequenceId > (recentSequenceIds[lowestValueIndex] + 10000)) {
+      // Block sequence IDs which are much higher than the lowest value
+      // This prevents people blocking the contract by using very large sequence IDs quickly
+      throw;
+    }
+    recentSequenceIds[lowestValueIndex] = sequenceId;
+  }
+
+  /**
+   * Gets the next available sequence ID for signing when using executeAndConfirm
+   * returns the sequenceId one higher than the highest currently stored
+   */
+  function getNextSequenceId() returns (uint) {
+    uint highestSequenceId = 0;
+    for (uint i = 0; i < SEQUENCE_ID_WINDOW_SIZE; i++) {
+      if (recentSequenceIds[i] > highestSequenceId) {
+        highestSequenceId = recentSequenceIds[i];
+      }
+    }
+    return highestSequenceId + 1;
+  }
 }
