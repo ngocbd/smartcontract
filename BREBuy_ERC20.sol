@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BREBuy_ERC20 at 0xec6a1e21441a55a39dcdadf475e970ec33ebee40
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BREBuy_ERC20 at 0x7910c579172c2d094d9813993e8b5704afb11003
 */
 pragma solidity ^0.4.24;
 
@@ -234,8 +234,8 @@ contract BREBuy_ERC20 is MobaBase  {
         }
         address inviteAddr = invite.GetAddressByName(inviteName);
         if(inviteAddr != address(0)) {
-           uint giveToEth   =  curConfig.singlePrice * inviteRate / 100;
-           inviteAddr.transfer(giveToEth);
+           uint giveToken   =  curConfig.singlePrice * inviteRate / 100;
+           token.transfer(inviteAddr,giveToken);
         }
     }
     
@@ -249,6 +249,8 @@ contract BREBuy_ERC20 is MobaBase  {
             result := mload(add(source, 32))
         }
     }
+    
+    
 
     function getGameInfo() public view returns  (uint256,uint32,uint256,uint8,address[],uint256,bool)  {
         return (gameIndex,
