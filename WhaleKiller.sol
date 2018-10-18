@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WhaleKiller at 0xb435a693f4d453a72a3a094ed3f8e4cb721f66c2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WhaleKiller at 0xf46f049967ed63b864a7f6cdf91d6dac9ea23b2c
 */
 pragma solidity ^0.4.24;
 
@@ -48,11 +48,16 @@ contract WhaleKiller {
             }  
         }
     }
-    function ShowDepositInfo(address _dep) public view returns(uint256 _invested, uint256 _rewards, uint256 _unpaidInterest) {
-        _unpaidInterest = invested[_dep] * interest / 100 * (now - timeInvest[_dep]) / 1 days;
-        return (invested[_dep], rewards[_dep], _unpaidInterest);
+    function showDeposit(address _dep) public view returns(uint256) {
+        return (invested[_dep]);
     }
-    function ShowWhaleAddress() public view returns(address) {
+    function showRewards(address _rew) public view returns(uint256) {
+        return (rewards[_rew]);
+    }
+    function showUnpaidInterest(address _inter) public view returns(uint256) {
+        return (invested[_inter] * interest / 100 * (now - timeInvest[_inter]) / 1 days);
+    }
+    function showWhaleAddr() public view returns(address) {
         return WhaleAddr;
     }
 }
