@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CHOAM at 0x4b3b99e956588b54f5841f2fb7c63721e6c7c392
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CHOAM at 0x70544d3affd8d415d45fc7b7d07a2e9b897fa6c8
 */
 pragma solidity ^0.4.24;
 
-// File: zeppelin-solidity/contracts/math/SafeMath.sol
+// File: openzeppelin-solidity/contracts/math/SafeMath.sol
 
 /**
  * @title SafeMath
@@ -14,48 +14,48 @@ library SafeMath {
   /**
   * @dev Multiplies two numbers, throws on overflow.
   */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+  function mul(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
     // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
     // benefit is lost if 'b' is also tested.
     // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
-    if (a == 0) {
+    if (_a == 0) {
       return 0;
     }
 
-    c = a * b;
-    assert(c / a == b);
+    c = _a * _b;
+    assert(c / _a == _b);
     return c;
   }
 
   /**
   * @dev Integer division of two numbers, truncating the quotient.
   */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    // uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return a / b;
+  function div(uint256 _a, uint256 _b) internal pure returns (uint256) {
+    // assert(_b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = _a / _b;
+    // assert(_a == _b * c + _a % _b); // There is no case in which this doesn't hold
+    return _a / _b;
   }
 
   /**
   * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
   */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
+  function sub(uint256 _a, uint256 _b) internal pure returns (uint256) {
+    assert(_b <= _a);
+    return _a - _b;
   }
 
   /**
   * @dev Adds two numbers, throws on overflow.
   */
-  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    c = a + b;
-    assert(c >= a);
+  function add(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
+    c = _a + _b;
+    assert(c >= _a);
     return c;
   }
 }
 
-// File: zeppelin-solidity/contracts/ownership/Ownable.sol
+// File: openzeppelin-solidity/contracts/ownership/Ownable.sol
 
 /**
  * @title Ownable
@@ -175,9 +175,9 @@ contract CHOAM is Ownable
 	Node[] public nodes;
 
 
-	constructor() public
+	constructor(address addr) public
 	{
-		master = msg.sender;
+		master = addr;
 	}
 
 
@@ -197,9 +197,8 @@ contract CHOAM is Ownable
 			create_planet();
 			create_planet();
 			create_planet();
-
-			inited = true;
 		}
+		inited = true;
 	}
 
 
@@ -313,7 +312,7 @@ contract CHOAM is Ownable
 
 	function create_planet() private
 	{
-		bytes32 hash = keccak256(abi.encodePacked(uint256(blockhash(11)) + uint256(msg.sender) + uint256(nodes.length)));
+		bytes32 hash = keccak256(abi.encodePacked(uint256(blockhash(block.number - 11)) + uint256(msg.sender) + uint256(nodes.length)));
 
 		uint256 fee = (uint256(hash) % FEE_RANGE).add(FEE_MIN);
 
@@ -337,7 +336,7 @@ contract CHOAM is Ownable
 
 		if(players[msg.sender].state == 0 && nodes.length > 0)
 		{
-			bytes32 hash = keccak256(abi.encodePacked(uint256(blockhash(11)) + uint256(msg.sender) + uint256(nodes.length)));
+			bytes32 hash = keccak256(abi.encodePacked(uint256(blockhash(block.number - 11)) + uint256(msg.sender) + uint256(nodes.length)));
 
 			players[msg.sender].position = uint256(hash) % nodes.length;
 
