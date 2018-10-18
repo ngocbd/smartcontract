@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EducationToken at 0x188526db9f105ed191a256842b1f4a66785e4803
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EducationToken at 0x3fc2af38448a082de44f5e1eff753e464023e0bb
 */
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////// ERC223 ///////////////////////////////////////
