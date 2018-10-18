@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DSFToken at 0x1477bfb56d6cceee876058c2f427c209fc92b5bf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DSFToken at 0x4f0cbbf6a312499e6841302b3b6ef8d460a781f9
 */
 pragma solidity ^0.4.16;
 
@@ -107,7 +107,7 @@ contract DSFToken is StandardToken {
         ) {
         balances[msg.sender] = 1000000000 * 1000000000000000000;   // Give the creator all initial tokens, 18 zero is 18 Decimals
         totalSupply = 1000000000 * 1000000000000000000;            // Update total supply, , 18 zero is 18 Decimals
-        name = "Dragon Star Currency FundTicker";                                // Token Name
+        name = "Dragon Star Currency Fund";                                // Token Name
         decimals = 18;                                      // Amount of decimals for display purposes
         symbol = "DSF";                                    // Token Symbol
     }
