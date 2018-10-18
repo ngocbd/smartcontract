@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CompliantCrowdsale at 0xee15c19b575893bdb1fe94e1e699def94d912a73
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CompliantCrowdsale at 0x7799ffb5704d2782f6f190a460784b32e24319bd
 */
 pragma solidity 0.4.24;
 
@@ -1101,6 +1101,64 @@ contract CompliantCrowdsale is Validator, FinalizableCrowdsale {
         );
         
         delete pendingMints[nonce];
+    }
+
+        /** @dev approve buy tokens requests in bulk
+      * @param nonces request recorded at these nonces
+      */
+    function bulkApproveMints(uint256[] nonces)
+        external 
+        onlyValidator 
+        returns (bool) 
+    {
+        for (uint i = 0; i < nonces.length; i++) {
+            require(whiteListingContract.isInvestorApproved(pendingMints[nonces[i]].to));
+
+            // update state
+            weiRaised = weiRaised.add(pendingMints[nonces[i]].weiAmount);
+            totalSupply = totalSupply.add(pendingMints[nonces[i]].tokens);
+
+            //No need to use mint-approval on token side, since the minting is already approved in the crowdsale side
+            token.mint(pendingMints[nonces[i]].to, pendingMints[nonces[i]].tokens);
+            
+            emit TokenPurchase(
+                msg.sender,
+                pendingMints[nonces[i]].to,
+                pendingMints[nonces[i]].weiAmount,
+                pendingMints[nonces[i]].tokens
+            );
+
+            forwardFunds(pendingMints[nonces[i]].weiAmount);
+            delete pendingMints[nonces[i]];
+        }
+
+        return true;
+        
+    }
+    
+    /** @dev reject buy tokens requests
+      * @param nonces request recorded at these nonces
+      * @param reasons reasons for rejection
+      */
+    function bulkRejectMints(uint256[] nonces, uint256[] reasons)
+        external 
+        onlyValidator
+    {
+        for (uint i = 0; i < nonces.length; i++) {
+            require(whiteListingContract.isInvestorApproved(pendingMints[nonces[i]].to));
+
+            rejectedMintBalance[pendingMints[nonces[i]].to] = rejectedMintBalance[pendingMints[nonces[i]].to].add(pendingMints[nonces[i]].weiAmount);
+            
+            emit MintRejected(
+                pendingMints[nonces[i]].to,
+                pendingMints[nonces[i]].tokens,
+                pendingMints[nonces[i]].weiAmount,
+                nonces[i],
+                reasons[i]
+            );
+            
+            delete pendingMints[nonces[i]];
+        }
     }
 
     /** @dev claim back ether if buy tokens request is rejected */
