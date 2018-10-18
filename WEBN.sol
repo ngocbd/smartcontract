@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WEBN at 0x76a1aeb942b24d0020a2d4b0ac3f2e5ed2bff150
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WEBN at 0x15a664416e42766a6cc0a1221d9c088548a6e731
 */
 pragma solidity ^0.4.24;
 
@@ -63,7 +63,7 @@ contract ERC20 is ERC20Basic {
 contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
   // timestamp when token release is enabled
-  uint256 public releaseTime = 1543140000;
+  uint256 public releaseTime = 1536917418;
   address owner;
   
   mapping(address => uint256) balances;
