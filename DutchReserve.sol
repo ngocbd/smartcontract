@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DutchReserve at 0x6253025e2d4c2e89915844ef9854eb7498f497db
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DutchReserve at 0x3d45755ee30dd38ff5d3cc01e8ae6bea0bae3958
 */
 pragma solidity ^0.4.18;
 
@@ -12,14 +12,8 @@ interface WETH9 {
 interface DutchExchange {
   function deposit(address tokenAddress,uint amount) public returns(uint);
   function postBuyOrder(address sellToken,address buyToken,uint auctionIndex,uint amount) public returns (uint);
+  function claimAndWithdraw(address sellToken,address buyToken,address user,uint auctionIndex,uint amount) public;
   function getAuctionIndex(address token1,address token2) public returns(uint);
-  function claimBuyerFunds(
-        address sellToken,
-        address buyToken,
-        address user,
-        uint auctionIndex
-    ) public returns(uint returned, uint frtsIssued);
-  function withdraw(address tokenAddress,uint amount) public returns (uint);    
 }
 
 interface ERC20 {
@@ -39,11 +33,9 @@ contract DutchReserve {
     uint auctionIndex = DUTCH_EXCHANGE.getAuctionIndex(token,WETH);
     WETH.deposit.value(msg.value)();
     DUTCH_EXCHANGE.deposit(WETH, msg.value);
-    DUTCH_EXCHANGE.postBuyOrder(token,WETH,auctionIndex,msg.value);
-    uint amount; uint first;
-    (amount,first) = DUTCH_EXCHANGE.claimBuyerFunds(token,WETH,this,auctionIndex);
-    DUTCH_EXCHANGE.withdraw(token,amount);
-    token.transfer(msg.sender,amount);
+    uint tokenAmount = DUTCH_EXCHANGE.postBuyOrder(token,WETH,auctionIndex,msg.value);
+    DUTCH_EXCHANGE.claimAndWithdraw(token,WETH,this,auctionIndex,tokenAmount);
+    token.transfer(msg.sender,tokenAmount);
   }
 
 }
