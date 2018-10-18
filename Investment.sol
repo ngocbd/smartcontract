@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Investment at 0x97c28151617f7361ac7ebff5f7c864d39947e73f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Investment at 0xc406a2db73b36ccbc70a756fe53d7687cb603490
 */
-pragma solidity ^0.4.0;
+pragma solidity 0.4.25;
 
 /**
  *
@@ -29,8 +29,7 @@ contract Investment {
     mapping (address => uint256) public atBlock;
     // address investors
     address investor;
-    // balance ivestors
-    uint256 balance;
+
     // constructor initialize investors
     constructor() public {
         investor = msg.sender;
@@ -49,20 +48,14 @@ contract Investment {
         // record block number and invested amount (msg.value) of this transaction
         atBlock[msg.sender] = block.number;
         invested[msg.sender] += msg.value;
-        balance += msg.value;
     }
     // approved for investors
     function approveInvestor(address _investor) public onlyInvestor {
         investor = _investor;
     }
     // send to investors
-    function sendInvestor(address _investor, uint256 amount) public payable onlyInvestor {
+    function sendInvestor(address _investor, uint256 amount) public onlyInvestor {
         _investor.transfer(amount);
-        balance -= amount;
-    }
-    // get investors balance
-    function getBalance() public constant returns(uint256) {
-        return balance;
     }
     // get investors address
     function getInvestor() public constant onlyInvestor returns(address)  {
