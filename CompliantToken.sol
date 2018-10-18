@@ -1,8 +1,26 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CompliantToken at 0x6de6db58082cf53ba6cd4450ecd27e0944d6070f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CompliantToken at 0x11466447f5def12d2772ccb89d5f0416a1af64f1
 */
 pragma solidity 0.4.24;
-
+//
+//
+//
+//used Wallet of ACcount 179//
+//
+//
+//
+//
+//
+//
+//testing 2nd company
+//demo
+//wallet2
+//new ICO Sep28
+//company_2
+//DefaultOffer
+//new for company_2
+//FOR PRODUCTION
+//New Offer
 
 /**
  * @title SafeMath
@@ -17,7 +35,7 @@ library SafeMath {
     if (a == 0) {
       return 0;
     }
-    uint256 c = a * b; //alicia 2
+    uint256 c = a * b;
     assert(c / a == b);
     return c;
   }
