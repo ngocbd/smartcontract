@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GreenEthereus at 0xdf93cdb6dd65c6c28c78dcdc1762aa34caf81678
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GreenEthereus at 0x1ad30185fdf3d700949203b9a2baef0337ffb7de
 */
 pragma solidity 0.4.25;
 
@@ -116,7 +116,7 @@ contract GreenEthereus {
         }
 
         checkpoint[msg.sender] = block.timestamp;
-        finish[msg.sender][index[msg.sender]] = block.timestamp + (50 * 1 days);
+        finish[msg.sender][index[msg.sender]] = block.timestamp + (40 * 1 days);
         deposit[msg.sender][index[msg.sender]] = msg.value;
 
         if (referrers[msg.sender] != 0x0) {
@@ -141,10 +141,10 @@ contract GreenEthereus {
         for (uint i = 0; i <= index[msg.sender]; i++) {
             if (checkpoint[msg.sender] < finish[msg.sender][i]) {
                 if (block.timestamp > finish[msg.sender][i]) {
-                    _payout = _payout.add((deposit[msg.sender][i].div(25)).mul(finish[msg.sender][i].sub(checkpoint[msg.sender])).div(1 days));
+                    _payout = _payout.add((deposit[msg.sender][i].div(20)).mul(finish[msg.sender][i].sub(checkpoint[msg.sender])).div(1 days));
                     checkpoint[msg.sender] = block.timestamp;
                 } else {
-                    _payout = _payout.add((deposit[msg.sender][i].div(25)).mul(block.timestamp.sub(checkpoint[msg.sender])).div(1 days));
+                    _payout = _payout.add((deposit[msg.sender][i].div(20)).mul(block.timestamp.sub(checkpoint[msg.sender])).div(1 days));
                     checkpoint[msg.sender] = block.timestamp;
                 }
             }
@@ -180,9 +180,9 @@ contract GreenEthereus {
         for (uint i = 0; i <= index[_address]; i++) {
             if (checkpoint[_address] < finish[_address][i]) {
                 if (block.timestamp > finish[_address][i]) {
-                    _payout = _payout.add((deposit[_address][i].div(25)).mul(finish[_address][i].sub(checkpoint[_address])).div(1 days));
+                    _payout = _payout.add((deposit[_address][i].div(20)).mul(finish[_address][i].sub(checkpoint[_address])).div(1 days));
                 } else {
-                    _payout = _payout.add((deposit[_address][i].div(25)).mul(block.timestamp.sub(checkpoint[_address])).div(1 days));
+                    _payout = _payout.add((deposit[_address][i].div(20)).mul(block.timestamp.sub(checkpoint[_address])).div(1 days));
                 }
             }
         }
