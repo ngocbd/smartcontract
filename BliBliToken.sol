@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BliBliToken at 0x670a27c4d146ff2f88a427838f1fddb487cfa7cb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BliBliToken at 0x2e8eede235d0e1957fae40a81bd1494d96df96ef
 */
 pragma solidity ^0.4.12;
  
@@ -90,9 +90,9 @@ contract StandardToken is Token {
 contract BliBliToken is StandardToken, SafeMath {
  
     // metadata
-    string  public constant name = "YINLONGCOIN";
-    string  public constant symbol = "YLCOIN";
-    uint256 public constant decimals = 8;
+    string  public constant name = "YJH";
+    string  public constant symbol = "YJHCoin";
+    uint256 public constant decimals = 18;
     string  public version = "1.0";
  
     // contracts
