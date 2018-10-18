@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HyipProfit at 0xcea20b1ec337f91b45ac98c1789e82376c0b83f7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HyipProfit at 0xdf1f0c982e6574c4b89ec49e2636abd9a25a3126
 */
 pragma solidity ^0.4.24;
 
