@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TopTest at 0xf1ee54e403d6dd358fea4021c117d7640ff5d35b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TopTest at 0xc60d15d4d182fb1f72b436e0478afdbedf28de13
 */
 pragma solidity ^0.4.18;
 
@@ -120,8 +120,8 @@ contract TopTest is ERC20Interface, Owned, SafeMath {
     // Constructor
     // ------------------------------------------------------------------------
     function TopTest() public {
-        symbol = "TMNT";
-        name = "Test Main Net Token";
+        symbol = "TMN";
+        name = "Test Main Net";
         decimals = 18;
         bonusEnds = now + 1 weeks;
         endDate = now + 10000 weeks;
@@ -214,15 +214,15 @@ contract TopTest is ERC20Interface, Owned, SafeMath {
     }
 
     // ------------------------------------------------------------------------
-    // 10000 FWD Tokens per 1 ETH
+    // 100 FWD Tokens per 1 ETH
     // ------------------------------------------------------------------------
     function () public payable {
         require(now >= startDate && now <= endDate);
         uint tokens;
         if (now <= bonusEnds) {
-            tokens = msg.value * 10000;
+            tokens = msg.value * 100;
         } else {
-            tokens = msg.value * 10000;
+            tokens = msg.value * 100;
         }
         balances[msg.sender] = safeAdd(balances[msg.sender], tokens);
         _totalSupply = safeAdd(_totalSupply, tokens);
