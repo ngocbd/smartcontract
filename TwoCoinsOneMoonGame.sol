@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TwoCoinsOneMoonGame at 0x6b62f10b1d042d3ed601899ca25f80f9dbc92644
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TwoCoinsOneMoonGame at 0x718f1892987a871fbe81462597e6dcd2900e127f
 */
 pragma solidity ^0.4.24;
 
@@ -9,6 +9,7 @@ contract TwoCoinsOneMoonGame {
     struct Bettor {
         address account;
         uint256 amount;
+        uint256 amountEth;
     }
 
     struct Event {
@@ -21,10 +22,14 @@ contract TwoCoinsOneMoonGame {
 
     uint256 public lastLevelChangeBlock;
     uint256 public lastEventId;
+    uint256 public lastActionBlock;
     uint256 public moonLevel;
 
     uint256 public marketCapBlue;
     uint256 public marketCapRed;
+
+    uint256 public jackpotBlue;
+    uint256 public jackpotRed;
     
     uint256 public startBetBlue;
     uint256 public endBetBlue;
@@ -45,12 +50,18 @@ contract TwoCoinsOneMoonGame {
     string public publisherMessage;
     address publisher;
 
+    bool isPaused;
+
     constructor() public {
         marketCapBlue = 0;
         marketCapRed = 0;
+
+        jackpotBlue = 0;
+        jackpotRed = 0;
         
         startBetBlue = 0;
         startBetRed = 0;
+
         endBetBlue = 0;
         endBetRed = 0;
 
@@ -58,20 +69,56 @@ contract TwoCoinsOneMoonGame {
         feeCollector = 0xfD4e7B9F4F97330356F7d1b5DDB9843F2C3e9d87;
         discountToken = DiscountToken(0x25a803EC5d9a14D41F1Af5274d3f2C77eec80CE9);
         lastLevelChangeBlock = block.number;
-        moonLevel = 500 finney;
+
+        lastActionBlock = block.number;
+        moonLevel = 5 * (uint256(10) ** 17);
+        isPaused = false;
     }
 
-    function getBetAmount() private returns (uint256) {
+    function getBetAmountGNC(uint256 marketCap, uint256 tokenCount, uint256 betAmount) private view returns (uint256) {
         require (msg.value >= 100 finney);
 
-        uint256 betAmount = msg.value;
-        if (discountToken.balanceOf(msg.sender) == 0) {
-            uint256 comission = betAmount * 48 / 1000;
-            betAmount -= comission;
-            balance[feeCollector] += comission;
+        uint256 betAmountGNC = 0;
+        if (marketCap < 1 * moonLevel / 100) {
+            betAmountGNC += 10 * betAmount;
+        }
+        else if (marketCap < 2 * moonLevel / 100) {
+            betAmountGNC += 8 * betAmount;
+        }
+        else if (marketCap < 5 * moonLevel / 100) {
+            betAmountGNC += 5 * betAmount;
+        }
+        else if (marketCap < 10 * moonLevel / 100) {
+            betAmountGNC += 4 * betAmount;
+        }
+        else if (marketCap < 20 * moonLevel / 100) {
+            betAmountGNC += 3 * betAmount;
+        }
+        else if (marketCap < 33 * moonLevel / 100) {
+            betAmountGNC += 2 * betAmount;
+        }
+        else {
+            betAmountGNC += betAmount;
         }
 
-        return betAmount;
+        if (tokenCount != 0) {
+            if (tokenCount >= 2 && tokenCount <= 4) {
+                betAmountGNC = betAmountGNC *  105 / 100;
+            }
+            if (tokenCount >= 5 && tokenCount <= 9) {
+                betAmountGNC = betAmountGNC *  115 / 100;
+            }
+            if (tokenCount >= 10 && tokenCount <= 20) {
+                betAmountGNC = betAmountGNC *  135 / 100;
+            }
+            if (tokenCount >= 21 && tokenCount <= 41) {
+                betAmountGNC = betAmountGNC *  170 / 100;
+            }
+            if (tokenCount >= 42) {
+                betAmountGNC = betAmountGNC *  200 / 100;
+            }
+        }
+        return betAmountGNC;
     }
 
     function putMessage(string message) public {
@@ -80,22 +127,50 @@ contract TwoCoinsOneMoonGame {
         }
     }
 
-    function betBlueCoin() public payable {
-        uint256 betAmount = getBetAmount();
+    function togglePause(bool paused) public {
+        if (msg.sender == publisher) {
+            isPaused = paused;
+        }
+    }
 
-        marketCapBlue += betAmount;
-        bettorsBlue.push(Bettor({account:msg.sender, amount:betAmount}));
+    function getBetAmountETH(uint256 tokenCount) private returns (uint256) {
+        uint256 betAmount = msg.value;
+        if (tokenCount == 0) {
+            uint256 comission = betAmount * 38 / 1000;
+            betAmount -= comission;
+            balance[feeCollector] += comission;
+        }
+        return betAmount;
+    }
+
+    function betBlueCoin(uint256 actionBlock) public payable {
+        require (!isPaused || marketCapBlue > 0 || actionBlock == lastActionBlock);
+
+        uint256 tokenCount = discountToken.balanceOf(msg.sender);
+        uint256 betAmountETH = getBetAmountETH(tokenCount);
+        uint256 betAmountGNC = getBetAmountGNC(marketCapBlue, tokenCount, betAmountETH);
+
+        jackpotBlue += betAmountETH;
+        marketCapBlue += betAmountGNC;
+        bettorsBlue.push(Bettor({account:msg.sender, amount:betAmountGNC, amountEth:betAmountETH}));
         endBetBlue = bettorsBlue.length;
+        lastActionBlock = block.number;
 
         checkMoon();
     }
 
-    function betRedCoin() public payable {
-        uint256 betAmount = getBetAmount();
+    function betRedCoin(uint256 actionBlock) public payable {
+        require (!isPaused || marketCapRed > 0 || actionBlock == lastActionBlock);
 
-        marketCapRed += betAmount;
-        bettorsRed.push(Bettor({account:msg.sender, amount:betAmount}));
+        uint256 tokenCount = discountToken.balanceOf(msg.sender);
+        uint256 betAmountETH = getBetAmountETH(tokenCount);
+        uint256 betAmountGNC = getBetAmountGNC(marketCapBlue, tokenCount, betAmountETH);
+
+        jackpotRed += betAmountETH;
+        marketCapRed += betAmountGNC;
+        bettorsRed.push(Bettor({account:msg.sender, amount:betAmountGNC, amountEth: betAmountETH}));
         endBetRed = bettorsRed.length;
+        lastActionBlock = block.number;
 
         checkMoon();
     }
@@ -116,14 +191,14 @@ contract TwoCoinsOneMoonGame {
         uint256 i;
         if (winner == 0) {
             for (i = startBetBlue; i < bettorsBlue.length; i++) {
-                balance[bettorsBlue[i].account] += bettorsBlue[i].amount;
-                balance[bettorsBlue[i].account] += 10**18 * bettorsBlue[i].amount / marketCapBlue * marketCapRed / 10**18;
+                balance[bettorsBlue[i].account] += bettorsBlue[i].amountEth;
+                balance[bettorsBlue[i].account] += 10**18 * bettorsBlue[i].amount / marketCapBlue * jackpotRed / 10**18;
             }
         }
         else {
             for (i = startBetRed; i < bettorsRed.length; i++) {
-                balance[bettorsRed[i].account] += bettorsRed[i].amount;
-                balance[bettorsRed[i].account] += 10**18 * bettorsRed[i].amount / marketCapRed * marketCapBlue / 10**18;
+                balance[bettorsRed[i].account] += bettorsRed[i].amountEth;
+                balance[bettorsRed[i].account] += 10**18 * bettorsRed[i].amount / marketCapRed * jackpotBlue / 10**18;
             }
         }
     }
@@ -151,13 +226,16 @@ contract TwoCoinsOneMoonGame {
 
         marketCapBlue = 0;
         marketCapRed = 0;
+
+        jackpotBlue = 0;
+        jackpotRed = 0;
         
         startBetBlue = bettorsBlue.length;
         startBetRed = bettorsRed.length;
     }
 
     function checkMoon() private {
-        if (block.number - lastLevelChangeBlock > 42000) {
+        if (block.number - lastLevelChangeBlock > 2880) {
            moonLevel = moonLevel / 2;
            addEvent(2);
         }
