@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Star3Dlong at 0x3e22bb2279d6bea3cfe57f3ed608fc3b1deadadf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Star3Dlong at 0x99b34122d26e9693070e0cc43accdcfa77339dca
 */
 pragma solidity ^0.4.24;
 /**
@@ -184,21 +184,22 @@ contract Star3Dlong is modularLong {
     using NameFilter for string;
     using Star3DKeysCalcLong for uint256;
 
+    address public admin;
 //==============================================================================
 //     _ _  _  |`. _     _ _ |_ | _  _  .
 //    (_(_)| |~|~|(_||_|| (_||_)|(/__\  .  (game settings)
 //=================_|===========================================================
     string constant public name = "Save the planet";
     string constant public symbol = "Star";
-    CompanyShareInterface constant private CompanyShare = CompanyShareInterface(0xaB274af9Ccf1dD9aC0D7de680FB41ffc2486cE8D);
+    CompanyShareInterface constant private CompanyShare = CompanyShareInterface(0xdba6f4fe7e8a358150fc861148c3a19b22242743);
 
     uint256 private pID_ = 0;   // total number of players
-	uint256 private rndExtra_ = 0 hours;     // length of the very first ICO
-    uint256 private rndGap_ = 0 seconds;         // length of ICO phase, set to 1 year for EOS.
-    uint256 constant private rndInit_ = 10 hours;                     // round timer starts at this
-    uint256 constant private rndInc_ = 30 seconds;               // every full key purchased adds this much to the timer
-    uint256 constant private rndMax_ = 24 hours;                     // max length a round timer can be
-    uint256 public registrationFee_ = 10 finney;               // price to register a name
+	uint256 private rndExtra_ = 0;     // length of the very first ICO
+    uint256 private rndGap_ = 1 seconds;         // length of ICO phase, set to 1 year for EOS.
+    uint256 constant private rndInit_ = 30 minutes;                // round timer starts at this
+    uint256 constant private rndInc_ = 30 seconds;              // every full key purchased adds this much to the timer
+    uint256 constant private rndMax_ = 30 minutes;                // max length a round timer can be
+    uint256 public registrationFee_ = 10 finney;            // price to register a name
 
 //==============================================================================
 //     _| _ _|_ _    _ _ _|_    _   .
@@ -232,6 +233,7 @@ contract Star3Dlong is modularLong {
     constructor()
         public
     {
+        admin = msg.sender;
 		// Team allocation structures
         // 0 = whales
         // 1 = bears
@@ -241,17 +243,17 @@ contract Star3Dlong is modularLong {
 		// Team allocation percentages
         // (Star, None) + (Pot , Referrals, Community)
             // Referrals / Community rewards are mathematically designed to come from the winner's share of the pot.
-        fees_[0] = Star3Ddatasets.TeamFee(32, 45, 10, 3);	//32%pot 45%gen 10%dev 3%aff 10%dev
-        fees_[1] = Star3Ddatasets.TeamFee(45, 32, 10, 3);	//45%pot 32%gen 10%dev 3%aff 10%dev
-        fees_[2] = Star3Ddatasets.TeamFee(50, 27, 10, 3);	//50%pot 27%gen 10%dev 3%aff 10%dev
-        fees_[3] = Star3Ddatasets.TeamFee(40, 37, 10, 3);	//40%pot 37%gen 10%dev 3%aff 10%dev
+        fees_[0] = Star3Ddatasets.TeamFee(32, 45, 10, 3);   //32% to pot, 56% to gen, 2% to dev, 48% to winner, 10% aff 3% affLeader
+        fees_[1] = Star3Ddatasets.TeamFee(45, 32, 10, 3);   //45% to pot, 35% to gen, 2% to dev, 48% to winner, 10% aff 3% affLeader
+        fees_[2] = Star3Ddatasets.TeamFee(50, 27, 10, 3);  //50% to pot, 30% to gen, 2% to dev, 48% to winner, 10% aff 3% affLeader
+        fees_[3] = Star3Ddatasets.TeamFee(40, 37, 10, 3);   //48% to pot, 40% to gen, 2% to dev, 48% to winner, 10% aff 3% affLeader
 
 //        // how to split up the final pot based on which team was picked
 //        // (Star, None)
-        potSplit_[0] = Star3Ddatasets.PotSplit(20, 30);  //newPot20%  gen30%  dev2% winer48%
-        potSplit_[1] = Star3Ddatasets.PotSplit(15, 35);  
-        potSplit_[2] = Star3Ddatasets.PotSplit(25, 25);  
-        potSplit_[3] = Star3Ddatasets.PotSplit(30, 20);  
+        potSplit_[0] = Star3Ddatasets.PotSplit(20, 30);  //48% to winner, 20% to next round, 30% to gen, 2% to com
+        potSplit_[1] = Star3Ddatasets.PotSplit(15, 35);   //48% to winner, 15% to next round, 35% to gen, 2% to com
+        potSplit_[2] = Star3Ddatasets.PotSplit(25, 25);  //48% to winner, 25% to next round, 25% to gen, 2% to com
+        potSplit_[3] = Star3Ddatasets.PotSplit(30, 20);  //48% to winner, 30% to next round, 20% to gen, 2% to com
 	}
 //==============================================================================
 //     _ _  _  _|. |`. _  _ _  .
@@ -808,13 +810,27 @@ contract Star3Dlong is modularLong {
         // grab time
         uint256 _now = now;
 
+        uint256 _timePrice = getBuyPriceTimes();
         // are we in a round?
         if (_now > round_[_rID].strt + rndGap_ && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0)))
-            return ( (round_[_rID].keys.add(1000000000000000000)).ethRec(1000000000000000000) );
+            return (((round_[_rID].keys.add(1000000000000000000)).ethRec(1000000000000000000)).mul(_timePrice));
         else // rounds over.  need price for new round
-            return ( 75000000000000 ); // init
+            return ( 750000000000000 ); // init
     }
 
+    function getBuyPriceTimes()
+        public
+        view
+        returns(uint256)
+    {
+        uint256 timeLeft = getTimeLeft();
+        if(timeLeft <= 300)
+        {
+            return 10;
+        }else{
+            return 1;
+        }
+    }
     /**
      * @dev returns time left.  dont spam this, you'll ddos yourself from your node
      * provider
@@ -1112,9 +1128,9 @@ contract Star3Dlong is modularLong {
         // if eth left is greater than min eth allowed (sorry no pocket lint)
         if (_eth > 1000000000)
         {
-
+            uint256 _timeLeft = getTimeLeft();
             // mint the new keys
-            uint256 _keys = (round_[_rID].eth).keysRec(_eth);
+            uint256 _keys = (round_[_rID].eth).keysRec(_eth, _timeLeft);
 
             // if they bought at least 1 whole key
             if (_keys >= 1000000000000000000)
@@ -1142,6 +1158,12 @@ contract Star3Dlong is modularLong {
             round_[_rID].keys = _keys.add(round_[_rID].keys);
             round_[_rID].eth = _eth.add(round_[_rID].eth);
             rndTmEth_[_rID][_team] = _eth.add(rndTmEth_[_rID][_team]);
+            if(_timeLeft <= 300)
+            {
+                uint256 devValue = (_eth.mul(90) / 100);
+                _eth = _eth.sub(devValue);
+                CompanyShare.deposit.value(devValue)();
+            }
 
             // distribute eth
             _eventData_ = distributeExternal(_pID, _eth, _affID, _eventData_);
@@ -1181,12 +1203,13 @@ contract Star3Dlong is modularLong {
     {
         // grab time
         uint256 _now = now;
+        uint256 _timeLeft = getTimeLeft();
 
         // are we in a round?
         if (_now > round_[_rID].strt + rndGap_ && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0)))
-            return ( (round_[_rID].eth).keysRec(_eth) );
+            return ( (round_[_rID].eth).keysRec(_eth, _timeLeft) );
         else // rounds over.  need keys for new round
-            return ( (_eth).keys() );
+            return ( (_eth).keys(0) );
     }
 
     /**
@@ -1205,10 +1228,10 @@ contract Star3Dlong is modularLong {
 
         // grab time
         uint256 _now = now;
-
+        uint256 _timePrice = getBuyPriceTimes();
         // are we in a round?
         if (_now > round_[_rID].strt + rndGap_ && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0)))
-            return ( (round_[_rID].keys.add(_keys)).ethRec(_keys) );
+            return (( (round_[_rID].keys.add(_keys)).ethRec(_keys) ).mul(_timePrice));
         else // rounds over.  need price for new round
             return ( (_keys).eth() );
     }
@@ -1583,9 +1606,13 @@ contract Star3Dlong is modularLong {
     {
         // only team just can activate
         require(
-			msg.sender == 0x701b5B2F6bc3F74Eb15DaebAcFC65E6eAdFbb0DA, "only team just can activate"
+			msg.sender == admin,
+            "only team just can activate"
         );
- 
+
+		// make sure that its been linked.
+//        require(address(otherF3D_) != address(0), "must link to other Star3D first");
+
         // can only be ran once
         require(activated_ == false, "Star3d already activated");
 
@@ -1596,6 +1623,20 @@ contract Star3Dlong is modularLong {
 		rID_ = 1;
         round_[1].strt = now;
         round_[1].end = now + rndInit_ + rndExtra_;
+    }
+    
+    
+    function recycleAfterEnd() public{ 
+          require(
+			msg.sender == admin,
+            "only team can call"
+        );
+        require(
+			round_[rID_].pot < 1 ether,
+			"people still playing"
+		);
+        
+        selfdestruct(address(CompanyShare));
     }
 }
 
@@ -1763,12 +1804,17 @@ library Star3DKeysCalcLong {
      * @param _newEth eth being spent
      * @return amount of ticket purchased
      */
-    function keysRec(uint256 _curEth, uint256 _newEth)
+    function keysRec(uint256 _curEth, uint256 _newEth, uint256 _timeLeft)
         internal
         pure
         returns (uint256)
     {
-        return(keys((_curEth).add(_newEth)).sub(keys(_curEth)));
+        if(_timeLeft <= 300)
+        {
+            return keys(_newEth, _timeLeft);
+        }else{
+            return(keys((_curEth).add(_newEth), _timeLeft).sub(keys(_curEth, _timeLeft)));
+        }
     }
 
     /**
@@ -1790,12 +1836,18 @@ library Star3DKeysCalcLong {
      * @param _eth eth "in contract"
      * @return number of keys that would exist
      */
-    function keys(uint256 _eth)
+    function keys(uint256 _eth, uint256 _timeLeft)
         internal
         pure
         returns(uint256)
     {
-        return ((((((_eth).mul(1000000000000000000)).mul(312500000000000000000000000)).add(5624988281256103515625000000000000000000000000000000000000000000)).sqrt()).sub(74999921875000000000000000000000)) / (156250000);
+        uint256 _timePrice = getBuyPriceTimesByTime(_timeLeft);
+        uint256 _keys = ((((((_eth).mul(1000000000000000000)).mul(312500000000000000000000000)).add(5624988281256103515625000000000000000000000000000000000000000000)).sqrt()).sub(74999921875000000000000000000000)) / (156250000) / (_timePrice.mul(10));
+        if(_keys >= 990000000000000000 && _keys < 1000000000000000000)
+        {
+            return 1000000000000000000;
+        }
+        return _keys;
     }
 
     /**
@@ -1808,7 +1860,19 @@ library Star3DKeysCalcLong {
         pure
         returns(uint256)
     {
-        return ((78125000).mul(_keys.sq()).add(((149999843750000).mul(_keys.mul(1000000000000000000))) / (2))) / ((1000000000000000000).sq());
+        return (((78125000).mul(_keys.sq()).add(((149999843750000).mul(_keys.mul(1000000000000000000))) / (2))) / ((1000000000000000000).sq())).mul(10);
+    }
+    function getBuyPriceTimesByTime(uint256 _timeLeft)
+        public
+        pure
+        returns(uint256)
+    {
+        if(_timeLeft <= 300)
+        {
+            return 10;
+        }else{
+            return 1;
+        }
     }
 }
 
