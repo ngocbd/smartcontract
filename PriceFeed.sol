@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PriceFeed at 0x18d0b572bf8804d51ca048f41f1a41d8371b1c14
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PriceFeed at 0x335ebc47adc461e411a0ca992562a66995314229
 */
 // hevm: flattened sources of src/price-feed.sol
 pragma solidity ^0.4.23;
