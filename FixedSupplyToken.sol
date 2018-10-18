@@ -1,9 +1,18 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FixedSupplyToken at 0x0e0a6c613ea16ae347cb98732e152530ae9bc7f2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FixedSupplyToken at 0x5ab415906ac77e20618fab6ac1d56d331813f9d9
 */
 pragma solidity ^0.4.24;
 
 // ----------------------------------------------------------------------------
+// 'FIXED' 'Example Fixed Supply Token' token contract
+//
+// Symbol      : VXCR2
+// Name        : Vixcore 2
+// Total supply: 10,000,000,000.000000000000000000
+// Decimals    : 18
+//
+// Enjoy.
+//
 // (c) BokkyPooBah / Bok Consulting Pty Ltd 2018. The MIT Licence.
 // ----------------------------------------------------------------------------
 
@@ -108,10 +117,10 @@ contract FixedSupplyToken is ERC20Interface, Owned {
     // Constructor
     // ------------------------------------------------------------------------
     constructor() public {
-        symbol = "NEWT";
-        name = "New Token";
+        symbol = "VXCR1";
+        name = "Vixcore 1";
         decimals = 18;
-        _totalSupply = 800000000 * 10**uint(decimals);
+        _totalSupply = 10000000000 * 10**uint(decimals);
         balances[owner] = _totalSupply;
         emit Transfer(address(0), owner, _totalSupply);
     }
