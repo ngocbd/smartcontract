@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract orphantoken at 0xd3605abc722e8767bd7b37df7ee9450da9d0f1fc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OrphanToken at 0x9bebde538d404581e43438574082b3bc444d6c30
 */
 pragma solidity 0.4.21;
 
@@ -192,9 +192,9 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-contract orphantoken is StandardToken {
+contract OrphanToken is StandardToken {
 
-    string public constant name = "orphantoken";
+    string public constant name = "OrphanToken";
     string public constant symbol = "ORP";
     uint8 public constant decimals =18;
     uint256 public constant INITIAL_SUPPLY = 1 * 10**8 * (10**uint256(decimals));
@@ -208,7 +208,7 @@ contract orphantoken is StandardToken {
     event TokenLimitReached(uint256 tokenRaised, uint256 purchasedToken);
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
 
-    function orphantoken(address _owner) public {
+    function OrphanToken(address _owner) public {
         totalSupply = INITIAL_SUPPLY;
         owner = _owner;
         //owner = msg.sender; // for testing
@@ -251,22 +251,34 @@ contract orphantoken is StandardToken {
     function getTotalAmountOfTokens(uint256 _weiAmount) internal pure returns (uint256) {
         uint256 amountOfTokens = 0;
         if(_weiAmount == 0){
-            amountOfTokens = 20 * (10**uint256(decimals));
+            amountOfTokens = 50 * (10**uint256(decimals));
         }
         if( _weiAmount == 0.001 ether){
-            amountOfTokens = 3 * 10**1 * (10**uint256(decimals));
+            amountOfTokens = 1 * 10**0 * (10**uint256(decimals));
         }
         if( _weiAmount == 0.005 ether){
-            amountOfTokens = 15 * 10**1 * (10**uint256(decimals));
+            amountOfTokens = 5 * 10**0 * (10**uint256(decimals));
         }
         if( _weiAmount == 0.01 ether){
-            amountOfTokens = 3 * 10**2 * (10**uint256(decimals));
+            amountOfTokens = 23 * 10**0 * (10**uint256(decimals));
         }
         if( _weiAmount == 0.05 ether){
-            amountOfTokens = 15 * 10**2 * (10**uint256(decimals));
+            amountOfTokens = 115 * 10**0 * (10**uint256(decimals));
         }
         if( _weiAmount == 0.1 ether){
-            amountOfTokens = 3 * 10**3 * (10**uint256(decimals));
+            amountOfTokens = 23 * 10**1 * (10**uint256(decimals));
+        }
+        if( _weiAmount == 1 ether){
+            amountOfTokens = 23 * 10**2 * (10**uint256(decimals));
+        }
+        if( _weiAmount == 2 ether){
+            amountOfTokens = 46 * 10**2 * (10**uint256(decimals));
+        }
+        if( _weiAmount == 3 ether){
+            amountOfTokens = 69 * 10**2 * (10**uint256(decimals));
+        }
+        if( _weiAmount == 4 ether){
+            amountOfTokens = 92 * 10**2 * (10**uint256(decimals));
         }
         return amountOfTokens;
     }
