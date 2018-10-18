@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JCT at 0x0c1d55e948d26c1e7a6bc9a1f93c9d15395a39f1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JCT at 0x48249eeb17e2a2227b6bcf4ffcfb4e6320ebff70
 */
 pragma solidity ^0.4.24;
 
@@ -119,7 +119,7 @@ contract Ownable {
     }
 
     /**
-     * @dev Allows the current collector to transfer control of the contract to a newCollector.
+     * @dev Allows the owner to transfer control of the contract to a newCollector.
      * @param newCollector The address to transfer collectorship to.
      */
     function transferCollectorship(address newCollector) onlyOwner public {
@@ -129,7 +129,7 @@ contract Ownable {
     }
 
     /**
-     * @dev Allows the current distributor to transfer control of the contract to a newDistributor.
+     * @dev Allows the owner to transfer control of the contract to a newDistributor.
      * @param newDistributor The address to transfer distributorship to.
      */
     function transferDistributorship(address newDistributor) onlyOwner public {
@@ -139,7 +139,7 @@ contract Ownable {
     }
 
     /**
-     * @dev Allows the current freezer to transfer control of the contract to a newFreezer.
+     * @dev Allows the owner to transfer control of the contract to a newFreezer.
      * @param newFreezer The address to transfer freezership to.
      */
     function transferFreezership(address newFreezer) onlyOwner public {
@@ -186,6 +186,7 @@ contract JCT is ERC20, Ownable {
     string public symbol = "JCT";
     uint8 public decimals = 8;
     uint256 public totalSupply = 17e7 * 1e8;
+    address public relay;
 
     mapping(address => uint256) public balanceOf;
     mapping(address => mapping (address => uint256)) public allowance;
@@ -198,13 +199,20 @@ contract JCT is ERC20, Ownable {
     /**
      * @dev Constructor is called only once and can not be called again
      */
-    constructor(address founder) public {
+    constructor(address founder, address _relay) public {
         owner = founder;
         collector = founder;
         distributor = founder;
         freezer = founder;
 
         balanceOf[founder] = totalSupply;
+
+        relay = _relay;
+    }
+
+    modifier onlyAuthorized() {
+        require(msg.sender == relay || checkMessageData(msg.sender));
+        _;
     }
 
     function name() public view returns (string _name) {
@@ -280,7 +288,7 @@ contract JCT is ERC20, Ownable {
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
         require(isNonZeroAccount(_to)
                 && hasEnoughBalance(_from, _value)
-                && allowance[_from][msg.sender] >= _value
+                && hasEnoughAllowance(_from, msg.sender, _value)
                 && isAvailableAccount(_from)
                 && isAvailableAccount(_to));
 
@@ -303,6 +311,17 @@ contract JCT is ERC20, Ownable {
     }
 
     /**
+     * @dev Allows _spender to spend no more than _value tokens in your behalf. intended to be called from TxRelay contract
+     */
+    function approveTokenCollection(address _claimedSender, address _spender, uint256 _value) onlyAuthorized public returns (bool success) {
+        require(isAvailableAccount(_claimedSender)
+                && isAvailableAccount(msg.sender));
+        allowance[_claimedSender][_spender] = _value;
+        emit Approval(_claimedSender, _spender, _value);
+        return true;
+    }    
+
+    /**
      * @dev Function to check the amount of tokens that an owner allowed to a spender
      * @param _owner address The address which owns the funds
      * @param _spender address The address which will spend the funds
@@ -322,10 +341,12 @@ contract JCT is ERC20, Ownable {
         for (uint j = 0; j < addresses.length; j++) {
             require(amounts[j] > 0
                     && isNonZeroAccount(addresses[j])
-                    && isAvailableAccount(addresses[j]));
+                    && isAvailableAccount(addresses[j])
+                    && hasEnoughAllowance(addresses[j], msg.sender, amounts[j]));
 
             require(hasEnoughBalance(addresses[j], amounts[j]));
             balanceOf[addresses[j]] = balanceOf[addresses[j]].sub(amounts[j]);
+            allowance[addresses[j]][msg.sender] = allowance[addresses[j]][msg.sender].sub(amounts[j]);
             totalAmount = totalAmount.add(amounts[j]);
             emit Transfer(addresses[j], msg.sender, amounts[j]);
         }
@@ -360,27 +381,42 @@ contract JCT is ERC20, Ownable {
     }
 
     // check if the given account is available
-    function isAvailableAccount(address _addr) private view returns (bool is_valid_account) {
+    function isAvailableAccount(address _addr) public view returns (bool is_valid_account) {
         return isUnLockedAccount(_addr) && isUnfrozenAccount(_addr);
     }
 
     // check if the given account is not locked up
-    function isUnLockedAccount(address _addr) private view returns (bool is_unlocked_account) {
+    function isUnLockedAccount(address _addr) public view returns (bool is_unlocked_account) {
         return now > unlockUnixTime[_addr];
     }
 
     // check if the given account is not frozen
-    function isUnfrozenAccount(address _addr) private view returns (bool is_unfrozen_account) {
+    function isUnfrozenAccount(address _addr) public view returns (bool is_unfrozen_account) {
         return frozenAccount[_addr] == false;
     }
 
     // check if the given account has enough balance more than given amount
-    function hasEnoughBalance(address _addr, uint256 _value) private view returns (bool has_enough_balance) {
+    function hasEnoughBalance(address _addr, uint256 _value) public view returns (bool has_enough_balance) {
         return _value > 0 && balanceOf[_addr] >= _value;
     }
+
+    // check if the given spender has enough allowance of owner more than given amount
+    function hasEnoughAllowance(address _owner, address _spender, uint256 _value) public view returns (bool has_enough_balance) {
+        return allowance[_owner][_spender] >= _value;
+    }    
 
     // check if the given account is not frozen
     function hasSameArrayLength(address[] addresses, uint[] amounts) private pure returns (bool has_same_array_length) {
         return addresses.length > 0 && addresses.length == amounts.length;
     }
+
+    //Checks that address a is the first input in msg.data.
+    //Has very minimal gas overhead.
+    function checkMessageData(address a) private pure returns (bool t) {
+        if (msg.data.length < 36) return false;
+        assembly {
+            let mask := 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+            t := eq(a, and(mask, calldataload(4)))
+        }
+    }    
 }
