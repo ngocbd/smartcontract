@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ECryptoToken at 0xaea1c18a992984831002d0cf90e291fb52d72649
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ECryptoToken at 0x8869b1f9bc8b246a4d7220f834e56ddfdd8255e7
 */
 pragma solidity ^0.4.4;
 
@@ -38,21 +38,64 @@ contract Token {
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-    
 }
 
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
 
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+
+  function toUINT112(uint256 a) internal constant returns(uint112) {
+    assert(uint112(a) == a);
+    return uint112(a);
+  }
+
+  function toUINT120(uint256 a) internal constant returns(uint120) {
+    assert(uint120(a) == a);
+    return uint120(a);
+  }
+
+  function toUINT128(uint256 a) internal constant returns(uint128) {
+    assert(uint128(a) == a);
+    return uint128(a);
+  }
+}
 
 contract StandardToken is Token {
-
+    using SafeMath for uint256;
+    
     function transfer(address _to, uint256 _value) returns (bool success) {
         //Default assumes totalSupply can't be over max (2^256 - 1).
         //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
         //Replace the if with this one instead.
         //if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
         if (balances[msg.sender] >= _value && _value > 0) {
-            balances[msg.sender] -= _value;
-            balances[_to] += _value;
+            balances[msg.sender] = balances[msg.sender].sub(_value);
+            balances[_to] = balances[_to].add(_value);
             Transfer(msg.sender, _to, _value);
             return true;
         } else { return false; }
@@ -62,9 +105,9 @@ contract StandardToken is Token {
         //same as above. Replace this line with the following if you want to protect against wrapping uints.
         //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
         if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
-            balances[_to] += _value;
-            balances[_from] -= _value;
-            allowed[_from][msg.sender] -= _value;
+            balances[_to] = balances[_to].add(_value);
+            balances[_from] = balances[_from].sub(_value);
+            allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
             Transfer(_from, _to, _value);
             return true;
         } else { return false; }
@@ -92,7 +135,8 @@ contract StandardToken is Token {
 
 //name this contract whatever you'd like
 contract ECryptoToken is StandardToken {
-
+        using SafeMath for uint256;
+        
     function () {
         //if ether is sent to this address, send it back.
         throw;
@@ -110,6 +154,7 @@ contract ECryptoToken is StandardToken {
     uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
     string public symbol;                 //An identifier: eg SBX
     string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
+    address public owner;                 //Owner of all the tokens
 
 //
 // CHANGE THESE VALUES FOR YOUR TOKEN
@@ -121,9 +166,10 @@ contract ECryptoToken is StandardToken {
         ) {
         balances[msg.sender] = 30000000 * 1000000000000000000;               // Give the creator all initial tokens (100000 for example)
         totalSupply = 30000000 * 1000000000000000000;                        // Update total supply (100000 for example)
-        name = "ECRYPTO COIN";                                   // Set the name for display purposes
+        name = "ECrypto Coin";                                   // Set the name for display purposes
         decimals = 18;                            // Amount of decimals for display purposes
         symbol = "ECP";                               // Set the symbol for display purposes
+        owner = msg.sender;                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
@@ -137,4 +183,35 @@ contract ECryptoToken is StandardToken {
         if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
         return true;
     }
+    
+    
+    /// @notice Will cause a certain `_value` of coins minted for `_to`.
+    /// @param _to The address that will receive the coin.
+    /// @param _value The amount of coin they will receive.
+    function mint(address _to, uint _value) public {
+        require(msg.sender == owner); // assuming you have a contract owner
+        mintToken(_to, _value);
+    }
+
+    /// @notice Will allow multiple minting within a single call to save gas.
+    /// @param _to_list A list of addresses to mint for.
+    /// @param _values The list of values for each respective `_to` address.
+    function airdropMinting(address[] _to_list, uint[] _values) public {
+        require(msg.sender == owner); // assuming you have a contract owner
+        require(_to_list.length == _values.length);
+        for (uint i = 0; i < _to_list.length; i++) {
+            mintToken(_to_list[i], _values[i]);
+        }
+    }
+
+    /// Internal method shared by `mint()` and `airdropMinting()`.
+    function mintToken(address _to, uint _value) internal {
+      uint tot;
+        tot = _value * 1000000000000000000;
+        balances[_to] = balances[_to].add(tot);
+        totalSupply = totalSupply.add(tot);
+        require(balances[_to] >= tot && totalSupply >= tot); // overflow checks
+  
+    }
+    
 }
