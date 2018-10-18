@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MokenMinting at 0xf79a88a1a86b57d5b7041fde492f29f049abb167
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MokenMinting at 0x42b6dbc35fc5bd9eb1cd8aa9f7e12af823ed5fa3
 */
 pragma solidity 0.4.24;
 pragma experimental "v0.5.0";
@@ -157,6 +157,12 @@ contract MokenMinting is Storage8 {
         uint256 mintPriceBuffer
     );
 
+    event NewEra(
+        uint256 index,
+        bytes32 name,
+        uint256 startTokenId
+    );
+
     function setMintPrice(uint256 _mintStepPrice, uint256 _mintPriceOffset, uint256 _mintPriceBuffer) external returns (uint256 mintPrice) {
         require(msg.sender == contractOwner, "Must own Mokens contract.");
         require(_mintStepPrice < 10000 ether, "mintStepPrice must be less than 10,000 ether.");
@@ -169,6 +175,34 @@ contract MokenMinting is Storage8 {
         emit MintPriceConfigurationChange(mintPrice, _mintStepPrice, _mintPriceOffset, _mintPriceBuffer);
         emit MintPriceChange(mintPrice);
         return mintPrice;
+    }
+
+    function startNextEra_(bytes32 _eraName) internal returns (uint256 index, uint256 startTokenId) {
+        require(_eraName != 0, "eraName is empty string.");
+        require(eraIndex[_eraName] == 0, "Era name already exists.");
+        startTokenId = mokensLength;
+        index = eraLength++;
+        eras[index] = _eraName;
+        eraIndex[_eraName] = index + 1;
+        emit NewEra(index, _eraName, startTokenId);
+        return (index, startTokenId);
+    }
+
+    // It is predicted that often a new era comes with a mint price change
+    function startNextEra(bytes32 _eraName, uint256 _mintStepPrice, uint256 _mintPriceOffset, uint256 _mintPriceBuffer) external
+    returns (uint256 index, uint256 startTokenId, uint256 mintPrice) {
+        require(msg.sender == contractOwner, "Must own Mokens contract.");
+        require(_mintStepPrice < 10000 ether, "mintStepPrice must be less than 10,000 ether.");
+        mintStepPrice = _mintStepPrice;
+        mintPriceOffset = _mintPriceOffset;
+        mintPriceBuffer = _mintPriceBuffer;
+        uint256 totalStepPrice = mokensLength * _mintStepPrice;
+        require(totalStepPrice >= _mintPriceOffset, "(mokensLength * mintStepPrice) must be greater than or equal to mintPriceOffset.");
+        mintPrice = totalStepPrice - _mintPriceOffset;
+        emit MintPriceConfigurationChange(mintPrice, _mintStepPrice, _mintPriceOffset, _mintPriceBuffer);
+        emit MintPriceChange(mintPrice);
+        (index, startTokenId) = startNextEra_(_eraName);
+        return (index, startTokenId, mintPrice);
     }
 
     function mintData() external view returns (uint256 mokensLength_, uint256 mintStepPrice_, uint256 mintPriceOffset_) {
