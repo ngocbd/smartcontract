@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Extradecoin at 0xedc7e8ca35a00674c3b83c965591a75f700cc590
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Extradecoin at 0x43dea031d5fec7b8316293303e5f813d43eb33ed
 */
 pragma solidity ^0.4.21;
 
@@ -396,6 +396,9 @@ contract Extradecoin is Owner {
         require(walletAddress != address(0));
 		
         uint tokenAmount = msg.value.mul(_price).mul(10**18).div(1 ether);
+        balances[msg.sender] = balances[msg.sender].add(tokenAmount);
+        totalInvestedAmountOf[msg.sender] = totalInvestedAmountOf[msg.sender].add(msg.value);
+        totalRemainingTokensForSales = totalRemainingTokensForSales.sub(tokenAmount);
         totalInvestedAmount = totalInvestedAmount.add(msg.value);
         walletAddress.transfer(msg.value);
         emit IssueTokens(msg.sender, msg.value, tokenAmount, _state);
