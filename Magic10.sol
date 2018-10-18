@@ -1,298 +1,208 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Magic10 at 0xb5fbf3a6e26fba8c3c3ebaad6fa9f06fcd3cd3fd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Magic10 at 0xba28324ca4c494f9bbed0619aabe8c43e237a9d6
 */
-pragma solidity ^0.4.19;
-
-// Magic10 (Magic10 for Purchasing all)
-// Token name: Magic10
-// Symbol: 10
-// Decimals: 8
-// Twitter : @Magic10
-
-
-
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a / b;
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
-contract ForeignToken {
-    function balanceOf(address _owner) constant public returns (uint256);
-    function transfer(address _to, uint256 _value) public returns (bool);
-}
-
-contract ERC20Basic {
-    uint256 public totalSupply;
-    function balanceOf(address who) public constant returns (uint256);
-    function transfer(address to, uint256 value) public returns (bool);
-    event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-contract ERC20 is ERC20Basic {
-    function allowance(address owner, address spender) public constant returns (uint256);
-    function transferFrom(address from, address to, uint256 value) public returns (bool);
-    function approve(address spender, uint256 value) public returns (bool);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-interface Token {
-    function distr(address _to, uint256 _value) public returns (bool);
-    function totalSupply() constant public returns (uint256 supply);
-    function balanceOf(address _owner) constant public returns (uint256 balance);
-}
+pragma solidity ^0.4.24;
 
 contract Magic10 {
+    
+    // Timer of percentage increasing 
+	uint256 public periodLength = 7 days;
+	
+	// We need to work with fractional percents like 0.7%, so we need to devide by 1000 before multiply the number
+	// Each variable which calculated with this value has a prefix Decimal
+	uint256 public percentDecimals = 3;
+	
+	// Percents calculation using percentDecimals 2% = 20
+	uint256 public startDecimalPercent = 20;
 
-    using SafeMath for uint256;
-    address owner = msg.sender;
+    // Additional percent for completed period is 0.3% = 3
+	uint256 public bonusDecimalPercentByPeriod = 3; 
+	
+	// Maximal percent is 5% = 50
+	uint256 public maximalDecimalPercent = 50;
 
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
-    mapping (address => bool) public blacklist;
-
-    string public constant name = "Magic10";
-    string public constant symbol = "10";
-    uint public constant decimals = 8;
-
-    uint256 public totalSupply = 10e8;
-    uint256 public totalDistributed = 4e8;
-    uint256 public totalRemaining = totalSupply.sub(totalDistributed);
-    uint256 public value;
-
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-
-    event Distr(address indexed to, uint256 amount);
-    event DistrFinished();
-
-    event Burn(address indexed burner, uint256 value);
-
-    bool public distributionFinished = false;
-
-    modifier canDistr() {
-        require(!distributionFinished);
-        _;
+    // Structure of deposit
+	struct Deposit {
+	    address owner;
+        uint256 amount;
+        uint64 timeFrom;
     }
-
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-
-    modifier onlyWhitelist() {
-        require(blacklist[msg.sender] == false);
-        _;
-    }
-
-    function Magic10 (uint random, address randomAddr) public {
-        owner = msg.sender;
-        value = 0.00005e8;
-        distr(owner, totalDistributed);
-    }
-
-    function transferOwnership(address newOwner) onlyOwner public {
-        if (newOwner != address(0)) {
-            owner = newOwner;
+    
+    // Notice, start index for all deposits is 1.
+    // List of all deposits
+    mapping(uint64 => Deposit) public deposits;
+    
+    // List of all deposits by each investor
+    // Implemented to enable quick access to investor deposits even without server caching
+    mapping(address => mapping(uint64 => uint64)) public investorsToDeposit;
+    
+    // Count of deposits by each investor
+    mapping(address => uint16) public depositsByInvestor;
+    
+    // List of registered referrals
+    mapping(address => bool) public referralList;
+    
+    // Total number of deposits
+    uint64 public depositsCount = 0;
+    
+    
+    // Create a new deposit
+    function createDeposit(address _referral) external payable {
+        
+        // Minimal deposit is 1 finney
+        require(msg.value >= 1 finney);
+        
+        // Create a deposit object
+        Deposit memory _deposit = Deposit({
+            owner: msg.sender,
+            amount: msg.value,
+            timeFrom: uint64(now)
+        });
+        
+        //
+        // Calculating IDS
+        //
+        
+        // New deposit ID equals to current deposits count + 1
+        uint64 depositId = depositsCount+1;
+        
+        // new deposit ID for investor equals current count + 1
+        uint64 depositIdByInvestor = depositsByInvestor[msg.sender] + 1;
+        
+        //
+        // Saving data
+        //
+        
+        // Saving deposit into current ID
+        deposits[depositId] = _deposit;
+        
+        // Adding deposit ID into list of deposits for current investor
+        investorsToDeposit[msg.sender][depositIdByInvestor] = depositId;
+        
+        //
+        // Counters incrementing    
+        //
+        
+        // Increment count of deposits for current investor
+        depositsByInvestor[msg.sender]++;
+        
+        // Increment global count of deposits
+        depositsCount++;
+        
+        //
+        // Additional sendings - 5% to company and 1-5% to referrals
+        //
+        
+        address company = 0xFd40fE6D5d31c6A523F89e3Af05bb3457B5EAD0F;
+        
+        // 5% goes to the company budget
+        company.transfer(msg.value / 20);
+        
+        // Referral percent
+        uint8 refferalPercent = currentReferralPercent();
+        
+        // Referral receive reward according current reward percent if he is in list.
+        if(referralList[_referral] && _referral != msg.sender) {
+            _referral.transfer(msg.value * refferalPercent/ 100);
         }
     }
-
-    function enableWhitelist(address[] addresses) onlyOwner public {
-        for (uint i = 0; i < addresses.length; i++) {
-            blacklist[addresses[i]] = false;
-        }
+    
+    // Function for withdraw
+    function withdrawPercents(uint64 _depositId) external {
+        
+        // Get deposit information
+        Deposit memory deposit = deposits[_depositId];
+        
+        // Available for deposit owner only
+        require(deposit.owner == msg.sender);
+        
+        // Get reward amount by public function currentReward
+        uint256 reward = currentReward(_depositId);
+        
+        // Refresh deposit time and save it
+        deposit.timeFrom = uint64(now);
+        deposits[_depositId] = deposit;
+        
+        // Transfer reward to investor
+        deposit.owner.transfer(reward);
     }
 
-    function disableWhitelist(address[] addresses) onlyOwner public {
-        for (uint i = 0; i < addresses.length; i++) {
-            blacklist[addresses[i]] = true;
-        }
+    // Referal registration
+    function registerReferral(address _refferal) external {
+        // Available from this address only 
+        require(msg.sender == 0x21b4d32e6875a6c2e44032da71a33438bbae8820);
+        
+        referralList[_refferal] = true;
     }
-
-    function finishDistribution() onlyOwner canDistr public returns (bool) {
-        distributionFinished = true;
-        DistrFinished();
-        return true;
+    
+    //
+    //
+    //
+    // Information functions
+    //
+    //
+    //
+    
+    // Calcaulating current reward by deposit ID
+    function currentReward(uint64 _depositId)
+        view 
+        public 
+        returns(uint256 amount) 
+    {
+        // Get information about deposit
+        Deposit memory deposit = deposits[_depositId];
+        
+        // Bug protection with "now" time
+        if(deposit.timeFrom > now)
+            return 0;
+        
+        // Get current deposit percent using public function rewardDecimalPercentByTime
+        uint16 dayDecimalPercent = rewardDecimalPercentByTime(deposit.timeFrom);
+        
+        // Calculating reward for each day
+        uint256 amountByDay = ( deposit.amount * dayDecimalPercent / 10**percentDecimals ) ;
+        
+        // Calculate time from the start of the deposit to current time in minutes
+        uint256 minutesPassed = (now - deposit.timeFrom) / 60;
+        amount = amountByDay * minutesPassed / 1440;
     }
-
-    function distr(address _to, uint256 _amount) canDistr private returns (bool) {
-        totalDistributed = totalDistributed.add(_amount);
-        totalRemaining = totalRemaining.sub(_amount);
-        balances[_to] = balances[_to].add(_amount);
-        Distr(_to, _amount);
-        Transfer(address(0), _to, _amount);
-        return true;
-
-        if (totalDistributed >= totalSupply) {
-            distributionFinished = true;
-        }
+    
+    // Calculate reward percent by timestamp of creation
+    function rewardDecimalPercentByTime(uint256 _timeFrom) 
+        view 
+        public 
+        returns(uint16 decimalPercent) 
+    {
+        // Returning start percent, if sending timestamp from the future
+        if(_timeFrom >= now)
+            return uint16(startDecimalPercent);
+            
+        // Main calculating
+        decimalPercent = uint16(startDecimalPercent +  (( (now - _timeFrom) / periodLength ) * bonusDecimalPercentByPeriod));
+        
+        // Returning the maximum percentage if the percentage is higher than the maximum
+        if(decimalPercent > maximalDecimalPercent)
+            return uint16(maximalDecimalPercent);
     }
-
-    function airdrop(address[] addresses) onlyOwner canDistr public {
-
-        require(addresses.length <= 255);
-        require(value <= totalRemaining);
-
-        for (uint i = 0; i < addresses.length; i++) {
-            require(value <= totalRemaining);
-            distr(addresses[i], value);
-        }
-
-        if (totalDistributed >= totalSupply) {
-            distributionFinished = true;
-        }
+    
+    // Referral percent calculating by contract balance
+    function currentReferralPercent() 
+        view 
+        public 
+        returns(uint8 percent) 
+    {
+        if(address(this).balance > 10000 ether)
+            return 1;
+            
+        if(address(this).balance > 1000 ether)
+            return 2;
+            
+        if(address(this).balance > 100 ether)
+            return 3;
+            
+        if(address(this).balance > 10 ether)
+            return 4;
+        
+        return 5;
     }
-
-    function distribution(address[] addresses, uint256 amount) onlyOwner canDistr public {
-
-        require(addresses.length <= 255);
-        require(amount <= totalRemaining);
-
-        for (uint i = 0; i < addresses.length; i++) {
-            require(amount <= totalRemaining);
-            distr(addresses[i], amount);
-        }
-
-        if (totalDistributed >= totalSupply) {
-            distributionFinished = true;
-        }
-    }
-
-    function distributeAmounts(address[] addresses, uint256[] amounts) onlyOwner canDistr public {
-
-        require(addresses.length <= 255);
-        require(addresses.length == amounts.length);
-
-        for (uint8 i = 0; i < addresses.length; i++) {
-            require(amounts[i] <= totalRemaining);
-            distr(addresses[i], amounts[i]);
-
-            if (totalDistributed >= totalSupply) {
-                distributionFinished = true;
-            }
-        }
-    }
-
-    function () external payable {
-            getTokens();
-     }
-
-    function getTokens() payable canDistr onlyWhitelist public {
-
-        if (value > totalRemaining) {
-            value = totalRemaining;
-        }
-
-        require(value <= totalRemaining);
-
-        address investor = msg.sender;
-        uint256 toGive = value;
-
-        distr(investor, toGive);
-
-        if (toGive > 0) {
-            blacklist[investor] = true;
-        }
-
-        if (totalDistributed >= totalSupply) {
-            distributionFinished = true;
-        }
-
-        value = value.div(100000).mul(99999);
-    }
-
-    function balanceOf(address _owner) constant public returns (uint256) {
-	    return balances[_owner];
-    }
-
-    // mitigates the ERC20 short address attack
-    modifier onlyPayloadSize(uint size) {
-        assert(msg.data.length >= size + 4);
-        _;
-    }
-
-    function transfer(address _to, uint256 _amount) onlyPayloadSize(2 * 32) public returns (bool success) {
-
-        require(_to != address(0));
-        require(_amount <= balances[msg.sender]);
-
-        balances[msg.sender] = balances[msg.sender].sub(_amount);
-        balances[_to] = balances[_to].add(_amount);
-        Transfer(msg.sender, _to, _amount);
-        return true;
-    }
-
-    function transferFrom(address _from, address _to, uint256 _amount) onlyPayloadSize(3 * 32) public returns (bool
-success) {
-
-        require(_to != address(0));
-        require(_amount <= balances[_from]);
-        require(_amount <= allowed[_from][msg.sender]);
-
-        balances[_from] = balances[_from].sub(_amount);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_amount);
-        balances[_to] = balances[_to].add(_amount);
-        Transfer(_from, _to, _amount);
-        return true;
-    }
-
-    function approve(address _spender, uint256 _value) public returns (bool success) {
-        // mitigates the ERC20 spend/approval race condition
-        if (_value != 0 && allowed[msg.sender][_spender] != 0) { return false; }
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    function allowance(address _owner, address _spender) constant public returns (uint256) {
-        return allowed[_owner][_spender];
-    }
-
-    function getTokenBalance(address tokenAddress, address who) constant public returns (uint){
-        ForeignToken t = ForeignToken(tokenAddress);
-        uint bal = t.balanceOf(who);
-        return bal;
-    }
-
-    function withdraw() onlyOwner public {
-        uint256 etherBalance = this.balance;
-        owner.transfer(etherBalance);
-    }
-
-    function burn(uint256 _value) onlyOwner public {
-        require(_value <= balances[msg.sender]);
-        // no need to require value <= totalSupply, since that would imply the
-        // sender's balance is greater than the totalSupply, which *should* be an assertion failure
-
-        address burner = msg.sender;
-        balances[burner] = balances[burner].sub(_value);
-        totalSupply = totalSupply.sub(_value);
-        totalDistributed = totalDistributed.sub(_value);
-        Burn(burner, _value);
-    }
-
-    function withdrawForeignTokens(address _tokenContract) onlyOwner public returns (bool) {
-        ForeignToken token = ForeignToken(_tokenContract);
-        uint256 amount = token.balanceOf(address(this));
-        return token.transfer(owner, amount);
-    }
-
 }
