@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NexToken at 0xd4a1aca8aee512824d7d6c5c1d20ae33dff99ed6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NexToken at 0x539924a4019aa982c25f1332ed5bb3a770c508fc
 */
 pragma solidity ^0.4.24;
 
@@ -105,7 +105,7 @@ contract NexToken is ERC20 {
         _;
     }
     
-    function NexToken () public {
+    function Nex () public {
         owner = msg.sender;
         uint256 devTokens = 4200000000e18;
         distr(owner, devTokens);
