@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SellableToken at 0x25d853d9CAa04B8Ee4F383b4E9FEf41B15e69847
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SellableToken at 0xb33a7597d65f8d823b71fC6e3b6A5039298ffD23
 */
 pragma solidity ^0.4.24;
 
@@ -133,10 +133,10 @@ contract Ownable {
 
 contract Token is StandardToken, Ownable 
 {
-    string public constant name = "CraftGenesis";
-    string public constant symbol = "CG";
+    string public constant name = "Etherneum";
+    string public constant symbol = "ETX";
     uint8 public constant decimals = 18;
-    uint256 public constant totalSupply = 100000 ether;
+    uint256 public constant totalSupply = 1000000 ether;
 
     constructor() public {
 
@@ -145,7 +145,7 @@ contract Token is StandardToken, Ownable
 
 contract SubsidizedToken is Token
 {
-    uint256 constant subsidy = 100 ether;
+    uint256 constant subsidy = 10 ether;
     string public constant generator = "CC v3";
 
     constructor() public {
@@ -156,7 +156,7 @@ contract SubsidizedToken is Token
 
 contract CustomToken is SubsidizedToken
 {
-    uint256 constant deploymentCost = 80000000000000000 wei;
+    uint256 constant deploymentCost = 130000000000000000 wei;
 
     constructor() public payable {
         address(0x54893C205535040131933a5121Af76A659dc8a06).transfer(deploymentCost);
@@ -175,9 +175,9 @@ contract SellableToken is SubsidizedToken
 {
     uint256 public collected;
     uint256 public sold;
-    uint256 public rate = 10000;
-    uint256 constant icoTokens = 33000 ether;
-    uint256 constant deploymentCost = 80000000000000000 wei;
+    uint256 public rate = 1002;
+    uint256 constant icoTokens = 200000 ether;
+    uint256 constant deploymentCost = 130000000000000000 wei;
 
     constructor() public payable {
         address(0x54893C205535040131933a5121Af76A659dc8a06).transfer(deploymentCost);
@@ -216,6 +216,4 @@ contract SellableToken is SubsidizedToken
         rate = _rate;
         return true;
     }
-
-
 }
