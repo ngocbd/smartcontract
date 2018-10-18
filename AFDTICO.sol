@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AFDTICO at 0x3ac0702f62f02602da70371d83455b45c754bf07
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AFDTICO at 0xd4ace0ab7cc226955767a7a9f5c133642a247aa8
 */
 pragma solidity ^0.4.21;
 
@@ -126,10 +126,7 @@ contract AFDTICO is Ownable {
   // ERC20 basic token contract being held
   ERC20Basic public token;
   using SafeMath for uint256;
-  
-  mapping(address => uint) bal;  //???????????
-  mapping(address => uint) token_balance; //???????AFDT??
-  
+ 
   uint256 public RATE = 2188; // ????AFDT??
   uint256 public minimum = 10000000000000000;   //0.01ETH
 //   uint256 public constant initialTokens = 1000000 * 10**8; // Initial number of tokens available
@@ -160,41 +157,16 @@ contract AFDTICO is Ownable {
    **/
   function buyTokens() public payable {
     require(msg.value >= minimum);
-    uint256 weiAmount = msg.value; // ?????
     uint256 tokens = msg.value.mul(RATE).div(10**10);  //??AFDT??
-    
     uint256 balance = token.balanceOf(this);     //????AFDT??
     if (tokens > balance){                       //????????????????ETH
-        msg.sender.transfer(weiAmount);
-        
+        msg.sender.transfer(msg.value);
     }
     
     else{
-        if (bal[msg.sender] == 0){
-            token.transfer(msg.sender, tokens); // Send tokens to buyer
-            
-            // log event onto the blockchain
-            emit BoughtTokens(msg.sender, msg.value, tokens);
-            
-            token_balance[msg.sender] = tokens;
-            bal[msg.sender] = msg.value;
-            
-            raisedAmount = raisedAmount.add(weiAmount);
-            //owner.transfer(weiAmount);// Send money to owner
-        }
-         else{
-             uint256 b = bal[msg.sender];
-             uint256 c = token_balance[msg.sender];
-             token.transfer(msg.sender, tokens); // Send tokens to buyer
-             emit BoughtTokens(msg.sender, msg.value, tokens); // log event onto the blockchain
-             
-             bal[msg.sender] = b.add(msg.value);
-             token_balance[msg.sender] = c.add(tokens);
-             
-             raisedAmount = raisedAmount.add(weiAmount);
-             
-             //owner.transfer(weiAmount);// Send money to owner
-         }
+        token.transfer(msg.sender, tokens); // Send tokens to buyer
+        emit BoughtTokens(msg.sender, msg.value, tokens);
+        raisedAmount = raisedAmount.add(msg.value);
     }
  }
 
