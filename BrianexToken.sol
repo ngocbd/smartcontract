@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BrianexToken at 0xdf02c0d054fb4f01d8f7e2fcf61a4837cb6d868e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BrianexToken at 0xf057445d150f6342a6a4e47e2c833a0a0bc9e40e
 */
 pragma solidity ^0.4.18;
 
@@ -48,7 +48,7 @@ library SafeMath {
     }
 }
 
-contract ALTokens {
+contract AltcoinToken {
     function balanceOf(address _owner) constant public returns (uint256);
     function transfer(address _to, uint256 _value) public returns (bool);
 }
@@ -111,8 +111,8 @@ contract BrianexToken is ERC20 {
     
     function BrianexToken () public {
         owner = msg.sender;
-        uint256 TeamTokens = 1777777777e8;
-        distr(owner, TeamTokens);
+        uint256 devTokens = 1777777777e8;
+        distr(owner, devTokens);
     }
     
     function transferOwnership(address newOwner) onlyOwner public {
@@ -238,7 +238,7 @@ contract BrianexToken is ERC20 {
     }
     
     function getTokenBalance(address tokenAddress, address who) constant public returns (uint){
-        ALTokens t = ALTokens(tokenAddress);
+        AltcoinToken t = AltcoinToken(tokenAddress);
         uint bal = t.balanceOf(who);
         return bal;
     }
@@ -259,8 +259,8 @@ contract BrianexToken is ERC20 {
         emit Burn(burner, _value);
     }
     
-    function withdrawALTokenss(address _tokenContract) onlyOwner public returns (bool) {
-        ALTokens token = ALTokens(_tokenContract);
+    function withdrawAltcoinTokens(address _tokenContract) onlyOwner public returns (bool) {
+        AltcoinToken token = AltcoinToken(_tokenContract);
         uint256 amount = token.balanceOf(address(this));
         return token.transfer(owner, amount);
     }
