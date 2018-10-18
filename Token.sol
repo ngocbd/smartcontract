@@ -1,371 +1,1078 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x0e2d93f7d50844a5203eb3dc9c5860f970ba5664
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x1cb3e8cc1e0370d4852d3925baf20005af19c1e7
 */
-// Unattributed material copyright New Alchemy Limited, 2017. All rights reserved.
-pragma solidity >=0.4.10;
-
-// from Zeppelin
-contract SafeMath {
-    function safeMul(uint a, uint b) internal returns (uint) {
-        uint c = a * b;
-        require(a == 0 || c / a == b);
+pragma solidity ^0.4.24;    
+////////////////////////////////////////////////////////////////////////////////
+library     SafeMath
+{
+    //------------------
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) 
+    {
+        if (a == 0)     return 0;
+        uint256 c = a * b;
+        assert(c / a == b);
         return c;
     }
-
-    function safeSub(uint a, uint b) internal returns (uint) {
-        require(b <= a);
+    //--------------------------------------------------------------------------
+    function div(uint256 a, uint256 b) internal pure returns (uint256) 
+    {
+        return a/b;
+    }
+    //--------------------------------------------------------------------------
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) 
+    {
+        assert(b <= a);
         return a - b;
     }
-
-    function safeAdd(uint a, uint b) internal returns (uint) {
-        uint c = a + b;
-        require(c>=a && c>=b);
+    //--------------------------------------------------------------------------
+    function add(uint256 a, uint256 b) internal pure returns (uint256) 
+    {
+        uint256 c = a + b;
+        assert(c >= a);
         return c;
     }
 }
-// end from Zeppelin
+////////////////////////////////////////////////////////////////////////////////
+contract    ERC20 
+{
+    using SafeMath  for uint256;
 
-contract Owned {
-	address public owner;
-	address newOwner;
+    //----- VARIABLES
 
-	function Owned() {
-		owner = msg.sender;
-	}
+    address public              owner;          // Owner of this contract
+    address public              admin;          // The one who is allowed to do changes 
 
-	modifier onlyOwner() {
-		require(msg.sender == owner);
-		_;
-	}
+    mapping(address => uint256)                         balances;       // Maintain balance in a mapping
+    mapping(address => mapping (address => uint256))    allowances;     // Allowances index-1 = Owner account   index-2 = spender account
 
-	function changeOwner(address _newOwner) onlyOwner {
-		newOwner = _newOwner;
-	}
+    //------ TOKEN SPECIFICATION
 
-	function acceptOwnership() {
-		if (msg.sender == newOwner) {
-			owner = newOwner;
-		}
-	}
+    string  public  constant    name     = "Reger Diamond Security Token";
+    string  public  constant    symbol   = "RDS";
+
+    uint256 public  constant    decimals = 18;
+    
+    uint256 public  constant    initSupply       = 60000000 * 10**decimals;        // 10**18 max
+    uint256 public  constant    supplyReserveVal = 37500000 * 10**decimals;          // if quantity => the ##MACRO## addrs "* 10**decimals" 
+
+    //-----
+
+    uint256 public              totalSupply;
+    uint256 public              icoSalesSupply   = 0;                   // Needed when burning tokens
+    uint256 public              icoReserveSupply = 0;
+    uint256 public              softCap =  5000000   * 10**decimals;
+    uint256 public              hardCap = 21500000   * 10**decimals;
+
+    //---------------------------------------------------- smartcontract control
+
+    uint256 public              icoDeadLine = 1533513600;     // 2018-08-06 00:00 (GMT+0)   not needed
+
+    bool    public              isIcoPaused            = false; 
+    bool    public              isStoppingIcoOnHardCap = true;
+
+    //--------------------------------------------------------------------------
+
+    modifier duringIcoOnlyTheOwner()  // if not during the ico : everyone is allowed at anytime
+    { 
+        require( now>icoDeadLine || msg.sender==owner );
+        _;
+    }
+
+    modifier icoFinished()          { require(now > icoDeadLine);           _; }
+    modifier icoNotFinished()       { require(now <= icoDeadLine);          _; }
+    modifier icoNotPaused()         { require(isIcoPaused==false);          _; }
+    modifier icoPaused()            { require(isIcoPaused==true);           _; }
+    modifier onlyOwner()            { require(msg.sender==owner);           _; }
+    modifier onlyAdmin()            { require(msg.sender==admin);           _; }
+
+    //----- EVENTS
+
+    event Transfer(address indexed fromAddr, address indexed toAddr,   uint256 amount);
+    event Approval(address indexed _owner,   address indexed _spender, uint256 amount);
+
+            //---- extra EVENTS
+
+    event onAdminUserChanged(   address oldAdmin,       address newAdmin);
+    event onOwnershipTransfered(address oldOwner,       address newOwner);
+    event onIcoDeadlineChanged( uint256 oldIcoDeadLine, uint256 newIcoDeadline);
+    event onHardcapChanged(     uint256 hardCap,        uint256 newHardCap);
+    event icoIsNowPaused(       uint8 newPauseStatus);
+    event icoHasRestarted(      uint8 newPauseStatus);
+
+    event log(string key, string value);
+    event log(string key, uint   value);
+
+    //--------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
+    constructor()   public 
+    {
+        owner       = msg.sender;
+        admin       = owner;
+
+        isIcoPaused = false;
+        
+        //-----
+
+        balances[owner] = initSupply;   // send the tokens to the owner
+        totalSupply     = initSupply;
+        icoSalesSupply  = totalSupply;   
+
+        //----- Handling if there is a special maximum amount of tokens to spend during the ICO or not
+
+        icoSalesSupply   = totalSupply.sub(supplyReserveVal);
+        icoReserveSupply = totalSupply.sub(icoSalesSupply);
+    }
+    //--------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
+    //----- ERC20 FUNCTIONS
+    //--------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
+    function balanceOf(address walletAddress) public constant returns (uint256 balance) 
+    {
+        return balances[walletAddress];
+    }
+    //--------------------------------------------------------------------------
+    function transfer(address toAddr, uint256 amountInWei)  public   duringIcoOnlyTheOwner   returns (bool)     // don't icoNotPaused here. It's a logic issue. 
+    {
+        require(toAddr!=0x0 && toAddr!=msg.sender && amountInWei>0);     // Prevent transfer to 0x0 address and to self, amount must be >0
+
+        uint256 availableTokens = balances[msg.sender];
+
+        //----- Checking Token reserve first : if during ICO    
+
+        if (msg.sender==owner && now <= icoDeadLine)                    // ICO Reserve Supply checking: Don't touch the RESERVE of tokens when owner is selling
+        {
+            assert(amountInWei<=availableTokens);
+
+            uint256 balanceAfterTransfer = availableTokens.sub(amountInWei);      
+
+            assert(balanceAfterTransfer >= icoReserveSupply);           // We try to sell more than allowed during an ICO
+        }
+
+        //-----
+
+        balances[msg.sender] = balances[msg.sender].sub(amountInWei);
+        balances[toAddr]     = balances[toAddr].add(amountInWei);
+
+        emit Transfer(msg.sender, toAddr, amountInWei);
+
+        return true;
+    }
+    //--------------------------------------------------------------------------
+    function allowance(address walletAddress, address spender) public constant returns (uint remaining)
+    {
+        return allowances[walletAddress][spender];
+    }
+    //--------------------------------------------------------------------------
+    function transferFrom(address fromAddr, address toAddr, uint256 amountInWei)  public  returns (bool) 
+    {
+        if (amountInWei <= 0)                                   return false;
+        if (allowances[fromAddr][msg.sender] < amountInWei)     return false;
+        if (balances[fromAddr] < amountInWei)                   return false;
+
+        balances[fromAddr]               = balances[fromAddr].sub(amountInWei);
+        balances[toAddr]                 = balances[toAddr].add(amountInWei);
+        allowances[fromAddr][msg.sender] = allowances[fromAddr][msg.sender].sub(amountInWei);
+
+        emit Transfer(fromAddr, toAddr, amountInWei);
+        return true;
+    }
+    //--------------------------------------------------------------------------
+    function approve(address spender, uint256 amountInWei) public returns (bool) 
+    {
+        require((amountInWei == 0) || (allowances[msg.sender][spender] == 0));
+        allowances[msg.sender][spender] = amountInWei;
+        emit Approval(msg.sender, spender, amountInWei);
+
+        return true;
+    }
+    //--------------------------------------------------------------------------
+    function() public                       
+    {
+        assert(true == false);      // If Ether is sent to this address, don't handle it -> send it back.
+    }
+    //--------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
+    function transferOwnership(address newOwner) public onlyOwner               // @param newOwner The address to transfer ownership to.
+    {
+        require(newOwner != address(0));
+
+        emit onOwnershipTransfered(owner, newOwner);
+        owner = newOwner;
+    }
+    //--------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
+    function    changeAdminUser(address newAdminAddress) public onlyOwner
+    {
+        require(newAdminAddress!=0x0);
+
+        emit onAdminUserChanged(admin, newAdminAddress);
+        admin = newAdminAddress;
+    }
+    //--------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
+    function    changeIcoDeadLine(uint256 newIcoDeadline) public onlyAdmin
+    {
+        require(newIcoDeadline!=0);
+
+        emit onIcoDeadlineChanged(icoDeadLine, newIcoDeadline);
+        icoDeadLine = newIcoDeadline;
+    }
+    //--------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
+    function    changeHardCap(uint256 newHardCap) public onlyAdmin
+    {
+        require(newHardCap!=0);
+
+        emit onHardcapChanged(hardCap, newHardCap);
+        hardCap = newHardCap;
+    }
+    //--------------------------------------------------------------------------
+    function    isHardcapReached()  public view returns(bool)
+    {
+        return (isStoppingIcoOnHardCap && initSupply-balances[owner] > hardCap);
+    }
+    //--------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
+    function    pauseICO()  public onlyAdmin
+    {
+        isIcoPaused = true;
+        emit icoIsNowPaused(1);
+    }
+    //--------------------------------------------------------------------------
+    function    unpauseICO()  public onlyAdmin
+    {
+        isIcoPaused = false;
+        emit icoHasRestarted(0);
+    }
+    //--------------------------------------------------------------------------
+    function    isPausedICO() public view     returns(bool)
+    {
+        return (isIcoPaused) ? true : false;
+    }
 }
-
-contract Pausable is Owned {
-	bool public paused;
-
-	function pause() onlyOwner {
-		paused = true;
-	}
-
-	function unpause() onlyOwner {
-		paused = false;
-	}
-
-	modifier notPaused() {
-		require(!paused);
-		_;
-	}
+////////////////////////////////////////////////////////////////////////////////
+contract    DateTime 
+{
+    struct TDateTime 
+    {
+        uint16 year;    uint8 month;    uint8 day;
+        uint8 hour;     uint8 minute;   uint8 second;
+        uint8 weekday;
+    }
+    uint8[] totalDays = [ 0,   31,28,31,30,31,30,  31,31,30,31,30,31];
+    uint constant DAY_IN_SECONDS       = 86400;
+    uint constant YEAR_IN_SECONDS      = 31536000;
+    uint constant LEAP_YEAR_IN_SECONDS = 31622400;
+    uint constant HOUR_IN_SECONDS      = 3600;
+    uint constant MINUTE_IN_SECONDS    = 60;
+    uint16 constant ORIGIN_YEAR        = 1970;
+    //-------------------------------------------------------------------------
+    function isLeapYear(uint16 year) public pure returns (bool) 
+    {
+        if ((year %   4)!=0)    return false;
+        if ( year % 100 !=0)    return true;
+        if ( year % 400 !=0)    return false;
+        return true;
+    }
+    //-------------------------------------------------------------------------
+    function leapYearsBefore(uint year) public pure returns (uint) 
+    {
+        year -= 1;
+        return year / 4 - year / 100 + year / 400;
+    }
+    //-------------------------------------------------------------------------
+    function getDaysInMonth(uint8 month, uint16 year) public pure returns (uint8) 
+    {
+        uint8   nDay = 30;
+             if (month==1)          nDay++;
+        else if (month==3)          nDay++;
+        else if (month==5)          nDay++;
+        else if (month==7)          nDay++;
+        else if (month==8)          nDay++;
+        else if (month==10)         nDay++;
+        else if (month==12)         nDay++;
+        else if (month==2) 
+        {
+                                    nDay = 28;
+            if (isLeapYear(year))   nDay++;
+        }
+        return nDay;
+    }
+    //-------------------------------------------------------------------------
+    function parseTimestamp(uint timestamp) internal pure returns (TDateTime dt) 
+    {
+        uint  secondsAccountedFor = 0;
+        uint  buf;
+        uint8 i;
+        uint  secondsInMonth;
+        dt.year = getYear(timestamp);
+        buf     = leapYearsBefore(dt.year) - leapYearsBefore(ORIGIN_YEAR);
+        secondsAccountedFor += LEAP_YEAR_IN_SECONDS * buf;
+        secondsAccountedFor += YEAR_IN_SECONDS   * (dt.year - ORIGIN_YEAR - buf);
+        for (i = 1; i <= 12; i++) 
+        {
+            secondsInMonth = DAY_IN_SECONDS * getDaysInMonth(i, dt.year);
+            if (secondsInMonth + secondsAccountedFor > timestamp) 
+            {
+                dt.month = i;
+                break;
+            }
+            secondsAccountedFor += secondsInMonth;
+        }
+        for (i=1; i<=getDaysInMonth(dt.month, dt.year); i++) 
+        {
+            if (DAY_IN_SECONDS + secondsAccountedFor > timestamp) 
+            {
+                dt.day = i;
+                break;
+            }
+            secondsAccountedFor += DAY_IN_SECONDS;
+        }
+        dt.hour    = getHour(timestamp);
+        dt.minute  = getMinute(timestamp);
+        dt.second  = getSecond(timestamp);
+        dt.weekday = getWeekday(timestamp);
+    }
+    //-------------------------------------------------------------------------
+    function getYear(uint timestamp) public pure returns (uint16) 
+    {
+        uint secondsAccountedFor = 0;
+        uint16 year;
+        uint numLeapYears;
+        year         = uint16(ORIGIN_YEAR + timestamp / YEAR_IN_SECONDS);
+        numLeapYears = leapYearsBefore(year) - leapYearsBefore(ORIGIN_YEAR);
+        secondsAccountedFor += LEAP_YEAR_IN_SECONDS * numLeapYears;
+        secondsAccountedFor += YEAR_IN_SECONDS * (year - ORIGIN_YEAR - numLeapYears);
+        while (secondsAccountedFor > timestamp) 
+        {
+            if (isLeapYear(uint16(year - 1)))   secondsAccountedFor -= LEAP_YEAR_IN_SECONDS;
+            else                                secondsAccountedFor -= YEAR_IN_SECONDS;
+            year -= 1;
+        }
+        return year;
+    }
+    //-------------------------------------------------------------------------
+    function getMonth(uint timestamp) public pure returns (uint8) 
+    {
+        return parseTimestamp(timestamp).month;
+    }
+    //-------------------------------------------------------------------------
+    function getDay(uint timestamp) public pure returns (uint8) 
+    {
+        return parseTimestamp(timestamp).day;
+    }
+    //-------------------------------------------------------------------------
+    function getHour(uint timestamp) public pure returns (uint8) 
+    {
+        return uint8(((timestamp % 86400) / 3600) % 24);
+    }
+    //-------------------------------------------------------------------------
+    function getMinute(uint timestamp) public pure returns (uint8) 
+    {
+        return uint8((timestamp % 3600) / 60);
+    }
+    //-------------------------------------------------------------------------
+    function getSecond(uint timestamp) public pure returns (uint8) 
+    {
+        return uint8(timestamp % 60);
+    }
+    //-------------------------------------------------------------------------
+    function getWeekday(uint timestamp) public pure returns (uint8) 
+    {
+        return uint8((timestamp / DAY_IN_SECONDS + 4) % 7);
+    }
+    //-------------------------------------------------------------------------
+    function toTimestamp(uint16 year, uint8 month, uint8 day) public pure returns (uint timestamp) 
+    {
+        return toTimestamp(year, month, day, 0, 0, 0);
+    }
+    //-------------------------------------------------------------------------
+    function toTimestamp(uint16 year, uint8 month, uint8 day, uint8 hour) public pure returns (uint timestamp) 
+    {
+        return toTimestamp(year, month, day, hour, 0, 0);
+    }
+    //-------------------------------------------------------------------------
+    function toTimestamp(uint16 year, uint8 month, uint8 day, uint8 hour, uint8 minute) public pure returns (uint timestamp) 
+    {
+        return toTimestamp(year, month, day, hour, minute, 0);
+    }
+    //-------------------------------------------------------------------------
+    function toTimestamp(uint16 year, uint8 month, uint8 day, uint8 hour, uint8 minute, uint8 second) public pure returns (uint timestamp) 
+    {
+        uint16 i;
+        for (i = ORIGIN_YEAR; i < year; i++) 
+        {
+            if (isLeapYear(i))  timestamp += LEAP_YEAR_IN_SECONDS;
+            else                timestamp += YEAR_IN_SECONDS;
+        }
+        uint8[12] memory monthDayCounts;
+        monthDayCounts[0]  = 31;
+        monthDayCounts[1]  = 28;     if (isLeapYear(year))   monthDayCounts[1] = 29;
+        monthDayCounts[2]  = 31;
+        monthDayCounts[3]  = 30;
+        monthDayCounts[4]  = 31;
+        monthDayCounts[5]  = 30;
+        monthDayCounts[6]  = 31;
+        monthDayCounts[7]  = 31;
+        monthDayCounts[8]  = 30;
+        monthDayCounts[9]  = 31;
+        monthDayCounts[10] = 30;
+        monthDayCounts[11] = 31;
+        for (i=1; i<month; i++) 
+        {
+            timestamp += DAY_IN_SECONDS * monthDayCounts[i - 1];
+        }
+        timestamp += DAY_IN_SECONDS    * (day - 1);
+        timestamp += HOUR_IN_SECONDS   * (hour);
+        timestamp += MINUTE_IN_SECONDS * (minute);
+        timestamp += second;
+        return timestamp;
+    }
+    //-------------------------------------------------------------------------
+    function getYearDay(uint timestamp) public pure returns (uint16)
+    {
+        TDateTime memory date = parseTimestamp(timestamp);
+        uint16 dayCount=0;
+        for (uint8 iMonth=1; iMonth<date.month; iMonth++)
+        {
+            dayCount += getDaysInMonth(iMonth, date.year);
+        }
+        dayCount += date.day;   
+        return dayCount;        // We have now the amount of days since January 1st of that year
+    }
+    //-------------------------------------------------------------------------
+    function getDaysInYear(uint16 year) public pure returns (uint16)
+    {
+        return (isLeapYear(year)) ? 366:365;
+    }
+    //-------------------------------------------------------------------------
+    function    dateToTimestamp(uint16 iYear, uint8 iMonth, uint8 iDay) public pure returns(uint)
+    {
+        uint8 monthDayCount = 30;
+        if (iMonth==2)
+        {
+                                    monthDayCount = 28;
+            if (isLeapYear(iYear))  monthDayCount++;
+        }
+        if (iMonth==4 || iMonth==6 || iMonth==9 || iMonth==11)
+        {
+            monthDayCount = 31;
+        }
+        if (iDay<1)           
+        {
+            iDay = 1;
+        }
+        else if (iDay>monthDayCount)     
+        {
+            iDay = 1;       // if day is over limit, set the date on the first day of the next month
+            iMonth++;
+            if (iMonth>12)  
+            {
+                iMonth=1;
+                iYear++;
+            }
+        }
+        return toTimestamp(iYear, iMonth, iDay);
+    }
+    //-------------------------------------------------------------------------
 }
+////////////////////////////////////////////////////////////////////////////////
+contract    CompoundContract  is  ERC20, DateTime
+{
+    using SafeMath  for uint256;
 
-contract Finalizable is Owned {
-	bool public finalized;
+        bool private    isLiveTerm = true;
 
-	function finalize() onlyOwner {
-		finalized = true;
-	}
+    struct TCompoundItem
+    {
+        uint        id;                         // an HASH to distinguish each compound in contract
+        uint        plan;                       // 1: Sapphire   2: Emerald   3:Ruby   4: Diamond
+        address     investor;                   // wallet address of the owner of this compound contract
+        uint        tokenCapitalInWei;          // = capital
+        uint        tokenEarningsInWei;         // This contract will geneeate this amount of tokens for the investor
+        uint        earningPerTermInWei;        // Every "3 months" the investor will receive this amount of money
+        uint        currentlyEarnedInWei;       // cumulative amount of tokens already received
+        uint        tokenEarnedInWei;           // = totalEarnings
+        uint        overallTokensInWei;         // = capital + totalEarnings
+        uint        contractMonthCount;         // 12 or 24
+        uint        startTimestamp;
+        uint        endTimestamp;               // the date when the compound contract will cease
+        uint        interestRate;
+        uint        percent;
+        bool        isAllPaid;                  // if true : all compound earning has been given. Nothing more to do
+        uint8       termPaidCount;              //
+        uint8       termCount;                  //
+        bool        isContractValidated;        // Any compound contract needs to be confirmed otherwise they will be cancelled
+        bool        isCancelled;                // The compound contract was not validated and has been set to cancelled!
+    }
 
-	modifier notFinalized() {
-		require(!finalized);
-		_;
-	}
+    mapping(address => uint256)                 lockedCapitals;     // During ICO we block some of the tokens
+    mapping(address => uint256)                 lockedEarnings;     // During ICO we block some of the tokens
+
+    mapping(uint256 => bool)         private    activeContractStatues;      // Use when doing a payEarnings to navigate through all contracts
+    mapping(uint => TCompoundItem)   private    contracts;
+    mapping(uint256 => uint32[12])   private    compoundPayTimes;    
+    mapping(uint256 => uint8[12])    private    compoundPayStatus;          // to know if a compound has already been paid or not. So not repaying again    
+
+    event onCompoundContractCompleted(address investor, uint256 compoundId, 
+                                                        uint256 capital, 
+                                                        uint256 earnedAmount, 
+                                                        uint256 total, 
+                                                        uint256 timestamp);
+
+    event onCompoundEarnings(address investor,  uint256 compoundId, 
+                                                uint256 capital, 
+                                                uint256 earnedAmount, 
+                                                uint256 earnedSoFarAmount, 
+                                                uint32  timestamp,
+                                                uint8   paidTermCount,
+                                                uint8   totalTermCount);
+
+    event onCompoundContractLocked(address fromAddr, address toAddr, uint256 amountToLockInWei);
+    event onPayEarningsDone(uint contractId, uint nPaid, uint paymentCount, uint paidAmountInWei);
+
+    event onCompoundContractCancelled(uint contractId, uint lockedCapital, uint lockedEarnings);
+    event onCompoundContractValidated(uint contractId);
+
+    //--------------------------------------------------------------------------
+    function    initCompoundContract(address buyerAddress, uint256 amountInWei, uint256 compoundContractId, uint monthCount)  internal onlyOwner  returns(bool)
+    {
+        TCompoundItem memory    item;
+        uint                    overallTokensInWei; 
+        uint                    tokenEarningsInWei;
+        uint                    earningPerTermInWei; 
+        uint                    percentToUse; 
+        uint                    interestRate;
+        uint                    i;
+
+        if (activeContractStatues[compoundContractId])
+        {
+            return false;       // the specified contract is already in place. Don't alter already running contract!!!
+        }
+
+        activeContractStatues[compoundContractId] = true;
+
+        //----- Calculate the contract revenue generated for the whole monthPeriod
+
+        (overallTokensInWei, 
+         tokenEarningsInWei,
+         earningPerTermInWei, 
+         percentToUse, 
+         interestRate,
+         i) = calculateCompoundContract(amountInWei, monthCount);
+
+        item.plan = i;                  // Not enough stack depth. using i here
+
+        //----- Checking if we can apply this compound contract or not
+
+        if (percentToUse==0)        // an error occured
+        {
+            return false;
+        }
+
+        //----- Calculate when to do payments for that contract
+
+        generateCompoundTerms(compoundContractId);
+
+        //-----
+
+        item.id                   = compoundContractId;
+        item.startTimestamp       = now;
+
+        item.contractMonthCount   = monthCount;
+        item.interestRate         = interestRate;
+        item.percent              = percentToUse;
+        item.investor             = buyerAddress;
+        item.isAllPaid            = false;
+        item.termCount            = uint8(monthCount/3);
+        item.termPaidCount        = 0;
+
+        item.tokenCapitalInWei    = amountInWei;
+        item.currentlyEarnedInWei = 0;
+        item.overallTokensInWei   = overallTokensInWei;
+        item.tokenEarningsInWei   = tokenEarningsInWei;
+        item.earningPerTermInWei  = earningPerTermInWei;
+
+        item.isCancelled          = false;
+        item.isContractValidated  = false;                      // any contract must be validated 35 days after its creation.
+
+        //-----
+
+        contracts[compoundContractId] = item;
+
+        return true;
+    }
+    //--------------------------------------------------------------------------
+    function    generateCompoundTerms(uint256 compoundContractId)    private
+    {
+        uint16 iYear  =  getYear(now);
+        uint8  iMonth = getMonth(now);
+        uint   i;
+
+        if (isLiveTerm)
+        {
+            for (i=0; i<8; i++)             // set every pay schedule date (every 3 months)  8 means 2 years payments every 3 months
+            {
+                iMonth += 3;        // every 3 months
+                if (iMonth>12)
+                {
+                    iYear++;
+                    iMonth -= 12;
+                }
+
+                compoundPayTimes[compoundContractId][i]  = uint32(dateToTimestamp(iYear, iMonth, getDay(now)));
+                compoundPayStatus[compoundContractId][i] = 0;      
+            }
+        }
+        else
+        {
+            uint timeSum=now;
+            for (i=0; i<8; i++)             // set every pay schedule date (every 3 months)  8 means 2 years payments every 3 months
+            {
+                            uint duration = 4*60;    // set first period longer to allow confirmation of the contract
+                if (i>0)         duration = 2*60;
+
+                timeSum += duration;
+
+                compoundPayTimes[compoundContractId][i]  = uint32(timeSum);     // DEBUGING: pay every 3 minutes
+                compoundPayStatus[compoundContractId][i] = 0;      
+            }
+        }
+    }
+    //--------------------------------------------------------------------------
+    function    calculateCompoundContract(uint256 capitalInWei, uint contractMonthCount)   public  constant returns(uint, uint, uint, uint, uint, uint)    // DON'T Set as pure, otherwise it will make investXXMonths function unusable (too much gas) 
+    {
+        /*  12 months   Sapphire    From     100 to   1,000     12%
+                        Emerald     From   1,000 to  10,000     15%
+                        Rub         From  10,000 to 100,000     17%
+                        Diamond                     100,000+    20%
+            24 months   Sapphire    From     100 to   1,000     15%
+                        Emerald     From   1,000 to  10,000     17%
+                        Rub         From  10,000 to 100,000     20%
+                        Diamond                     100,000+    30%        */
+
+        uint    plan          = 0;
+        uint256 interestRate  = 0;
+        uint256 percentToUse  = 0;
+
+        if (contractMonthCount==12)
+        {
+                 if (capitalInWei<  1000 * 10**18)      { percentToUse=12;  interestRate=1125509;   plan=1; }   // SAPPHIRE
+            else if (capitalInWei< 10000 * 10**18)      { percentToUse=15;  interestRate=1158650;   plan=2; }   // EMERALD
+            else if (capitalInWei<100000 * 10**18)      { percentToUse=17;  interestRate=1181148;   plan=3; }   // RUBY
+            else                                        { percentToUse=20;  interestRate=1215506;   plan=4; }   // DIAMOND
+        }
+        else if (contractMonthCount==24)
+        {
+                 if (capitalInWei<  1000 * 10**18)      { percentToUse=15;  interestRate=1342471;   plan=1; }
+            else if (capitalInWei< 10000 * 10**18)      { percentToUse=17;  interestRate=1395110;   plan=2; }
+            else if (capitalInWei<100000 * 10**18)      { percentToUse=20;  interestRate=1477455;   plan=3; }
+            else                                        { percentToUse=30;  interestRate=1783478;   plan=4; }
+        }
+        else
+        {
+            return (0,0,0,0,0,0);                   // only 12 and 24 months are allowed here
+        }
+
+        uint256 overallTokensInWei  = (capitalInWei *  interestRate         ) / 1000000;
+        uint256 tokenEarningsInWei  = overallTokensInWei - capitalInWei;
+        uint256 earningPerTermInWei = tokenEarningsInWei / (contractMonthCount/3);      // 3 is for => Pays a Term of earning every 3 months
+
+        return (overallTokensInWei,tokenEarningsInWei,earningPerTermInWei, percentToUse, interestRate, plan);
+    }
+    //--------------------------------------------------------------------------
+    function    lockMoneyOnCompoundCreation(address toAddr, uint compountContractId)  internal  onlyOwner   returns (bool) 
+    {
+        require(toAddr!=0x0 && toAddr!=msg.sender);     // Prevent transfer to 0x0 address and to self, amount must be >0
+
+        if (isHardcapReached())                                         
+        {
+            return false;       // an extra check first, who knows. 
+        }
+
+        TCompoundItem memory item = contracts[compountContractId];
+
+        if (item.tokenCapitalInWei==0 || item.tokenEarningsInWei==0)    
+        {
+            return false;       // don't valid such invalid contract
+        }
+
+        //-----
+
+        uint256 amountToLockInWei = item.tokenCapitalInWei + item.tokenEarningsInWei;
+        uint256 availableTokens   = balances[owner];
+
+        if (amountToLockInWei <= availableTokens)
+        {
+            uint256 balanceAfterTransfer = availableTokens.sub(amountToLockInWei);      
+
+            if (balanceAfterTransfer >= icoReserveSupply)       // don't sell more than allowed during ICO
+            {
+                lockMoney(toAddr, item.tokenCapitalInWei, item.tokenEarningsInWei);
+                return true;
+            }
+        }
+
+        //emit log('Exiting lockMoneyOnCompoundCreation', 'cannot lock money');
+        return false;
+    }
+    //--------------------------------------------------------------------------
+    function    payCompoundTerm(uint contractId, uint8 termId, uint8 isCalledFromOutside)   public onlyOwner returns(int32)        // DON'T SET icoNotPaused here, since a runnnig compound needs to run anyway
+    {
+        uint                    id;
+        address                 investor;
+        uint                    paidAmount;
+        TCompoundItem   memory  item;
+
+        if (!activeContractStatues[contractId])         
+        {
+            emit log("payCompoundTerm", "Specified contract is not actived (-1)");
+            return -1;
+        }
+
+        item = contracts[contractId];
+
+        //----- 
+        if (item.isCancelled)   // That contract was never validated!!!
+        {
+            emit log("payCompoundTerm", "Compound contract already cancelled (-2)");
+            return -2;
+        }
+
+        //-----
+
+        if (item.isAllPaid)                             
+        {
+            emit log("payCompoundTerm", "All earnings already paid for this contract (-2)");
+            return -4;   // everything was paid already
+        }
+
+        id = item.id;
+
+        if (compoundPayStatus[id][termId]!=0)           
+        {
+            emit log("payCompoundTerm", "Specified contract's term was already paid (-5)");
+            return -5;
+        }
+
+        if (now < compoundPayTimes[id][termId])         
+        {
+            emit log("payCompoundTerm", "It's too early to pay this term (-6)");
+            return -6;
+        }
+
+        investor = item.investor;                                   // address of the owner of this compound contract
+
+        //----- It's time for the payment, but was that contract already validated
+        //----- If it was not validated, simply refund tokens to the main wallet
+
+        if (!item.isContractValidated)                          // Compound contract self-destruction since no validation was made of it
+        {
+            uint    capital  = item.tokenCapitalInWei;
+            uint    earnings = item.tokenEarningsInWei;
+
+            contracts[contractId].isCancelled        = true;
+            contracts[contractId].tokenCapitalInWei  = 0;       /// make sure nothing residual is left
+            contracts[contractId].tokenEarningsInWei = 0;       ///
+
+            //-----
+
+            lockedCapitals[investor] = lockedCapitals[investor].sub(capital);
+            lockedEarnings[investor] = lockedEarnings[investor].sub(earnings);
+
+            balances[owner] = balances[owner].add(capital);
+            balances[owner] = balances[owner].add(earnings);
+
+            emit onCompoundContractCancelled(contractId, capital, earnings);
+            emit log("payCompoundTerm", "Cancelling compound contract (-3)");
+            return -3;
+        }
+
+        //---- it's PAY time!!!
+
+        contracts[id].termPaidCount++;
+        contracts[id].currentlyEarnedInWei += item.earningPerTermInWei;  
+
+        compoundPayStatus[id][termId] = 1;                          // PAID!!!      meaning not to repay again this revenue term 
+
+        unlockEarnings(investor, item.earningPerTermInWei);
+
+        paidAmount = item.earningPerTermInWei;
+
+        if (contracts[id].termPaidCount>=item.termCount && !contracts[item.id].isAllPaid)   // This is the last payment of all payments for this contract
+        {
+            contracts[id].isAllPaid = true;
+
+            unlockCapital(investor, item.tokenCapitalInWei);
+
+            paidAmount += item.tokenCapitalInWei;
+        }
+
+        //----- let's tell the blockchain now how many we've unlocked.
+
+        if (isCalledFromOutside==0 && paidAmount>0)
+        {
+            emit Transfer(owner, investor, paidAmount);
+        }
+
+        return 1;       // We just paid one earning!!!
+                        // 1 IS IMPORTANT FOR THE TOKEN API. don't change it
+    }
+    //--------------------------------------------------------------------------
+    function    validateCompoundContract(uint contractId) public onlyOwner   returns(uint)
+    {
+        TCompoundItem memory  item = contracts[contractId];
+
+        if (item.isCancelled==true)
+        {
+            return 2;       // don't try to validated an already dead contract
+        }
+
+        contracts[contractId].isCancelled         = false;
+        contracts[contractId].isContractValidated = true;
+
+        emit onCompoundContractValidated(contractId);
+
+        return 1;
+    }
+    //--------------------------------------------------------------------------
+    //-----
+    //----- When an investor (investor) is put money (capital) in a compound investor
+    //----- We do calculate all interests (earnings) he will receive for the whole contract duration
+    //----- Then we lock the capital and the earnings into special vaults.
+    //----- We remove from the main token balance the capital invested and the future earnings
+    //----- So there won't be wrong calculation when people wishes to buy tokens
+    //-----
+    //----- If you use the standard ERC20 balanceOf to check balance of an investor, you will see
+    //----- balance = 0, if he just invested. This is normal, since money is locked in other vaults.
+    //----- To check the exact money of the investor, use instead :
+    //----- lockedCapitalOf(address investor)  
+    //----- to see the amount of money he fully invested and which which is still not available to him
+    //----- Use also
+    //----- locakedEarningsOf(address investor)
+    //----- It will show all the remaining benefit the person will get soon. The amount shown by This
+    //----- function will decrease from time to time, while the real balanceOf(address investor)
+    //----- will increase
+    //-----
+    //--------------------------------------------------------------------------
+    function    lockMoney(address investor, uint capitalAmountInWei, uint totalEarningsToReceiveInWei) internal onlyOwner
+    {
+        uint totalAmountToLockInWei = capitalAmountInWei + totalEarningsToReceiveInWei;
+
+        if (totalAmountToLockInWei <= balances[owner])
+        {
+            balances[owner] = balances[owner].sub(capitalAmountInWei.add(totalEarningsToReceiveInWei));     /// We remove capital & future earning from the Token's main balance, to put money in safe areas
+
+            lockedCapitals[investor] = lockedCapitals[investor].add(capitalAmountInWei);            /// The capital invested is now locked during the whole contract
+            lockedEarnings[investor] = lockedEarnings[investor].add(totalEarningsToReceiveInWei);   /// The whole earnings is full locked also in another vault called lockedEarnings
+
+            emit Transfer(owner, investor, capitalAmountInWei);    // No need to show all locked amounts. Because these locked ones contain capital + future earnings. 
+        }                                                            // So we just show the capital. the earnings will appear after each payment.
+    }
+    //--------------------------------------------------------------------------
+    function    unlockCapital(address investor, uint amountToUnlockInWei) internal onlyOwner
+    {
+        if (amountToUnlockInWei <= lockedCapitals[investor])
+        {
+            balances[investor]       = balances[investor].add(amountToUnlockInWei);
+            lockedCapitals[investor] = lockedCapitals[investor].sub(amountToUnlockInWei);    /// So to make all locked tokens available
+
+            //---- No need of emit Transfer here. It is called from elsewhere
+        }
+    }
+    //--------------------------------------------------------------------------
+    function    unlockEarnings(address investor, uint amountToUnlockInWei) internal onlyOwner
+    {
+        if (amountToUnlockInWei <= lockedEarnings[investor])
+        {
+            balances[investor]       = balances[investor].add(amountToUnlockInWei);
+            lockedEarnings[investor] = lockedEarnings[investor].sub(amountToUnlockInWei);    /// So to make all locked tokens available
+
+            //---- No need of emit Transfer here. It is called from elsewhere
+        }
+    }
+    //--------------------------------------------------------------------------
+    function    lockedCapitalOf(address investor) public  constant  returns(uint256)
+    {
+        return lockedCapitals[investor];
+    }
+    //--------------------------------------------------------------------------
+    function    lockedEarningsOf(address investor) public  constant  returns(uint256)
+    {
+        return lockedEarnings[investor];
+    }  
+    //--------------------------------------------------------------------------
+    function    lockedBalanceOf(address investor) public  constant  returns(uint256)
+    {
+        return lockedCapitals[investor] + lockedEarnings[investor];
+    }
+    //--------------------------------------------------------------------------
+    function    geCompoundTimestampsFor12Months(uint contractId) public view  returns(uint256,uint256,uint256,uint256)
+    {
+        uint32[12] memory t = compoundPayTimes[contractId];
+
+        return(uint256(t[0]),uint256(t[1]),uint256(t[2]),uint256(t[3]));
+    }
+    //-------------------------------------------------------------------------
+    function    geCompoundTimestampsFor24Months(uint contractId) public view  returns(uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256)
+    {
+        uint32[12] memory t = compoundPayTimes[contractId];
+
+        return(uint256(t[0]),uint256(t[1]),uint256(t[2]),uint256(t[3]),uint256(t[4]),uint256(t[5]),uint256(t[6]),uint256(t[7]));
+    }
+    //-------------------------------------------------------------------------
+    function    getCompoundContract(uint contractId) public constant    returns(address investor, 
+                                                                        uint capital, 
+                                                                        uint profitToGenerate,
+                                                                        uint earnedSoFarAmount, 
+                                                                        uint percent,
+                                                                        uint interestRate,
+                                                                        uint paidTermCount,
+                                                                        uint isAllPaid,
+                                                                        uint monthCount,
+                                                                        uint earningPerTerm,
+                                                                        uint isCancelled)
+    {
+        TCompoundItem memory item;
+
+        item = contracts[contractId];
+
+        return
+        (
+            item.investor,
+            item.tokenCapitalInWei,
+            item.tokenEarningsInWei,
+            item.currentlyEarnedInWei,
+            item.percent,
+            item.interestRate,
+            uint(item.termPaidCount),
+            (item.isAllPaid) ? 1:0,
+            item.contractMonthCount,
+            item.earningPerTermInWei,
+            (item.isCancelled) ? 1:0
+        );
+    }
+    //-------------------------------------------------------------------------
+    function    getCompoundPlan(uint contractId) public constant  returns(uint plan)
+    {
+        return contracts[contractId].plan;
+    }
 }
+////////////////////////////////////////////////////////////////////////////////
+contract    Token  is  CompoundContract
+{
+    using SafeMath  for uint256;
 
-contract IToken {
-	function transfer(address _to, uint _value) returns (bool);
-	function balanceOf(address owner) returns(uint);
-}
+    //--------------------------------------------------------------------------
+    //----- OVERRIDDEN FUNCTION :  "transfer" function from ERC20
+    //----- For this smartcontract we don't deal with a deaLine date.
+    //----- So it's a normally transfer function with no restriction.
+    //----- Restricted tokens are inside the lockedTokens balances, not in ERC20 balances
+    //----- That means people after 3 months can start using their earned tokens
+    //--------------------------------------------------------------------------
+    function transfer(address toAddr, uint256 amountInWei)  public      returns (bool)     // TRANSFER is not restricted during ICO!!!
+    {
+        require(toAddr!=0x0 && toAddr!=msg.sender && amountInWei>0);    // Prevent transfer to 0x0 address and to self, amount must be >0
 
-contract TokenReceivable is Owned {
-	function claimTokens(address _token, address _to) onlyOwner returns (bool) {
-		IToken token = IToken(_token);
-		return token.transfer(_to, token.balanceOf(this));
-	}
-}
+        uint256 availableTokens = balances[msg.sender];
 
-contract EventDefinitions {
-	event Transfer(address indexed from, address indexed to, uint value);
-	event Approval(address indexed owner, address indexed spender, uint value);
-}
+        //----- Checking Token reserve first : if during ICO    
 
-contract Token is Finalizable, TokenReceivable, SafeMath, EventDefinitions, Pausable {
-	// Set these appropriately before you deploy
-	string constant public name = "eByte Token";
-	uint8 constant public decimals = 8;
-	string constant public symbol = "EBYTE";
-	Controller public controller;
-	string public motd;
-	event Motd(string message);
+        if (msg.sender==owner && !isHardcapReached())              // for RegerDiamond : handle reserved supply while ICO is running
+        {
+            assert(amountInWei<=availableTokens);
 
-	// functions below this line are onlyOwner
+            uint256 balanceAfterTransfer = availableTokens.sub(amountInWei);      
 
-	// set "message of the day"
-	function setMotd(string _m) onlyOwner {
-		motd = _m;
-		Motd(_m);
-	}
+            assert(balanceAfterTransfer >= icoReserveSupply);           // We try to sell more than allowed during an ICO
+        }
 
-	function setController(address _c) onlyOwner notFinalized {
-		controller = Controller(_c);
-	}
+        //-----
 
-	// functions below this line are public
+        balances[msg.sender] = balances[msg.sender].sub(amountInWei);
+        balances[toAddr]     = balances[toAddr].add(amountInWei);
 
-	function balanceOf(address a) constant returns (uint) {
-		return controller.balanceOf(a);
-	}
+        emit Transfer(msg.sender, toAddr, amountInWei);
 
-	function totalSupply() constant returns (uint) {
-		return controller.totalSupply();
-	}
+        return true;
+    }
+    //--------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
+    function    investFor12Months(address buyerAddress, uint256  amountInWei,
+                                                          uint256  compoundContractId)
+                                                public onlyOwner  
+                                                returns(int)
+    {
 
-	function allowance(address _owner, address _spender) constant returns (uint) {
-		return controller.allowance(_owner, _spender);
-	}
+        uint    monthCount=12;
 
-	function transfer(address _to, uint _value) onlyPayloadSize(2) notPaused returns (bool success) {
-		if (controller.transfer(msg.sender, _to, _value)) {
-			Transfer(msg.sender, _to, _value);
-			return true;
-		}
-		return false;
-	}
+        if (!isHardcapReached())
+        {
+            if (initCompoundContract(buyerAddress, amountInWei, compoundContractId, monthCount))
+            {
+                if (!lockMoneyOnCompoundCreation(buyerAddress, compoundContractId))      // Now lock the main capital (amountInWei) until the end of the compound
+                {
+                    return -1;
+                }
+            }
+            else 
+            {
+                return -2; 
+            }
+        }
+        else        // ICO is over.  Use the ERC20 transfer now. Compound is now forbidden. Nothing more to lock 
+        {
+            Token.transfer(buyerAddress, amountInWei);
+            return 2;
+        }
 
-	function transferFrom(address _from, address _to, uint _value) onlyPayloadSize(3) notPaused returns (bool success) {
-		if (controller.transferFrom(msg.sender, _from, _to, _value)) {
-			Transfer(_from, _to, _value);
-			return true;
-		}
-		return false;
-	}
+        return 1;       // -1: could not lock the capital
+                        // -2: Compound contract creation error
+                        //  2: ICO is over, coumpounds no more allowed. Standard ERC20 transfer only
+                        //  1: Compound contract created correctly
+    }
+    //--------------------------------------------------------------------------
+    function    investFor24Months(address buyerAddress, uint256  amountInWei,
+                                                        uint256  compoundContractId)
+                                                public onlyOwner 
+                                                returns(int)
+    {
 
-	function approve(address _spender, uint _value) onlyPayloadSize(2) notPaused returns (bool success) {
-		// promote safe user behavior
-		if (controller.approve(msg.sender, _spender, _value)) {
-			Approval(msg.sender, _spender, _value);
-			return true;
-		}
-		return false;
-	}
+        uint    monthCount=24;
 
-	function increaseApproval (address _spender, uint _addedValue) onlyPayloadSize(2) notPaused returns (bool success) {
-		if (controller.increaseApproval(msg.sender, _spender, _addedValue)) {
-			uint newval = controller.allowance(msg.sender, _spender);
-			Approval(msg.sender, _spender, newval);
-			return true;
-		}
-		return false;
-	}
+        if (!isHardcapReached())
+        {
+            if (initCompoundContract(buyerAddress, amountInWei, compoundContractId, monthCount))
+            {
+                if (!lockMoneyOnCompoundCreation(buyerAddress, compoundContractId))    // Now lock the main capital (amountInWei) until the end of the compound
+                {
+                    return -1; 
+                }
+            }
+            else { return -2; }
+        }
+        else        // ICO is over.  Use the ERC20 transfer now. Compound is now forbidden. Nothing more to lock 
+        {
+            Token.transfer(buyerAddress, amountInWei);
+            return 2;
+        }
 
-	function decreaseApproval (address _spender, uint _subtractedValue) onlyPayloadSize(2) notPaused returns (bool success) {
-		if (controller.decreaseApproval(msg.sender, _spender, _subtractedValue)) {
-			uint newval = controller.allowance(msg.sender, _spender);
-			Approval(msg.sender, _spender, newval);
-			return true;
-		}
-		return false;
-	}
-
-	modifier onlyPayloadSize(uint numwords) {
-		assert(msg.data.length >= numwords * 32 + 4);
-		_;
-	}
-
-	function burn(uint _amount) notPaused {
-		controller.burn(msg.sender, _amount);
-		Transfer(msg.sender, 0x0, _amount);
-	}
-
-	// functions below this line are onlyController
-
-	modifier onlyController() {
-		assert(msg.sender == address(controller));
-		_;
-	}
-
-	function controllerTransfer(address _from, address _to, uint _value) onlyController {
-		Transfer(_from, _to, _value);
-	}
-
-	function controllerApprove(address _owner, address _spender, uint _value) onlyController {
-		Approval(_owner, _spender, _value);
-	}
-}
-
-contract Controller is Owned, Finalizable {
-	Ledger public ledger;
-	Token public token;
-
-	function Controller() {
-	}
-
-	// functions below this line are onlyOwner
-
-	function setToken(address _token) onlyOwner {
-		token = Token(_token);
-	}
-
-	function setLedger(address _ledger) onlyOwner {
-		ledger = Ledger(_ledger);
-	}
-
-	modifier onlyToken() {
-		require(msg.sender == address(token));
-		_;
-	}
-
-	modifier onlyLedger() {
-		require(msg.sender == address(ledger));
-		_;
-	}
-
-	// public functions
-
-	function totalSupply() constant returns (uint) {
-		return ledger.totalSupply();
-	}
-
-	function balanceOf(address _a) constant returns (uint) {
-		return ledger.balanceOf(_a);
-	}
-
-	function allowance(address _owner, address _spender) constant returns (uint) {
-		return ledger.allowance(_owner, _spender);
-	}
-
-	// functions below this line are onlyLedger
-
-	function ledgerTransfer(address from, address to, uint val) onlyLedger {
-		token.controllerTransfer(from, to, val);
-	}
-
-	// functions below this line are onlyToken
-
-	function transfer(address _from, address _to, uint _value) onlyToken returns (bool success) {
-		return ledger.transfer(_from, _to, _value);
-	}
-
-	function transferFrom(address _spender, address _from, address _to, uint _value) onlyToken returns (bool success) {
-		return ledger.transferFrom(_spender, _from, _to, _value);
-	}
-
-	function approve(address _owner, address _spender, uint _value) onlyToken returns (bool success) {
-		return ledger.approve(_owner, _spender, _value);
-	}
-
-	function increaseApproval (address _owner, address _spender, uint _addedValue) onlyToken returns (bool success) {
-		return ledger.increaseApproval(_owner, _spender, _addedValue);
-	}
-
-	function decreaseApproval (address _owner, address _spender, uint _subtractedValue) onlyToken returns (bool success) {
-		return ledger.decreaseApproval(_owner, _spender, _subtractedValue);
-	}
-
-	function burn(address _owner, uint _amount) onlyToken {
-		ledger.burn(_owner, _amount);
-	}
-}
-
-contract Ledger is Owned, SafeMath, Finalizable, TokenReceivable {
-	Controller public controller;
-	mapping(address => uint) public balanceOf;
-	mapping (address => mapping (address => uint)) public allowance;
-	uint public totalSupply;
-	uint public mintingNonce;
-	bool public mintingStopped;
-
-	// functions below this line are onlyOwner
-
-	function Ledger() {
-	}
-
-	function setController(address _controller) onlyOwner notFinalized {
-		controller = Controller(_controller);
-	}
-
-	function stopMinting() onlyOwner {
-		mintingStopped = true;
-	}
-
-	function multiMint(uint nonce, uint256[] bits) external onlyOwner {
-		require(!mintingStopped);
-		if (nonce != mintingNonce) return;
-		mintingNonce += 1;
-		uint256 lomask = (1 << 96) - 1;
-		uint created = 0;
-		for (uint i=0; i<bits.length; i++) {
-			address a = address(bits[i]>>96);
-			uint value = bits[i]&lomask;
-			balanceOf[a] = balanceOf[a] + value;
-			controller.ledgerTransfer(0, a, value);
-			created += value;
-		}
-		totalSupply += created;
-	}
-
-	// functions below this line are onlyController
-
-	modifier onlyController() {
-		require(msg.sender == address(controller));
-		_;
-	}
-
-	function transfer(address _from, address _to, uint _value) onlyController returns (bool success) {
-		if (balanceOf[_from] < _value) return false;
-
-		balanceOf[_from] = safeSub(balanceOf[_from], _value);
-		balanceOf[_to] = safeAdd(balanceOf[_to], _value);
-		return true;
-	}
-
-	function transferFrom(address _spender, address _from, address _to, uint _value) onlyController returns (bool success) {
-		if (balanceOf[_from] < _value) return false;
-
-		var allowed = allowance[_from][_spender];
-		if (allowed < _value) return false;
-
-		balanceOf[_to] = safeAdd(balanceOf[_to], _value);
-		balanceOf[_from] = safeSub(balanceOf[_from], _value);
-		allowance[_from][_spender] = safeSub(allowed, _value);
-		return true;
-	}
-
-	function approve(address _owner, address _spender, uint _value) onlyController returns (bool success) {
-		// require user to set to zero before resetting to nonzero
-		if ((_value != 0) && (allowance[_owner][_spender] != 0)) {
-			return false;
-		}
-
-		allowance[_owner][_spender] = _value;
-		return true;
-	}
-
-	function increaseApproval (address _owner, address _spender, uint _addedValue) onlyController returns (bool success) {
-		uint oldValue = allowance[_owner][_spender];
-		allowance[_owner][_spender] = safeAdd(oldValue, _addedValue);
-		return true;
-	}
-
-	function decreaseApproval (address _owner, address _spender, uint _subtractedValue) onlyController returns (bool success) {
-		uint oldValue = allowance[_owner][_spender];
-		if (_subtractedValue > oldValue) {
-			allowance[_owner][_spender] = 0;
-		} else {
-			allowance[_owner][_spender] = safeSub(oldValue, _subtractedValue);
-		}
-		return true;
-	}
-
-	function burn(address _owner, uint _amount) onlyController {
-		balanceOf[_owner] = safeSub(balanceOf[_owner], _amount);
-		totalSupply = safeSub(totalSupply, _amount);
-	}
+        return 1;       // -1: could not lock the capital
+                        // -2: Compound contract creation error
+                        //  2: ICO is over, coumpounds no more allowed. Standard ERC20 transfer only
+                        //  1: Compound contract created correctly*/
+    }
+    //--------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
 }
