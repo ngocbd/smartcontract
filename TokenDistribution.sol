@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenDistribution at 0xccad24a69a76da7763f937d855857302535bfd88
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenDistribution at 0x9dbf4430f5ff5f0653c371d55fa2f92ab5196031
 */
 pragma solidity ^0.4.11;
 
@@ -42,7 +42,7 @@ contract TokenDistribution is Owned {
 
     ERC20 public tokenContract;
     
-    function TokenDistribution ( address _tokenAddress ) public {
+    function TokenSale ( address _tokenAddress ) public {
         tokenContract = ERC20(_tokenAddress); // The Deployed Token Contract
      }
           
