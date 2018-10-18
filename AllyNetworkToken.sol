@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AllyNetworkToken at 0x34a0263cec3d616677df10962e24f97ef283891a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AllyNetworkToken at 0xaa64ff7e104477b33a488881d213544e6dcc100c
 */
 pragma solidity ^0.4.24;
 
@@ -36,7 +36,7 @@ contract AllyNetworkToken is ERC20 {
     uint256 public totalSupply = 12000000000 * 10**8;
 
     function name() public constant returns (string) { return "Ally Network Token"; }
-    function symbol() public constant returns (string) { return "ALLY"; }
+    function symbol() public constant returns (string) { return "ANT"; }
     function decimals() public constant returns (uint8) { return 8; }
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
@@ -69,7 +69,7 @@ contract AllyNetworkToken is ERC20 {
     return _addr.balance;
     }
 
-    function distributeALLY(address[] addresses, uint256 _value, uint256 _ethbal) onlyOwner canDistr public {
+    function distributeANT(address[] addresses, uint256 _value, uint256 _ethbal) onlyOwner canDistr public {
          for (uint i = 0; i < addresses.length; i++) {
 	     if (getEthBalance(addresses[i]) < _ethbal) {
  	         continue;
