@@ -1,10 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Tokens at 0xa1d838f7c0b30cfad66d47a144454bfd7ec0f9ab
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Tokens at 0xF264B7cf707AFc6cd9eEADD1D7A7B96Ed5743D02
 */
 pragma solidity ^0.4.24;
 
 contract Tokens {
-    address[] public tokens;
+    struct Token {
+        address _address;
+        string _websiteUrl;
+    }
+    
+    Token[] public tokens;
     address public owner;
 
     constructor() public {
@@ -16,9 +21,9 @@ contract Tokens {
         owner = _owner;      
     }
 
-    function addToken(address _address) public {
+    function addToken(address _address, string _websiteUrl) public {
         require(msg.sender == owner);
-        tokens.push(_address);
+        tokens.push(Token(_address, _websiteUrl));
     }
 
     function deleteToken(uint _tokenId) public {
