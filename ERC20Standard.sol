@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Standard at 0xE3d424dFFecC3759Fcc997F5EBa2A01a58585405
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Standard at 0x6747f6cf15c07169da471e003e59e6aafea7768a
 */
 pragma solidity ^0.4.11;
 
@@ -30,43 +30,34 @@ pragma solidity ^0.4.11;
 //------------------------------------------------------------------------------------------------
 
 contract ERC20Standard {
-	uint256 public totalSupply;
-	bool public mintable;
-	string public name;
-	uint256 public decimals;
-	string public symbol;
-	address public owner;
-
+	uint256 public totalSupply = 140245398245132780789239631;
+	
+	string public name = "OMGToken";
+	uint256 public decimals = 18;
+	string public symbol = "OMG";
+	string public version;
+	
 	mapping (address => uint256) balances;
-	mapping (address => mapping (address => uint256)) allowed;
+	mapping (address => mapping (address => uint)) allowed;
 
-  function ERC20Standard() public {
-		decimals = 18;
-		symbol = "IPAY";
-		name = "infinite pay";
-		mintable = true;
-		owner = msg.sender;
-        totalSupply = 300000000 * (10 ** decimals);
-        balances[msg.sender] = totalSupply;
-  }
 	//Fix for short address attack against ERC20
 	modifier onlyPayloadSize(uint size) {
 		assert(msg.data.length == size + 4);
 		_;
 	} 
 
-	function balanceOf(address _owner) constant public returns (uint256) {
+	function balanceOf(address _owner) constant returns (uint balance) {
 		return balances[_owner];
 	}
 
-	function transfer(address _recipient, uint256 _value) onlyPayloadSize(2*32) public {
+	function transfer(address _recipient, uint _value) onlyPayloadSize(2*32) {
 		require(balances[msg.sender] >= _value && _value > 0);
 	    balances[msg.sender] -= _value;
 	    balances[_recipient] += _value;
 	    Transfer(msg.sender, _recipient, _value);        
     }
 
-	function transferFrom(address _from, address _to, uint256 _value) public {
+	function transferFrom(address _from, address _to, uint _value) {
 		require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0);
         balances[_to] += _value;
         balances[_from] -= _value;
@@ -74,34 +65,27 @@ contract ERC20Standard {
         Transfer(_from, _to, _value);
     }
 
-	function approve(address _spender, uint256 _value) public {
+	function approve(address _spender, uint _value) {
 		allowed[msg.sender][_spender] = _value;
 		Approval(msg.sender, _spender, _value);
 	}
 
-	function allowance(address _owner, address _spender) constant public returns (uint256) {
+	function allowance(address _spender, address _owner) constant returns (uint balance) {
 		return allowed[_owner][_spender];
-	}
-
-	function mint(uint256 amount) public {
-		assert(amount >= 0);
-		require(msg.sender == owner);
-		balances[msg.sender] += amount;
-		totalSupply += amount;
 	}
 
 	//Event which is triggered to log all transfers to this contract's event log
 	event Transfer(
 		address indexed _from,
 		address indexed _to,
-		uint256 _value
+		uint _value
 		);
 		
 	//Event which is triggered whenever an owner approves a new allowance for a spender.
 	event Approval(
 		address indexed _owner,
 		address indexed _spender,
-		uint256 _value
+		uint _value
 		);
 
 }
