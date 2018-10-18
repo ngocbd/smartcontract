@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3D at 0x5cd17346bc2b8b3b04251dfea7763dbc70cceaf7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fomo3D at 0x9b61b10356a04644dbbad26037fa40141db3f407
 */
 pragma solidity ^0.4.24;
 
@@ -133,16 +133,16 @@ contract Ownable {
     }
 }
 
-contract FoMo3D is Ownable, Events {
+contract Fomo3D is Ownable, Events {
     using SafeMath for *;
     using NameFilter for string;
     using KeysCalcLong for uint256;
 
-    ExtSettingInterface private extSetting = ExtSettingInterface(0x2CFaEEF971d06B74eF2fc1Cb0c568ab92000e95e);
-    FoundationInterface private foundation = FoundationInterface(0xc91CA445AcdAe9EebAf003A64088cA29A694C3ae);
-	PlayerBookInterface private playerBook = PlayerBookInterface(0x4F86182FF4704330B0f169eD897D608B367015B7);
+    ExtSettingInterface private extSetting = ExtSettingInterface(0x6378B8016Fa6B47aCe731DB84aEaBd1abeA4f635);
+    FoundationInterface private foundation = FoundationInterface(0x2Ad0EbB0FFa7A9c698Ae7F1d23BD7d86FF0ae386);
+	PlayerBookInterface private playerBook = PlayerBookInterface(0x2082ee2696658F8Fd38B837986E02AC8541855da);
 
-    string constant public name = "FoMo3D Asia (Official)";
+    string constant public name = "Fomo3D Asia (Official)";
     string constant public symbol = "F3DA";
 
     uint256 constant private rndInit_ = 1 hours;
