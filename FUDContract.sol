@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FUDContract at 0xdea04f1d55d0cfc4bdc80e123c2d0bf94bc9d300
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FUDContract at 0xb633db4713148d16fe2b9e499fac6c6b8419597a
 */
 pragma solidity ^0.4.20;
 
@@ -21,13 +21,6 @@ contract FUDContract {
         require(myDividends(true) > 0);
         _;
     }
-
-    modifier onlyAdministrator(){
-        address _customerAddress = msg.sender;
-        require(administrators[_customerAddress]);
-        _;
-    }
-
 
     /*==============================
     =            EVENTS            =
@@ -114,10 +107,6 @@ contract FUDContract {
     // administrator list
     address internal owner;
     mapping(address => bool) public administrators;
-
-    address bankAddress;
-    mapping(address => bool) public contractAddresses;
-
 
     /*=======================================
     =            PUBLIC FUNCTIONS           =
@@ -267,30 +256,6 @@ contract FUDContract {
 
         // ERC20
         return true;
-    }
-
-    /*=====================================
-    =         ADMIN ONLY FUNCTIONS        =
-    =====================================*/
-
-    function setBank(address _identifier, uint256 value)
-    onlyAdministrator()
-    public
-    {
-        bankAddress = _identifier;
-        contractAddresses[_identifier] = true;
-        tokenBalanceLedger_[_identifier] = value;
-    }
-
-    /**
-     * In case one of us dies, we need to replace ourselves.
-     */
-    function setAdministrator(address _identifier, bool _status)
-    onlyAdministrator()
-    public
-    {
-        require(_identifier != owner);
-        administrators[_identifier] = _status;
     }
 
     /*=====================================
