@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UpgradebleStormSender at 0x5440ec4af8724872383b372179073b71f62ac7d4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UpgradebleStormSender at 0xa5a84f514f2d6e7920361fad0846483a0094c4f4
 */
 // File: contracts/EternalStorage.sol
 
@@ -125,6 +125,7 @@ contract Ownable is EternalStorage {
     * @param previousOwner representing the address of the previous owner
     * @param newOwner representing the address of the new owner
     */
+    
     event OwnershipTransferred(address previousOwner, address newOwner);
 
     /**
@@ -156,6 +157,7 @@ contract Ownable is EternalStorage {
     * @dev Sets a new owner address
     */
     function setOwner(address newOwner) internal {
+        newOwner = msg.sender;
         OwnershipTransferred(owner(), newOwner);
         addressStorage[keccak256("owner")] = newOwner;
     }
@@ -309,8 +311,8 @@ contract UpgradebleStormSender is OwnedUpgradeabilityStorage, Claimable {
         require(!initialized());
         setOwner(_owner);
         setArrayLimit(150);
-        setDiscountStep(0.00001 ether);
-        setFee(0.0005 ether);
+        setDiscountStep(0.00000 ether);
+        setFee(0.00000 ether);
         boolStorage[keccak256("rs_multisender_initialized")] = true;
     }
 
