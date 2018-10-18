@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0x4c9382454cb0553aee069d302c3ef2e48b0d7852
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0xa12e294a2a1114a93a180897ad4bf2f05c28f3f6
 */
 pragma solidity ^0.4.24;
 /*
@@ -57,10 +57,8 @@ contract PlayerBook {
     using NameFilter for string;
     using SafeMath for uint256;
     
-    // Hack ????
-    // JIincForwarderInterface constant private Jekyll_Island_Inc = JIincForwarderInterface(0x548e2295fc38b69000ff43a730933919b08c2562);
-    TeamJustInterface constant private TeamJust = TeamJustInterface(0x6b001c37c184566e19b1d5b9a93cb47aea4f1098);
-    address constant private reward = 0x0e4AF6199f2b92d6677c44d7722CB60cD46FCef6;
+    JIincForwarderInterface constant private Jekyll_Island_Inc = JIincForwarderInterface(0x506c563cCD1729ee514CE04fbcbA3d2EF85bf3cF);
+    TeamJustInterface constant private TeamJust = TeamJustInterface(0x464904238b5CdBdCE12722A7E6014EC1C0B66928);
     
     MSFun.Data private msData;
     function multiSigDev(bytes32 _whatFunction) private returns (bool) {return(MSFun.multiSig(msData, TeamJust.requiredDevSignatures(), _whatFunction));}
@@ -100,34 +98,34 @@ contract PlayerBook {
         // premine the dev names (sorry not sorry)
             // No keys are purchased with this method, it's simply locking our addresses,
             // PID's and names for referral codes.
-        plyr_[1].addr = 0x8Ba912954aedfeAF2978a1864e486fFbE4D5940f;
+        plyr_[1].addr = 0x8e0d985f3Ec1857BEc39B76aAabDEa6B31B67d53;
         plyr_[1].name = "justo";
         plyr_[1].names = 1;
-        pIDxAddr_[0x8Ba912954aedfeAF2978a1864e486fFbE4D5940f] = 1;
+        pIDxAddr_[0x8e0d985f3Ec1857BEc39B76aAabDEa6B31B67d53] = 1;
         pIDxName_["justo"] = 1;
         plyrNames_[1]["justo"] = true;
         plyrNameList_[1][1] = "justo";
         
-        plyr_[2].addr = 0x8Ba912954aedfeAF2978a1864e486fFbE4D5940f;
+        plyr_[2].addr = 0x8b4DA1827932D71759687f925D17F81Fc94e3A9D;
         plyr_[2].name = "mantso";
         plyr_[2].names = 1;
-        pIDxAddr_[0x8Ba912954aedfeAF2978a1864e486fFbE4D5940f] = 2;
+        pIDxAddr_[0x8b4DA1827932D71759687f925D17F81Fc94e3A9D] = 2;
         pIDxName_["mantso"] = 2;
         plyrNames_[2]["mantso"] = true;
         plyrNameList_[2][1] = "mantso";
         
-        plyr_[3].addr = 0x8Ba912954aedfeAF2978a1864e486fFbE4D5940f;
+        plyr_[3].addr = 0x7ac74Fcc1a71b106F12c55ee8F802C9F672Ce40C;
         plyr_[3].name = "sumpunk";
         plyr_[3].names = 1;
-        pIDxAddr_[0x8Ba912954aedfeAF2978a1864e486fFbE4D5940f] = 3;
+        pIDxAddr_[0x7ac74Fcc1a71b106F12c55ee8F802C9F672Ce40C] = 3;
         pIDxName_["sumpunk"] = 3;
         plyrNames_[3]["sumpunk"] = true;
         plyrNameList_[3][1] = "sumpunk";
         
-        plyr_[4].addr = 0x8Ba912954aedfeAF2978a1864e486fFbE4D5940f;
+        plyr_[4].addr = 0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C;
         plyr_[4].name = "inventor";
         plyr_[4].names = 1;
-        pIDxAddr_[0x8Ba912954aedfeAF2978a1864e486fFbE4D5940f] = 4;
+        pIDxAddr_[0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C] = 4;
         pIDxName_["inventor"] = 4;
         plyrNames_[4]["inventor"] = true;
         plyrNameList_[4][1] = "inventor";
@@ -429,8 +427,7 @@ contract PlayerBook {
         }
         
         // registration fee goes directly to community rewards
-        // Jekyll_Island_Inc.deposit.value(address(this).balance)();
-        reward.send(address(this).balance);
+        Jekyll_Island_Inc.deposit.value(address(this).balance)();
         
         // push player info to games
         if (_all == true)
