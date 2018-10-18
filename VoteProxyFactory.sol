@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VoteProxyFactory at 0xa63e145309cadaa6a903a19993868ef7e85058be
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VoteProxyFactory at 0x719d7dc797951eda31dd60d43bd8df38b7ed1317
 */
 // hevm: flattened sources of src/VoteProxyFactory.sol
 pragma solidity ^0.4.24;
@@ -895,7 +895,7 @@ contract VoteProxyFactory {
             ? coldMap[msg.sender] : hotMap[msg.sender];
         address cold = voteProxy.cold();
         address hot = voteProxy.hot();
-        require(chief.deposits(voteProxy) == 0, "VoteProxy still has funds attached to it");
+        require(chief.IOU().balanceOf(voteProxy) == 0, "VoteProxy still has funds attached to it");
 
         delete coldMap[cold];
         delete hotMap[hot];
