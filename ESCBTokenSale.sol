@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ESCBTokenSale at 0x27a36731337cdee330d99b980b73e24f6e188618
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ESCBTokenSale at 0x65717fb50ee8f93827f9eeca761e108e502b255f
 */
 pragma solidity ^0.4.19;
 
@@ -1280,15 +1280,17 @@ contract SaleWallet {
     function () public payable {}
 }
 
+
 /**
  * Copyright 2018, Konstantin Viktorov (EscrowBlock Foundation)
  * Copyright 2017, Jorge Izquierdo (Aragon Foundation)
  * Copyright 2017, Jordi Baylina (Giveth)
  *
  * Based on SampleCampaign-TokenController.sol from https://github.com/Giveth/minime
+ * This is the new token sale smart contract for conduction IITO and Airdrop together,
+ * also it will allow having a stable price for some period after exchange listing.
  **/
 
- 
  contract ESCBTokenSale is TokenController {
    uint256 public initialTime;           // Time in which the sale starts. Inclusive. sale will be opened at initial time.
    uint256 public controlTime;           // The Unix time in which the sale needs to check on the refunding start.
@@ -1481,52 +1483,42 @@ contract SaleWallet {
             returns (uint256) {
 
      if (totalCollected >= 0 && totalCollected <= 80 ether) { // 1 ETH = 500 USD, then 40 000 USD 1 stage
-       currentStage = 1;
        return SafeMath.add(_amount, SafeMath.div(SafeMath.mul(_amount, 20), 100));
      }
 
      if (totalCollected > 80 ether && totalCollected <= 200 ether) { // 1 ETH = 500 USD, then 100 000 USD 2 stage
-       currentStage = 2;
        return SafeMath.add(_amount, SafeMath.div(SafeMath.mul(_amount, 18), 100));
      }
 
      if (totalCollected > 200 ether && totalCollected <= 400 ether) { // 1 ETH = 500 USD, then 200 000 USD 3 stage
-       currentStage = 3;
        return SafeMath.add(_amount, SafeMath.div(SafeMath.mul(_amount, 16), 100));
      }
 
      if (totalCollected > 400 ether && totalCollected <= 1000 ether) { // 1 ETH = 500 USD, then 500 000 USD 4 stage
-       currentStage = 4;
        return SafeMath.add(_amount, SafeMath.div(SafeMath.mul(_amount, 14), 100));
      }
 
      if (totalCollected > 1000 ether && totalCollected <= 2000 ether) { // 1 ETH = 500 USD, then 1 000 000 USD 5 stage
-       currentStage = 5;
        return SafeMath.add(_amount, SafeMath.div(SafeMath.mul(_amount, 12), 100));
      }
 
      if (totalCollected > 2000 ether && totalCollected <= 4000 ether) { // 1 ETH = 500 USD, then 2 000 000 USD 6 stage
-       currentStage = 6;
        return SafeMath.add(_amount, SafeMath.div(SafeMath.mul(_amount, 10), 100));
      }
 
      if (totalCollected > 4000 ether && totalCollected <= 8000 ether) { // 1 ETH = 500 USD, then 4 000 000 USD 7 stage
-       currentStage = 7;
        return SafeMath.add(_amount, SafeMath.div(SafeMath.mul(_amount, 8), 100));
      }
 
      if (totalCollected > 8000 ether && totalCollected <= 12000 ether) { // 1 ETH = 500 USD, then 6 000 000 USD 8 stage
-       currentStage = 8;
        return SafeMath.add(_amount, SafeMath.div(SafeMath.mul(_amount, 6), 100));
      }
 
      if (totalCollected > 12000 ether && totalCollected <= 16000 ether) { // 1 ETH = 500 USD, then 8 000 000 USD 9 stage
-       currentStage = 9;
        return SafeMath.add(_amount, SafeMath.div(SafeMath.mul(_amount, 4), 100));
      }
 
      if (totalCollected > 16000 ether && totalCollected <= 20000 ether) { // 1 ETH = 500 USD, then 10 000 000 USD 10 stage
-       currentStage = 10;
        return SafeMath.add(_amount, SafeMath.div(SafeMath.mul(_amount, 2), 100));
      }
 
@@ -1541,6 +1533,45 @@ contract SaleWallet {
    function allocationForESCBbyStage()
             only(ESCBDevMultisig)
             public {
+      if (totalCollected >= 0 && totalCollected <= 80 ether) { // 1 ETH = 500 USD, then 40 000 USD 1 stage
+        currentStage = 1;
+      }
+
+      if (totalCollected > 80 ether && totalCollected <= 200 ether) { // 1 ETH = 500 USD, then 100 000 USD 2 stage
+        currentStage = 2;
+      }
+
+      if (totalCollected > 200 ether && totalCollected <= 400 ether) { // 1 ETH = 500 USD, then 200 000 USD 3 stage
+        currentStage = 3;
+      }
+
+      if (totalCollected > 400 ether && totalCollected <= 1000 ether) { // 1 ETH = 500 USD, then 500 000 USD 4 stage
+        currentStage = 4;
+      }
+
+      if (totalCollected > 1000 ether && totalCollected <= 2000 ether) { // 1 ETH = 500 USD, then 1 000 000 USD 5 stage
+        currentStage = 5;
+      }
+
+      if (totalCollected > 2000 ether && totalCollected <= 4000 ether) { // 1 ETH = 500 USD, then 2 000 000 USD 6 stage
+        currentStage = 6;
+      }
+
+      if (totalCollected > 4000 ether && totalCollected <= 8000 ether) { // 1 ETH = 500 USD, then 4 000 000 USD 7 stage
+        currentStage = 7;
+      }
+
+      if (totalCollected > 8000 ether && totalCollected <= 12000 ether) { // 1 ETH = 500 USD, then 6 000 000 USD 8 stage
+        currentStage = 8;
+      }
+
+      if (totalCollected > 12000 ether && totalCollected <= 16000 ether) { // 1 ETH = 500 USD, then 8 000 000 USD 9 stage
+        currentStage = 9;
+      }
+
+      if (totalCollected > 16000 ether && totalCollected <= 20000 ether) { // 1 ETH = 500 USD, then 10 000 000 USD 10 stage
+        currentStage = 10;
+      }
      if(currentStage > allocatedStage) {
        // ESCB Foundation owns 30% of the total number of emitted tokens.
        // totalSupply here 66%, then we 30%/66% to get amount 30% of tokens
@@ -1557,6 +1588,30 @@ contract SaleWallet {
          revert();
        }
      }
+   }
+
+   // @notice Notifies the controller about a transfer, for this sale all
+   //  transfers are allowed by default and no extra notifications are needed
+   // @param _from The origin of the transfer
+   // @param _to The destination of the transfer
+   // @param _amount The amount of the transfer
+   // @return False if the controller does not authorize the transfer
+   function onTransfer(address _from, address _to, uint _amount)
+            public
+            returns (bool) {
+     return true;
+   }
+
+   // @notice Notifies the controller about an approval, for this sale all
+   //  approvals are allowed by default and no extra notifications are needed
+   // @param _owner The address that calls `approve()`
+   // @param _spender The spender in the `approve()` call
+   // @param _amount The amount in the `approve()` call
+   // @return False if the controller does not authorize the approval
+   function onApprove(address _owner, address _spender, uint _amount)
+            public
+            returns (bool) {
+     return true;
    }
 
    // @dev The fallback function is called when ether is sent to the contract, it
@@ -1596,33 +1651,6 @@ contract SaleWallet {
             returns (bool) {
      doPayment(_owner);
      return true;
-   }
-
-   // @notice Notifies the controller about a transfer, for this sale all
-   //  transfers are allowed by default and no extra notifications are needed
-   // @param _from The origin of the transfer
-   // @param _to The destination of the transfer
-   // @param _amount The amount of the transfer
-   // @return False if the controller does not authorize the transfer
-   function onTransfer(address _from, address _to, uint _amount)
-            public
-            returns (bool) {
-     // Until the sale is finalized, only allows transfers originated by the sale contract.
-     // When finalizeSale is called, this function will stop being called and will always be true.
-     return _from == address(this);
-   }
-
-   // @notice Notifies the controller about an approval, for this sale all
-   //  approvals are allowed by default and no extra notifications are needed
-   // @param _owner The address that calls `approve()`
-   // @param _spender The spender in the `approve()` call
-   // @param _amount The amount in the `approve()` call
-   // @return False if the controller does not authorize the approval
-   function onApprove(address _owner, address _spender, uint _amount)
-            public
-            returns (bool) {
-     // No approve/transferFrom during the sale
-     return false;
    }
 
    // @dev `doPayment()` is an internal function that sends the ether that this
