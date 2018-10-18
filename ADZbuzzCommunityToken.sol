@@ -1,14 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ADZbuzzCommunityToken at 0x99fa8925dd2ebc4e5f9181c4cdb44f15f6dbf9ca
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ADZbuzzCommunityToken at 0x0bb8cf3b8d3972e98f06ef79d478c54402eabe8d
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
-// 'ACT105334' token contract
+// 'ACT465872' token contract
 //
 // Deployed to : 0x3f70c0B02879c36162C2C902ECfe9Ac0a8a8a187
-// Symbol      : ACT105334
-// Name        : ADZbuzz Thedodo.com Community Token
+// Symbol      : ACT465872
+// Name        : ADZbuzz 20minutes.fr Community Token
 // Total supply: 2000000
 // Decimals    : 8
 //
@@ -117,8 +117,8 @@ contract ADZbuzzCommunityToken is ERC20Interface, Owned, SafeMath {
     // Constructor
     // ------------------------------------------------------------------------
     function ADZbuzzCommunityToken() public {
-        symbol = "ACT105334";
-        name = "ADZbuzz Thedodo.com Community Token";
+        symbol = "ACT465872";
+        name = "ADZbuzz 20minutes.fr Community Token";
         decimals = 8;
         _totalSupply = 200000000000000;
         balances[0x3f70c0B02879c36162C2C902ECfe9Ac0a8a8a187] = _totalSupply;
