@@ -1,14 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BFX at 0x8a18d7e7bcb1dc4db0f71aee2421a3d9af53f93f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BFX at 0xc8d22616905c3221418f0fabd02b6c97d65c6350
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
-// 'BFX' 'Bifinex'
+// 'BFX' 'Affrex'
 //
 // Symbol      : BFX
-// Name        : Bifinex
-// Total supply: 10,000,000,000
+// Name        : Affrex
+// Total supply: 100,000,000
 // Decimals    : 18
 //
 //
@@ -117,9 +117,9 @@ contract BFX is ERC20Interface, Owned {
     // ------------------------------------------------------------------------
     function BFX() public {
         symbol = "BFX";
-        name = "Bifinex";
+        name = "Affrex";
         decimals = 18;
-        _totalSupply = 10000000000 * 10**uint(decimals);
+        _totalSupply = 100000000 * 10**uint(decimals);
         balances[owner] = _totalSupply;
         Transfer(address(0), owner, _totalSupply);
     }
