@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OffChainManagerImpl at 0x9e068182bee5d84bf36b0946e8b8d69f8310a8a2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OffChainManagerImpl at 0xb0c0d0e4b2019884225154e4e6c6daa8e232b11d
 */
 pragma solidity ^0.4.1;
 
