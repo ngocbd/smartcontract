@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EasyStockExchange at 0xf2d32cfa422a4a5b7074050651ca380eb0cf0a8c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EasyStockExchange at 0x68824685b5a397500002751fd7212096a2247823
 */
 /**
  *
@@ -83,8 +83,6 @@ contract EasyStockExchange {
      */
     function buyDepo (address _depo) public payable {
         require (isSale[_depo] == true,"So sorry, but this deposit is not for sale.");
-        isSale[_depo] = false; // lock reentrance
-
         require (forSale[_depo] == msg.value,"Summ for buying deposit is incorrect.");
         address seller = _depo;
         
