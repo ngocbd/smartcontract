@@ -1,258 +1,236 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC223Token at 0x4efb1718d23dec663b465821fdb530af22e07322
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC223Token at 0x4cade551cbca8bdef947922577bf76e6940df26c
 */
-pragma solidity ^0.4.24;
-/**
-* @notice Block Coin Bit Token Contract
-* @dev ERC-223 Token Standar Compliant
-* Contact: aaronwalterfraser@gmail.com
-*/
+// compiler: 0.4.21+commit.dfe3193c.Emscripten.clang
+pragma solidity ^0.4.21;
 
-/**
- * @title SafeMath by OpenZeppelin
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-      uint256 c = a * b;
-      assert(a == 0 || c / a == b);
-      return c;
-    }
-
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-      uint256 c = a / b;
-      return c;
-    }
-
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-      assert(b <= a);
-      return a - b;
-    }
-
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-      uint256 c = a + b;
-      assert(c >= a);
-      return c;
-    }
+// https://www.ethereum.org/token
+interface tokenRecipient {
+  function receiveApproval( address from, uint256 value, bytes data ) external;
 }
 
-/**
- * @title ERC223 Token interface
- * @dev Code based on Dexaran's one on github as recommended on ERC223 discussion
- */
+// ERC223 - LLT Luxury Lifestyle Token Intel-wise Edition - RS
+// ERC20 token with added ERC223 and Ethereum-Token support
 
-contract ERC223Interface {
+// Combination of multiple interfaces:
+// https://theethereum.wiki/w/index.php/ERC20_Token_Standard
+// https://www.ethereum.org/token (uncontrolled, non-standard)
+// https://github.com/Dexaran/ERC23-tokens/blob/Recommended/ERC223_Token.sol
 
-  function balanceOf(address who) constant public returns (uint256);
-
-  function name() constant public returns (string _name);
-  function symbol() constant public returns (string _symbol);
-  function decimals() constant public returns (uint8 _decimals);
-  function totalSupply() constant public returns (uint256 _supply);
-
-  function mintToken(address _target, uint256 _mintedAmount) public returns (bool success);
-  function burnToken(uint256 _burnedAmount) public returns (bool success);
-
-  function transfer(address to, uint256 value) public returns (bool ok);
-  function transfer(address to, uint256 value, bytes data) public returns (bool ok);
-  function transfer(address to, uint256 value, bytes data, bytes custom_fallback) public returns (bool ok);
-
-  event Transfer(address indexed from, address indexed to, uint256 value, bytes indexed data);
-  event Burned(address indexed _target, uint256 _value);
+interface ContractReceiver {
+  function tokenFallback( address from, uint value, bytes data ) external;
 }
 
- contract ContractReceiver {
-    function tokenFallback(address _from, uint256 _value, bytes _data) public;
-}
-
-/**
-* @title Admin parameters
-* @dev Define administration parameters for this contract
-*/
-contract admined { //This token contract is administered
-    address public admin; //Admin address is public
-    bool public lockSupply; //Mint and Burn Lock flag
-
-    /**
-    * @dev Contract constructor
-    * define initial administrator
-    */
-    constructor() internal {
-        admin = msg.sender; //Set initial admin to contract creator
-        emit Admined(admin);
-    }
-
-    modifier onlyAdmin() { //A modifier to define admin-only functions
-        require(msg.sender == admin);
-        _;
-    }
-
-    modifier supplyLock() { //A modifier to lock mint and burn transactions
-        require(lockSupply == false);
-        _;
-    }
-
-   /**
-    * @dev Function to set new admin address
-    * @param _newAdmin The address to transfer administration to
-    */
-    function transferAdminship(address _newAdmin) onlyAdmin public { //Admin can be transfered
-        require(_newAdmin != 0);
-        admin = _newAdmin;
-        emit TransferAdminship(admin);
-    }
-
-   /**
-    * @dev Function to set mint and burn locks
-    * @param _set boolean flag (true | false)
-    */
-    function setSupplyLock(bool _set) onlyAdmin public { //Only the admin can set a lock on supply
-        lockSupply = _set;
-        emit SetSupplyLock(_set);
-    }
-
-    //All admin actions have a log for public review
-    event SetSupplyLock(bool _set);
-    event TransferAdminship(address newAdminister);
-    event Admined(address administer);
-
-}
-
-/**
- * @title ERC223 Token definition
- * @dev Code based on Dexaran's one on github as recommended on ERC223 discussion
- */
-
-contract ERC223Token is admined,ERC223Interface {
-
-  using SafeMath for uint256;
-
-  mapping(address => uint256) balances;
-
-  string public name    = "Block Coin Bit";
-  string public symbol  = "BLCB";
-  uint8 public decimals = 8;
+contract ERC223Token
+{
+  string  public name;
+  string  public symbol;
+  uint8   public decimals;
   uint256 public totalSupply;
-  address initialOwner = 0x0D77002Affd96A22635bB46EC98F23EB99e12253;
 
-  constructor() public
+  mapping( address => uint256 ) balances_;
+  mapping( address => mapping(address => uint256) ) allowances_;
+
+  // ERC20
+  event Approval( address indexed owner,
+                  address indexed spender,
+                  uint value );
+
+  event Transfer( address indexed from,
+                  address indexed to,
+                  uint256 value );
+               // bytes    data ); use ERC20 version instead
+
+  // Ethereum Token
+  event Burn( address indexed from, uint256 value );
+
+  constructor( uint256 initialSupply,
+                        string tokenName,
+                        uint8 decimalUnits,
+                        string tokenSymbol ) public
   {
+    totalSupply = initialSupply * 10 ** uint256(decimalUnits);
+    balances_[msg.sender] = totalSupply;
+    name = tokenName;
+    decimals = decimalUnits;
+    symbol = tokenSymbol;
+    emit Transfer( address(0), msg.sender, totalSupply );
+  }
+
+  function() public payable { revert(); } // does not accept money
+
+  // ERC20
+  function balanceOf( address owner ) public constant returns (uint) {
+    return balances_[owner];
+  }
+
+  // ERC20
+  //
+  // WARNING! When changing the approval amount, first set it back to zero
+  // AND wait until the transaction is mined. Only afterwards set the new
+  // amount. Otherwise you may be prone to a race condition attack.
+  // See: https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+
+  function approve( address spender, uint256 value ) public
+  returns (bool success)
+  {
+    allowances_[msg.sender][spender] = value;
+    emit Approval( msg.sender, spender, value );
+    return true;
+  }
+ 
+  // recommended fix for known attack on any ERC20
+  function safeApprove( address _spender,
+                        uint256 _currentValue,
+                        uint256 _value ) public
+                        returns (bool success) {
+
+    // If current allowance for _spender is equal to _currentValue, then
+    // overwrite it with _value and return true, otherwise return false.
+
+    if (allowances_[msg.sender][_spender] == _currentValue)
+      return approve(_spender, _value);
+
+    return false;
+  }
+
+  // ERC20
+  function allowance( address owner, address spender ) public constant
+  returns (uint256 remaining)
+  {
+    return allowances_[owner][spender];
+  }
+
+  // ERC20
+  function transfer(address to, uint256 value) public returns (bool success)
+  {
+    bytes memory empty; // null
+    _transfer( msg.sender, to, value, empty );
+    return true;
+  }
+
+  // ERC20
+  function transferFrom( address from, address to, uint256 value ) public
+  returns (bool success)
+  {
+    require( value <= allowances_[from][msg.sender] );
+
+    allowances_[from][msg.sender] -= value;
     bytes memory empty;
-    totalSupply = 12000000000 * (10 ** uint256(decimals));
-    balances[initialOwner] = totalSupply;
-    emit Transfer(0, this, totalSupply, empty);
-    emit Transfer(this, initialOwner, balances[initialOwner], empty);
+    _transfer( from, to, value, empty );
+
+    return true;
   }
 
+  // Ethereum Token Definition
+  function approveAndCall( address spender,
+                           uint256 value,
+                           bytes context ) public
+  returns (bool success)
+  {
+    if ( approve(spender, value) )
+    {
+      tokenRecipient recip = tokenRecipient( spender );
+      recip.receiveApproval( msg.sender, value, context );
+      return true;
+    }
+    return false;
+  }        
 
-  // Function to access name of token .
-  function name() constant public returns (string _name) {
-      return name;
-  }
-  // Function to access symbol of token .
-  function symbol() constant public returns (string _symbol) {
-      return symbol;
-  }
-  // Function to access decimals of token .
-  function decimals() constant public returns (uint8 _decimals) {
-      return decimals;
-  }
-  // Function to access total supply of tokens .
-  function totalSupply() constant public returns (uint256 _totalSupply) {
-      return totalSupply;
+  // Ethereum Token
+  function burn( uint256 value ) public
+  returns (bool success)
+  {
+    require( balances_[msg.sender] >= value );
+    balances_[msg.sender] -= value;
+    totalSupply -= value;
+
+    emit Burn( msg.sender, value );
+    return true;
   }
 
-  function balanceOf(address _owner) constant public returns (uint256 balance) {
-    return balances[_owner];
+  // Ethereum Token
+  function burnFrom( address from, uint256 value ) public
+  returns (bool success)
+  {
+    require( balances_[from] >= value );
+    require( value <= allowances_[from][msg.sender] );
+
+    balances_[from] -= value;
+    allowances_[from][msg.sender] -= value;
+    totalSupply -= value;
+
+    emit Burn( from, value );
+    return true;
   }
 
-  // Standard function transfer similar to ERC20 transfer with no _data .
-  // Added due to backwards compatibility reasons .
-  function transfer(address _to, uint256 _value) public returns (bool success) {
+  // ERC223 Transfer and invoke specified callback
+  function transfer( address to,
+                     uint value,
+                     bytes data,
+                     string custom_fallback ) public returns (bool success)
+  {
+    _transfer( msg.sender, to, value, data );
 
-    //standard function transfer similar to ERC20 transfer with no _data
-    //added due to backwards compatibility reasons
+    if ( isContract(to) )
+    {
+      ContractReceiver rx = ContractReceiver( to );
+      require( address(rx).call.value(0)(bytes4(keccak256(abi.encodePacked(custom_fallback))),
+               msg.sender,
+               value,
+               data) );
+    }
+
+    return true;
+  }
+
+  // ERC223 Transfer to a contract or externally-owned account
+  function transfer( address to, uint value, bytes data ) public
+  returns (bool success)
+  {
+    if (isContract(to)) {
+      return transferToContract( to, value, data );
+    }
+
+    _transfer( msg.sender, to, value, data );
+    return true;
+  }
+
+  // ERC223 Transfer to contract and invoke tokenFallback() method
+  function transferToContract( address to, uint value, bytes data ) private
+  returns (bool success)
+  {
+    _transfer( msg.sender, to, value, data );
+
+    ContractReceiver rx = ContractReceiver(to);
+    rx.tokenFallback( msg.sender, value, data );
+
+    return true;
+  }
+
+  // ERC223 Fetch contract size (This must be non-zero to be a contract)
+  function isContract( address _addr ) private constant returns (bool)
+  {
+    uint length;
+    assembly { length := extcodesize(_addr) }
+    return (length > 0);
+  }
+
+  function _transfer( address from,
+                      address to,
+                      uint value,
+                      bytes data ) internal
+  {
+    require( to != 0x0 );
+    require( balances_[from] >= value );
+    require( balances_[to] + value > balances_[to] ); // catch overflow
+
+    balances_[from] -= value;
+    balances_[to] += value;
+
+    //Transfer( from, to, value, data ); This is the ERC223 compatible version
     bytes memory empty;
-    if(isContract(_to)) {
-        return transferToContract(_to, _value, empty);
-    }
-    else {
-        return transferToAddress(_to, _value, empty);
-    }
+    empty = data;
+    emit Transfer( from, to, value ); // This is the ERC20 compatible version
   }
-
-  // Function that is called when a user or another contract wants to transfer funds .
-  function transfer(address _to, uint256 _value, bytes _data) public returns (bool success) {
-
-    if(isContract(_to)) {
-        return transferToContract(_to, _value, _data);
-    }
-    else {
-        return transferToAddress(_to, _value, _data);
-    }
-  }
-
-  // Function that is called when a user or another contract wants to transfer funds .
-  function transfer(address _to, uint256 _value, bytes _data, bytes _custom_fallback) public returns (bool success) {
-
-    if(isContract(_to)) {
-        require(balanceOf(msg.sender) >= _value);
-        balances[msg.sender] = balanceOf(msg.sender).sub(_value);
-        balances[_to] = balanceOf(_to).add(_value);
-        assert(_to.call.value(0)(bytes4(keccak256(_custom_fallback)), msg.sender, _value, _data));
-        emit Transfer(msg.sender, _to, _value, _data);
-        return true;
-    }
-    else {
-        return transferToAddress(_to, _value, _data);
-    }
-  }
-
-  //assemble the given address bytecode. If bytecode exists then the _addr is a contract.
-  function isContract(address _addr) private view returns (bool is_contract) {
-      uint256 length;
-      assembly {
-            //retrieve the size of the code on target address, this needs assembly
-            length := extcodesize(_addr)
-      }
-      return (length>0);
-    }
-
-  //function that is called when transaction target is an address
-  function transferToAddress(address _to, uint256 _value, bytes _data) private returns (bool success) {
-    require(balanceOf(msg.sender) >= _value);
-    balances[msg.sender] = balanceOf(msg.sender).sub(_value);
-    balances[_to] = balanceOf(_to).add(_value);
-    emit Transfer(msg.sender, _to, _value, _data);
-    return true;
-  }
-
-  //function that is called when transaction target is a contract
-  function transferToContract(address _to, uint256 _value, bytes _data) private returns (bool success) {
-    require(balanceOf(msg.sender) >= _value);
-    balances[msg.sender] = balanceOf(msg.sender).sub(_value);
-    balances[_to] = balanceOf(_to).add(_value);
-    ContractReceiver receiver = ContractReceiver(_to);
-    receiver.tokenFallback(msg.sender, _value, _data);
-    emit Transfer(msg.sender, _to, _value, _data);
-    return true;
-  }
-
-  function mintToken(address _target, uint256 _mintedAmount) onlyAdmin supplyLock public returns (bool success) {
-    bytes memory empty;
-    balances[_target] = SafeMath.add(balances[_target], _mintedAmount);
-    totalSupply = SafeMath.add(totalSupply, _mintedAmount);
-    emit Transfer(0, this, _mintedAmount,empty);
-    emit Transfer(this, _target, _mintedAmount,empty);
-    return true;
-  }
-
-  function burnToken(uint256 _burnedAmount) onlyAdmin supplyLock public returns (bool success) {
-    balances[msg.sender] = SafeMath.sub(balances[msg.sender], _burnedAmount);
-    totalSupply = SafeMath.sub(totalSupply, _burnedAmount);
-    emit Burned(msg.sender, _burnedAmount);
-    return true;
-  }
-
 }
