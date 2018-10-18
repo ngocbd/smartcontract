@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VictorieumToken at 0xaa3eba3effe26b7c2466744a3b4c2d89f3429400
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VictorieumToken at 0xe88fff42196f5a47ffc1ba2854c14e8eee4bfd05
 */
 pragma solidity ^0.4.24;
 
@@ -1573,9 +1573,9 @@ contract VictorieumToken is StandardBurnableToken, Ownable, usingOraclize {
   uint bonus;
   uint256 public icoSupply = 0;
   uint256 public icoLimit = 765000000000000000000000000;
-event LogConstructorInitiated(string nextStep);
-    event LogPriceUpdated(string price);
-    event LogNewOraclizeQuery(string description);
+  event LogConstructorInitiated(string nextStep);
+  event LogPriceUpdated(string price);
+  event LogNewOraclizeQuery(string description);
 
 
   
@@ -1635,7 +1635,7 @@ event LogConstructorInitiated(string nextStep);
   // ------------------------------------------------------------------------
   // Constructor
   // ------------------------------------------------------------------------
-  constructor() public {
+  constructor() public payable {
   
     owner = msg.sender;
     totalSupply_ = 1000000000000000000000000000;
@@ -1652,7 +1652,7 @@ event LogConstructorInitiated(string nextStep);
     endDate = 1548028799;   // Jan 20 2019, 11:59 PM
 
     // to update ETH Price 
-    oraclize_setProof(proofType_Android | proofStorage_IPFS);
+    //oraclize_setProof(proofType_TLSNotary | proofStorage_IPFS);
     updatePrice(60);
     
   }
@@ -1718,21 +1718,19 @@ event LogConstructorInitiated(string nextStep);
         if (msg.sender != oraclize_cbAddress()) revert();
         ETHUSD = parseInt(result,2);
         emit LogPriceUpdated(result);
-       // updatePrice(600);
-	updatePrice(10800);
+	    updatePrice(10800); // updates ETHUSD each 3 hours 
     }
 
     function updatePrice(uint time_interval) payable {
-        if (now < endDate)
-        {
-            if (oraclize_getPrice("URL") > this.balance) {
-                emit LogNewOraclizeQuery("Oraclize query was NOT sent, please add some ETH to cover for the query fee");
-            } else {
-                emit LogNewOraclizeQuery("Oraclize query was sent, standing by for the answer..");
-                oraclize_query(time_interval, "URL", "json(https://api.gdax.com/products/ETH-USD/ticker).price");
-            }
-        
+        require(now <= endDate); // end all updates transaction for eth to usd conversion after ICO
+        if (oraclize_getPrice("URL") > this.balance) {
+            emit LogNewOraclizeQuery("Oraclize query was NOT sent, please add some ETH to cover for the query fee");
+        } else {
+            emit LogNewOraclizeQuery("Oraclize query was sent, standing by for the answer..");
+            oraclize_query(time_interval, "URL", "json(https://api.gdax.com/products/ETH-USD/ticker).price");
         }
+        
+        
         
     }
 
