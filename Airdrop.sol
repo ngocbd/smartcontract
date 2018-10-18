@@ -1,142 +1,61 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdrop at 0x5be8142fe5bfce520750c67fb2bf3a15be313b1a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdrop at 0x9f1cf3f7c5285e79aa1b7df3bbbda3fbbc4a3811
 */
-pragma solidity 0.4.24;
+pragma solidity ^0.4.21;
 
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
+contract owned {
 
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
+    mapping (address => bool) internal owners;
+    
+    constructor() public{
+        owners[msg.sender] = true;
     }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
 
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
+    modifier onlyOwner {
+        require(owners[msg.sender] == true);
+        _;
+    }
 
-  /**
-  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
+    function addOwner(address _newOwner) onlyOwner public{
+        owners[_newOwner] = true;
+    }
+    
+    function removeOwner(address _oldOwner) onlyOwner public{
+        owners[_oldOwner] = false;
+    }
 }
 
 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  constructor() public {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
+contract ContractConn{
+    function transfer(address _to, uint _value) public returns (bool success);
 }
 
-
-interface IERC20 {
-    function transfer(address to, uint value) external returns (bool ok);
-    function balanceOf(address _owner) external view returns (uint256 balance);
-}
-
-
-contract Airdrop is Ownable {
-    using SafeMath for uint256;
-
-    IERC20 public token;
-    uint256 public individualCap;
-    uint256 public totalAlloctedToken;
-    mapping (address => uint256) airdropContribution;
-    event Airdrop(address to, uint256 token);
-
-    constructor (
-        IERC20 _tokenAddr,
-        uint256 _individualCap
-    )
-        public
-    {
-        token = _tokenAddr;
-        individualCap = _individualCap;
+contract Airdrop is owned{
+    
+   constructor()  public payable{
+         
+   }
+    
+  function deposit() payable public{
+  }
+  
+  function doAirdrop(address _tokenAddr, address[] _dests, uint256[] _values) onlyOwner public {
+    ContractConn usb = ContractConn(_tokenAddr);
+    uint256 i = 0;
+    while (i < _dests.length) {
+        usb.transfer(_dests[i], _values[i]);
+        i += 1;
     }
-
-    function drop(address[] _recipients, uint256[] _amount) 
-        external 
-        onlyOwner returns (bool) 
-    {
-        require(_recipients.length == _amount.length);
-        
-        for (uint i = 0; i < _recipients.length; i++) {
-            require(_recipients[i] != address(0), "Address is zero address");
-            require(individualCap >= airdropContribution[_recipients[i]].add(_amount[i]), "Exceding individual cap");
-            require(token.balanceOf(address(this)) >= _amount[i], "No enoufgh tokens available");
-            airdropContribution[_recipients[i]] = airdropContribution[_recipients[i]].add(_amount[i]);
-            totalAlloctedToken = totalAlloctedToken.add(_amount[i]);
-            token.transfer(_recipients[i], _amount[i]);
-            emit Airdrop(_recipients[i], _amount[i]);
-        }
-        return true;
-    }
-
-    function updateIndividualCap(uint256 _value) external onlyOwner {
-        require(individualCap > 0, "Individual Cap should be greater than zero");
-        individualCap = _value;
-    }
+  }
+  
+  function extract(address _tokenAddr,address _to,uint256 _value) onlyOwner  public{
+      ContractConn usb = ContractConn(_tokenAddr);
+      usb.transfer(_to,_value);
+  }
+  
+  function extractEth(uint256 _value) onlyOwner  public{
+      msg.sender.transfer(_value);
+  }
+  
 }
