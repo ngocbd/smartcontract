@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PromoCodes at 0xa9cd9a033290f58cedca65091268bcfcb9a29270
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PromoCodes at 0x65732d6e88a83a38a4b803b0181b3a03a4165373
 */
 pragma solidity ^0.4.13;
 
@@ -476,7 +476,7 @@ contract Crowdsale is StaffUtil {
 
 		require(startDate < crowdsaleStartDate);
 		require(crowdsaleStartDate < endDate);
-		require(tokenRate > 0);
+		require(tokenDecimals > 0);
 		require(tokenRate > 0);
 		require(tokensForSaleCap > 0);
 		require(minPurchaseInWei <= maxInvestorContributionInWei);
@@ -899,6 +899,7 @@ contract Crowdsale is StaffUtil {
 }
 
 contract DiscountPhases is StaffUtil {
+	using SafeMath for uint256;
 
 	event DiscountPhaseAdded(uint index, string name, uint8 percent, uint fromDate, uint toDate, uint timestamp, address byStaff);
 	event DiscountPhaseRemoved(uint index, uint timestamp, address byStaff);
@@ -917,14 +918,14 @@ contract DiscountPhases is StaffUtil {
 	function calculateBonusAmount(uint256 _purchasedAmount) public constant returns (uint256) {
 		for (uint i = 0; i < discountPhases.length; i++) {
 			if (now >= discountPhases[i].fromDate && now <= discountPhases[i].toDate) {
-				return _purchasedAmount * discountPhases[i].percent / 100;
+				return _purchasedAmount.mul(discountPhases[i].percent).div(100);
 			}
 		}
 	}
 
 	function addDiscountPhase(string _name, uint8 _percent, uint _fromDate, uint _toDate) public onlyOwnerOrStaff {
 		require(bytes(_name).length > 0);
-		require(_percent > 0);
+		require(_percent > 0 && _percent <= 100);
 
 		if (now > _fromDate) {
 			_fromDate = now;
@@ -1017,7 +1018,7 @@ contract DiscountStructs is StaffUtil {
 				for (uint j = 0; j < discountSteps[i].length; j++) {
 					if (_purchasedValue >= discountSteps[i][j].fromWei
 						&& (_purchasedValue < discountSteps[i][j].toWei || discountSteps[i][j].toWei == 0)) {
-						uint256 bonus = _purchasedAmount * discountSteps[i][j].percent / 100;
+						uint256 bonus = _purchasedAmount.mul(discountSteps[i][j].percent).div(100);
 						if (discountStructs[i].distributedTokens.add(bonus) > discountStructs[i].availableTokens) {
 							return;
 						}
@@ -1043,7 +1044,7 @@ contract DiscountStructs is StaffUtil {
 				for (uint j = 0; j < discountSteps[i].length; j++) {
 					if (_purchasedValue >= discountSteps[i][j].fromWei
 						&& (_purchasedValue < discountSteps[i][j].toWei || discountSteps[i][j].toWei == 0)) {
-						uint256 bonus = _purchasedAmount * discountSteps[i][j].percent / 100;
+						uint256 bonus = _purchasedAmount.mul(discountSteps[i][j].percent).div(100);
 						if (discountStructs[i].distributedTokens.add(bonus) > discountStructs[i].availableTokens) {
 							return;
 						}
@@ -1071,7 +1072,10 @@ contract DiscountStructs is StaffUtil {
 
 		for (uint i = 0; i < _fromWei.length; i++) {
 			require(_fromWei[i] > 0 || _toWei[i] > 0);
-			require(_percent[i] > 0);
+			if (_fromWei[i] > 0 && _toWei[i] > 0) {
+				require(_fromWei[i] < _toWei[i]);
+			}
+			require(_percent[i] > 0 && _percent[i] <= 100);
 			discountSteps[index].push(DiscountStep(_fromWei[i], _toWei[i], _percent[i]));
 		}
 
@@ -1087,6 +1091,8 @@ contract DiscountStructs is StaffUtil {
 }
 
 contract PromoCodes is StaffUtil {
+	using SafeMath for uint256;
+
 	address public crowdsale;
 
 	event PromoCodeAdded(bytes32 indexed code, string name, uint8 percent, uint256 maxUses, uint timestamp, address byStaff);
@@ -1125,7 +1131,7 @@ contract PromoCodes is StaffUtil {
 		promoCodes[_promoCode].investors[_investor] = true;
 		promoCodes[_promoCode].uses = promoCodes[_promoCode].uses + 1;
 		emit PromoCodeUsed(_promoCode, _investor, now);
-		return _purchasedAmount * promoCodes[_promoCode].percent / 100;
+		return _purchasedAmount.mul(promoCodes[_promoCode].percent).div(100);
 	}
 
 	function calculateBonusAmount(address _investor, uint256 _purchasedAmount, bytes32 _promoCode) public constant returns (uint256) {
@@ -1134,13 +1140,13 @@ contract PromoCodes is StaffUtil {
 		|| promoCodes[_promoCode].uses == promoCodes[_promoCode].maxUses) {
 			return 0;
 		}
-		return _purchasedAmount * promoCodes[_promoCode].percent / 100;
+		return _purchasedAmount.mul(promoCodes[_promoCode].percent).div(100);
 	}
 
 	function addPromoCode(string _name, bytes32 _code, uint256 _maxUses, uint8 _percent) public onlyOwnerOrStaff {
 		require(bytes(_name).length > 0);
 		require(_code[0] != 0);
-		require(_percent > 0);
+		require(_percent > 0 && _percent <= 100);
 		require(_maxUses > 0);
 		require(promoCodes[_code].percent == 0);
 
