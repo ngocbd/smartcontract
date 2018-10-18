@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ICO at 0x24e188A980B0aEAb2C68F3eb20CC823Af96a36Da
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ICO at 0x6e0A9440095FaD16911009BEc3085668A52191E9
 */
 pragma solidity ^0.4.20;
 
@@ -831,47 +831,6 @@ contract Jotter {
     function setEth(uint _newEth) public {
         require(msg.sender == owner);
         ethToJot = _newEth;
-    }
-
-}
-
-contract SwapperX {
-
-    // used to swap proxy token for real token
-    // must have real token balance in order to recieve swap
-
-    Token public proxyToken;
-    Token public token;
-
-    address public owner;
-
-    struct Swap {
-        address _from;
-        uint _amount;
-    }
-
-    Swap[] public swaps;
-
-    constructor(address _tokenAddress, address _proxyTokenAddress) public {
-        owner = msg.sender;
-        token = Token(_tokenAddress);
-        proxyToken = Token(_proxyTokenAddress);
-    }
-
-    // SWAPS PROXY TOKENS FOR ICO TOKENS
-    function swapMe() public {
-        uint allowance = proxyToken.allowance(msg.sender,address(this));
-        require(token.balanceOf(address(this)) >= allowance);
-        require(token.transfer(msg.sender, allowance));
-        require(proxyToken.transferFrom(msg.sender,address(this),allowance));
-        swaps.push(Swap(msg.sender,allowance));
-    }
-
-    // REFUNDS TOKEN HOLDERS ALLOWANCE
-    function returnMe() public {
-        uint allowance = proxyToken.allowance(msg.sender,address(this));
-        require(proxyToken.transferFrom(msg.sender,address(this),allowance));
-        require(proxyToken.transfer(msg.sender, allowance));
     }
 
 }
