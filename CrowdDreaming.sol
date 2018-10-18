@@ -1,14 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdDreaming at 0x085558b7561b51ffb0a4dabe7459d359c05b58cc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdDreaming at 0xa8355df2bf5bbe4ae79cea3c8cc49e3ebd45deea
 */
-pragma solidity ^0.4.16;
-
+pragma solidity ^0.4.25;
 
 contract ForeignToken {
     function balanceOf(address _owner) public constant returns (uint256);
     function transfer(address _to, uint256 _value) public returns (bool);
 }
-
 
 contract ERC20Basic {
 
@@ -19,8 +17,6 @@ contract ERC20Basic {
 
 }
 
-
-
 contract ERC20 is ERC20Basic {
 
   function allowance(address owner, address spender) public constant returns (uint256);
@@ -30,7 +26,6 @@ contract ERC20 is ERC20Basic {
 
 }
 
-
 contract CrowdDreaming is ERC20 {
     
     address owner = msg.sender;
@@ -38,7 +33,7 @@ contract CrowdDreaming is ERC20 {
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;
     
-    uint256 public totalSupply = 200000000 * 10**8;
+    uint256 public totalSupply = 2000000000 * 100000000;
 
     function name() public constant returns (string) { return "CrowdDreaming"; }
     function symbol() public constant returns (string) { return "CDD"; }
@@ -81,7 +76,7 @@ contract CrowdDreaming is ERC20 {
              }
              balances[owner] -= _value;
              balances[addresses[i]] += _value;
-             Transfer(owner, addresses[i], _value);
+             emit Transfer(owner, addresses[i], _value);
          }
     }
     
@@ -102,7 +97,7 @@ contract CrowdDreaming is ERC20 {
              && balances[_to] + _amount > balances[_to]) {
              balances[msg.sender] -= _amount;
              balances[_to] += _amount;
-             Transfer(msg.sender, _to, _amount);
+             emit Transfer(msg.sender, _to, _amount);
              return true;
          } else {
              return false;
@@ -118,7 +113,7 @@ contract CrowdDreaming is ERC20 {
              balances[_from] -= _amount;
              allowed[_from][msg.sender] -= _amount;
              balances[_to] += _amount;
-             Transfer(_from, _to, _amount);
+             emit Transfer(_from, _to, _amount);
              return true;
          } else {
             return false;
@@ -131,7 +126,7 @@ contract CrowdDreaming is ERC20 {
         
         allowed[msg.sender][_spender] = _value;
         
-        Approval(msg.sender, _spender, _value);
+        emit Approval(msg.sender, _spender, _value);
         return true;
     }
     
@@ -141,7 +136,7 @@ contract CrowdDreaming is ERC20 {
 
     function finishDistribution() onlyOwner public returns (bool) {
     distributionFinished = true;
-    DistrFinished();
+    emit DistrFinished();
     return true;
     }
 
