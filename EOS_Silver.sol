@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EOS_Silver at 0x761342a0c4f258dee0f85f7df684ac22f8f4e7da
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EOS_Silver at 0x62f8a3185d15da7f4ab6f1d2c25ab3cccf99805b
 */
 pragma solidity ^0.4.4;
 
@@ -110,9 +110,9 @@ contract EOS_Silver is StandardToken { // CHANGE THIS. Update the contract name.
     function EOS_Silver() {
         balances[msg.sender] = 1000000000000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
         totalSupply = 1000000000000000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
-        name = "EOS_Silver";                                   // Set the name for display purposes (CHANGE THIS)
+        name = "EOS Silver (eossilver.com)";                                   // Set the name for display purposes (CHANGE THIS)
         decimals = 18;                                               // Amount of decimals for display purposes (CHANGE THIS)
-        symbol = "EOS.S";                                             // Set the symbol for display purposes (CHANGE THIS)
+        symbol = "EOS.S (eossilver.com)";                                             // Set the symbol for display purposes (CHANGE THIS)
         unitsOneEthCanBuy = 4000;                                      // Set the price of your token for the ICO (CHANGE THIS)
         fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
     }
