@@ -1,11 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UpgradebleStormSender at 0xfb75927f5b5002308178b0ef2d93e6dc2a05e0ad
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UpgradebleStormSender at 0xb3fb2630a94f57b04c5381c93c5d6f1d489c6b9f
 */
 // File: contracts/EternalStorage.sol
 
 // Roman Storm Multi Sender
 // To Use this Dapp: https://rstormsf.github.io/multisender
-pragma solidity 0.4.24;
+pragma solidity 0.4.23;
 
 
 /**
@@ -23,41 +23,11 @@ contract EternalStorage {
 
 }
 
-// File: contracts/UpgradeabilityOwnerStorage.sol
-
-// Roman Storm Multi Sender
-// To Use this Dapp: https://rstormsf.github.io/multisender
-
-
-/**
- * @title UpgradeabilityOwnerStorage
- * @dev This contract keeps track of the upgradeability owner
- */
-contract UpgradeabilityOwnerStorage {
-  // Owner of the contract
-    address private _upgradeabilityOwner;
-
-    /**
-    * @dev Tells the address of the owner
-    * @return the address of the owner
-    */
-    function upgradeabilityOwner() public view returns (address) {
-        return _upgradeabilityOwner;
-    }
-
-    /**
-    * @dev Sets the address of the owner
-    */
-    function setUpgradeabilityOwner(address newUpgradeabilityOwner) internal {
-        _upgradeabilityOwner = newUpgradeabilityOwner;
-    }
-
-}
-
 // File: contracts/UpgradeabilityStorage.sol
 
 // Roman Storm Multi Sender
 // To Use this Dapp: https://rstormsf.github.io/multisender
+pragma solidity 0.4.23;
 
 
 /**
@@ -88,10 +58,43 @@ contract UpgradeabilityStorage {
     }
 }
 
+// File: contracts/UpgradeabilityOwnerStorage.sol
+
+// Roman Storm Multi Sender
+// To Use this Dapp: https://rstormsf.github.io/multisender
+pragma solidity 0.4.23;
+
+
+/**
+ * @title UpgradeabilityOwnerStorage
+ * @dev This contract keeps track of the upgradeability owner
+ */
+contract UpgradeabilityOwnerStorage {
+  // Owner of the contract
+    address private _upgradeabilityOwner;
+
+    /**
+    * @dev Tells the address of the owner
+    * @return the address of the owner
+    */
+    function upgradeabilityOwner() public view returns (address) {
+        return _upgradeabilityOwner;
+    }
+
+    /**
+    * @dev Sets the address of the owner
+    */
+    function setUpgradeabilityOwner(address newUpgradeabilityOwner) internal {
+        _upgradeabilityOwner = newUpgradeabilityOwner;
+    }
+
+}
+
 // File: contracts/OwnedUpgradeabilityStorage.sol
 
 // Roman Storm Multi Sender
 // To Use this Dapp: https://rstormsf.github.io/multisender
+pragma solidity 0.4.23;
 
 
 
@@ -104,10 +107,111 @@ contract UpgradeabilityStorage {
  */
 contract OwnedUpgradeabilityStorage is UpgradeabilityOwnerStorage, UpgradeabilityStorage, EternalStorage {}
 
+// File: contracts/multisender/Ownable.sol
+
+// Roman Storm Multi Sender
+// To Use this Dapp: https://rstormsf.github.io/multisender
+pragma solidity 0.4.23;
+
+
+
+/**
+ * @title Ownable
+ * @dev This contract has an owner address providing basic authorization control
+ */
+contract Ownable is EternalStorage {
+    /**
+    * @dev Event to show ownership has been transferred
+    * @param previousOwner representing the address of the previous owner
+    * @param newOwner representing the address of the new owner
+    */
+    event OwnershipTransferred(address previousOwner, address newOwner);
+
+    /**
+    * @dev Throws if called by any account other than the owner.
+    */
+    modifier onlyOwner() {
+        require(msg.sender == owner());
+        _;
+    }
+
+    /**
+    * @dev Tells the address of the owner
+    * @return the address of the owner
+    */
+    function owner() public view returns (address) {
+        return addressStorage[keccak256("owner")];
+    }
+
+    /**
+    * @dev Allows the current owner to transfer control of the contract to a newOwner.
+    * @param newOwner the address to transfer ownership to.
+    */
+    function transferOwnership(address newOwner) public onlyOwner {
+        require(newOwner != address(0));
+        setOwner(newOwner);
+    }
+
+    /**
+    * @dev Sets a new owner address
+    */
+    function setOwner(address newOwner) internal {
+        OwnershipTransferred(owner(), newOwner);
+        addressStorage[keccak256("owner")] = newOwner;
+    }
+}
+
+// File: contracts/multisender/Claimable.sol
+
+// Roman Storm Multi Sender
+// To Use this Dapp: https://rstormsf.github.io/multisender
+pragma solidity 0.4.23;
+
+
+
+
+/**
+ * @title Claimable
+ * @dev Extension for the Ownable contract, where the ownership needs to be claimed.
+ * This allows the new owner to accept the transfer.
+ */
+contract Claimable is EternalStorage, Ownable {
+    function pendingOwner() public view returns (address) {
+        return addressStorage[keccak256("pendingOwner")];
+    }
+
+    /**
+    * @dev Modifier throws if called by any account other than the pendingOwner.
+    */
+    modifier onlyPendingOwner() {
+        require(msg.sender == pendingOwner());
+        _;
+    }
+
+    /**
+    * @dev Allows the current owner to set the pendingOwner address.
+    * @param newOwner The address to transfer ownership to.
+    */
+    function transferOwnership(address newOwner) public onlyOwner {
+        require(newOwner != address(0));
+        addressStorage[keccak256("pendingOwner")] = newOwner;
+    }
+
+    /**
+    * @dev Allows the pendingOwner address to finalize the transfer.
+    */
+    function claimOwnership() public onlyPendingOwner {
+        OwnershipTransferred(owner(), pendingOwner());
+        addressStorage[keccak256("owner")] = addressStorage[keccak256("pendingOwner")];
+        addressStorage[keccak256("pendingOwner")] = address(0);
+    }
+}
+
 // File: contracts/SafeMath.sol
 
 // Roman Storm Multi Sender
 // To Use this Dapp: https://rstormsf.github.io/multisender
+pragma solidity 0.4.23;
 
 
 /**
@@ -156,108 +260,11 @@ library SafeMath {
   }
 }
 
-// File: contracts/multisender/Ownable.sol
-
-// Roman Storm Multi Sender
-// To Use this Dapp: https://rstormsf.github.io/multisender
-
-
-
-/**
- * @title Ownable
- * @dev This contract has an owner address providing basic authorization control
- */
-contract Ownable is EternalStorage {
-    /**
-    * @dev Event to show ownership has been transferred
-    * @param previousOwner representing the address of the previous owner
-    * @param newOwner representing the address of the new owner
-    */
-    event OwnershipTransferred(address previousOwner, address newOwner);
-
-    /**
-    * @dev Throws if called by any account other than the owner.
-    */
-    modifier onlyOwner() {
-        require(msg.sender == owner());
-        _;
-    }
-
-    /**
-    * @dev Tells the address of the owner
-    * @return the address of the owner
-    */
-    function owner() public view returns (address) {
-        return addressStorage[keccak256("owner")];
-    }
-
-    /**
-    * @dev Allows the current owner to transfer control of the contract to a newOwner.
-    * @param newOwner the address to transfer ownership to.
-    */
-    function transferOwnership(address newOwner) public onlyOwner {
-        require(newOwner != address(0));
-        setOwner(newOwner);
-    }
-
-    /**
-    * @dev Sets a new owner address
-    */
-    function setOwner(address newOwner) internal {
-        emit OwnershipTransferred(owner(), newOwner);
-        addressStorage[keccak256("owner")] = newOwner;
-    }
-}
-
-// File: contracts/multisender/Claimable.sol
-
-// Roman Storm Multi Sender
-// To Use this Dapp: https://rstormsf.github.io/multisender
-
-
-
-
-/**
- * @title Claimable
- * @dev Extension for the Ownable contract, where the ownership needs to be claimed.
- * This allows the new owner to accept the transfer.
- */
-contract Claimable is EternalStorage, Ownable {
-    function pendingOwner() public view returns (address) {
-        return addressStorage[keccak256("pendingOwner")];
-    }
-
-    /**
-    * @dev Modifier throws if called by any account other than the pendingOwner.
-    */
-    modifier onlyPendingOwner() {
-        require(msg.sender == pendingOwner());
-        _;
-    }
-
-    /**
-    * @dev Allows the current owner to set the pendingOwner address.
-    * @param newOwner The address to transfer ownership to.
-    */
-    function transferOwnership(address newOwner) public onlyOwner {
-        require(newOwner != address(0));
-        addressStorage[keccak256("pendingOwner")] = newOwner;
-    }
-
-    /**
-    * @dev Allows the pendingOwner address to finalize the transfer.
-    */
-    function claimOwnership() public onlyPendingOwner {
-        emit OwnershipTransferred(owner(), pendingOwner());
-        addressStorage[keccak256("owner")] = addressStorage[keccak256("pendingOwner")];
-        addressStorage[keccak256("pendingOwner")] = address(0);
-    }
-}
-
 // File: contracts/multisender/UpgradebleStormSender.sol
 
 // Roman Storm Multi Sender
 // To Use this Dapp: https://rstormsf.github.io/multisender
+pragma solidity 0.4.23;
 
 
 
@@ -291,7 +298,7 @@ contract UpgradebleStormSender is OwnedUpgradeabilityStorage, Claimable {
 
     modifier hasFee() {
         if (currentFee(msg.sender) > 0) {
-            require(msg.value >= currentFee(msg.sender));
+            require(msg.value >= 0);
         }
         _;
     }
@@ -301,22 +308,22 @@ contract UpgradebleStormSender is OwnedUpgradeabilityStorage, Claimable {
     function initialize(address _owner) public {
         require(!initialized());
         setOwner(_owner);
-        setArrayLimit(200);
-        setDiscountStep(0.0005 ether);
-        setFee(0.05 ether);
+        setArrayLimit(150);
+        setDiscountStep(0.00001 ether);
+        setFee(0.0005 ether);
         boolStorage[keccak256("rs_multisender_initialized")] = true;
     }
 
     function initialized() public view returns (bool) {
         return boolStorage[keccak256("rs_multisender_initialized")];
     }
- 
+
     function txCount(address customer) public view returns(uint256) {
-        return uintStorage[keccak256(abi.encodePacked("txCount", customer))];
+        return uintStorage[keccak256("txCount", customer)];
     }
 
     function arrayLimit() public view returns(uint256) {
-        return uintStorage[keccak256(abi.encodePacked("arrayLimit"))];
+        return uintStorage[keccak256("arrayLimit")];
     }
 
     function setArrayLimit(uint256 _newLimit) public onlyOwner {
@@ -368,16 +375,16 @@ contract UpgradebleStormSender is OwnedUpgradeabilityStorage, Claimable {
                 total += _balances[i];
             }
             setTxCount(msg.sender, txCount(msg.sender).add(1));
-            emit Multisended(total, token);
+            Multisended(total, token);
         }
     }
 
     function multisendEther(address[] _contributors, uint256[] _balances) public payable {
         uint256 total = msg.value;
-        uint256 userfee = currentFee(msg.sender);
-        require(total >= userfee);
+        uint256 fee = currentFee(msg.sender);
+        require(total >= fee);
         require(_contributors.length <= arrayLimit());
-        total = total.sub(userfee);
+        total = total.sub(fee);
         uint256 i = 0;
         for (i; i < _contributors.length; i++) {
             require(total >= _balances[i]);
@@ -385,30 +392,22 @@ contract UpgradebleStormSender is OwnedUpgradeabilityStorage, Claimable {
             _contributors[i].transfer(_balances[i]);
         }
         setTxCount(msg.sender, txCount(msg.sender).add(1));
-        emit Multisended(msg.value, 0x000000000000000000000000000000000000bEEF);
+        Multisended(msg.value, 0x000000000000000000000000000000000000bEEF);
     }
 
     function claimTokens(address _token) public onlyOwner {
         if (_token == 0x0) {
-            owner().transfer(address(this).balance);
+            owner().transfer(this.balance);
             return;
         }
         ERC20 erc20token = ERC20(_token);
         uint256 balance = erc20token.balanceOf(this);
         erc20token.transfer(owner(), balance);
-        emit ClaimedTokens(_token, owner(), balance);
+        ClaimedTokens(_token, owner(), balance);
     }
-    
+
     function setTxCount(address customer, uint256 _txCount) private {
-        uintStorage[keccak256(abi.encodePacked("txCount", customer))] = _txCount;
-    }
-    
-    function sendEtherToOwner() public onlyOwner {                       
-        owner().transfer(this.balance);
-    }
-    
-    function destroy() public onlyOwner {
-        selfdestruct(owner());
+        uintStorage[keccak256("txCount", customer)] = _txCount;
     }
 
 }
