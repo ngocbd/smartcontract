@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AddressDeployer at 0x07a9b3bfdf02d996f4782b69a05c9b8b376741a5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AddressDeployer at 0x7120c2a369d8a07579442b25042305362571ddd4
 */
 pragma solidity ^0.4.24;
 
@@ -850,8 +850,6 @@ contract IAddressDeployerOwner {
 
 
 contract AddressDeployer {
-    event Deployed(address at);
-
     address public owner = msg.sender;
 
     modifier onlyOwner {
@@ -868,12 +866,9 @@ contract AddressDeployer {
         require(_newOwner.ownershipTransferred(msg.sender));
     }
 
-    function deploy(bytes _data) public onlyOwner returns(address addr) {
-        // solium-disable-next-line security/no-inline-assembly
-        assembly {
-            addr := create(0, add(_data, 0x20), mload(_data))
-        }
-        emit Deployed(addr);
+    function deploy(bytes _data) public onlyOwner {
+        // solium-disable-next-line security/no-low-level-calls
+        require(address(0).call(_data));
         selfdestruct(msg.sender);
     }
 }
