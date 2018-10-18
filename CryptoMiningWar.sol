@@ -1,8 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoMiningWar at 0x0de197dc289d680e734ccab866d529505b2638db
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoMiningWar at 0xf84c61bb982041c030b8580d1634f00fffb89059
 */
 pragma solidity ^0.4.24;
 
+/*
+* CryptoMiningWar - Mining Contest Game
+* Author: InspiGames
+* Website: https://cryptominingwar.github.io/
+*/
 library SafeMath {
 
     /**
@@ -87,6 +92,11 @@ contract PullPayment {
   }
 }
 
+interface MiniGameInterface {
+     function setupMiniGame(uint256 _miningWarRoundNumber, uint256 _miningWarDeadline) external;
+     function isContractMiniGame() external pure returns( bool _isContractMiniGame );
+}
+
 contract CryptoMiningWar is PullPayment {
     bool public initialized = false;
     uint256 public roundNumber = 0;
@@ -97,20 +107,21 @@ contract CryptoMiningWar is PullPayment {
 	uint256 public prizePool = 0;
     uint256 BASE_PRICE = 0.005 ether;
     uint256 RANK_LIST_LIMIT = 10000;
-    uint256 MINIMUM_LIMIT_SELL = 5000000;
     uint256 randNonce = 0;
+    uint256 public totalContractMiniGame = 0;
+    
+    mapping(uint256 => address) public contractsMiniGameAddress;
     //miner info
     mapping(uint256 => MinerData) private minerData;
     uint256 private numberOfMiners;
     // plyer info
-    mapping(address => PlayerData) private players;
+    mapping(address => PlayerData) public players;
     //booster info
     uint256 private numberOfBoosts;
     mapping(uint256 => BoostData) private boostData;
-    //order info
-    uint256 private numberOfOrders;
-    mapping(uint256 => BuyOrderData) private buyOrderData;
-    mapping(uint256 => SellOrderData) private sellOrderData;
+    //mini game contract info
+    mapping(address => bool) public miniGames;   
+    
     uint256 private numberOfRank;
     address[21] rankList;
     address public sponsor;
@@ -138,24 +149,6 @@ contract CryptoMiningWar is PullPayment {
         uint256 startingTime;
         uint256 halfLife;
     }
-    struct BuyOrderData {
-        address owner;
-        string title;
-        string description;
-        uint256 unitPrice;
-        uint256 amount;
-    }
-    struct SellOrderData {
-        address owner;
-        string title;
-        string description;
-        uint256 unitPrice;
-        uint256 amount;
-    }
-    event eventDoQuest(
-        uint clientNumber,
-        uint randomNumber
-    );
     modifier isNotOver() 
     {
         require(now <= deadline);
@@ -171,26 +164,19 @@ contract CryptoMiningWar is PullPayment {
         require(players[msg.sender].roundNumber == roundNumber);
         _;
     }
-    modifier limitSell() 
+    modifier onlyContractsMiniGame() 
     {
-        PlayerData storage p = players[msg.sender];
-        if(p.hashrate <= MINIMUM_LIMIT_SELL){
-            _;
-        }else{
-            uint256 limit_hashrate = 0;
-            if(rankList[9] != 0){
-                PlayerData storage rank_player = players[rankList[9]];
-                limit_hashrate = SafeMath.mul(rank_player.hashrate, 5);
-            }
-            require(p.hashrate <= limit_hashrate);
-            _;
-        }
+        require(miniGames[msg.sender] == true);
+        _;
     }
+    event eventDoQuest(
+        uint clientNumber,
+        uint randomNumber
+    );
     constructor() public {
         administrator = msg.sender;
         numberOfMiners = 8;
         numberOfBoosts = 5;
-        numberOfOrders = 5;
         numberOfRank = 21;
         //init miner data
         //                      price,          prod.     limit
@@ -211,8 +197,82 @@ contract CryptoMiningWar is PullPayment {
     {
         require(msg.sender == administrator);
         require(!initialized);
+        
         startNewRound();
         initialized = true;
+    }
+    /**
+    * @dev add crystals to a player
+    * msg.sender should be in the list of mini game
+    */
+    function addCrystal( address _addr, uint256 _value ) public onlyContractsMiniGame
+    {
+        require(players[_addr].roundNumber == roundNumber);
+
+        uint256 crystals = SafeMath.mul(_value, CRTSTAL_MINING_PERIOD);
+        PlayerData storage p = players[_addr];
+        p.crystals =  SafeMath.add( p.crystals, crystals ); 
+    }
+    /**
+    * @dev sub player's crystals
+    * msg.sender should be in the list of mini game
+    * @param _addr player address
+    */
+    function subCrystal( address _addr, uint256 _value ) public onlyContractsMiniGame
+    {
+        require(players[_addr].roundNumber == roundNumber);
+        updateCrystal( _addr );
+        uint256 crystals = SafeMath.mul(_value,CRTSTAL_MINING_PERIOD);
+        require(crystals <= players[_addr].crystals);
+
+        PlayerData storage p = players[_addr];
+        p.crystals =  SafeMath.sub( p.crystals, crystals ); 
+    }
+    /**
+    * @dev add hashrate to a player.
+    * msg.sender should be in the list of mini game
+    */
+    function addHashrate( address _addr, uint256 _value ) public onlyContractsMiniGame
+    {
+        require(players[_addr].roundNumber == roundNumber);
+
+        PlayerData storage p = players[_addr];
+        p.hashrate =  SafeMath.add( p.hashrate, _value ); 
+    }
+    /**
+    * @dev sub player's hashrate
+    * msg.sender should be in the list of mini game
+    */
+    function subHashrate( address _addr, uint256 _value ) public onlyContractsMiniGame
+    {
+        require(players[_addr].roundNumber == roundNumber && players[_addr].hashrate >= _value);
+
+        PlayerData storage p = players[_addr];
+        
+        p.hashrate = SafeMath.sub( p.hashrate, _value ); 
+    }
+    function setContractsMiniGame( address _contractMiniGameAddress ) public  
+    {
+        require(administrator == msg.sender);
+
+        MiniGameInterface MiniGame = MiniGameInterface( _contractMiniGameAddress );
+        bool isContractMiniGame = MiniGame.isContractMiniGame();
+        require( isContractMiniGame == true );
+
+        if ( miniGames[_contractMiniGameAddress] == false ) {
+            miniGames[_contractMiniGameAddress] = true;
+            contractsMiniGameAddress[totalContractMiniGame] = _contractMiniGameAddress;
+            totalContractMiniGame = totalContractMiniGame + 1;
+        }
+    }
+    /**
+    * @dev remove mini game contract from main contract
+    * @param _contractMiniGameAddress mini game contract address
+    */
+    function removeContractMiniGame(address _contractMiniGameAddress) public
+    {
+        require(administrator == msg.sender);        
+        miniGames[_contractMiniGameAddress] = false;
     }
 
     function startNewRound() private 
@@ -220,6 +280,16 @@ contract CryptoMiningWar is PullPayment {
         deadline = SafeMath.add(now, ROUND_TIME);
         roundNumber = SafeMath.add(roundNumber, 1);
         initData();
+        setupMiniGame();
+    }
+    function setupMiniGame() private 
+    {
+        for ( uint256 index = 0; index < totalContractMiniGame; index++ ) {
+            if (miniGames[contractsMiniGameAddress[index]] == true) {
+                MiniGameInterface MiniGame = MiniGameInterface( contractsMiniGameAddress[index] );
+                MiniGame.setupMiniGame(roundNumber,deadline);
+            }   
+        }
     }
     function initData() private
     {
@@ -231,13 +301,7 @@ contract CryptoMiningWar is PullPayment {
         boostData[2] = BoostData(0, 200, 1, now, HALF_TIME);
         boostData[3] = BoostData(0, 225, 1, now, HALF_TIME);
         boostData[4] = BoostData(msg.sender, 250, 2, now, HALF_TIME);
-        //init order data
-        uint256 idx;
-        for (idx = 0; idx < numberOfOrders; idx++) {
-            buyOrderData[idx] = BuyOrderData(0, "title", "description", 0, 0);
-            sellOrderData[idx] = SellOrderData(0, "title", "description", 0, 0);
-        }
-        for (idx = 0; idx < numberOfRank; idx++) {
+        for (uint256 idx = 0; idx < numberOfRank; idx++) {
             rankList[idx] = 0;
         }
     }
@@ -282,7 +346,10 @@ contract CryptoMiningWar is PullPayment {
     //--------------------------------------------------------------------------
     // Miner 
     //--------------------------------------------------------------------------
-    function getFreeMiner(address ref) public disableContract isNotOver
+    /**
+    * @dev get a free miner
+    */
+    function getFreeMiner() public disableContract isNotOver
     {
         require(players[msg.sender].roundNumber != roundNumber);
         PlayerData storage p = players[msg.sender];
@@ -292,6 +359,7 @@ contract CryptoMiningWar is PullPayment {
                 p.minerCount[idx] = 0;
             }
         }
+        MinerData storage m0 = minerData[0];
         p.crystals = 0;
         p.roundNumber = roundNumber;
         //free miner
@@ -299,7 +367,6 @@ contract CryptoMiningWar is PullPayment {
         p.referral_count = 0;
         p.noQuest        = 0;
         p.minerCount[0] = 1;
-        MinerData storage m0 = minerData[0];
         p.hashrate = m0.baseProduct;
     }
 	function doQuest(uint256 clientNumber) disableContract isCurrentRound isNotOver public
@@ -323,7 +390,7 @@ contract CryptoMiningWar is PullPayment {
                 revert();
             }
         }
-        updateCrytal(msg.sender);
+        updateCrystal(msg.sender);
         PlayerData storage p = players[msg.sender];
         uint256 price = 0;
         uint256 minerNumber = 0;
@@ -338,15 +405,20 @@ contract CryptoMiningWar is PullPayment {
         if(p.crystals < price){
             revert();
         }
+        p.crystals = SafeMath.sub(p.crystals, price);
+        uint256 hashrate = 0;
         for (minerIdx = 0; minerIdx < numberOfMiners; minerIdx++) {
             minerNumber = minerNumbers[minerIdx];
             if (minerNumber > 0) {
                 m = minerData[minerIdx];
+                uint256 currentMinerCount = p.minerCount[minerIdx];
                 p.minerCount[minerIdx] = SafeMath.min(m.limit, SafeMath.add(p.minerCount[minerIdx], minerNumber));
+                // calculate no hashrate you want buy
+                hashrate = SafeMath.add(hashrate, SafeMath.mul(SafeMath.sub(p.minerCount[minerIdx],currentMinerCount), minerData[minerIdx].baseProduct));
             }
         }
-        p.crystals = SafeMath.sub(p.crystals, price);
-        updateHashrate(msg.sender);
+
+        updateHashrate(msg.sender, hashrate);
     }
     function getPlayerData(address addr) public view
     returns (uint256 crystals, uint256 lastupdate, uint256 hashratePerDay, uint256[8] miners, uint256 hasBoost, uint256 referral_count, uint256 playerBalance, uint256 noQuest )
@@ -397,8 +469,8 @@ contract CryptoMiningWar is PullPayment {
 			asyncSend(beneficiary, refundPrize);
         }
 		prizePool = SafeMath.add(prizePool, SafeMath.sub(msg.value, SafeMath.add(devFeePrize, refundPrize)));
-        updateCrytal(msg.sender);
-        updateCrytal(beneficiary);
+        updateCrystal(msg.sender);
+        updateCrystal(beneficiary);
         uint256 level = getCurrentLevel(b.startingLevel, b.startingTime, b.halfLife);
         b.startingLevel = SafeMath.add(level, 1);
         b.startingTime = now;
@@ -433,175 +505,6 @@ contract CryptoMiningWar is PullPayment {
         }
     }
     //--------------------------------------------------------------------------
-    // Market 
-    //--------------------------------------------------------------------------
-    function buyCrystalDemand(uint256 amount, uint256 unitPrice,string title, string description) public isNotOver isCurrentRound payable 
-    {
-        require(unitPrice >= 100000000000);
-        require(amount >= 1000);
-        require(SafeMath.mul(amount, unitPrice) <= msg.value);
-        uint256 lowestIdx = getLowestUnitPriceIdxFromBuy();
-        BuyOrderData storage o = buyOrderData[lowestIdx];
-        if(o.amount > 10 && unitPrice <= o.unitPrice){
-            revert();
-        }
-        uint256 balance = SafeMath.mul(o.amount, o.unitPrice);
-        if (o.owner != 0){
-			asyncSend(o.owner, balance);
-        }
-        o.owner = msg.sender;
-        o.unitPrice = unitPrice;
-        o.title = title;
-        o.description = description;
-        o.amount = amount;
-    }
-    function sellCrystal(uint256 amount, uint256 index) public isNotOver isCurrentRound limitSell
-    {
-        require(index < numberOfOrders);
-        require(amount > 0);
-        BuyOrderData storage o = buyOrderData[index];
-		require(o.owner != msg.sender);
-        require(amount <= o.amount);
-        updateCrytal(msg.sender);
-        PlayerData storage seller = players[msg.sender];
-        PlayerData storage buyer = players[o.owner];
-        require(seller.crystals >= SafeMath.mul(amount, CRTSTAL_MINING_PERIOD));
-        uint256 price = SafeMath.mul(amount, o.unitPrice);
-        uint256 fee = devFee(price);
-		asyncSend(sponsor, fee);
-		asyncSend(administrator, fee);
-		prizePool = SafeMath.add(prizePool, SafeMath.div(SafeMath.mul(price, 40), 100));
-        buyer.crystals = SafeMath.add(buyer.crystals, SafeMath.mul(amount, CRTSTAL_MINING_PERIOD));
-        seller.crystals = SafeMath.sub(seller.crystals, SafeMath.mul(amount, CRTSTAL_MINING_PERIOD));
-        o.amount = SafeMath.sub(o.amount, amount);
-		asyncSend(msg.sender, SafeMath.div(price, 2));
-    }
-    function withdrawBuyDemand(uint256 index) public isNotOver isCurrentRound
-    {
-        require(index < numberOfOrders);
-        BuyOrderData storage o = buyOrderData[index];
-        require(o.owner == msg.sender);
-        if(o.amount > 0){
-            uint256 balance = SafeMath.mul(o.amount, o.unitPrice);
-			asyncSend(o.owner, balance);
-        }
-        o.unitPrice = 0;
-        o.amount = 0;  
-        o.title = "title";
-        o.description = "description";
-        o.owner = 0;
-    }
-    function getBuyDemand(uint256 index) public view returns(address owner, string title, string description,
-     uint256 amount, uint256 unitPrice)
-    {
-        require(index < numberOfOrders);
-        BuyOrderData storage o = buyOrderData[index];
-        owner = o.owner;
-        title = o.title;
-        description = o.description;
-        amount = o.amount;
-        unitPrice = o.unitPrice;
-    }
-    function getLowestUnitPriceIdxFromBuy() public view returns(uint256 lowestIdx)
-    {
-        uint256 lowestPrice = 2**256 - 1;
-        for (uint256 idx = 0; idx < numberOfOrders; idx++) {
-            BuyOrderData storage o = buyOrderData[idx];
-            //if empty
-            if (o.unitPrice == 0 || o.amount < 10) {
-                return idx;
-            }else if (o.unitPrice < lowestPrice) {
-                lowestPrice = o.unitPrice;
-                lowestIdx = idx;
-            }
-        }
-    }
-    //-------------------------Sell-----------------------------
-    function sellCrystalDemand(uint256 amount, uint256 unitPrice, string title, string description) 
-    public isNotOver isCurrentRound limitSell
-    {
-        require(amount >= 1000);
-        updateCrytal(msg.sender);
-        PlayerData storage seller = players[msg.sender];
-        if(seller.crystals < SafeMath.mul(amount, CRTSTAL_MINING_PERIOD)){
-            revert();
-        }
-        uint256 highestIdx = getHighestUnitPriceIdxFromSell();
-        SellOrderData storage o = sellOrderData[highestIdx];
-        if(o.amount > 10 && unitPrice >= o.unitPrice){
-            revert();
-        }
-        if (o.owner != 0){
-            PlayerData storage prev = players[o.owner];
-            prev.crystals = SafeMath.add(prev.crystals, SafeMath.mul(o.amount, CRTSTAL_MINING_PERIOD));
-        }
-        o.owner = msg.sender;
-        o.unitPrice = unitPrice;
-        o.title = title;
-        o.description = description;
-        o.amount = amount;
-        //sub crystals
-        seller.crystals = SafeMath.sub(seller.crystals, SafeMath.mul(amount, CRTSTAL_MINING_PERIOD));
-    }
-    function buyCrystal(uint256 amount, uint256 index) public isNotOver isCurrentRound payable
-    {
-        require(index < numberOfOrders);
-        require(amount > 0);
-        SellOrderData storage o = sellOrderData[index];
-		require(o.owner != msg.sender);
-        require(amount <= o.amount);
-		uint256 price = SafeMath.mul(amount, o.unitPrice);
-        require(msg.value >= price);
-        PlayerData storage buyer = players[msg.sender];        
-        uint256 fee = devFee(price);
-		asyncSend(sponsor, fee);
-		asyncSend(administrator, fee);
-		prizePool = SafeMath.add(prizePool, SafeMath.div(SafeMath.mul(price, 40), 100));
-        buyer.crystals = SafeMath.add(buyer.crystals, SafeMath.mul(amount, CRTSTAL_MINING_PERIOD));
-        o.amount = SafeMath.sub(o.amount, amount);
-		asyncSend(o.owner, SafeMath.div(price, 2));
-    }
-    function withdrawSellDemand(uint256 index) public isNotOver isCurrentRound
-    {
-        require(index < numberOfOrders);
-        SellOrderData storage o = sellOrderData[index];
-        require(o.owner == msg.sender);
-        if(o.amount > 0){
-            PlayerData storage p = players[o.owner];
-            p.crystals = SafeMath.add(p.crystals, SafeMath.mul(o.amount, CRTSTAL_MINING_PERIOD));
-        }
-        o.unitPrice = 0;
-        o.amount = 0; 
-        o.title = "title";
-        o.description = "description";
-        o.owner = 0;
-    }
-    function getSellDemand(uint256 index) public view returns(address owner, string title, string description,
-     uint256 amount, uint256 unitPrice)
-    {
-        require(index < numberOfOrders);
-        SellOrderData storage o = sellOrderData[index];
-        owner = o.owner;
-        title = o.title;
-        description = o.description;
-        amount = o.amount;
-        unitPrice = o.unitPrice;
-    }
-    function getHighestUnitPriceIdxFromSell() public view returns(uint256 highestIdx)
-    {
-        uint256 highestPrice = 0;
-        for (uint256 idx = 0; idx < numberOfOrders; idx++) {
-            SellOrderData storage o = sellOrderData[idx];
-            //if empty
-            if (o.unitPrice == 0 || o.amount < 10) {
-                return idx;
-            }else if (o.unitPrice > highestPrice) {
-                highestPrice = o.unitPrice;
-                highestIdx = idx;
-            }
-        }
-    }
-    //--------------------------------------------------------------------------
     // Other 
     //--------------------------------------------------------------------------
     function devFee(uint256 amount) public pure returns(uint256)
@@ -622,20 +525,19 @@ contract CryptoMiningWar is PullPayment {
     //--------------------------------------------------------------------------
     // Private 
     //--------------------------------------------------------------------------
-    function updateHashrate(address addr) private
+    /**
+    * @param addr is player address you want add hash rate
+    * @param _hashrate is no hashrate you want add for this player
+    */
+    function updateHashrate(address addr, uint256 _hashrate) private
     {
         PlayerData storage p = players[addr];
-        uint256 hashrate = 0;
-        for (uint idx = 0; idx < numberOfMiners; idx++) {
-            MinerData storage m = minerData[idx];
-            hashrate = SafeMath.add(hashrate, SafeMath.mul(p.minerCount[idx], m.baseProduct));
-        }
-        p.hashrate = hashrate;
-        if(hashrate > RANK_LIST_LIMIT){
+        p.hashrate = SafeMath.add(p.hashrate, _hashrate);
+        if(p.hashrate > RANK_LIST_LIMIT){
             updateRankList(addr);
         }
     }
-    function updateCrytal(address addr) private
+    function updateCrystal(address addr) private
     {
         require(now > players[addr].lastUpdateTime);
         if (players[addr].lastUpdateTime != 0) {
@@ -707,7 +609,7 @@ contract CryptoMiningWar is PullPayment {
     }
 	function getRandomNumber(address playerAddress) internal returns(uint256 randomNumber) {
         randNonce++;
-        randomNumber = uint256(keccak256(now, playerAddress, randNonce)) % 3;
+        randomNumber = uint256(keccak256(abi.encodePacked(now, playerAddress, randNonce))) % 3;
     }
     function quickSort(address[21] list, int left, int right) internal
     {
