@@ -1,8 +1,24 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafeMathLibExt at 0x9555008c1EDDDa9A78361CF8E52E97431f6667cC
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafeMathLibExt at 0x561c6308EB16695B4562bE9Ecc42CE8eC13AA8Af
 */
-pragma solidity ^0.4.11;
+/**
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ *
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ */
 
+pragma solidity ^0.4.6;
+
+/**
+ * Safe unsigned safe math.
+ *
+ * https://blog.aragon.one/library-driven-development-in-solidity-2bebcaf88736#.750gwtwli
+ *
+ * Originally from https://raw.githubusercontent.com/AragonOne/zeppelin-solidity/master/contracts/SafeMathLib.sol
+ *
+ * Maintained here until merged to mainline zeppelin-solidity.
+ *
+ */
 library SafeMathLibExt {
 
   function times(uint a, uint b) returns (uint) {
