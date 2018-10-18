@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ImperiumCoin at 0x802e50a4c19870d86a7e17c0740036ba7336a739
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ImperiumCoin at 0xb75f43d0edb98d0577b5148fea34f4fa5ab17a06
 */
 pragma solidity ^0.4.24;
 
@@ -138,7 +138,7 @@ contract ImperiumCoin is ERC20Interface, Owned, SafeMath {
         symbol = "IMP";
         name = "Imperium Coin";
         decimals = 18;
-        _totalSupply = 1000000000000000000000000000;
+        _totalSupply = 1000000000;
         balances[owner] = _totalSupply;
         emit Transfer(address(0), owner, _totalSupply);
     }
