@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dex at 0x9a2d163ab40f88c625fd475e807bbc3556566f80
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DEX at 0xf0a33207a6e363faa58aed86abb7b4d2e51591c0
 */
 pragma solidity ^0.4.9;
 
@@ -151,7 +151,7 @@ contract AccountLevelsTest is AccountLevels {
   }
 }
 
-contract Dex is SafeMath {
+contract DEX is SafeMath {
   address public admin; //the admin address
   address public feeAccount; //the account that will receive fees
   address public accountLevelsAddr; //the address of the AccountLevels contract
@@ -168,7 +168,7 @@ contract Dex is SafeMath {
   event Deposit(address token, address user, uint amount, uint balance);
   event Withdraw(address token, address user, uint amount, uint balance);
 
-  function Dex(address admin_, address feeAccount_, address accountLevelsAddr_, uint feeMake_, uint feeTake_, uint feeRebate_) {
+  function DEX(address admin_, address feeAccount_, address accountLevelsAddr_, uint feeMake_, uint feeTake_, uint feeRebate_) {
     admin = admin_;
     feeAccount = feeAccount_;
     accountLevelsAddr = accountLevelsAddr_;
