@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiTokenDeployer at 0x9165e408cc615a545945d34a270e10e275cbc231
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiTokenDeployer at 0x8fe6be84716bec227246717575e748a9d5f37afd
 */
 pragma solidity ^0.4.24;
 
@@ -247,14 +247,14 @@ library CheckedERC20 {
 
     //
 
-    function asmName(address _token) internal view returns(bytes32) {
+    function asmName(address _token) public view returns(bytes32) {
         require(isContract(_token));
         // solium-disable-next-line security/no-low-level-calls
         require(_token.call(bytes4(keccak256("name()"))));
         return handleReturnBytes32();
     }
 
-    function asmSymbol(address _token) internal view returns(bytes32) {
+    function asmSymbol(address _token) public view returns(bytes32) {
         require(isContract(_token));
         // solium-disable-next-line security/no-low-level-calls
         require(_token.call(bytes4(keccak256("symbol()"))));
