@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo12H at 0x8378438344d4f1e3c9d7c9663e2eb8b23c6c80ca
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fomo12H at 0xd02c223bc1a3da3b263bf84bfd8532795be47197
 */
 pragma solidity ^0.4.24;
 
-contract F3Devents {
+contract FEPevents {
     // fired whenever a player registers a name
     event onNewName
     (
@@ -80,7 +80,7 @@ contract F3Devents {
         uint256 genAmount
     );
 
-    // (fomo3d short only) fired whenever a player tries a reload after round timer
+    // (short only) fired whenever a player tries a reload after round timer
     // hit zero, and causes end round to be ran.
     event onReLoadAndDistribute
     (
@@ -121,27 +121,27 @@ contract F3Devents {
 //  (_(_)| | | | (_|(_ |   _\(/_ | |_||_)  .
 //====================================|=========================================
 
-contract modularShort is F3Devents {}
+contract modularShort is FEPevents {}
 
-contract FoMo12H is modularShort {
+contract Fomo12H is modularShort {
     using SafeMath for *;
     using NameFilter for string;
     using F3DKeysCalcShort for uint256;
 
-    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x21a9d24f49ba931c365dabd934bbf5312164056e);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xE10E045608aBB48e49fCfCb090Ba35C5c8aB2209);
 
 //==============================================================================
 //     _ _  _  |`. _     _ _ |_ | _  _  .
 //    (_(_)| |~|~|(_||_|| (_||_)|(/__\  .  (game settings)
 //=================_|===========================================================
     address private admin = msg.sender;
-    string constant public name = "FOMO 12H";
-    string constant public symbol = "FOMO12H";
-    uint256 private rndExtra_ = 1 hours;     // length of the very first ICO
-    uint256 private rndGap_ = 1 hours;         // length of ICO phase, set to 1 year for EOS.
-    uint256 constant private rndInit_ = 6 hours;                // round timer starts at this
-    uint256 constant private rndInc_ = 60 seconds;              // every full key purchased adds this much to the timer
-    uint256 constant private rndMax_ = 12 hours;                // max length a round timer can be
+    string constant public name = "Fomo12H";
+    string constant public symbol = "fomo12h";
+    uint256 private rndExtra_ = 0; // length of the very first ICO
+    uint256 private rndGap_ = 30 minutes; // length of ICO phase, set to 1 year for EOS.
+    uint256 constant private rndInit_ = 11 hours; // round timer starts at this
+    uint256 constant private rndInc_ = 30 seconds; // every full key purchased adds this much to the timer
+    uint256 constant private rndMax_ = 12 hours; // max length a round timer can be
 //==============================================================================
 //     _| _ _|_ _    _ _ _|_    _   .
 //    (_|(_| | (_|  _\(/_ | |_||_)  .  (data used to store game info that changes)
@@ -154,19 +154,19 @@ contract FoMo12H is modularShort {
 //****************
     mapping (address => uint256) public pIDxAddr_;          // (addr => pID) returns player id by address
     mapping (bytes32 => uint256) public pIDxName_;          // (name => pID) returns player id by name
-    mapping (uint256 => F3Ddatasets.Player) public plyr_;   // (pID => data) player data
-    mapping (uint256 => mapping (uint256 => F3Ddatasets.PlayerRounds)) public plyrRnds_;    // (pID => rID => data) player round data by player id & round id
+    mapping (uint256 => FEPdatasets.Player) public plyr_;   // (pID => data) player data
+    mapping (uint256 => mapping (uint256 => FEPdatasets.PlayerRounds)) public plyrRnds_;    // (pID => rID => data) player round data by player id & round id
     mapping (uint256 => mapping (bytes32 => bool)) public plyrNames_; // (pID => name => bool) list of names a player owns.  (used so you can change your display name amongst any name you own)
 //****************
 // ROUND DATA
 //****************
-    mapping (uint256 => F3Ddatasets.Round) public round_;   // (rID => data) round data
+    mapping (uint256 => FEPdatasets.Round) public round_;   // (rID => data) round data
     mapping (uint256 => mapping(uint256 => uint256)) public rndTmEth_;      // (rID => tID => data) eth in per team, by round id and team id
 //****************
 // TEAM FEE DATA
 //****************
-    mapping (uint256 => F3Ddatasets.TeamFee) public fees_;          // (team => fees) fee distribution by team
-    mapping (uint256 => F3Ddatasets.PotSplit) public potSplit_;     // (team => fees) pot split distribution by team
+    mapping (uint256 => FEPdatasets.TeamFee) public fees_;          // (team => fees) fee distribution by team
+    mapping (uint256 => FEPdatasets.PotSplit) public potSplit_;     // (team => fees) pot split distribution by team
 //==============================================================================
 //     _ _  _  __|_ _    __|_ _  _  .
 //    (_(_)| |_\ | | |_|(_ | (_)|   .  (initial data setup upon contract deploy)
@@ -183,17 +183,17 @@ contract FoMo12H is modularShort {
 		// Team allocation percentages
         // (F3D, P3D) + (Pot , Referrals, Community)
             // Referrals / Community rewards are mathematically designed to come from the winner's share of the pot.
-        fees_[0] = F3Ddatasets.TeamFee(30,6);   //50% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
-        fees_[1] = F3Ddatasets.TeamFee(43,0);   //43% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
-        fees_[2] = F3Ddatasets.TeamFee(56,10);  //20% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
-        fees_[3] = F3Ddatasets.TeamFee(43,8);   //35% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
+        fees_[0] = FEPdatasets.TeamFee(53,0); //20% to pot, 10% to aff, 15% to com, 1% to pot swap, 1% to air drop pot
+        fees_[1] = FEPdatasets.TeamFee(40,0); //33% to pot, 10% to aff, 15% to com, 1% to pot swap, 1% to air drop pot
+        fees_[2] = FEPdatasets.TeamFee(30,0); //43% to pot, 10% to aff, 15% to com, 1% to pot swap, 1% to air drop pot
+        fees_[3] = FEPdatasets.TeamFee(36,0); //37% to pot, 10% to aff, 15% to com, 1% to pot swap, 1% to air drop pot
 
         // how to split up the final pot based on which team was picked
         // (F3D, P3D)
-        potSplit_[0] = F3Ddatasets.PotSplit(15,10);  //48% to winner, 25% to next round, 2% to com
-        potSplit_[1] = F3Ddatasets.PotSplit(25,0);   //48% to winner, 25% to next round, 2% to com
-        potSplit_[2] = F3Ddatasets.PotSplit(20,20);  //48% to winner, 10% to next round, 2% to com
-        potSplit_[3] = F3Ddatasets.PotSplit(30,10);  //48% to winner, 10% to next round, 2% to com
+        potSplit_[0] = FEPdatasets.PotSplit(35,0); //48% to winner, 10% to next round, 7% to com
+        potSplit_[1] = FEPdatasets.PotSplit(30,0); //48% to winner, 15% to next round, 7% to com
+        potSplit_[2] = FEPdatasets.PotSplit(20,0); //48% to winner, 25% to next round, 7% to com
+        potSplit_[3] = FEPdatasets.PotSplit(25,0); //48% to winner, 20% to next round, 7% to com
 	}
 //==============================================================================
 //     _ _  _  _|. |`. _  _ _  .
@@ -244,7 +244,7 @@ contract FoMo12H is modularShort {
         payable
     {
         // set up our tx event data and determine if player is new or not
-        F3Ddatasets.EventReturns memory _eventData_ = determinePID(_eventData_);
+        FEPdatasets.EventReturns memory _eventData_ = determinePID(_eventData_);
 
         // fetch player id
         uint256 _pID = pIDxAddr_[msg.sender];
@@ -269,7 +269,7 @@ contract FoMo12H is modularShort {
         payable
     {
         // set up our tx event data and determine if player is new or not
-        F3Ddatasets.EventReturns memory _eventData_ = determinePID(_eventData_);
+        FEPdatasets.EventReturns memory _eventData_ = determinePID(_eventData_);
 
         // fetch player id
         uint256 _pID = pIDxAddr_[msg.sender];
@@ -302,7 +302,7 @@ contract FoMo12H is modularShort {
         payable
     {
         // set up our tx event data and determine if player is new or not
-        F3Ddatasets.EventReturns memory _eventData_ = determinePID(_eventData_);
+        FEPdatasets.EventReturns memory _eventData_ = determinePID(_eventData_);
 
         // fetch player id
         uint256 _pID = pIDxAddr_[msg.sender];
@@ -343,7 +343,7 @@ contract FoMo12H is modularShort {
         payable
     {
         // set up our tx event data and determine if player is new or not
-        F3Ddatasets.EventReturns memory _eventData_ = determinePID(_eventData_);
+        FEPdatasets.EventReturns memory _eventData_ = determinePID(_eventData_);
 
         // fetch player id
         uint256 _pID = pIDxAddr_[msg.sender];
@@ -393,7 +393,7 @@ contract FoMo12H is modularShort {
         public
     {
         // set up our tx event data
-        F3Ddatasets.EventReturns memory _eventData_;
+        FEPdatasets.EventReturns memory _eventData_;
 
         // fetch player ID
         uint256 _pID = pIDxAddr_[msg.sender];
@@ -425,7 +425,7 @@ contract FoMo12H is modularShort {
         public
     {
         // set up our tx event data
-        F3Ddatasets.EventReturns memory _eventData_;
+        FEPdatasets.EventReturns memory _eventData_;
 
         // fetch player ID
         uint256 _pID = pIDxAddr_[msg.sender];
@@ -465,7 +465,7 @@ contract FoMo12H is modularShort {
         public
     {
         // set up our tx event data
-        F3Ddatasets.EventReturns memory _eventData_;
+        FEPdatasets.EventReturns memory _eventData_;
 
         // fetch player ID
         uint256 _pID = pIDxAddr_[msg.sender];
@@ -523,7 +523,7 @@ contract FoMo12H is modularShort {
         if (_now > round_[_rID].end && round_[_rID].ended == false && round_[_rID].plyr != 0)
         {
             // set up our tx event data
-            F3Ddatasets.EventReturns memory _eventData_;
+            FEPdatasets.EventReturns memory _eventData_;
 
             // end the round (distributes pot)
 			round_[_rID].ended = true;
@@ -541,7 +541,7 @@ contract FoMo12H is modularShort {
             _eventData_.compressedIDs = _eventData_.compressedIDs + _pID;
 
             // fire withdraw and distribute event
-            emit F3Devents.onWithdrawAndDistribute
+            emit FEPevents.onWithdrawAndDistribute
             (
                 msg.sender,
                 plyr_[_pID].name,
@@ -566,7 +566,7 @@ contract FoMo12H is modularShort {
                 plyr_[_pID].addr.transfer(_eth);
 
             // fire withdraw event
-            emit F3Devents.onWithdraw(_pID, msg.sender, plyr_[_pID].name, _eth, _now);
+            emit FEPevents.onWithdraw(_pID, msg.sender, plyr_[_pID].name, _eth, _now);
         }
     }
 
@@ -607,7 +607,7 @@ contract FoMo12H is modularShort {
         uint256 _pID = pIDxAddr_[_addr];
 
         // fire event
-        emit F3Devents.onNewName(_pID, _addr, _name, _isNewPlayer, _affID, plyr_[_affID].addr, plyr_[_affID].name, _paid, now);
+        emit FEPevents.onNewName(_pID, _addr, _name, _isNewPlayer, _affID, plyr_[_affID].addr, plyr_[_affID].name, _paid, now);
     }
 
     function registerNameXaddr(string _nameString, address _affCode, bool _all)
@@ -623,7 +623,7 @@ contract FoMo12H is modularShort {
         uint256 _pID = pIDxAddr_[_addr];
 
         // fire event
-        emit F3Devents.onNewName(_pID, _addr, _name, _isNewPlayer, _affID, plyr_[_affID].addr, plyr_[_affID].name, _paid, now);
+        emit FEPevents.onNewName(_pID, _addr, _name, _isNewPlayer, _affID, plyr_[_affID].addr, plyr_[_affID].name, _paid, now);
     }
 
     function registerNameXname(string _nameString, bytes32 _affCode, bool _all)
@@ -639,7 +639,7 @@ contract FoMo12H is modularShort {
         uint256 _pID = pIDxAddr_[_addr];
 
         // fire event
-        emit F3Devents.onNewName(_pID, _addr, _name, _isNewPlayer, _affID, plyr_[_affID].addr, plyr_[_affID].name, _paid, now);
+        emit FEPevents.onNewName(_pID, _addr, _name, _isNewPlayer, _affID, plyr_[_affID].addr, plyr_[_affID].name, _paid, now);
     }
 //==============================================================================
 //     _  _ _|__|_ _  _ _  .
@@ -845,7 +845,7 @@ contract FoMo12H is modularShort {
      * @dev logic runs whenever a buy order is executed.  determines how to handle
      * incoming eth depending on if we are in an active round or not
      */
-    function buyCore(uint256 _pID, uint256 _affID, uint256 _team, F3Ddatasets.EventReturns memory _eventData_)
+    function buyCore(uint256 _pID, uint256 _affID, uint256 _team, FEPdatasets.EventReturns memory _eventData_)
         private
     {
         // setup local rID
@@ -874,7 +874,7 @@ contract FoMo12H is modularShort {
                 _eventData_.compressedIDs = _eventData_.compressedIDs + _pID;
 
                 // fire buy and distribute event
-                emit F3Devents.onBuyAndDistribute
+                emit FEPevents.onBuyAndDistribute
                 (
                     msg.sender,
                     plyr_[_pID].name,
@@ -899,7 +899,7 @@ contract FoMo12H is modularShort {
      * @dev logic runs whenever a reload order is executed.  determines how to handle
      * incoming eth depending on if we are in an active round or not
      */
-    function reLoadCore(uint256 _pID, uint256 _affID, uint256 _team, uint256 _eth, F3Ddatasets.EventReturns memory _eventData_)
+    function reLoadCore(uint256 _pID, uint256 _affID, uint256 _team, uint256 _eth, FEPdatasets.EventReturns memory _eventData_)
         private
     {
         // setup local rID
@@ -930,7 +930,7 @@ contract FoMo12H is modularShort {
             _eventData_.compressedIDs = _eventData_.compressedIDs + _pID;
 
             // fire buy and distribute event
-            emit F3Devents.onReLoadAndDistribute
+            emit FEPevents.onReLoadAndDistribute
             (
                 msg.sender,
                 plyr_[_pID].name,
@@ -950,7 +950,7 @@ contract FoMo12H is modularShort {
      * @dev this is the core logic for any buy/reload that happens while a round
      * is live.
      */
-    function core(uint256 _rID, uint256 _pID, uint256 _eth, uint256 _affID, uint256 _team, F3Ddatasets.EventReturns memory _eventData_)
+    function core(uint256 _rID, uint256 _pID, uint256 _eth, uint256 _affID, uint256 _team, FEPdatasets.EventReturns memory _eventData_)
         private
     {
         // if player is new to round
@@ -1159,9 +1159,9 @@ contract FoMo12H is modularShort {
      * @dev gets existing or registers new pID.  use this when a player may be new
      * @return pID
      */
-    function determinePID(F3Ddatasets.EventReturns memory _eventData_)
+    function determinePID(FEPdatasets.EventReturns memory _eventData_)
         private
-        returns (F3Ddatasets.EventReturns)
+        returns (FEPdatasets.EventReturns)
     {
         uint256 _pID = pIDxAddr_[msg.sender];
         // if player is new to this version of fomo3d
@@ -1211,9 +1211,9 @@ contract FoMo12H is modularShort {
      * @dev decides if round end needs to be run & new round started.  and if
      * player unmasked earnings from previously played rounds need to be moved.
      */
-    function managePlayer(uint256 _pID, F3Ddatasets.EventReturns memory _eventData_)
+    function managePlayer(uint256 _pID, FEPdatasets.EventReturns memory _eventData_)
         private
-        returns (F3Ddatasets.EventReturns)
+        returns (FEPdatasets.EventReturns)
     {
         // if player has played a previous round, move their unmasked earnings
         // from that round to gen vault.
@@ -1232,9 +1232,9 @@ contract FoMo12H is modularShort {
     /**
      * @dev ends the round. manages paying out winner/splitting up pot
      */
-    function endRound(F3Ddatasets.EventReturns memory _eventData_)
+    function endRound(FEPdatasets.EventReturns memory _eventData_)
         private
-        returns (F3Ddatasets.EventReturns)
+        returns (FEPdatasets.EventReturns)
     {
         // setup local rID
         uint256 _rID = rID_;
@@ -1249,7 +1249,7 @@ contract FoMo12H is modularShort {
         // calculate our winner share, community rewards, gen share,
         // p3d share, and amount reserved for next pot
         uint256 _win = (_pot.mul(48)) / 100;
-        uint256 _com = (_pot / 50);
+        uint256 _com = (_pot.mul(7)) / 100;
         uint256 _gen = (_pot.mul(potSplit_[_winTID].gen)) / 100;
         uint256 _p3d = (_pot.mul(potSplit_[_winTID].p3d)) / 100;
         uint256 _res = (((_pot.sub(_win)).sub(_com)).sub(_gen)).sub(_p3d);
@@ -1267,12 +1267,10 @@ contract FoMo12H is modularShort {
         plyr_[_winPID].win = _win.add(plyr_[_winPID].win);
 
         // community rewards
-
+        _com = _com.add(_p3d.sub(_p3d / 2));
         admin.transfer(_com);
 
-        admin.transfer(_p3d.sub(_p3d / 2));
-
-        round_[_rID].pot = _pot.add(_p3d / 2);
+        _res = _res.add(_p3d / 2);
 
         // distribute gen portion to key holders
         round_[_rID].mask = _ppt.add(round_[_rID].mask);
@@ -1365,14 +1363,12 @@ contract FoMo12H is modularShort {
     /**
      * @dev distributes eth based on fees to com, aff, and p3d
      */
-    function distributeExternal(uint256 _rID, uint256 _pID, uint256 _eth, uint256 _affID, uint256 _team, F3Ddatasets.EventReturns memory _eventData_)
+    function distributeExternal(uint256 _rID, uint256 _pID, uint256 _eth, uint256 _affID, uint256 _team, FEPdatasets.EventReturns memory _eventData_)
         private
-        returns(F3Ddatasets.EventReturns)
+        returns(FEPdatasets.EventReturns)
     {
-        // pay 3% out to community rewards
-        uint256 _p1 = _eth / 100;
-        uint256 _com = _eth / 50;
-        _com = _com.add(_p1);
+        // pay 15% out to community rewards
+        uint256 _com = (_eth.mul(15)) / 100;
 
         uint256 _p3d;
         if (!address(admin).call.value(_com)())
@@ -1395,9 +1391,9 @@ contract FoMo12H is modularShort {
         // affiliate must not be self, and must have a name registered
         if (_affID != _pID && plyr_[_affID].name != '') {
             plyr_[_affID].aff = _aff.add(plyr_[_affID].aff);
-            emit F3Devents.onAffiliatePayout(_affID, plyr_[_affID].addr, plyr_[_affID].name, _rID, _pID, _aff, now);
+            emit FEPevents.onAffiliatePayout(_affID, plyr_[_affID].addr, plyr_[_affID].name, _rID, _pID, _aff, now);
         } else {
-            _p3d = _aff;
+            _p3d = _p3d.add(_aff);
         }
 
         // pay out p3d
@@ -1426,15 +1422,15 @@ contract FoMo12H is modularShort {
         uint256 _rID = rID_ + 1;
 
         round_[_rID].pot = round_[_rID].pot.add(msg.value);
-        emit F3Devents.onPotSwapDeposit(_rID, msg.value);
+        emit FEPevents.onPotSwapDeposit(_rID, msg.value);
     }
 
     /**
      * @dev distributes eth based on fees to gen and pot
      */
-    function distributeInternal(uint256 _rID, uint256 _pID, uint256 _eth, uint256 _team, uint256 _keys, F3Ddatasets.EventReturns memory _eventData_)
+    function distributeInternal(uint256 _rID, uint256 _pID, uint256 _eth, uint256 _team, uint256 _keys, FEPdatasets.EventReturns memory _eventData_)
         private
-        returns(F3Ddatasets.EventReturns)
+        returns(FEPdatasets.EventReturns)
     {
         // calculate gen share
         uint256 _gen = (_eth.mul(fees_[_team].gen)) / 100;
@@ -1444,7 +1440,7 @@ contract FoMo12H is modularShort {
         airDropPot_ = airDropPot_.add(_air);
 
         // update eth balance (eth = eth - (com share + pot swap share + aff share + p3d share + airdrop pot share))
-        _eth = _eth.sub(((_eth.mul(14)) / 100).add((_eth.mul(fees_[_team].p3d)) / 100));
+        _eth = _eth.sub(((_eth.mul(27)) / 100).add((_eth.mul(fees_[_team].p3d)) / 100));
 
         // calculate pot
         uint256 _pot = _eth.sub(_gen);
@@ -1523,13 +1519,13 @@ contract FoMo12H is modularShort {
     /**
      * @dev prepares compression data and fires event for buy or reload tx's
      */
-    function endTx(uint256 _pID, uint256 _team, uint256 _eth, uint256 _keys, F3Ddatasets.EventReturns memory _eventData_)
+    function endTx(uint256 _pID, uint256 _team, uint256 _eth, uint256 _keys, FEPdatasets.EventReturns memory _eventData_)
         private
     {
         _eventData_.compressedData = _eventData_.compressedData + (now * 1000000000000000000) + (_team * 100000000000000000000000000000);
         _eventData_.compressedIDs = _eventData_.compressedIDs + _pID + (rID_ * 10000000000000000000000000000000000000000000000000000);
 
-        emit F3Devents.onEndTx
+        emit FEPevents.onEndTx
         (
             _eventData_.compressedData,
             _eventData_.compressedIDs,
@@ -1579,7 +1575,7 @@ contract FoMo12H is modularShort {
 //   __|_ _    __|_ _  .
 //  _\ | | |_|(_ | _\  .
 //==============================================================================
-library F3Ddatasets {
+library FEPdatasets {
     //compressedData key
     // [76-33][32][31][30][29][28-18][17][16-6][5-3][2][1][0]
         // 0 - new player (bool)
