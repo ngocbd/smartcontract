@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumanStandardToken at 0x0728a2bac712d102a44ca37179476c1acf3355b6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumanStandardToken at 0xa30B660ace1935Ca76400c6C553c00a02314a9B0
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.8;
 contract Token{
     // token???????public??????getter????????totalSupply().
     uint256 public totalSupply;
@@ -19,7 +19,7 @@ contract Token{
     //??????????_spender????????????_value?token
     function approve(address _spender, uint256 _value) returns (bool success);
 
-    //????_spender?????_owner???token??? 
+    //????_spender?????_owner???token???
     function allowance(address _owner, address _spender) constant returns 
     (uint256 remaining);
 
@@ -31,39 +31,14 @@ contract Token{
     _value);
 }
 
-library SafeMath {
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        if (a == 0) {
-            return 0;
-        }
-        uint256 c = a * b;
-        assert(c / a == b);
-        return c;
-    }
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return c;
-    }
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
-    }
-}
-
 contract StandardToken is Token {
-    using SafeMath for uint256;
     function transfer(address _to, uint256 _value) returns (bool success) {
-        require(_to != address(0));
+        //??totalSupply ??????? (2^256 - 1).
+        //??????????????token??????????????????
+        //require(balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]);
         require(balances[msg.sender] >= _value);
-        balances[msg.sender] = balances[msg.sender].sub(_value);//???????????token??_value
-        balances[_to] = balances[_to].add(_value);//???????token??_value
+        balances[msg.sender] -= _value;//???????????token??_value
+        balances[_to] += _value;//???????token??_value
         Transfer(msg.sender, _to, _value);//????????
         return true;
     }
@@ -71,11 +46,12 @@ contract StandardToken is Token {
 
     function transferFrom(address _from, address _to, uint256 _value) returns 
     (bool success) {
-        require(_to != address(0));
+        //require(balances[_from] >= _value && allowed[_from][msg.sender] >= 
+        // _value && balances[_to] + _value > balances[_to]);
         require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value);
-        balances[_to] = balances[_to].add(_value);//??????token??_value
-        balances[_from] = balances[_from].sub(_value); //????_from??token??_value
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);//??????????_from????????_value
+        balances[_to] += _value;//??????token??_value
+        balances[_from] -= _value; //????_from??token??_value
+        allowed[_from][msg.sender] -= _value;//??????????_from????????_value
         Transfer(_from, _to, _value);//????????
         return true;
     }
@@ -86,7 +62,6 @@ contract StandardToken is Token {
 
     function approve(address _spender, uint256 _value) returns (bool success)   
     {
-        require((_value == 0) || (allowed[msg.sender][_spender] == 0));
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
         return true;
@@ -119,7 +94,6 @@ contract HumanStandardToken is StandardToken {
     /* Approves and then calls the receiving contract */
     
     function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
-        require((_value == 0) || (allowed[msg.sender][_spender] == 0));
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
         //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
