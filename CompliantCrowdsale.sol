@@ -1,13 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CompliantCrowdsale at 0x790ab3c76d6589b489ad60938411b8dd1c0d32ef
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CompliantCrowdsale at 0x47bfde592c302bfcd103be3899eef0215422520f
 */
 pragma solidity 0.4.24;
-
+//;;;
 
 /**
  * @title SafeMath
- * @dev Math operations with safety checks that throw on error 1
- * version 7
+ * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
 
@@ -1058,7 +1057,7 @@ contract CompliantCrowdsale is Validator, FinalizableCrowdsale {
         checkIsInvestorApproved(pendingMints[nonce].to)
         returns (bool)
     {
-        // update state alicia
+        // update state
         weiRaised = weiRaised.add(pendingMints[nonce].weiAmount);
 
         //No need to use mint-approval on token side, since the minting is already approved in the crowdsale side
