@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xc2cf3fcb6156a1383c01f092a842997df0e1d447
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xeb60f00c8b6188962b9be3d94995d266541cb931
 */
 pragma solidity ^0.4.21;
 
@@ -37,43 +37,18 @@ library SafeMath {
     return c;
   }
 }
-interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; }
 
-contract Ownable {
-  address public owner;
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-}
-
-contract TokenERC20 is Ownable {
+contract TokenERC20 {
 	
     using SafeMath for uint256;
     
     string public constant name       = "?????";
-    string public constant symbol     = "SHML";
+    string public constant symbol     = "WFC.";
     uint32 public constant decimals   = 18;
     uint256 public totalSupply;
 
     mapping(address => uint256) balances;
 	mapping(address => mapping (address => uint256)) internal allowed;
-
-	
 
 	event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed owner, address indexed spender, uint256 value);
@@ -84,6 +59,7 @@ contract TokenERC20 is Ownable {
     ) public {
         totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
         balances[msg.sender] = totalSupply;                // Give the creator all initial tokens
+        emit Transfer(this,msg.sender,totalSupply);
     }
 	
     function totalSupply() public view returns (uint256) {
@@ -139,16 +115,13 @@ contract TokenERC20 is Ownable {
 	}
 	
 	function getBalance(address _a) internal constant returns(uint256) {
-
+ 
             return balances[_a];
-       
+ 
     }
     
     function balanceOf(address _owner) public view returns (uint256 balance) {
         return getBalance( _owner );
     }
-	
-
  
-	
 }
