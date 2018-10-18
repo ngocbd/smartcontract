@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BIToken at 0x403323ee9541ca541c412f9b9055de4619d2e7f8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BIToken at 0x3651d24bb7d6d974342f2d1618e10884f8d31b6b
 */
 /**
  * @autor  Olga Solodina <olgasolidity@gmail.com>
@@ -275,10 +275,10 @@ contract BIToken is ERC20 {
    */
   constructor() public {
 
-    totalSupply_ = 20480000 * (10 ** uint256(decimals));
+    totalSupply_ = 20480000 * 1000000000000;
 
     balances_[msg.sender] = totalSupply_;
-    emit Transfer(address(0), msg.sender, totalSupply_);
+    emit Transfer(0x0, msg.sender, totalSupply_);
   }
 
 }
