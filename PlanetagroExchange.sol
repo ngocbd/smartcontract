@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlanetagroExchange at 0xe0089bfd703a711bb211ff62bdd76cd9032f237a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlanetagroExchange at 0x726091d1dad881fba95dc8093591bca110f2bf2e
 */
 pragma solidity ^0.4.25;
 
@@ -195,7 +195,7 @@ contract StandardToken is ERC20, BasicToken {
 contract PlanetagroExchange is StandardToken {
 
     string public constant name = "Planetagro-Exchange";
-    string public constant symbol = "SOYBEAN";
+    string public constant symbol = "WHEAT";
     uint8 public constant decimals = 18;
     uint256 public constant INITIAL_SUPPLY = 1000000 * 10**3 * (10**uint256(decimals));
 
