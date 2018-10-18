@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherLife at 0x39ad2460b94904e044ca921c964347ebb0c21146
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherLife at 0x4fee1274a9a5f8c58daf18f8545e4568c2db5769
 */
 pragma solidity ^0.4.24;
 
@@ -99,12 +99,10 @@ contract EtherLife is Ownable
         uint timeOfLastWithdraw;
     }
     
-    mapping(address => deposit[]) public deposits;
+    mapping(address => deposit) public deposits;
     mapping(address => address) public parents;
     address[] public investors;
     
-    address public constant rootParentAddress = 0xcf9E764539Ae0eE0fA316AAD30A870447C349b46;
-    address public constant feeAddress = 0xcf9E764539Ae0eE0fA316AAD30A870447C349b46;
     uint public constant withdrawPeriod = 1 days;
     
     uint public constant minDepositSum = 100 finney; // 0.1 ether;
@@ -154,16 +152,6 @@ contract EtherLife is Ownable
         return investors.length;
     }
     
-    function getDepositsLength(address investorAddress) public view returns (uint)
-    {
-        return deposits[investorAddress].length;
-    }
-    
-    function getDepositByIndex(address investorAddress, uint index) public view returns (uint, uint)
-    {
-        return (deposits[investorAddress][index].time, deposits[investorAddress][index].value);
-    }
-    
     function getParents(address investorAddress) public view returns (address[])
     {
         address[] memory refLevels = new address[](5);
@@ -181,7 +169,7 @@ contract EtherLife is Ownable
     
     function calculateRewardForLevel(uint8 level, uint value) public pure returns (uint)
     {
-        if(level == 1) return value.mul(2).div(100);   // 2%
+        if(level == 1) return value.div(50);           // 2%
         if(level == 2) return value.div(100);          // 1%
         if(level == 3) return value.div(200);          // 0.5%
         if(level == 4) return value.div(400);          // 0.25%
@@ -194,7 +182,7 @@ contract EtherLife is Ownable
     {
         if(period == 1)
         {
-            return depositValue.mul(4).div(100).mul(periodsCount);  // 4%
+            return depositValue.div(25).mul(periodsCount);          // 4%
         }
         else if(period == 2)
         {
@@ -202,7 +190,7 @@ contract EtherLife is Ownable
         }
         else if(period == 3)
         {
-            return depositValue.mul(2).div(100).mul(periodsCount);  // 2%
+            return depositValue.div(50).mul(periodsCount);          // 2%
         }
         else if(period == 4)
         {
@@ -240,21 +228,21 @@ contract EtherLife is Ownable
             sum = calculatWithdrawForPeriod(1, depositValue, periodsCount);
         }
         
-        if(timeOfLastWithdraw >= timeEndOfPeriod1)
+        if(timeOfLastWithdraw < timeEndOfPeriod2)
         {
             timeEnd = currentTime > timeEndOfPeriod2 ? timeEndOfPeriod2 : currentTime;
             (periodsCount, timeOfLastWithdraw) = calculatePeriodsCountAndNewTime(timeOfLastWithdraw, timeEnd);
             sum = sum.add(calculatWithdrawForPeriod(2, depositValue, periodsCount));
         }
         
-        if(timeOfLastWithdraw >= timeEndOfPeriod2)
+        if(timeOfLastWithdraw < timeEndOfPeriod3)
         {
             timeEnd = currentTime > timeEndOfPeriod3 ? timeEndOfPeriod3 : currentTime;
             (periodsCount, timeOfLastWithdraw) = calculatePeriodsCountAndNewTime(timeOfLastWithdraw, timeEnd);
             sum = sum.add(calculatWithdrawForPeriod(3, depositValue, periodsCount));
         }
         
-        if(timeOfLastWithdraw >= timeEndOfPeriod3)
+        if(timeOfLastWithdraw < timeEndOfPeriod4)
         {
             timeEnd = currentTime > timeEndOfPeriod4 ? timeEndOfPeriod4 : currentTime;
             (periodsCount, timeOfLastWithdraw) = calculatePeriodsCountAndNewTime(timeOfLastWithdraw, timeEnd);
@@ -273,14 +261,11 @@ contract EtherLife is Ownable
     
     function checkReferrer(address investorAddress) internal
     {
-        if(deposits[investorAddress].length == 0)
+        if(deposits[investorAddress].value == 0 && msg.data.length == 20)
         {
-            require(msg.data.length == 20, "you must specify referer address"); 
-            
             address referrerAddress = bytesToAddress(bytes(msg.data));
-            
-            require(referrerAddress != investorAddress, "address must be different from your own"); 
-            require(deposits[referrerAddress].length > 0 || referrerAddress == rootParentAddress, "address must be an active investor");
+            require(referrerAddress != investorAddress);     
+            require(deposits[referrerAddress].value > 0);        
             
             parents[investorAddress] = referrerAddress;
             investors.push(investorAddress);
@@ -303,14 +288,29 @@ contract EtherLife is Ownable
     }
     
     function addDeposit(address investorAddress, uint weiAmount) internal
-    {
-        deposits[investorAddress].push(deposit(now, weiAmount, now));
+    {   
+        if(deposits[investorAddress].value == 0)
+        {
+            deposits[investorAddress].time = now;
+            deposits[investorAddress].timeOfLastWithdraw = now;
+            deposits[investorAddress].value = weiAmount;
+        }
+        else
+        {
+            if(now - deposits[investorAddress].timeOfLastWithdraw >= withdrawPeriod)
+            {
+                payWithdraw(investorAddress);
+            }
+            
+            deposits[investorAddress].value = deposits[investorAddress].value.add(weiAmount);
+            deposits[investorAddress].timeOfLastWithdraw = now;
+        }
     }
     
     function payFee(uint weiAmount) internal
     {
         uint fee = weiAmount.mul(16).div(100); // 16%
-        feeAddress.transfer(fee);
+        owner.transfer(fee);
     }
     
     function calculateNewTime(uint startTime, uint endTime) public pure returns (uint) 
@@ -328,24 +328,14 @@ contract EtherLife is Ownable
     
     function payWithdraw(address to) internal
     {
-        require(deposits[to].length > 0);
+        require(deposits[to].value > 0);
         
-        uint sum = 0;
-        
-        for(uint i = 0; i < deposits[to].length; i++)
-        {
-            uint value = calculateWithdraw(now, deposits[to][i].time, deposits[to][i].value, deposits[to][i].timeOfLastWithdraw);
-            if(value > 0) 
-            {
-                deposits[to][i].timeOfLastWithdraw = calculateNewTime(deposits[to][i].timeOfLastWithdraw, now);
-            }
-            sum = sum.add(value);
-        }
-        
+        uint sum = calculateWithdraw(now, deposits[to].time, deposits[to].value, deposits[to].timeOfLastWithdraw);
         require(sum > 0);
         
-        to.transfer(sum);
+        deposits[to].timeOfLastWithdraw = calculateNewTime(deposits[to].time, now);
         
+        to.transfer(sum);
         emit Withdraw(to, sum);
     }
     
@@ -355,6 +345,7 @@ contract EtherLife is Ownable
         payWithdraw(msg.sender);
         return true;
     }
+    
     
     function batchWithdraw(address[] to) onlyOwner public 
     {
