@@ -1,9 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VIRToken at 0x501202610ce02b97fcbd406157431214ca55ec75
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VIRToken at 0x00f458047c2eae96a7aea42c4f8b768c8e93b383
 */
 pragma solidity 0.4.24;
 
-library SafeMath {
+library SafeMath 
+{
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a * b;
     assert(a == 0 || c / a == b);
@@ -29,21 +30,24 @@ library SafeMath {
   }
 }
 
-contract ERC20Basic {
+contract ERC20Basic 
+{
   uint256 public totalSupply;
   function balanceOf(address who) public constant returns (uint256);
   function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-contract ERC20 is ERC20Basic {
+contract ERC20 is ERC20Basic 
+{
   function allowance(address owner, address spender) public constant returns (uint256);
   function transferFrom(address from, address to, uint256 value) public returns (bool);
   function approve(address spender, uint256 value) public returns (bool);
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-contract BasicToken is ERC20Basic {
+contract BasicToken is ERC20Basic 
+{
   using SafeMath for uint256;
 
   mapping(address => uint256) balances;
@@ -65,7 +69,8 @@ contract BasicToken is ERC20Basic {
 
 }
 
-contract StandardToken is ERC20, BasicToken {
+contract StandardToken is ERC20, BasicToken 
+{
 
   mapping (address => mapping (address => uint256)) internal allowed;
 
@@ -110,7 +115,8 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-contract Ownable {
+contract Ownable 
+{
   address public owner;
 
   constructor() public {
@@ -130,8 +136,8 @@ contract Ownable {
 
 contract VIRToken is StandardToken, Ownable
 {
-    string public name = "VIR";
-    string public symbol = "Virtual Reality Token";
+    string public symbol = "VIR";
+    string public name = "Virtual Reality Token";
 
     uint public decimals = 18;
 
