@@ -1,78 +1,182 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SaleClockAuction at 0x8dca8784bd774e81887d76b09e8ce135c10c77d1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SaleClockAuction at 0x0925bda166940800af5efd6c7d1136ddefbf0387
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.25;
 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-	address public owner;
+/// @title ERC-721 Non-Fungible Token Standard
+/// @dev See https://github.com/ethereum/EIPs/blob/master/EIPS/eip-721.md
+///  Note: the ERC-165 identifier for this interface is 0x80ac58cd.
+interface ERC721 /* is ERC165 */ {
+    /// @dev This emits when ownership of any NFT changes by any mechanism.
+    ///  This event emits when NFTs are created (`from` == 0) and destroyed
+    ///  (`to` == 0). Exception: during contract creation, any number of NFTs
+    ///  may be created and assigned without emitting Transfer. At the time of
+    ///  any transfer, the approved address for that NFT (if any) is reset to none.
+    ///
+    /// MOVED THIS TO CSportsBase because of how class structure is derived.
+    ///
+    event Transfer(address indexed _from, address indexed _to, uint256 indexed _tokenId);
 
+    /// @dev This emits when the approved address for an NFT is changed or
+    ///  reaffirmed. The zero address indicates there is no approved address.
+    ///  When a Transfer event emits, this also indicates that the approved
+    ///  address for that NFT (if any) is reset to none.
+    event Approval(address indexed _owner, address indexed _approved, uint256 indexed _tokenId);
 
-	/**
-	 * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-	 * account.
-	 */
-	function Ownable() public {
-		owner = msg.sender;
-	}
+    /// @dev This emits when an operator is enabled or disabled for an owner.
+    ///  The operator can manage all NFTs of the owner.
+    event ApprovalForAll(address indexed _owner, address indexed _operator, bool _approved);
 
+    /// @notice Count all NFTs assigned to an owner
+    /// @dev NFTs assigned to the zero address are considered invalid, and this
+    ///  function throws for queries about the zero address.
+    /// @param _owner An address for whom to query the balance
+    /// @return The number of NFTs owned by `_owner`, possibly zero
+    function balanceOf(address _owner) external view returns (uint256);
 
-	/**
-	 * @dev Throws if called by any account other than the owner.
-	 */
-	modifier onlyOwner() {
-		require(msg.sender == owner);
-		_;
-	}
+    /// @notice Find the owner of an NFT
+    /// @dev NFTs assigned to zero address are considered invalid, and queries
+    ///  about them do throw.
+    /// @param _tokenId The identifier for an NFT
+    /// @return The address of the owner of the NFT
+    function ownerOf(uint256 _tokenId) external view returns (address);
 
+    /// @notice Transfers the ownership of an NFT from one address to another address
+    /// @dev Throws unless `msg.sender` is the current owner, an authorized
+    ///  operator, or the approved address for this NFT. Throws if `_from` is
+    ///  not the current owner. Throws if `_to` is the zero address. Throws if
+    ///  `_tokenId` is not a valid NFT. When transfer is complete, this function
+    ///  checks if `_to` is a smart contract (code size > 0). If so, it calls
+    ///  `onERC721Received` on `_to` and throws if the return value is not
+    ///  `bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))`.
+    /// @param _from The current owner of the NFT
+    /// @param _to The new owner
+    /// @param _tokenId The NFT to transfer
+    /// @param data Additional data with no specified format, sent in call to `_to`
+    function safeTransferFrom(address _from, address _to, uint256 _tokenId, bytes data) external payable;
 
-	/**
-	 * @dev Allows the current owner to transfer control of the contract to a newOwner.
-	 * @param newOwner The address to transfer ownership to.
-	 */
-	function transferOwnership(address newOwner) public onlyOwner {
-		if (newOwner != address(0)) {
-			owner = newOwner;
-		}
-	}
+    /// @notice Transfers the ownership of an NFT from one address to another address
+    /// @dev This works identically to the other function with an extra data parameter,
+    ///  except this function just sets data to "".
+    /// @param _from The current owner of the NFT
+    /// @param _to The new owner
+    /// @param _tokenId The NFT to transfer
+    function safeTransferFrom(address _from, address _to, uint256 _tokenId) external payable;
 
+    /// @notice Transfer ownership of an NFT -- THE CALLER IS RESPONSIBLE
+    ///  TO CONFIRM THAT `_to` IS CAPABLE OF RECEIVING NFTS OR ELSE
+    ///  THEY MAY BE PERMANENTLY LOST
+    /// @dev Throws unless `msg.sender` is the current owner, an authorized
+    ///  operator, or the approved address for this NFT. Throws if `_from` is
+    ///  not the current owner. Throws if `_to` is the zero address. Throws if
+    ///  `_tokenId` is not a valid NFT.
+    /// @param _from The current owner of the NFT
+    /// @param _to The new owner
+    /// @param _tokenId The NFT to transfer
+    function transferFrom(address _from, address _to, uint256 _tokenId) external payable;
+
+    /// @notice Change or reaffirm the approved address for an NFT
+    /// @dev The zero address indicates there is no approved address.
+    ///  Throws unless `msg.sender` is the current NFT owner, or an authorized
+    ///  operator of the current owner.
+    /// @param _approved The new approved NFT controller
+    /// @param _tokenId The NFT to approve
+    function approve(address _approved, uint256 _tokenId) external payable;
+
+    /// @notice Enable or disable approval for a third party ("operator") to manage
+    ///  all of `msg.sender`'s assets
+    /// @dev Emits the ApprovalForAll event. The contract MUST allow
+    ///  multiple operators per owner.
+    /// @param _operator Address to add to the set of authorized operators
+    /// @param _approved True if the operator is approved, false to revoke approval
+    function setApprovalForAll(address _operator, bool _approved) external;
+
+    /// @notice Get the approved address for a single NFT
+    /// @dev Throws if `_tokenId` is not a valid NFT.
+    /// @param _tokenId The NFT to find the approved address for
+    /// @return The approved address for this NFT, or the zero address if there is none
+    function getApproved(uint256 _tokenId) external view returns (address);
+
+    /// @notice Query if an address is an authorized operator for another address
+    /// @param _owner The address that owns the NFTs
+    /// @param _operator The address that acts on behalf of the owner
+    /// @return True if `_operator` is an approved operator for `_owner`, false otherwise
+    function isApprovedForAll(address _owner, address _operator) external view returns (bool);
 }
 
+/// @title ERC-721 Non-Fungible Token Standard, optional metadata extension
+/// @dev See https://github.com/ethereum/EIPs/blob/master/EIPS/eip-721.md
+///  Note: the ERC-165 identifier for this interface is 0x5b5e139f.
+interface ERC721Metadata /* is ERC721 */ {
+    /// @notice A descriptive name for a collection of NFTs in this contract
+    function name() external view returns (string _name);
 
-/// @title Interface for contracts conforming to ERC-721: Non-Fungible Tokens
-/// @author Dieter Shirley <dete@axiomzen.co> (https://github.com/dete)
-contract ERC721 {
-    // Required methods
-    function totalSupply() public view returns (uint256 total);
-    function balanceOf(address _owner) public view returns (uint256 balance);
-    function ownerOf(uint256 _tokenId) external view returns (address owner);
-    function approve(address _to, uint256 _tokenId) external;
-    function transfer(address _to, uint256 _tokenId) external;
-    function transferFrom(address _from, address _to, uint256 _tokenId) external;
+    /// @notice An abbreviated name for NFTs in this contract
+    function symbol() external view returns (string _symbol);
 
-    // Events
-    event Transfer(address from, address to, uint256 tokenId);
-    event Approval(address owner, address approved, uint256 tokenId);
-
-    // Optional
-    // function name() public view returns (string name);
-    // function symbol() public view returns (string symbol);
-    // function tokensOfOwner(address _owner) external view returns (uint256[] tokenIds);
-    // function tokenMetadata(uint256 _tokenId, string _preferredTransport) public view returns (string infoUrl);
-
-    // ERC-165 Compatibility (https://github.com/ethereum/EIPs/issues/165)
-    function supportsInterface(bytes4 _interfaceID) external view returns (bool);
+    /// @notice A distinct Uniform Resource Identifier (URI) for a given asset.
+    /// @dev Throws if `_tokenId` is not a valid NFT. URIs are defined in RFC
+    ///  3986. The URI may point to a JSON file that conforms to the "ERC721
+    ///  Metadata JSON Schema".
+    function tokenURI(uint256 _tokenId) external view returns (string);
 }
 
+/// @title ERC-721 Non-Fungible Token Standard, optional enumeration extension
+/// @dev See https://github.com/ethereum/EIPs/blob/master/EIPS/eip-721.md
+///  Note: the ERC-165 identifier for this interface is 0x780e9d63.
+interface ERC721Enumerable /* is ERC721 */ {
+    /// @notice Count NFTs tracked by this contract
+    /// @return A count of valid NFTs tracked by this contract, where each one of
+    ///  them has an assigned and queryable owner not equal to the zero address
+    function totalSupply() external view returns (uint256);
+
+    /// @notice Enumerate valid NFTs
+    /// @dev Throws if `_index` >= `totalSupply()`.
+    /// @param _index A counter less than `totalSupply()`
+    /// @return The token identifier for the `_index`th NFT,
+    ///  (sort order not specified)
+    function tokenByIndex(uint256 _index) external view returns (uint256);
+
+    /// @notice Enumerate NFTs assigned to an owner
+    /// @dev Throws if `_index` >= `balanceOf(_owner)` or if
+    ///  `_owner` is the zero address, representing invalid NFTs.
+    /// @param _owner An address where we are interested in NFTs owned by them
+    /// @param _index A counter less than `balanceOf(_owner)`
+    /// @return The token identifier for the `_index`th NFT assigned to `_owner`,
+    ///   (sort order not specified)
+    function tokenOfOwnerByIndex(address _owner, uint256 _index) external view returns (uint256);
+}
+
+/// @dev Note: the ERC-165 identifier for this interface is 0x150b7a02.
+interface ERC721TokenReceiver {
+    /// @notice Handle the receipt of an NFT
+    /// @dev The ERC721 smart contract calls this function on the recipient
+    ///  after a `transfer`. This function MAY throw to revert and reject the
+    ///  transfer. Return of other than the magic value MUST result in the
+    ///  transaction being reverted.
+    ///  Note: the contract address is always the message sender.
+    /// @param _operator The address which called `safeTransferFrom` function
+    /// @param _from The address which previously owned the token
+    /// @param _tokenId The NFT identifier which is being transferred
+    /// @param _data Additional data with no specified format
+    /// @return `bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))`
+    ///  unless throwing
+    function onERC721Received(address _operator, address _from, uint256 _tokenId, bytes _data) external returns(bytes4);
+}
+
+interface ERC165 {
+    /// @notice Query if a contract implements an interface
+    /// @param interfaceID The interface identifier, as specified in ERC-165
+    /// @dev Interface identification is specified in ERC-165. This function
+    ///  uses less than 30,000 gas.
+    /// @return `true` if the contract implements `interfaceID` and
+    ///  `interfaceID` is not 0xffffffff, `false` otherwise
+    function supportsInterface(bytes4 interfaceID) external view returns (bool);
+}
 
 /// @title Auction Core
 /// @dev Contains models, variables, and internal methods for the auction.
-/// @notice We omit a fallback function to prevent accidental sends to this contract.
-contract ClockAuctionBase {
+contract TimeAuctionBase {
 
     // Represents an auction on an NFT
     struct Auction {
@@ -99,9 +203,33 @@ contract ClockAuctionBase {
     // Map from token ID to their corresponding auction.
     mapping (uint256 => Auction) tokenIdToAuction;
 
-    event AuctionCreated(uint256 tokenId, uint256 startingPrice, uint256 endingPrice, uint256 duration);
+    event AuctionCreated(uint256 tokenId, address seller, uint256 startingPrice, uint256 endingPrice, uint256 duration);
     event AuctionSuccessful(uint256 tokenId, uint256 totalPrice, address winner);
     event AuctionCancelled(uint256 tokenId);
+    event AuctionSettled(uint256 tokenId, uint256 price, uint256 sellerProceeds, address seller, address buyer);
+    event AuctionRepriced(uint256 tokenId, uint256 startingPrice, uint256 endingPrice, uint64 duration, uint64 startedAt);
+
+    /// @dev DON'T give me your money.
+    function() external {}
+
+    // Modifiers to check that inputs can be safely stored with a certain
+    // number of bits. We use constants and multiple modifiers to save gas.
+    modifier canBeStoredWith32Bits(uint256 _value) {
+        require(_value <= 4294967295);
+        _;
+    }
+
+    // Modifiers to check that inputs can be safely stored with a certain
+    // number of bits. We use constants and multiple modifiers to save gas.
+    modifier canBeStoredWith64Bits(uint256 _value) {
+        require(_value <= 18446744073709551615);
+        _;
+    }
+
+    modifier canBeStoredWith128Bits(uint256 _value) {
+        require(_value < 340282366920938463463374607431768211455);
+        _;
+    }
 
     /// @dev Returns true if the claimant owns the token.
     /// @param _claimant - Address claiming to own the token.
@@ -125,7 +253,8 @@ contract ClockAuctionBase {
     /// @param _tokenId - ID of token to transfer.
     function _transfer(address _receiver, uint256 _tokenId) internal {
         // it will throw if transfer fails
-        nonFungibleContract.transfer(_receiver, _tokenId);
+        nonFungibleContract.approve(_receiver, _tokenId);
+        nonFungibleContract.transferFrom(address(this), _receiver, _tokenId);
     }
 
     /// @dev Adds an auction to the list of open auctions. Also fires the
@@ -139,8 +268,9 @@ contract ClockAuctionBase {
 
         tokenIdToAuction[_tokenId] = _auction;
 
-        AuctionCreated(
+        emit AuctionCreated(
             uint256(_tokenId),
+            address(_auction.seller),
             uint256(_auction.startingPrice),
             uint256(_auction.endingPrice),
             uint256(_auction.duration)
@@ -151,7 +281,7 @@ contract ClockAuctionBase {
     function _cancelAuction(uint256 _tokenId, address _seller) internal {
         _removeAuction(_tokenId);
         _transfer(_seller, _tokenId);
-        AuctionCancelled(_tokenId);
+        emit AuctionCancelled(_tokenId);
     }
 
     /// @dev Computes the price and transfers winnings.
@@ -169,7 +299,8 @@ contract ClockAuctionBase {
         // return an auction object that is all zeros.)
         require(_isOnAuction(auction));
 
-        // Check that the bid is greater than or equal to the current price
+        // Check that the incoming bid is higher than the current
+        // price
         uint256 price = _currentPrice(auction);
         require(_bidAmount >= price);
 
@@ -183,9 +314,9 @@ contract ClockAuctionBase {
 
         // Transfer proceeds to seller (if there are any!)
         if (price > 0) {
-            // Calculate the auctioneer's cut.
+            //  Calculate the auctioneer's cut.
             // (NOTE: _computeCut() is guaranteed to return a
-            // value <= price, so this subtraction can't go negative.)
+            //  value <= price, so this subtraction can't go negative.)
             uint256 auctioneerCut = _computeCut(price);
             uint256 sellerProceeds = price - auctioneerCut;
 
@@ -198,21 +329,11 @@ contract ClockAuctionBase {
             // can DoS is the sale of their own asset! (And if it's an
             // accident, they can call cancelAuction(). )
             seller.transfer(sellerProceeds);
+            emit AuctionSettled(_tokenId, price, sellerProceeds, seller, msg.sender);
         }
 
-        // Calculate any excess funds included with the bid. If the excess
-        // is anything worth worrying about, transfer it back to bidder.
-        // NOTE: We checked above that the bid amount is greater than or
-        // equal to the price so this cannot underflow.
-        uint256 bidExcess = _bidAmount - price;
-
-        // Return the funds. Similar to the previous transfer, this is
-        // not susceptible to a re-entry attack because the auction is
-        // removed before any transfers occur.
-        msg.sender.transfer(bidExcess);
-
         // Tell the world!
-        AuctionSuccessful(_tokenId, price, msg.sender);
+        emit AuctionSuccessful(_tokenId, price, msg.sender);
 
         return price;
     }
@@ -302,97 +423,119 @@ contract ClockAuctionBase {
         // NOTE: We don't use SafeMath (or similar) in this function because
         //  all of our entry functions carefully cap the maximum values for
         //  currency (at 128-bits), and ownerCut <= 10000 (see the require()
-        //  statement in the ClockAuction constructor). The result of this
+        //  statement in the TimeAuction constructor). The result of this
         //  function is always guaranteed to be <= _price.
         return _price * ownerCut / 10000;
     }
+
 }
 
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  constructor() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    emit OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
 
 /**
  * @title Pausable
  * @dev Base contract which allows children to implement an emergency stop mechanism.
  */
 contract Pausable is Ownable {
-	event Pause();
-	event Unpause();
+  event Pause();
+  event Unpause();
 
-	bool public paused = false;
+  bool public paused = false;
 
+  /**
+   * @dev Modifier to make a function callable only when the contract is not paused.
+   */
+  modifier whenNotPaused() {
+    require(!paused);
+    _;
+  }
 
-	/**
-	 * @dev modifier to allow actions only when the contract IS paused
-	 */
-	modifier whenNotPaused() {
-		require(!paused);
-		_;
-	}
+  /**
+   * @dev Modifier to make a function callable only when the contract is paused.
+   */
+  modifier whenPaused() {
+    require(paused);
+    _;
+  }
 
-	/**
-	 * @dev modifier to allow actions only when the contract IS NOT paused
-	 */
-	modifier whenPaused {
-		require(paused);
-		_;
-	}
+  /**
+   * @dev called by the owner to pause, triggers stopped state
+   */
+  function pause() onlyOwner whenNotPaused public {
+    paused = true;
+    emit Pause();
+  }
 
-	/**
-	 * @dev called by the owner to pause, triggers stopped state
-	 */
-	function pause() public onlyOwner whenNotPaused returns (bool) {
-		paused = true;
-		Pause();
-		return true;
-	}
-
-	/**
-	 * @dev called by the owner to unpause, returns to normal state
-	 */
-	function unpause() public onlyOwner whenPaused returns (bool) {
-		paused = false;
-		Unpause();
-		return true;
-	}
+  /**
+   * @dev called by the owner to unpause, returns to normal state
+   */
+  function unpause() onlyOwner whenPaused public {
+    paused = false;
+    emit Unpause();
+  }
 }
 
-
 /// @title Clock auction for non-fungible tokens.
-/// @notice We omit a fallback function to prevent accidental sends to this contract.
-contract ClockAuction is Pausable, ClockAuctionBase {
-
-    /// @dev The ERC-165 interface signature for ERC-721.
-    ///  Ref: https://github.com/ethereum/EIPs/issues/165
-    ///  Ref: https://github.com/ethereum/EIPs/issues/721
-    bytes4 constant InterfaceSignature_ERC721 = bytes4(0x9a20483d);
+contract TimeAuction is Pausable, TimeAuctionBase {
 
     /// @dev Constructor creates a reference to the NFT ownership contract
     ///  and verifies the owner cut is in the valid range.
     /// @param _nftAddress - address of a deployed contract implementing
     ///  the Nonfungible Interface.
-    /// @param _cut - percent cut the owner takes on each auction, must be
+    /// @param _cut - 100*(percent cut) the owner takes on each auction, must be
     ///  between 0-10,000.
-    function ClockAuction(address _nftAddress, uint256 _cut) public {
+    constructor(address _nftAddress, uint256 _cut) public {
         require(_cut <= 10000);
         ownerCut = _cut;
 
         ERC721 candidateContract = ERC721(_nftAddress);
-        require(candidateContract.supportsInterface(InterfaceSignature_ERC721));
         nonFungibleContract = candidateContract;
     }
 
     /// @dev Remove all Ether from the contract, which is the owner's cuts
     ///  as well as any Ether sent directly to the contract address.
-    ///  Always transfers to the NFT contract, but can be called either by
-    ///  the owner or the NFT contract.
+    ///  Always transfers to the NFT contract, and can only be called from
+    ///  the NFT contract.
     function withdrawBalance() external {
         address nftAddress = address(nonFungibleContract);
-
-        require(
-            msg.sender == owner ||
-            msg.sender == nftAddress
-        );
-        // We are using this boolean method to make sure that even if one fails it will still work
-        nftAddress.transfer(this.balance);
+        require(msg.sender == nftAddress);
+        nftAddress.transfer(address(this).balance);
     }
 
     /// @dev Creates and begins a new auction.
@@ -409,15 +552,12 @@ contract ClockAuction is Pausable, ClockAuctionBase {
         uint256 _duration,
         address _seller
     )
-        external
+        public
         whenNotPaused
+        canBeStoredWith128Bits(_startingPrice)
+        canBeStoredWith128Bits(_endingPrice)
+        canBeStoredWith64Bits(_duration)
     {
-        // Sanity check that no inputs overflow how many bits we've allocated
-        // to store them in the auction struct.
-        require(_startingPrice == uint256(uint128(_startingPrice)));
-        require(_endingPrice == uint256(uint128(_endingPrice)));
-        require(_duration == uint256(uint64(_duration)));
-
         require(_owns(msg.sender, _tokenId));
         _escrow(msg.sender, _tokenId);
         Auction memory auction = Auction(
@@ -434,7 +574,7 @@ contract ClockAuction is Pausable, ClockAuctionBase {
     ///  ownership of the NFT if enough Ether is supplied.
     /// @param _tokenId - ID of token to bid on.
     function bid(uint256 _tokenId)
-        external
+        public
         payable
         whenNotPaused
     {
@@ -446,10 +586,11 @@ contract ClockAuction is Pausable, ClockAuctionBase {
     /// @dev Cancels an auction that hasn't been won yet.
     ///  Returns the NFT to original owner.
     /// @notice This is a state-modifying function that can
-    ///  be called while the contract is paused.
+    ///  be called while the contract is paused. An auction can
+    ///  only be cancelled by the seller.
     /// @param _tokenId - ID of token on auction
     function cancelAuction(uint256 _tokenId)
-        external
+        public
     {
         Auction storage auction = tokenIdToAuction[_tokenId];
         require(_isOnAuction(auction));
@@ -459,13 +600,14 @@ contract ClockAuction is Pausable, ClockAuctionBase {
     }
 
     /// @dev Cancels an auction when the contract is paused.
-    ///  Only the owner may do this, and NFTs are returned to
+    ///  Only the owner (account that created the contract)
+    ///  may do this, and NFTs are returned to
     ///  the seller. This should only be used in emergencies.
     /// @param _tokenId - ID of the NFT on auction to cancel.
     function cancelAuctionWhenPaused(uint256 _tokenId)
         whenPaused
         onlyOwner
-        external
+        public
     {
         Auction storage auction = tokenIdToAuction[_tokenId];
         require(_isOnAuction(auction));
@@ -475,31 +617,54 @@ contract ClockAuction is Pausable, ClockAuctionBase {
     /// @dev Returns auction info for an NFT on auction.
     /// @param _tokenId - ID of NFT on auction.
     function getAuction(uint256 _tokenId)
-        external
+        public
         view
         returns
     (
         address seller,
         uint256 startingPrice,
         uint256 endingPrice,
+        uint256 currentPrice,
         uint256 duration,
         uint256 startedAt
     ) {
         Auction storage auction = tokenIdToAuction[_tokenId];
         require(_isOnAuction(auction));
+        uint256 price = _currentPrice(auction);
         return (
             auction.seller,
             auction.startingPrice,
             auction.endingPrice,
+            price,
             auction.duration,
             auction.startedAt
         );
     }
 
+    /// @dev Returns current auction prices for up to 50 auctions
+    /// @param _tokenIds - up to 50 IDs of NFT on auction that we want the prices of
+    function getCurrentAuctionPrices(uint128[] _tokenIds) public view returns (uint128[50]) {
+
+        require (_tokenIds.length <= 50);
+
+        /// @dev A fixed array we can return current auction price information in.
+        uint128[50] memory currentPricesArray;
+
+        for (uint8 i = 0; i < _tokenIds.length; i++) {
+          Auction storage auction = tokenIdToAuction[_tokenIds[i]];
+          if (_isOnAuction(auction)) {
+            uint256 price = _currentPrice(auction);
+            currentPricesArray[i] = uint128(price);
+          }
+        }
+
+        return currentPricesArray;
+    }
+
     /// @dev Returns the current price of an auction.
     /// @param _tokenId - ID of the token price we are checking.
     function getCurrentPrice(uint256 _tokenId)
-        external
+        public
         view
         returns (uint256)
     {
@@ -510,24 +675,51 @@ contract ClockAuction is Pausable, ClockAuctionBase {
 
 }
 
+/// @title Interface to allow a contract to listen to auction events.
+contract SaleClockAuctionListener {
+    function implementsSaleClockAuctionListener() public pure returns (bool);
+    function auctionCreated(uint256 tokenId, address seller, uint128 startingPrice, uint128 endingPrice, uint64 duration) public;
+    function auctionSuccessful(uint256 tokenId, uint128 totalPrice, address seller, address buyer) public;
+    function auctionCancelled(uint256 tokenId, address seller) public;
+}
 
-/// @title Clock auction modified for sale of CobeFriends
-/// @notice We omit a fallback function to prevent accidental sends to this contract.
-contract SaleClockAuction is ClockAuction {
+/// @title Clock auction modified for sale of kitties
+contract SaleClockAuction is TimeAuction {
 
-    // @dev Sanity check that allows us to ensure that we are pointing to the
-    //  right auction in our setSaleAuctionAddress() call.
-    bool public isSaleClockAuction = true;
-
-    // Tracks last 5 sale price of gen0 CobeFriend sales
-    uint256 public gen0SaleCount;
-    uint256[5] public lastGen0SalePrices;
+    // @dev A listening contract that wants notifications of auction creation,
+    //  completion, and cancellation
+    SaleClockAuctionListener public listener;
 
     // Delegate constructor
-    function SaleClockAuction(address _nftAddr, uint256 _cut) public
-        ClockAuction(_nftAddr, _cut) {}
+    constructor(address _nftAddr, uint256 _cut) public TimeAuction(_nftAddr, _cut) {
 
-    /// @dev Creates and begins a new auction.
+    }
+
+    /// @dev Sanity check that allows us to ensure that we are pointing to the
+    ///  right auction in our setSaleAuctionAddress() call.
+    function isSaleClockAuction() public pure returns (bool) {
+        return true;
+    }
+
+    // @dev Method used to add a listener for auction events. This can only be called
+    //  if the listener has not already been set (i.e. once). This limitation is in place to prevent
+    //  malicious attempt to hijack the listening contract and perhaps try to do
+    //  something bad (like throw). Since the listener methods are called inline with our
+    //  createAuction(...), bid(...), and cancelAuction(...) methods, we need to make
+    //  sure none of the listener methods causes a revert/throw/out of gas/etc.
+    // @param _listener - Address of a SaleClockAuctionListener compatible contract
+    function setListener(address _listener) public {
+      require(listener == address(0));
+      SaleClockAuctionListener candidateContract = SaleClockAuctionListener(_listener);
+      require(candidateContract.implementsSaleClockAuctionListener());
+      listener = candidateContract;
+    }
+
+    /// @dev Creates and begins a new auction. We override the base class
+    ///   so we can add the listener capability.
+    ///
+    /// CALLABLE ONLY BY NFT CONTRACT
+    ///
     /// @param _tokenId - ID of token to auction, sender must be owner.
     /// @param _startingPrice - Price of item (in wei) at beginning of auction.
     /// @param _endingPrice - Price of item (in wei) at end of auction.
@@ -540,14 +732,11 @@ contract SaleClockAuction is ClockAuction {
         uint256 _duration,
         address _seller
     )
-        external
+        public
+        canBeStoredWith128Bits(_startingPrice)
+        canBeStoredWith128Bits(_endingPrice)
+        canBeStoredWith64Bits(_duration)
     {
-        // Sanity check that no inputs overflow how many bits we've allocated
-        // to store them in the auction struct.
-        require(_startingPrice == uint256(uint128(_startingPrice)));
-        require(_endingPrice == uint256(uint128(_endingPrice)));
-        require(_duration == uint256(uint64(_duration)));
-
         require(msg.sender == address(nonFungibleContract));
         _escrow(_seller, _tokenId);
         Auction memory auction = Auction(
@@ -558,33 +747,124 @@ contract SaleClockAuction is ClockAuction {
             uint64(now)
         );
         _addAuction(_tokenId, auction);
+
+        if (listener != address(0)) {
+          listener.auctionCreated(_tokenId, _seller, uint128(_startingPrice), uint128(_endingPrice), uint64(_duration));
+        }
     }
 
-    /// @dev Updates lastSalePrice if seller is the nft contract
-    /// Otherwise, works the same as default bid method.
-    function bid(uint256 _tokenId)
-        external
-        payable
+    /// @dev Reprices (and updates duration) of an array of tokens that are currently
+    /// being auctioned by this contract.
+    ///
+    /// CALLABLE ONLY BY NFT CONTRACT
+    ///
+    /// @param _tokenIds Array of tokenIds corresponding to auctions being updated
+    /// @param _startingPrices New starting prices
+    /// @param _endingPrices New ending prices
+    /// @param _duration New duration
+    /// @param _seller Address of the seller in all specified auctions to be updated
+    function repriceAuctions(
+        uint256[] _tokenIds,
+        uint256[] _startingPrices,
+        uint256[] _endingPrices,
+        uint256 _duration,
+        address _seller
+    )
+    public
+    canBeStoredWith64Bits(_duration)
     {
-        // _bid verifies token ID size
-        address seller = tokenIdToAuction[_tokenId].seller;
+        require(msg.sender == address(nonFungibleContract));
+
+        uint64 timeNow = uint64(now);
+        for (uint32 i = 0; i < _tokenIds.length; i++) {
+            uint256 _tokenId = _tokenIds[i];
+            uint256 _startingPrice = _startingPrices[i];
+            uint256 _endingPrice = _endingPrices[i];
+
+            // Must be able to be stored in 128 bits
+            require(_startingPrice < 340282366920938463463374607431768211455);
+            require(_endingPrice < 340282366920938463463374607431768211455);
+
+            Auction storage auction = tokenIdToAuction[_tokenId];
+
+            // Here is where we make sure the seller in the auction is correct.
+            // Since this method can only be called by the NFT, the NFT controls
+            // what happens here by passing in the _seller we are to require.
+            if (auction.seller == _seller) {
+                // Update the auction parameters
+                auction.startingPrice = uint128(_startingPrice);
+                auction.endingPrice = uint128(_endingPrice);
+                auction.duration = uint64(_duration);
+                auction.startedAt = timeNow;
+                emit AuctionRepriced(_tokenId, _startingPrice, _endingPrice, uint64(_duration), timeNow);
+            }
+        }
+    }
+
+    /// @dev Place a bid to purchase multiple tokens in a single call.
+    /// @param _tokenIds Array of IDs of tokens to bid on.
+    function batchBid(uint256[] _tokenIds) public payable whenNotPaused
+    {
+        // Check to make sure the bid amount is sufficient to purchase
+        // all of the auctions specified.
+        uint256 totalPrice = 0;
+        for (uint32 i = 0; i < _tokenIds.length; i++) {
+          uint256 _tokenId = _tokenIds[i];
+          Auction storage auction = tokenIdToAuction[_tokenId];
+          totalPrice += _currentPrice(auction);
+        }
+        require(msg.value >= totalPrice);
+
+        // Loop through auctions, placing bids to buy
+        //
+        for (i = 0; i < _tokenIds.length; i++) {
+
+          _tokenId = _tokenIds[i];
+          auction = tokenIdToAuction[_tokenId];
+
+          // Need to store this before the _bid & _transfer calls
+          // so we can fire our auctionSuccessful events
+          address seller = auction.seller;
+
+          uint256 bid = _currentPrice(auction);
+          uint256 price = _bid(_tokenId, bid);
+          _transfer(msg.sender, _tokenId);
+
+          if (listener != address(0)) {
+            listener.auctionSuccessful(_tokenId, uint128(price), seller, msg.sender);
+          }
+        }
+    }
+
+    /// @dev Does exactly what the parent does, but also notifies any
+    ///   listener of the successful bid.
+    /// @param _tokenId - ID of token to bid on.
+    function bid(uint256 _tokenId) public payable whenNotPaused
+    {
+        Auction storage auction = tokenIdToAuction[_tokenId];
+
+        // Need to store this before the _bid & _transfer calls
+        // so we can fire our auctionSuccessful events
+        address seller = auction.seller;
+
+        // _bid will throw if the bid or funds transfer fails
         uint256 price = _bid(_tokenId, msg.value);
         _transfer(msg.sender, _tokenId);
 
-        // If not a gen0 auction, exit
-        if (seller == address(nonFungibleContract)) {
-            // Track gen0 sale prices
-            lastGen0SalePrices[gen0SaleCount % 5] = price;
-            gen0SaleCount++;
+        if (listener != address(0)) {
+          listener.auctionSuccessful(_tokenId, uint128(price), seller, msg.sender);
         }
     }
 
-    function averageGen0SalePrice() external view returns (uint256) {
-        uint256 sum = 0;
-        for (uint256 i = 0; i < 5; i++) {
-            sum += lastGen0SalePrices[i];
-        }
-        return sum / 5;
+    /// @dev Cancels an auction that hasn't been won yet by calling
+    ///   the super(...) and then notifying any listener.
+    /// @param _tokenId - ID of token on auction
+    function cancelAuction(uint256 _tokenId) public
+    {
+      super.cancelAuction(_tokenId);
+      if (listener != address(0)) {
+        listener.auctionCancelled(_tokenId, msg.sender);
+      }
     }
 
 }
