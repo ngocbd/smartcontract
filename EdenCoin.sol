@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EdenCoin at 0xefe485bf6a608a41a3d1330c9af25eac90dea59b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EdenCoin at 0xa376c0c1c50db1c0aec23970e319760e4fc4eae3
 */
 pragma solidity ^0.4.24;
 
@@ -46,8 +46,7 @@ library SafeMath {
 
 contract EdenCoin is IERC20 {
   using SafeMath for uint256;
-  address private deployer;
-  address private multisend = 0xB76a20D5d42c041593DF95D7d72b74B2543824f9;
+  address private deployer; 
   string public name = "Eden Coin";
   string public symbol = "EDEN";
   uint8 public constant decimals = 18;
@@ -76,7 +75,7 @@ contract EdenCoin is IERC20 {
   function transfer(address _to, uint256 _value) public returns (bool) {
     require(_to != address(0));
     require(_value <= balances[msg.sender]);
-    require(block.timestamp >= 1537164000 || msg.sender == deployer || msg.sender == multisend);
+    require(block.timestamp >= 1537164000 || msg.sender == deployer);
 
     // SafeMath.sub will throw if there is not enough balance.
     balances[msg.sender] = balances[msg.sender].sub(_value);
@@ -89,7 +88,7 @@ contract EdenCoin is IERC20 {
     require(_to != address(0));
     require(_value <= balances[_from]);
     require(_value <= allowed[_from][msg.sender]);
-    require(block.timestamp >= 1537164000);
+    require(block.timestamp >= 1537164000 || msg.sender == deployer);
 
     balances[_from] = balances[_from].sub(_value);
     balances[_to] = balances[_to].add(_value);
