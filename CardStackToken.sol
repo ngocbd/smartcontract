@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CardStackToken at 0xb07ec2c28834b889b1ce527ca0f19364cd38935c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CardstackToken at 0x48ec5680eb030356ff12ad82be1433a6992fffe7
 */
 pragma solidity ^0.4.13;
 
@@ -8,111 +8,186 @@ library SafeMath {
   /**
   * @dev Multiplies two numbers, throws on overflow.
   */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+  function mul(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
     // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
     // benefit is lost if 'b' is also tested.
     // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
-    if (a == 0) {
+    if (_a == 0) {
       return 0;
     }
 
-    c = a * b;
-    assert(c / a == b);
+    c = _a * _b;
+    assert(c / _a == _b);
     return c;
   }
 
   /**
   * @dev Integer division of two numbers, truncating the quotient.
   */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    // uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return a / b;
+  function div(uint256 _a, uint256 _b) internal pure returns (uint256) {
+    // assert(_b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = _a / _b;
+    // assert(_a == _b * c + _a % _b); // There is no case in which this doesn't hold
+    return _a / _b;
   }
 
   /**
   * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
   */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
+  function sub(uint256 _a, uint256 _b) internal pure returns (uint256) {
+    assert(_b <= _a);
+    return _a - _b;
   }
 
   /**
   * @dev Adds two numbers, throws on overflow.
   */
-  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    c = a + b;
-    assert(c >= a);
+  function add(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
+    c = _a + _b;
+    assert(c >= _a);
     return c;
   }
 }
 
-contract Ownable {
+contract Initializable {
+
+  /**
+   * @dev Indicates if the contract has been initialized.
+   */
+  bool public initialized;
+
+  /**
+   * @dev Modifier to use in the initialization function of a contract.
+   */
+  modifier isInitializer() {
+    require(!initialized, "Contract instance has already been initialized");
+    _;
+    initialized = true;
+  }
+}
+
+contract Administratable {
+  using SafeMath for uint256;
+
+  // zOS requires that the variables are never removed nor order changed
+  // Since this is a parent contract, no new variables can be added here
+  address internal constant primaryInitializer = 0x0AEaF8c2Fe778797CD5464E7EB8351d28da2E823;
+  address internal constant stagingInitializer = 0x1E65F71b024937b988fdba09814d60049e0Fc59d;
   address public owner;
+  bool public adminsInitialized;
+  address[] public adminsForIndex;
+  address[] public superAdminsForIndex;
+  mapping (address => bool) public admins;
+  mapping (address => bool) public superAdmins;
+  mapping (address => bool) private processedAdmin;
+  mapping (address => bool) private processedSuperAdmin;
 
-
-  event OwnershipRenounced(address indexed previousOwner);
+  event AddAdmin(address indexed admin);
+  event RemoveAdmin(address indexed admin);
+  event AddSuperAdmin(address indexed admin);
+  event RemoveSuperAdmin(address indexed admin);
   event OwnershipTransferred(
     address indexed previousOwner,
     address indexed newOwner
   );
 
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  constructor() public {
-    owner = msg.sender;
+  modifier onlyInitializers() {
+    require(msg.sender == primaryInitializer ||
+            msg.sender == stagingInitializer);
+    _;
   }
 
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
   modifier onlyOwner() {
     require(msg.sender == owner);
     _;
   }
 
-  /**
-   * @dev Allows the current owner to relinquish control of the contract.
-   */
-  function renounceOwnership() public onlyOwner {
-    emit OwnershipRenounced(owner);
-    owner = address(0);
+  modifier onlyAdmins {
+    if (msg.sender != owner && !superAdmins[msg.sender] && !admins[msg.sender]) revert();
+    _;
   }
 
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param _newOwner The address to transfer ownership to.
-   */
+  modifier onlySuperAdmins {
+    if (msg.sender != owner && !superAdmins[msg.sender]) revert();
+    _;
+  }
+
+  constructor() public {
+    owner = msg.sender;
+  }
+
+  function addSuperAdmin(address admin) public onlySuperAdmins {
+    _addSuperAdmin(admin);
+
+    emit AddSuperAdmin(admin);
+  }
+
+  function removeSuperAdmin(address admin) public onlySuperAdmins {
+    require(admin != address(0));
+    superAdmins[admin] = false;
+
+    emit RemoveSuperAdmin(admin);
+  }
+
+  function addAdmin(address admin) public onlySuperAdmins {
+    require(admin != address(0));
+    admins[admin] = true;
+    if (!processedAdmin[admin]) {
+      adminsForIndex.push(admin);
+      processedAdmin[admin] = true;
+    }
+
+    emit AddAdmin(admin);
+  }
+
+  function removeAdmin(address admin) public onlySuperAdmins {
+    require(admin != address(0));
+    admins[admin] = false;
+
+    emit RemoveAdmin(admin);
+  }
+
   function transferOwnership(address _newOwner) public onlyOwner {
-    _transferOwnership(_newOwner);
-  }
-
-  /**
-   * @dev Transfers control of the contract to a newOwner.
-   * @param _newOwner The address to transfer ownership to.
-   */
-  function _transferOwnership(address _newOwner) internal {
     require(_newOwner != address(0));
     emit OwnershipTransferred(owner, _newOwner);
     owner = _newOwner;
   }
+
+  function totalSuperAdminsMapping() public view returns (uint256) {
+    return superAdminsForIndex.length;
+  }
+
+  function totalAdminsMapping() public view returns (uint256) {
+    return adminsForIndex.length;
+  }
+
+  // Accepting a function param to set initial owner/admins
+  // is a potential security vulnerability when using initialize
+  // pattern (which is just a public function). So we hard-code
+  // our initial admin addresses and use zOS to manage this list.
+  function initializeAdmins() internal {
+    require(!adminsInitialized, "Contract instance has already initialized the admins");
+
+    owner = primaryInitializer;
+    _addSuperAdmin(stagingInitializer);
+
+    adminsInitialized = true;
+  }
+
+  function _addSuperAdmin(address admin) internal {
+    require(admin != address(0));
+    superAdmins[admin] = true;
+    if (!processedSuperAdmin[admin]) {
+      superAdminsForIndex.push(admin);
+      processedSuperAdmin[admin] = true;
+    }
+  }
+
+
 }
 
-interface ITokenLedger {
-  function totalTokens() external view returns (uint256);
-  function totalInCirculation() external view returns (uint256);
-  function balanceOf(address account) external view returns (uint256);
-  function mintTokens(uint256 amount) external;
-  function transfer(address sender, address reciever, uint256 amount) external;
-  function creditAccount(address account, uint256 amount) external;
-  function debitAccount(address account, uint256 amount) external;
-  function addAdmin(address admin) external;
-  function removeAdmin(address admin) external;
+contract Configurable {
+  function configureFromStorage() public returns (bool);
 }
 
 library CstLibrary {
@@ -415,6 +490,24 @@ library CstLibrary {
 
 }
 
+contract Displayable {
+  function bytes32ToString(bytes32 x) public pure returns (string) {
+    bytes memory bytesString = new bytes(32);
+    uint256 charCount = 0;
+    for (uint256 j = 0; j < 32; j++) {
+      if (x[j] != 0) {
+        bytesString[charCount] = x[j];
+        charCount++;
+      }
+    }
+    bytes memory bytesStringTrimmed = new bytes(charCount);
+    for (j = 0; j < charCount; j++) {
+      bytesStringTrimmed[j] = bytesString[j];
+    }
+    return string(bytesStringTrimmed);
+  }
+}
+
 contract ERC20 {
   function allowance(address owner, address spender) public view returns (uint256);
   function transferFrom(address from, address to, uint256 value) public returns (bool);
@@ -426,147 +519,27 @@ contract ERC20 {
   event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
-contract administratable is Ownable {
-  using SafeMath for uint256;
-
-  address[] public adminsForIndex;
-  address[] public superAdminsForIndex;
-  mapping (address => bool) public admins;
-  mapping (address => bool) public superAdmins;
-  mapping (address => bool) private processedAdmin;
-  mapping (address => bool) private processedSuperAdmin;
-
-  event AddAdmin(address indexed admin);
-  event RemoveAdmin(address indexed admin);
-  event AddSuperAdmin(address indexed admin);
-  event RemoveSuperAdmin(address indexed admin);
-
-  modifier onlyAdmins {
-    if (msg.sender != owner && !superAdmins[msg.sender] && !admins[msg.sender]) revert();
-    _;
-  }
-
-  modifier onlySuperAdmins {
-    if (msg.sender != owner && !superAdmins[msg.sender]) revert();
-    _;
-  }
-
-  function totalSuperAdminsMapping() public view returns (uint256) {
-    return superAdminsForIndex.length;
-  }
-
-  function addSuperAdmin(address admin) public onlySuperAdmins {
-    require(admin != address(0));
-    superAdmins[admin] = true;
-    if (!processedSuperAdmin[admin]) {
-      superAdminsForIndex.push(admin);
-      processedSuperAdmin[admin] = true;
-    }
-
-    emit AddSuperAdmin(admin);
-  }
-
-  function removeSuperAdmin(address admin) public onlySuperAdmins {
-    require(admin != address(0));
-    superAdmins[admin] = false;
-
-    emit RemoveSuperAdmin(admin);
-  }
-
-  function totalAdminsMapping() public view returns (uint256) {
-    return adminsForIndex.length;
-  }
-
-  function addAdmin(address admin) public onlySuperAdmins {
-    require(admin != address(0));
-    admins[admin] = true;
-    if (!processedAdmin[admin]) {
-      adminsForIndex.push(admin);
-      processedAdmin[admin] = true;
-    }
-
-    emit AddAdmin(admin);
-  }
-
-  function removeAdmin(address admin) public onlySuperAdmins {
-    require(admin != address(0));
-    admins[admin] = false;
-
-    emit RemoveAdmin(admin);
-  }
-}
-
-contract CstLedger is ITokenLedger, administratable {
-
-  using SafeMath for uint256;
-
-  uint256 private _totalInCirculation; // warning this does not take into account unvested nor vested-unreleased tokens into consideration
-  uint256 private _totalTokens;
-  mapping (address => uint256) private _balanceOf;
-  mapping (address => bool) private accounts;
-  address[] public accountForIndex;
-
-  function totalTokens() external view returns (uint256) {
-    return _totalTokens;
-  }
-
-  function totalInCirculation() external view returns (uint256) {
-    return _totalInCirculation;
-  }
-
-  function balanceOf(address account) external view returns (uint256) {
-    return _balanceOf[account];
-  }
-
-  function mintTokens(uint256 amount) external onlyAdmins {
-    _totalTokens = _totalTokens.add(amount);
-  }
-
-  function ledgerCount() external view returns (uint256) {
-    return accountForIndex.length;
-  }
-
-  function makeAccountIterable(address account) internal {
-    if (!accounts[account]) {
-      accountForIndex.push(account);
-      accounts[account] = true;
-    }
-  }
-
-  function transfer(address sender, address recipient, uint256 amount) external onlyAdmins {
-    require(sender != address(0));
-    require(recipient != address(0));
-    require(_balanceOf[sender] >= amount);
-
-    _balanceOf[sender] = _balanceOf[sender].sub(amount);
-    _balanceOf[recipient] = _balanceOf[recipient].add(amount);
-    makeAccountIterable(recipient);
-  }
-
-  function creditAccount(address account, uint256 amount) external onlyAdmins { // remove tokens
-    require(account != address(0));
-    require(_balanceOf[account] >= amount);
-
-    _totalInCirculation = _totalInCirculation.sub(amount);
-    _balanceOf[account] = _balanceOf[account].sub(amount);
-  }
-
-  function debitAccount(address account, uint256 amount) external onlyAdmins { // add tokens
-    require(account != address(0));
-    _totalInCirculation = _totalInCirculation.add(amount);
-    _balanceOf[account] = _balanceOf[account].add(amount);
-    makeAccountIterable(account);
-  }
-}
-
-contract ExternalStorage is administratable {
+contract ExternalStorage is Administratable {
   using SafeMath for uint256;
 
   mapping(bytes32 => address[]) public primaryLedgerEntryForIndex;
   mapping(bytes32 => mapping(address => address[])) public secondaryLedgerEntryForIndex;
+  mapping(bytes32 => address[]) public ledgerEntryForIndex;
+  mapping(bytes32 => address[]) public booleanMapEntryForIndex;
+
   mapping(bytes32 => mapping(address => mapping(address => uint256))) private MultiLedgerStorage;
   mapping(bytes32 => mapping(address => bool)) private ledgerPrimaryEntries;
   mapping(bytes32 => mapping(address => mapping(address => bool))) private ledgerSecondaryEntries;
+  mapping(bytes32 => mapping(address => uint256)) private LedgerStorage;
+  mapping(bytes32 => mapping(address => bool)) private ledgerAccounts;
+  mapping(bytes32 => mapping(address => bool)) private BooleanMapStorage;
+  mapping(bytes32 => mapping(address => bool)) private booleanMapAccounts;
+  mapping(bytes32 => uint256) private UIntStorage;
+  mapping(bytes32 => bytes32) private Bytes32Storage;
+  mapping(bytes32 => address) private AddressStorage;
+  mapping(bytes32 => bytes) private BytesStorage;
+  mapping(bytes32 => bool) private BooleanStorage;
+  mapping(bytes32 => int256) private IntStorage;
 
   function getMultiLedgerValue(string record, address primaryAddress, address secondaryAddress) external view returns (uint256) {
     return MultiLedgerStorage[keccak256(abi.encodePacked(record))][primaryAddress][secondaryAddress];
@@ -595,10 +568,6 @@ contract ExternalStorage is administratable {
     MultiLedgerStorage[hash][primaryAddress][secondaryAddress] = value;
   }
 
-  mapping(bytes32 => address[]) public ledgerEntryForIndex;
-  mapping(bytes32 => mapping(address => uint256)) private LedgerStorage;
-  mapping(bytes32 => mapping(address => bool)) private ledgerAccounts;
-
   function getLedgerValue(string record, address _address) external view returns (uint256) {
     return LedgerStorage[keccak256(abi.encodePacked(record))][_address];
   }
@@ -616,10 +585,6 @@ contract ExternalStorage is administratable {
 
     LedgerStorage[hash][_address] = value;
   }
-
-  mapping(bytes32 => address[]) public booleanMapEntryForIndex;
-  mapping(bytes32 => mapping(address => bool)) private BooleanMapStorage;
-  mapping(bytes32 => mapping(address => bool)) private booleanMapAccounts;
 
   function getBooleanMapValue(string record, address _address) external view returns (bool) {
     return BooleanMapStorage[keccak256(abi.encodePacked(record))][_address];
@@ -639,8 +604,6 @@ contract ExternalStorage is administratable {
     BooleanMapStorage[hash][_address] = value;
   }
 
-  mapping(bytes32 => uint256) private UIntStorage;
-
   function getUIntValue(string record) external view returns (uint256) {
     return UIntStorage[keccak256(abi.encodePacked(record))];
   }
@@ -648,8 +611,6 @@ contract ExternalStorage is administratable {
   function setUIntValue(string record, uint256 value) external onlyAdmins {
     UIntStorage[keccak256(abi.encodePacked(record))] = value;
   }
-
-  mapping(bytes32 => bytes32) private Bytes32Storage;
 
   function getBytes32Value(string record) external view returns (bytes32) {
     return Bytes32Storage[keccak256(abi.encodePacked(record))];
@@ -659,8 +620,6 @@ contract ExternalStorage is administratable {
     Bytes32Storage[keccak256(abi.encodePacked(record))] = value;
   }
 
-  mapping(bytes32 => address) private AddressStorage;
-
   function getAddressValue(string record) external view returns (address) {
     return AddressStorage[keccak256(abi.encodePacked(record))];
   }
@@ -668,8 +627,6 @@ contract ExternalStorage is administratable {
   function setAddressValue(string record, address value) external onlyAdmins {
     AddressStorage[keccak256(abi.encodePacked(record))] = value;
   }
-
-  mapping(bytes32 => bytes) private BytesStorage;
 
   function getBytesValue(string record) external view returns (bytes) {
     return BytesStorage[keccak256(abi.encodePacked(record))];
@@ -679,8 +636,6 @@ contract ExternalStorage is administratable {
     BytesStorage[keccak256(abi.encodePacked(record))] = value;
   }
 
-  mapping(bytes32 => bool) private BooleanStorage;
-
   function getBooleanValue(string record) external view returns (bool) {
     return BooleanStorage[keccak256(abi.encodePacked(record))];
   }
@@ -688,8 +643,6 @@ contract ExternalStorage is administratable {
   function setBooleanValue(string record, bool value) external onlyAdmins {
     BooleanStorage[keccak256(abi.encodePacked(record))] = value;
   }
-
-  mapping(bytes32 => int256) private IntStorage;
 
   function getIntValue(string record) external view returns (int256) {
     return IntStorage[keccak256(abi.encodePacked(record))];
@@ -700,31 +653,11 @@ contract ExternalStorage is administratable {
   }
 }
 
-contract configurable {
-  function configureFromStorage() public returns (bool);
-}
-
-contract displayable {
-  function bytes32ToString(bytes32 x) public pure returns (string) {
-    bytes memory bytesString = new bytes(32);
-    uint256 charCount = 0;
-    for (uint256 j = 0; j < 32; j++) {
-      if (x[j] != 0) {
-        bytesString[charCount] = x[j];
-        charCount++;
-      }
-    }
-    bytes memory bytesStringTrimmed = new bytes(charCount);
-    for (j = 0; j < charCount; j++) {
-      bytesStringTrimmed[j] = bytesString[j];
-    }
-    return string(bytesStringTrimmed);
-  }
-}
-
-contract freezable is administratable {
+contract Freezable is Administratable {
   using SafeMath for uint256;
 
+  // zOS requires that the variables are never removed nor order changed
+  // Since this is a parent contract, no new variables can be added here
   bool public frozenToken;
   // TODO move this into external storage
   address[] public frozenAccountForIndex;
@@ -738,10 +671,6 @@ contract freezable is administratable {
     require(!frozenToken);
     require(!frozenAccount[msg.sender]);
     _;
-  }
-
-  function totalFrozenAccountsMapping() public view returns(uint256) {
-    return frozenAccountForIndex.length;
   }
 
   function freezeAccount(address target, bool freeze) public onlySuperAdmins {
@@ -758,6 +687,10 @@ contract freezable is administratable {
     emit FrozenToken(frozenToken);
   }
 
+  function totalFrozenAccountsMapping() public view returns(uint256) {
+    return frozenAccountForIndex.length;
+  }
+
 }
 
 contract IStorable {
@@ -765,96 +698,32 @@ contract IStorable {
   function getStorageNameHash() external view returns (bytes32);
 }
 
-contract upgradeable is administratable {
-  address public predecessor;
-  address public successor;
-  bool public isTokenContract;
-  string public version;
-
-  event Upgraded(address indexed successor);
-  event UpgradedFrom(address indexed predecessor);
-  event Transfer(address indexed _from, address indexed _to, uint256 _value);
-
-  modifier unlessUpgraded() {
-    if (msg.sender != successor && successor != address(0)) revert();
-    _;
-  }
-
-  modifier isUpgraded() {
-    if (successor == address(0)) revert();
-    _;
-  }
-
-  modifier hasPredecessor() {
-    if (predecessor == address(0)) revert();
-    _;
-  }
-
-  function isDeprecated() public view returns (bool) {
-    return successor != address(0);
-  }
-
-  function upgradeTo(address _successor, uint256 remainingContractBalance) public onlySuperAdmins unlessUpgraded returns (bool){
-    require(_successor != address(0));
-    successor = _successor;
-    if (remainingContractBalance > 0) {
-      emit Transfer(this, _successor, remainingContractBalance);
-    }
-
-    emit Upgraded(_successor);
-    return true;
-  }
-
-  function upgradedFrom(address _predecessor) public onlySuperAdmins returns (bool) {
-    require(_predecessor != address(0));
-
-    predecessor = _predecessor;
-
-    emit UpgradedFrom(_predecessor);
-
-    // TODO refactor this into registry contract when ready for registry upgrade
-    if (upgradeable(_predecessor).predecessor() != address(0)) {
-      if (upgradeable(_predecessor).isTokenContract()) {
-        emit Transfer(_predecessor, this, ERC20(_predecessor).balanceOf(_predecessor));
-      }
-    } else {
-      emit Transfer(this, this, 0); // make etherscan see this as an ERC-20. lets remove in v3
-    }
-
-    return true;
-  }
-}
-
-contract CardStackToken is ERC20,
-                           freezable,
-                           displayable,
-                           upgradeable,
-                           configurable,
+contract CardstackToken is ERC20,
+                           Initializable,
+                           Freezable,
+                           Displayable,
+                           Configurable,
                            IStorable {
 
   using SafeMath for uint256;
   using CstLibrary for address;
+
+  /* zOS requires that the variables are never removed nor order changed
+  /* BEGIN VARIABLES */
+  uint8 public constant decimals = 18;
+  string public constant version = "3";
+  uint256 public constant tokenMaxCap = 6000000000000000000000000000; // 6 billion * 10^18
 
   ITokenLedger public tokenLedger;
   string public storageName;
   string public ledgerName;
   address public externalStorage;
   address public registry;
-  uint8 public constant decimals = 18;
-  bool public isTokenContract = true;
   bool public haltPurchase;
-
-  // This state is specific to the first version of the CST
-  // token contract and the token generation event, and hence
-  // there is no reason to persist in external storage for
-  // future contracts.
-  bool public allowTransfers;
-  mapping (address => bool) public whitelistedTransferer;
-  address[] public whitelistedTransfererForIndex;
-  mapping (address => bool) private processedWhitelistedTransferer;
   uint256 public contributionMinimum;
+  /* END VARIABLES */
 
-  event Mint(uint256 amountMinted, uint256 totalTokens, uint256 circulationCap);
+  event Mint(uint256 amountMinted);
   event Approval(address indexed _owner,
                  address indexed _spender,
                  uint256 _value);
@@ -862,11 +731,14 @@ contract CardStackToken is ERC20,
                  address indexed _to,
                  uint256 _value);
   event WhiteList(address indexed buyer, uint256 holdCap);
+  event RemoveWhitelistedBuyer(address indexed buyer);
   event ConfigChanged(uint256 buyPrice, uint256 circulationCap, uint256 balanceLimit);
   event VestedTokenGrant(address indexed beneficiary, uint256 startDate, uint256 cliffDate, uint256 durationSec, uint256 fullyVestedAmount, bool isRevocable);
   event VestedTokenRevocation(address indexed beneficiary);
   event VestedTokenRelease(address indexed beneficiary, uint256 amount);
   event StorageUpdated(address storageAddress, address ledgerAddress);
+  event FoundationDeposit(uint256 amount);
+  event FoundationWithdraw(uint256 amount);
   event PurchaseHalted();
   event PurchaseResumed();
 
@@ -886,164 +758,7 @@ contract CardStackToken is ERC20,
     _;
   }
 
-  constructor(address _registry, string _storageName, string _ledgerName) public payable {
-    isTokenContract = true;
-    version = "2";
-    require(_registry != address(0));
-    storageName = _storageName;
-    ledgerName = _ledgerName;
-    registry = _registry;
-
-    addSuperAdmin(registry);
-  }
-
-  /* This unnamed function is called whenever someone tries to send ether directly to the token contract */
-  function () public {
-    revert(); // Prevents accidental sending of ether
-  }
-
-  function getLedgerNameHash() external view returns (bytes32) {
-    return keccak256(abi.encodePacked(ledgerName));
-  }
-
-  function getStorageNameHash() external view returns (bytes32) {
-    return keccak256(abi.encodePacked(storageName));
-  }
-
-  function configure(bytes32 _tokenName,
-                     bytes32 _tokenSymbol,
-                     uint256 _buyPrice,
-                     uint256 _circulationCap,
-                     uint256 _balanceLimit,
-                     address _foundation) public onlySuperAdmins initStorage returns (bool) {
-
-    uint256 __buyPrice= externalStorage.getBuyPrice();
-    if (__buyPrice> 0 && __buyPrice!= _buyPrice) {
-      require(frozenToken);
-    }
-
-    externalStorage.setTokenName(_tokenName);
-    externalStorage.setTokenSymbol(_tokenSymbol);
-    externalStorage.setBuyPrice(_buyPrice);
-    externalStorage.setCirculationCap(_circulationCap);
-    externalStorage.setFoundation(_foundation);
-    externalStorage.setBalanceLimit(_balanceLimit);
-
-    emit ConfigChanged(_buyPrice, _circulationCap, _balanceLimit);
-
-    return true;
-  }
-
-  function configureFromStorage() public onlySuperAdmins unlessUpgraded initStorage returns (bool) {
-    freezeToken(true);
-    return true;
-  }
-
-  function updateStorage(string newStorageName, string newLedgerName) public onlySuperAdmins unlessUpgraded returns (bool) {
-    require(frozenToken);
-
-    storageName = newStorageName;
-    ledgerName = newLedgerName;
-
-    configureFromStorage();
-
-    address ledgerAddress = Registry(registry).getStorage(ledgerName);
-    address storageAddress = Registry(registry).getStorage(storageName);
-    emit StorageUpdated(storageAddress, ledgerAddress);
-    return true;
-  }
-
-  function name() public view unlessUpgraded returns(string) {
-    return bytes32ToString(externalStorage.getTokenName());
-  }
-
-  function symbol() public view unlessUpgraded returns(string) {
-    return bytes32ToString(externalStorage.getTokenSymbol());
-  }
-
-  function totalInCirculation() public view unlessUpgraded returns(uint256) {
-    return tokenLedger.totalInCirculation().add(totalUnvestedAndUnreleasedTokens());
-  }
-
-  function cstBalanceLimit() public view unlessUpgraded returns(uint256) {
-    return externalStorage.getBalanceLimit();
-  }
-
-  function buyPrice() public view unlessUpgraded returns(uint256) {
-    return externalStorage.getBuyPrice();
-  }
-
-  function circulationCap() public view unlessUpgraded returns(uint256) {
-    return externalStorage.getCirculationCap();
-  }
-
-  // intentionally allowing this to be visible if upgraded so foundation can
-  // withdraw funds from contract that has a successor
-  function foundation() public view returns(address) {
-    return externalStorage.getFoundation();
-  }
-
-  function totalSupply() public view unlessUpgraded returns(uint256) {
-    return tokenLedger.totalTokens();
-  }
-
-  function tokensAvailable() public view unlessUpgraded returns(uint256) {
-    return totalSupply().sub(totalInCirculation());
-  }
-
-  function balanceOf(address account) public view unlessUpgraded returns (uint256) {
-    address thisAddress = this;
-    if (thisAddress == account) {
-      return tokensAvailable();
-    } else {
-      return tokenLedger.balanceOf(account);
-    }
-  }
-
-  function transfer(address recipient, uint256 amount) public unlessFrozen unlessUpgraded returns (bool) {
-    require(allowTransfers || whitelistedTransferer[msg.sender]);
-    require(amount > 0);
-    require(!frozenAccount[recipient]);
-
-    tokenLedger.transfer(msg.sender, recipient, amount);
-    emit Transfer(msg.sender, recipient, amount);
-
-    return true;
-  }
-
-  function mintTokens(uint256 mintedAmount) public onlySuperAdmins unlessUpgraded returns (bool) {
-    uint256 _circulationCap = externalStorage.getCirculationCap();
-    tokenLedger.mintTokens(mintedAmount);
-
-    emit Mint(mintedAmount, tokenLedger.totalTokens(), _circulationCap);
-
-    emit Transfer(address(0), this, mintedAmount);
-
-    return true;
-  }
-
-  function grantTokens(address recipient, uint256 amount) public onlySuperAdmins unlessUpgraded returns (bool) {
-    require(amount <= tokensAvailable());
-    require(!frozenAccount[recipient]);
-
-    tokenLedger.debitAccount(recipient, amount);
-    emit Transfer(this, recipient, amount);
-
-    return true;
-  }
-
-  function setHaltPurchase(bool _haltPurchase) public onlySuperAdmins unlessUpgraded returns (bool) {
-    haltPurchase = _haltPurchase;
-
-    if (_haltPurchase) {
-      emit PurchaseHalted();
-    } else {
-      emit PurchaseResumed();
-    }
-    return true;
-  }
-
-  function buy() external payable unlessFrozen unlessUpgraded returns (uint256) {
+  function buy() external payable unlessFrozen returns (uint256) {
     require(!haltPurchase);
     require(externalStorage.getApprovedBuyer(msg.sender));
 
@@ -1076,29 +791,127 @@ contract CardStackToken is ERC20,
     return amount;
   }
 
-  // intentionally allowing this to be visible if upgraded so foundation can
-  // withdraw funds from contract that has a successor
+  function getLedgerNameHash() external view returns (bytes32) {
+    return keccak256(abi.encodePacked(ledgerName));
+  }
+
+  function getStorageNameHash() external view returns (bytes32) {
+    return keccak256(abi.encodePacked(storageName));
+  }
+
+  function initialize(address _registry, string _storageName, string _ledgerName) public onlyInitializers {
+    initializeAdmins();
+    _initialize(_registry, _storageName, _ledgerName);
+  }
+
+  function configure(bytes32 _tokenName,
+                     bytes32 _tokenSymbol,
+                     uint256 _buyPrice,
+                     uint256 _circulationCap,
+                     uint256 _balanceLimit,
+                     address _foundation) public onlySuperAdmins initStorage returns (bool) {
+
+    uint256 __buyPrice = externalStorage.getBuyPrice();
+    if (__buyPrice > 0 && __buyPrice != _buyPrice) {
+      require(frozenToken);
+    }
+
+    externalStorage.setTokenName(_tokenName);
+    externalStorage.setTokenSymbol(_tokenSymbol);
+    externalStorage.setBuyPrice(_buyPrice);
+    externalStorage.setCirculationCap(_circulationCap);
+    externalStorage.setFoundation(_foundation);
+    externalStorage.setBalanceLimit(_balanceLimit);
+
+    emit ConfigChanged(_buyPrice, _circulationCap, _balanceLimit);
+
+    return true;
+  }
+
+  function configureFromStorage() public onlySuperAdmins initStorage returns (bool) {
+    freezeToken(true);
+    return true;
+  }
+
+  function updateStorage(string newStorageName, string newLedgerName) public onlySuperAdmins returns (bool) {
+    require(frozenToken);
+
+    storageName = newStorageName;
+    ledgerName = newLedgerName;
+
+    configureFromStorage();
+
+    address ledgerAddress = Registry(registry).getStorage(ledgerName);
+    address storageAddress = Registry(registry).getStorage(storageName);
+    emit StorageUpdated(storageAddress, ledgerAddress);
+    return true;
+  }
+
+  function transfer(address recipient, uint256 amount) public unlessFrozen returns (bool) {
+    require(!frozenAccount[recipient]);
+
+    tokenLedger.transfer(msg.sender, recipient, amount);
+    emit Transfer(msg.sender, recipient, amount);
+
+    return true;
+  }
+
+  function mintTokens(uint256 mintedAmount) public onlySuperAdmins returns (bool) {
+    require(mintedAmount.add(totalSupply()) <= tokenMaxCap);
+    require(mintedAmount > 0);
+
+    tokenLedger.mintTokens(mintedAmount);
+
+    emit Mint(mintedAmount);
+    emit Transfer(address(0), this, mintedAmount);
+
+    return true;
+  }
+
+  function grantTokens(address recipient, uint256 amount) public onlySuperAdmins returns (bool) {
+    require(haltPurchase);
+    require(!frozenAccount[recipient]);
+
+    uint256 _circulationCap = externalStorage.getCirculationCap();
+    require(totalInCirculation().add(amount) <= _circulationCap);
+    require(amount <= tokensAvailable()); // assert the granted tokens doesnt exceed the totalSupply minus the fully vested amount of vesting tokens
+
+    tokenLedger.debitAccount(recipient, amount);
+    emit Transfer(this, recipient, amount);
+
+    return true;
+  }
+
+  function setHaltPurchase(bool _haltPurchase) public onlySuperAdmins returns (bool) {
+    haltPurchase = _haltPurchase;
+
+    if (_haltPurchase) {
+      emit PurchaseHalted();
+    } else {
+      emit PurchaseResumed();
+    }
+    return true;
+  }
+
+  // intentionally allowing this to work when token is frozen as foundation is a form of a super admin
   function foundationWithdraw(uint256 amount) public onlyFoundation returns (bool) {
     /* UNTRUSTED */
     msg.sender.transfer(amount);
 
+    emit FoundationWithdraw(amount);
     return true;
   }
 
-  function foundationDeposit() public payable unlessUpgraded returns (bool) {
+  function foundationDeposit() public payable unlessFrozen returns (bool) {
+    emit FoundationDeposit(msg.value);
+
     return true;
   }
 
-  function allowance(address owner, address spender) public view unlessUpgraded returns (uint256) {
-    return externalStorage.getAllowance(owner, spender);
-  }
-
-  function transferFrom(address from, address to, uint256 value) public unlessFrozen unlessUpgraded returns (bool) {
-    require(allowTransfers);
+  function transferFrom(address from, address to, uint256 value) public unlessFrozen returns (bool) {
     require(!frozenAccount[from]);
     require(!frozenAccount[to]);
     require(from != msg.sender);
-    require(value > 0);
 
     uint256 allowanceValue = allowance(from, msg.sender);
     require(allowanceValue >= value);
@@ -1117,28 +930,23 @@ contract CardStackToken is ERC20,
    *
    * Please use `increaseApproval` or `decreaseApproval` instead.
    */
-  function approve(address spender, uint256 value) public unlessFrozen unlessUpgraded returns (bool) {
-    require(spender != address(0));
-    require(!frozenAccount[spender]);
-    require(msg.sender != spender);
+  function approve(address spender, uint256 value) public unlessFrozen returns (bool) {
+    require(value == 0 || allowance(msg.sender, spender) == 0);
 
-    externalStorage.setAllowance(msg.sender, spender, value);
-
-    emit Approval(msg.sender, spender, value);
-    return true;
+    return _approve(spender, value);
   }
 
-  function increaseApproval(address spender, uint256 addedValue) public unlessFrozen unlessUpgraded returns (bool) {
-    return approve(spender, externalStorage.getAllowance(msg.sender, spender).add(addedValue));
+  function increaseApproval(address spender, uint256 addedValue) public unlessFrozen returns (bool) {
+    return _approve(spender, externalStorage.getAllowance(msg.sender, spender).add(addedValue));
   }
 
-  function decreaseApproval(address spender, uint256 subtractedValue) public unlessFrozen unlessUpgraded returns (bool) {
+  function decreaseApproval(address spender, uint256 subtractedValue) public unlessFrozen returns (bool) {
     uint256 oldValue = externalStorage.getAllowance(msg.sender, spender);
 
     if (subtractedValue > oldValue) {
-      return approve(spender, 0);
+      return _approve(spender, 0);
     } else {
-      return approve(spender, oldValue.sub(subtractedValue));
+      return _approve(spender, oldValue.sub(subtractedValue));
     }
   }
 
@@ -1147,7 +955,7 @@ contract CardStackToken is ERC20,
                              uint256 startDate, // 0 indicates start "now"
                              uint256 cliffSec,
                              uint256 durationSec,
-                             bool isRevocable) public onlySuperAdmins unlessUpgraded returns(bool) {
+                             bool isRevocable) public onlySuperAdmins returns(bool) {
 
     uint256 _circulationCap = externalStorage.getCirculationCap();
 
@@ -1157,27 +965,26 @@ contract CardStackToken is ERC20,
     require(totalInCirculation().add(fullyVestedAmount) <= _circulationCap);
     require(fullyVestedAmount <= tokensAvailable());
 
-    uint256 _now = now;
-    if (startDate == 0) {
-      startDate = _now;
+    uint256 _startDate = startDate;
+    if (_startDate == 0) {
+      _startDate = now;
     }
 
-    uint256 cliffDate = startDate.add(cliffSec);
+    uint256 cliffDate = _startDate.add(cliffSec);
 
     externalStorage.setVestingSchedule(beneficiary,
                                        fullyVestedAmount,
-                                       startDate,
+                                       _startDate,
                                        cliffDate,
                                        durationSec,
                                        isRevocable);
 
-    emit VestedTokenGrant(beneficiary, startDate, cliffDate, durationSec, fullyVestedAmount, isRevocable);
+    emit VestedTokenGrant(beneficiary, _startDate, cliffDate, durationSec, fullyVestedAmount, isRevocable);
 
     return true;
   }
 
-
-  function revokeVesting(address beneficiary) public onlySuperAdmins unlessUpgraded returns (bool) {
+  function revokeVesting(address beneficiary) public onlySuperAdmins returns (bool) {
     require(beneficiary != address(0));
     externalStorage.revokeVesting(beneficiary);
 
@@ -1188,11 +995,11 @@ contract CardStackToken is ERC20,
     return true;
   }
 
-  function releaseVestedTokens() public unlessFrozen unlessUpgraded returns (bool) {
+  function releaseVestedTokens() public unlessFrozen returns (bool) {
     return releaseVestedTokensForBeneficiary(msg.sender);
   }
 
-  function releaseVestedTokensForBeneficiary(address beneficiary) public unlessFrozen unlessUpgraded returns (bool) {
+  function releaseVestedTokensForBeneficiary(address beneficiary) public unlessFrozen returns (bool) {
     require(beneficiary != address(0));
     require(!frozenAccount[beneficiary]);
 
@@ -1210,32 +1017,118 @@ contract CardStackToken is ERC20,
     return true;
   }
 
-  function releasableAmount(address beneficiary) public view unlessUpgraded returns (uint256) {
+  function setCustomBuyer(address buyer, uint256 balanceLimit) public onlySuperAdmins returns (bool) {
+    require(buyer != address(0));
+    externalStorage.setCustomBuyerLimit(buyer, balanceLimit);
+    addBuyer(buyer);
+
+    return true;
+  }
+
+  function setContributionMinimum(uint256 _contributionMinimum) public onlySuperAdmins returns (bool) {
+    contributionMinimum = _contributionMinimum;
+    return true;
+  }
+
+  function addBuyer(address buyer) public onlySuperAdmins returns (bool) {
+    require(buyer != address(0));
+    externalStorage.setApprovedBuyer(buyer, true);
+
+    uint256 balanceLimit = externalStorage.getCustomBuyerLimit(buyer);
+    if (balanceLimit == 0) {
+      balanceLimit = externalStorage.getBalanceLimit();
+    }
+
+    emit WhiteList(buyer, balanceLimit);
+
+    return true;
+  }
+
+  function removeBuyer(address buyer) public onlySuperAdmins returns (bool) {
+    require(buyer != address(0));
+    externalStorage.setApprovedBuyer(buyer, false);
+
+    emit RemoveWhitelistedBuyer(buyer);
+    return true;
+  }
+
+  function name() public view returns(string) {
+    return bytes32ToString(externalStorage.getTokenName());
+  }
+
+  function symbol() public view returns(string) {
+    return bytes32ToString(externalStorage.getTokenSymbol());
+  }
+
+  function totalInCirculation() public view returns(uint256) {
+    return tokenLedger.totalInCirculation().add(totalUnvestedAndUnreleasedTokens());
+  }
+
+  function cstBalanceLimit() public view returns(uint256) {
+    return externalStorage.getBalanceLimit();
+  }
+
+  function buyPrice() public view returns(uint256) {
+    return externalStorage.getBuyPrice();
+  }
+
+  function circulationCap() public view returns(uint256) {
+    return externalStorage.getCirculationCap();
+  }
+
+  // intentionally allowing this to be visible if upgraded so foundation can
+  // withdraw funds from contract that has a successor
+  function foundation() public view returns(address) {
+    return externalStorage.getFoundation();
+  }
+
+  function totalSupply() public view returns(uint256) {
+    return tokenLedger.totalTokens();
+  }
+
+  function tokensAvailable() public view returns(uint256) {
+    return totalSupply().sub(totalInCirculation());
+  }
+
+  function balanceOf(address account) public view returns (uint256) {
+    address thisAddress = this;
+    if (thisAddress == account) {
+      return tokensAvailable();
+    } else {
+      return tokenLedger.balanceOf(account);
+    }
+  }
+
+  function allowance(address _owner, address _spender) public view returns (uint256) {
+    return externalStorage.getAllowance(_owner, _spender);
+  }
+
+  function releasableAmount(address beneficiary) public view returns (uint256) {
     return externalStorage.releasableAmount(beneficiary);
   }
 
-  function totalUnvestedAndUnreleasedTokens() public view unlessUpgraded returns (uint256) {
+  function totalUnvestedAndUnreleasedTokens() public view returns (uint256) {
     return externalStorage.getTotalUnvestedAndUnreleasedTokens();
   }
 
-  function vestingMappingSize() public view unlessUpgraded returns (uint256) {
+  function vestingMappingSize() public view returns (uint256) {
     return externalStorage.vestingMappingSize();
   }
 
-  function vestingBeneficiaryForIndex(uint256 index) public view unlessUpgraded returns (address) {
+  function vestingBeneficiaryForIndex(uint256 index) public view returns (address) {
     return externalStorage.vestingBeneficiaryForIndex(index);
   }
 
   function vestingSchedule(address _beneficiary) public
-                                                 view unlessUpgraded returns (uint256 startDate,
-                                                                              uint256 cliffDate,
-                                                                              uint256 durationSec,
-                                                                              uint256 fullyVestedAmount,
-                                                                              uint256 vestedAmount,
-                                                                              uint256 vestedAvailableAmount,
-                                                                              uint256 releasedAmount,
-                                                                              uint256 revokeDate,
-                                                                              bool isRevocable) {
+                                                 view returns (uint256 startDate,
+                                                               uint256 cliffDate,
+                                                               uint256 durationSec,
+                                                               uint256 fullyVestedAmount,
+                                                               uint256 vestedAmount,
+                                                               uint256 vestedAvailableAmount,
+                                                               uint256 releasedAmount,
+                                                               uint256 revokeDate,
+                                                               bool isRevocable) {
     (
       startDate,
       cliffDate,
@@ -1262,24 +1155,6 @@ contract CardStackToken is ERC20,
     return externalStorage.getCustomBuyerForIndex(index);
   }
 
-  function setCustomBuyer(address buyer, uint256 balanceLimit) public onlySuperAdmins unlessUpgraded returns (bool) {
-    require(buyer != address(0));
-    externalStorage.setCustomBuyerLimit(buyer, balanceLimit);
-    addBuyer(buyer);
-
-    return true;
-  }
-
-  function setAllowTransfers(bool _allowTransfers) public onlySuperAdmins unlessUpgraded returns (bool) {
-    allowTransfers = _allowTransfers;
-    return true;
-  }
-
-  function setContributionMinimum(uint256 _contributionMinimum) public onlySuperAdmins unlessUpgraded returns (bool) {
-    contributionMinimum = _contributionMinimum;
-    return true;
-  }
-
   function totalBuyersMapping() public view returns (uint256) {
     return externalStorage.getApprovedBuyerMappingCount();
   }
@@ -1292,58 +1167,119 @@ contract CardStackToken is ERC20,
     return externalStorage.getApprovedBuyerForIndex(index);
   }
 
-  function addBuyer(address buyer) public onlySuperAdmins unlessUpgraded returns (bool) {
-    require(buyer != address(0));
-    externalStorage.setApprovedBuyer(buyer, true);
+  function _initialize(address _registry, string _storageName, string _ledgerName) internal isInitializer {
+    require(_registry != address(0));
 
-    uint256 balanceLimit = externalStorage.getCustomBuyerLimit(buyer);
-    if (balanceLimit == 0) {
-      balanceLimit = externalStorage.getBalanceLimit();
-    }
+    storageName = _storageName;
+    ledgerName = _ledgerName;
+    registry = _registry;
 
-    emit WhiteList(buyer, balanceLimit);
+    addSuperAdmin(registry);
 
+    emit Transfer(address(0), this, 0); // create ERC-20 signature for etherscan.io
+  }
+
+  function _approve(address spender, uint256 value) internal unlessFrozen returns(bool) {
+    require(spender != address(0));
+    require(!frozenAccount[spender]);
+    require(msg.sender != spender);
+
+    externalStorage.setAllowance(msg.sender, spender, value);
+
+    emit Approval(msg.sender, spender, value);
     return true;
   }
 
-  function removeBuyer(address buyer) public onlySuperAdmins unlessUpgraded returns (bool) {
-    require(buyer != address(0));
-    externalStorage.setApprovedBuyer(buyer, false);
-
-    return true;
-  }
-
-  function totalTransferWhitelistMapping() public view returns (uint256) {
-    return whitelistedTransfererForIndex.length;
-  }
-
-  function setWhitelistedTransferer(address transferer, bool _allowTransfers) public onlySuperAdmins unlessUpgraded returns (bool) {
-    require(transferer != address(0));
-    whitelistedTransferer[transferer] = _allowTransfers;
-    if (!processedWhitelistedTransferer[transferer]) {
-      whitelistedTransfererForIndex.push(transferer);
-      processedWhitelistedTransferer[transferer] = true;
-    }
-
-    return true;
-  }
 }
 
-contract Registry is administratable, upgradeable {
+interface ITokenLedger {
+  function mintTokens(uint256 amount) external;
+  function transfer(address sender, address reciever, uint256 amount) external;
+  function creditAccount(address account, uint256 amount) external;
+  function debitAccount(address account, uint256 amount) external;
+  function addAdmin(address admin) external;
+  function removeAdmin(address admin) external;
+  function totalTokens() external view returns (uint256);
+  function totalInCirculation() external view returns (uint256);
+  function balanceOf(address account) external view returns (uint256);
+}
+
+contract CstLedger is ITokenLedger, Initializable, Administratable {
+
   using SafeMath for uint256;
 
-  bytes4 constant INTERFACE_META_ID = 0x01ffc9a7;
-  bytes4 constant ADDR_INTERFACE_ID = 0x3b3b57de;
-  bytes32 constant BARE_DOMAIN_NAMEHASH = 0x794941fae74d6435d1b29ee1c08cc39941ba78470872e6afd0693c7eeb63025c; // namehash for "cardstack.eth"
+  /* zOS requires that the variables are never removed nor order changed
+  /* BEGIN VARIABLES */
+  string public constant version = "2";
 
+  uint256 private _totalInCirculation; // warning this does not take into account unvested nor vested-unreleased tokens into consideration
+  uint256 private _totalTokens;
+  mapping (address => uint256) private _balanceOf;
+  mapping (address => bool) private accounts;
+  /* END VARIABLES */
+
+  function transfer(address sender, address recipient, uint256 amount) external onlyAdmins {
+    require(sender != address(0));
+    require(recipient != address(0));
+    require(_balanceOf[sender] >= amount);
+
+    _balanceOf[sender] = _balanceOf[sender].sub(amount);
+    _balanceOf[recipient] = _balanceOf[recipient].add(amount);
+  }
+
+  function creditAccount(address account, uint256 amount) external onlyAdmins { // remove tokens
+    require(account != address(0));
+    require(_balanceOf[account] >= amount);
+
+    _totalInCirculation = _totalInCirculation.sub(amount);
+    _balanceOf[account] = _balanceOf[account].sub(amount);
+  }
+
+  function debitAccount(address account, uint256 amount) external onlyAdmins { // add tokens
+    require(account != address(0));
+    _totalInCirculation = _totalInCirculation.add(amount);
+    _balanceOf[account] = _balanceOf[account].add(amount);
+  }
+
+  function totalTokens() external view returns (uint256) {
+    return _totalTokens;
+  }
+
+  function totalInCirculation() external view returns (uint256) {
+    return _totalInCirculation;
+  }
+
+  function balanceOf(address account) external view returns (uint256) {
+    return _balanceOf[account];
+  }
+
+  function mintTokens(uint256 amount) external onlyAdmins {
+    _totalTokens = _totalTokens.add(amount);
+  }
+
+  function initialize() public onlyInitializers isInitializer {
+    initializeAdmins();
+  }
+
+}
+
+contract Registry is Initializable, Administratable {
+  using SafeMath for uint256;
+
+  /* zOS requires that the variables are never removed nor order changed
+  /* BEGIN VARIABLES */
+  string public constant version = "2";
+  bytes4 private constant INTERFACE_META_ID = 0x01ffc9a7;
+  bytes4 private constant ADDR_INTERFACE_ID = 0x3b3b57de;
+  bytes32 private constant BARE_DOMAIN_NAMEHASH = 0x794941fae74d6435d1b29ee1c08cc39941ba78470872e6afd0693c7eeb63025c; // namehash for "cardstack.eth"
   mapping(bytes32 => address) public storageForHash;
   mapping(bytes32 => address) public contractForHash;
   mapping(bytes32 => bytes32) public hashForNamehash;
   mapping(bytes32 => bytes32) public namehashForHash;
   string[] public contractNameForIndex;
+  /* END VARIABLES */
 
   event ContractRegistered(address indexed _contract, string _name, bytes32 namehash);
-  event ContractUpgraded(address indexed successor, address indexed predecessor, string name, bytes32 namehash);
   event StorageAdded(address indexed storageAddress, string name);
   event StorageRemoved(address indexed storageAddress, string name);
   event AddrChanged(bytes32 indexed node, address a);
@@ -1352,24 +1288,7 @@ contract Registry is administratable, upgradeable {
     revert();
   }
 
-  function supportsInterface(bytes4 interfaceId) public pure returns (bool) {
-    return interfaceId == ADDR_INTERFACE_ID ||
-           interfaceId == INTERFACE_META_ID;
-  }
-
-  function addr(bytes32 node) public view returns (address) {
-    return contractForHash[hashForNamehash[node]];
-  }
-
-  function getContractHash(string name) public view unlessUpgraded returns (bytes32) {
-    return keccak256(abi.encodePacked(name));
-  }
-
-  function numContracts() public view returns(uint256) {
-    return contractNameForIndex.length;
-  }
-
-  function setNamehash(string contractName, bytes32 namehash) external onlySuperAdmins unlessUpgraded returns (bool) {
+  function setNamehash(string contractName, bytes32 namehash) external onlySuperAdmins returns (bool) {
     require(namehash != 0x0);
 
     bytes32 hash = keccak256(abi.encodePacked(contractName));
@@ -1384,7 +1303,7 @@ contract Registry is administratable, upgradeable {
     emit AddrChanged(namehash, contractAddress);
   }
 
-  function register(string name, address contractAddress, bytes32 namehash) external onlySuperAdmins unlessUpgraded returns (bool) {
+  function register(string name, address contractAddress, bytes32 namehash) external onlySuperAdmins returns (bool) {
     bytes32 hash = keccak256(abi.encodePacked(name));
     require(bytes(name).length > 0);
     require(contractAddress != 0x0);
@@ -1409,7 +1328,7 @@ contract Registry is administratable, upgradeable {
       CstLedger(ledgerAddress).addAdmin(contractAddress);
     }
 
-    configurable(contractAddress).configureFromStorage();
+    Configurable(contractAddress).configureFromStorage();
 
     emit ContractRegistered(contractAddress, name, namehash);
 
@@ -1420,60 +1339,7 @@ contract Registry is administratable, upgradeable {
     return true;
   }
 
-  function upgradeContract(string name, address successor) external onlySuperAdmins unlessUpgraded returns (bytes32) {
-    bytes32 hash = keccak256(abi.encodePacked(name));
-    require(successor != 0x0);
-    require(contractForHash[hash] != 0x0);
-
-    address predecessor = contractForHash[hash];
-    require(freezable(predecessor).frozenToken());
-
-    contractForHash[hash] = successor;
-
-    uint256 remainingContractBalance;
-    // we need https://github.com/ethereum/EIPs/issues/165
-    // to be able to see if a contract is ERC20 or not...
-    if (hash == keccak256("cst")) {
-      remainingContractBalance = ERC20(predecessor).balanceOf(predecessor);
-    }
-
-    upgradeable(predecessor).upgradeTo(successor,
-                                       remainingContractBalance);
-    upgradeable(successor).upgradedFrom(predecessor);
-
-    address successorStorageAddress = storageForHash[IStorable(successor).getStorageNameHash()];
-    address successorLedgerAddress = storageForHash[IStorable(successor).getLedgerNameHash()];
-    address predecessorStorageAddress = storageForHash[IStorable(predecessor).getStorageNameHash()];
-    address predecessorLedgerAddress = storageForHash[IStorable(predecessor).getLedgerNameHash()];
-
-    if (successorStorageAddress != 0x0) {
-      ExternalStorage(successorStorageAddress).addAdmin(successor);
-    }
-    if (predecessorStorageAddress != 0x0) {
-      ExternalStorage(predecessorStorageAddress).removeAdmin(predecessor);
-    }
-
-    if (successorLedgerAddress != 0x0) {
-      CstLedger(successorLedgerAddress).addAdmin(successor);
-    }
-    if (predecessorLedgerAddress != 0x0) {
-      CstLedger(predecessorLedgerAddress).removeAdmin(predecessor);
-    }
-
-    configurable(successor).configureFromStorage();
-
-    if (hashForNamehash[BARE_DOMAIN_NAMEHASH] == hash) {
-      emit AddrChanged(BARE_DOMAIN_NAMEHASH, successor);
-    }
-    if (namehashForHash[hash] != 0x0 && namehashForHash[hash] != BARE_DOMAIN_NAMEHASH) {
-      emit AddrChanged(namehashForHash[hash], successor);
-    }
-
-    emit ContractUpgraded(successor, predecessor, name, namehashForHash[hash]);
-    return hash;
-  }
-
-  function addStorage(string name, address storageAddress) external onlySuperAdmins unlessUpgraded {
+  function addStorage(string name, address storageAddress) external onlySuperAdmins {
     require(storageAddress != address(0));
     bytes32 hash = keccak256(abi.encodePacked(name));
     storageForHash[hash] = storageAddress;
@@ -1481,14 +1347,35 @@ contract Registry is administratable, upgradeable {
     emit StorageAdded(storageAddress, name);
   }
 
-  function getStorage(string name) public view unlessUpgraded returns (address) {
-    return storageForHash[keccak256(abi.encodePacked(name))];
+  function initialize() public onlyInitializers isInitializer {
+    initializeAdmins();
   }
 
-  function removeStorage(string name) public onlySuperAdmins unlessUpgraded {
+  function removeStorage(string name) public onlySuperAdmins {
     address storageAddress = storageForHash[keccak256(abi.encodePacked(name))];
     delete storageForHash[keccak256(abi.encodePacked(name))];
 
     emit StorageRemoved(storageAddress, name);
+  }
+
+  function getStorage(string name) public view returns (address) {
+    return storageForHash[keccak256(abi.encodePacked(name))];
+  }
+
+  function addr(bytes32 node) public view returns (address) {
+    return contractForHash[hashForNamehash[node]];
+  }
+
+  function numContracts() public view returns(uint256) {
+    return contractNameForIndex.length;
+  }
+
+  function getContractHash(string name) public pure returns (bytes32) {
+    return keccak256(abi.encodePacked(name));
+  }
+
+  function supportsInterface(bytes4 interfaceId) public pure returns (bool) {
+    return interfaceId == ADDR_INTERFACE_ID ||
+           interfaceId == INTERFACE_META_ID;
   }
 }
