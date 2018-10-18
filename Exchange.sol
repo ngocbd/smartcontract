@@ -1,39 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Exchange at 0x51c46c33064a9d7171dbdbfc65c3bf2d2ef688a4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Exchange at 0x9e75153a78f1f61fe2e87d7ecdf9eb2aab01a3aa
 */
-pragma solidity ^0.4.21;
-
-/*
-* Wall Street Market presents......
-
- _       __      ____   _____ __                 __     ______          __                         
-| |     / /___ _/ / /  / ___// /_________  ___  / /_   / ____/  _______/ /_  ____ _____  ____ ____ 
-| | /| / / __ `/ / /   \__ \/ __/ ___/ _ \/ _ \/ __/  / __/ | |/_/ ___/ __ \/ __ `/ __ \/ __ `/ _ \
-| |/ |/ / /_/ / / /   ___/ / /_/ /  /  __/  __/ /_   / /____>  </ /__/ / / / /_/ / / / / /_/ /  __/
-|__/|__/\__,_/_/_/   /____/\__/_/   \___/\___/\__/  /_____/_/|_|\___/_/ /_/\__,_/_/ /_/\__, /\___/ 
-                                                                                      /____/       
-
-
-website:    https://wallstreetmarket.tk
-
-discord:    https://discord.gg/8AFP9gS
-
-25% Dividends Fees/Payouts
-
-5% of Buy In Fee Goes into the Bond Market Contract for Distribution to Bond holders
-
-Referral Program pays out 33% of Buy-in/Sell Fees to user of masternode link
-
-*/
-
-
-
-
+pragma solidity ^0.4.25;
 
 contract AcceptsExchange {
     Exchange public tokenContract;
 
-    function AcceptsExchange(address _tokenContract) public {
+    constructor(address _tokenContract) public {
         tokenContract = Exchange(_tokenContract);
     }
 
@@ -89,7 +62,6 @@ contract Exchange {
         _;
     }
 
- 
     /*==============================
     =            EVENTS            =
     ==============================*/
@@ -128,27 +100,23 @@ contract Exchange {
     /*=====================================
     =            CONFIGURABLES            =
     =====================================*/
-    string public name = "WallStreetExchange";
-    string public symbol = "STOCK";
+    string public name = "Nasdaq";
+    string public symbol = "SHARES";
     uint8 constant public decimals = 18;
-
+    uint8 constant internal dividendFee_ = 20; // 20% dividend fee on each buy and sell
+    uint8 constant internal fundFee_ = 5; // 5% to bond game
     uint256 constant internal tokenPriceInitial_ = 0.00000001 ether;
     uint256 constant internal tokenPriceIncremental_ = 0.000000001 ether;
     uint256 constant internal magnitude = 2**64;
 
-   
+    // Address to send the 5% Fee
+    address public giveEthFundAddress = 0x0;
+    bool public finalizedEthFundAddress = false;
     uint256 public totalEthFundRecieved; // total ETH charity recieved from this contract
     uint256 public totalEthFundCollected; // total ETH charity collected in this contract
 
-    // proof of stake (defaults at 25 tokens)
+    // proof of stake (defaults at 100 tokens)
     uint256 public stakingRequirement = 25e18;
-
-    // ambassador program
-    mapping(address => bool) internal ambassadors_;
-    uint256 constant internal ambassadorMaxPurchase_ = 2.5 ether;
-    uint256 constant internal ambassadorQuota_ = 2.5 ether;
-
-
 
    /*================================
     =            DATASETS            =
@@ -157,29 +125,16 @@ contract Exchange {
     mapping(address => uint256) internal tokenBalanceLedger_;
     mapping(address => uint256) internal referralBalance_;
     mapping(address => int256) internal payoutsTo_;
-    mapping(address => uint256) internal ambassadorAccumulatedQuota_;
     uint256 internal tokenSupply_ = 0;
     uint256 internal profitPerShare_;
-
-
-    uint8 internal dividendFee_ = 20; // 20% dividend fee on each buy and sell
-    uint8 internal fundFee_ = 5; // 5% bond fund fee on each buy and sell
-    uint8 internal altFundFee_ = 0; // Fund fee rate on each buy and sell for future game
-
 
     // administrator list (see above on what they can do)
     mapping(address => bool) public administrators;
 
-    // when this is set to true, only ambassadors can purchase tokens (this prevents a whale premine, it ensures a fairly distributed upper pyramid)
-    bool public onlyAmbassadors = true;
-
-    // Special Wall Street Market Platform control from scam game contracts on Wall Street Market platform
-    mapping(address => bool) public canAcceptTokens_; // contracts, which can accept Wall Street tokens
+    // To whitelist game contracts on the platform
+    mapping(address => bool) public canAcceptTokens_; // contracts, which can accept the exchanges tokens
 
     mapping(address => address) public stickyRef;
-
-     address public bondFundAddress = 0x1822435de9b923a7a8c4fbd2f6d0aa8f743d3010;   //Bond Fund
-     address public altFundAddress = 0x1822435de9b923a7a8c4fbd2f6d0aa8f743d3010;    //Alternate Fund for Future Game
 
     /*=======================================
     =            PUBLIC FUNCTIONS            =
@@ -187,12 +142,14 @@ contract Exchange {
     /*
     * -- APPLICATION ENTRY POINTS --
     */
-    function Exchange()
+    constructor()
         public
     {
         // add administrators here
-        administrators[msg.sender] = true;
+        administrators[0x7191cbD8BBCacFE989aa60FB0bE85B47f922FE21] = true;
     }
+
+
     /**
      * Converts all incoming ethereum to tokens for the caller, and passes down the referral addy (if any)
      */
@@ -201,7 +158,7 @@ contract Exchange {
         payable
         returns(uint256)
     {
-        
+
         require(tx.gasprice <= 0.05 szabo);
         purchaseTokens(msg.value, _referredBy);
     }
@@ -214,44 +171,35 @@ contract Exchange {
         payable
         public
     {
-        
+
         require(tx.gasprice <= 0.05 szabo);
         purchaseTokens(msg.value, 0x0);
     }
 
-    /**
-     * Sends Bondf Fund ether to the bond contract
-     * 
-     */
-    function payFund() payable public 
-    onlyAdministrator()
+    function updateFundAddress(address _newAddress)
+        onlyAdministrator()
+        public
     {
-        
+        require(finalizedEthFundAddress == false);
+        giveEthFundAddress = _newAddress;
+    }
 
-        uint256 _bondEthToPay = 0;
+    function finalizeFundAddress(address _finalAddress)
+        onlyAdministrator()
+        public
+    {
+        require(finalizedEthFundAddress == false);
+        giveEthFundAddress = _finalAddress;
+        finalizedEthFundAddress = true;
+    }
 
+    function payFund() payable public {
         uint256 ethToPay = SafeMath.sub(totalEthFundCollected, totalEthFundRecieved);
-        require(ethToPay > 1);
-
-        uint256 altEthToPay = SafeMath.div(SafeMath.mul(ethToPay,altFundFee_),100);
-        if (altFundFee_ > 0){
-            _bondEthToPay = SafeMath.sub(ethToPay,altEthToPay);
-        } else{
-            _bondEthToPay = 0;
-        }
-
-        
+        require(ethToPay > 0);
         totalEthFundRecieved = SafeMath.add(totalEthFundRecieved, ethToPay);
-        if(!bondFundAddress.call.value(_bondEthToPay).gas(400000)()) {
-            totalEthFundRecieved = SafeMath.sub(totalEthFundRecieved, _bondEthToPay);
+        if(!giveEthFundAddress.call.value(ethToPay)()) {
+            revert();
         }
-
-        if(altEthToPay > 0){
-            if(!altFundAddress.call.value(altEthToPay).gas(400000)()) {
-                totalEthFundRecieved = SafeMath.sub(totalEthFundRecieved, altEthToPay);
-            }
-        }
-      
     }
 
     /**
@@ -276,7 +224,7 @@ contract Exchange {
         uint256 _tokens = purchaseTokens(_dividends, 0x0);
 
         // fire event
-        onReinvestment(_customerAddress, _dividends, _tokens);
+        emit onReinvestment(_customerAddress, _dividends, _tokens);
     }
 
     /**
@@ -316,7 +264,7 @@ contract Exchange {
         _customerAddress.transfer(_dividends);
 
         // fire event
-        onWithdraw(_customerAddress, _dividends);
+        emit onWithdraw(_customerAddress, _dividends);
     }
 
     /**
@@ -335,7 +283,6 @@ contract Exchange {
 
         uint256 _dividends = SafeMath.div(SafeMath.mul(_ethereum, dividendFee_), 100);
         uint256 _fundPayout = SafeMath.div(SafeMath.mul(_ethereum, fundFee_), 100);
-        
         uint256 _refPayout = _dividends / 3;
         _dividends = SafeMath.sub(_dividends, _refPayout);
         (_dividends,) = handleRef(stickyRef[msg.sender], _refPayout, _dividends, 0);
@@ -361,7 +308,7 @@ contract Exchange {
         }
 
         // fire event
-        onTokenSell(_customerAddress, _tokens, _taxedEthereum);
+        emit onTokenSell(_customerAddress, _tokens, _taxedEthereum);
     }
 
 
@@ -395,7 +342,7 @@ contract Exchange {
 
 
         // fire event
-        Transfer(_customerAddress, _toAddress, _amountOfTokens);
+        emit Transfer(_customerAddress, _toAddress, _amountOfTokens);
 
         // ERC20
         return true;
@@ -411,7 +358,7 @@ contract Exchange {
     */
     function transferAndCall(address _to, uint256 _value, bytes _data) external returns (bool) {
       require(_to != address(0));
-      require(canAcceptTokens_[_to] == true); // security check that contract approved by Wall Street Exchange platform
+      require(canAcceptTokens_[_to] == true); // security check that contract approved by the exchange
       require(transfer(_to, _value)); // do a normal token transfer to the contract
 
       if (isContract(_to)) {
@@ -435,45 +382,6 @@ contract Exchange {
 
     /*----------  ADMINISTRATOR ONLY FUNCTIONS  ----------*/
     /**
-     * In case the amassador quota is not met, the administrator can manually disable the ambassador phase.
-     */
-    //function disableInitialStage()
-    //    onlyAdministrator()
-    //    public
-    //{
-    //    onlyAmbassadors = false;
-    //}
-
-    
-  
-    function setBondFundAddress(address _newBondFundAddress)
-        onlyAdministrator()
-        public
-    {
-        bondFundAddress = _newBondFundAddress;
-    }
-
-    
-    function setAltFundAddress(address _newAltFundAddress)
-        onlyAdministrator()
-        public
-    {
-        altFundAddress = _newAltFundAddress;
-    }
-
-
-    /**
-     * Set fees/rates
-     */
-    function setFeeRates(uint8 _newDivRate, uint8 _newFundFee, uint8 _newAltRate)
-        onlyAdministrator()
-        public
-    {
-        dividendFee_ = _newDivRate;
-        fundFee_ = _newFundFee;
-        altFundFee_ = _newAltRate;
-    }
-
 
     /**
      * In case one of us dies, we need to replace ourselves.
@@ -496,7 +404,7 @@ contract Exchange {
     }
 
     /**
-     * Add or remove game contract, which can accept Wall Street Market tokens
+     * Add or remove game contract, which can accept tokens
      */
     function setCanAcceptTokens(address _address, bool _value)
       onlyAdministrator()
@@ -536,7 +444,7 @@ contract Exchange {
         view
         returns(uint)
     {
-        return this.balance;
+        return address(this).balance;
     }
 
     /**
@@ -685,7 +593,7 @@ contract Exchange {
     =            INTERNAL FUNCTIONS            =
     ==========================================*/
 
-    // Make sure we will send back excess if user sends more then 5 ether before 10 ETH in contract
+    // Make sure we will send back excess if user sends more then 5 ether before 100 ETH in contract
     function purchaseInternal(uint256 _incomingEthereum, address _referredBy)
       notContract()// no contracts allowed
       internal
@@ -694,7 +602,7 @@ contract Exchange {
       uint256 purchaseEthereum = _incomingEthereum;
       uint256 excess;
       if(purchaseEthereum > 2.5 ether) { // check if the transaction is over 2.5 ether
-          if (SafeMath.sub(address(this).balance, purchaseEthereum) <= 10 ether) { // if so check the contract is less then 100 ether
+          if (SafeMath.sub(address(this).balance, purchaseEthereum) <= 100 ether) { // if so check the contract is less then 100 ether
               purchaseEthereum = 2.5 ether;
               excess = SafeMath.sub(_incomingEthereum, purchaseEthereum);
           }
@@ -747,8 +655,8 @@ contract Exchange {
                 _dividends = SafeMath.add(_dividends, _referralBonus - _referralBonus/2);
                 _fee = _dividends * magnitude;
             }
-            
-            
+
+
         } else {
             // no ref purchase
             // add the referral bonus back to the global dividends cake
@@ -760,7 +668,6 @@ contract Exchange {
 
 
     function purchaseTokens(uint256 _incomingEthereum, address _referredBy)
-       
         internal
         returns(uint256)
     {
@@ -777,7 +684,7 @@ contract Exchange {
         uint256 _amountOfTokens = ethereumToTokens_(_taxedEthereum);
 
 
-        // no point in continuing execution if OP is a poorfag russian hacker
+        // no point in continuing execution if OP is a poor russian hacker
         // prevents overflow in the case that the pyramid somehow magically starts being used by everyone in the world
         // (or hackers)
         // and yes we know that the safemath function automatically rules out the "greater then" equasion.
@@ -787,7 +694,7 @@ contract Exchange {
 
         // we can't give people infinite ethereum
         if(tokenSupply_ > 0){
- 
+
             // add tokens to the pool
             tokenSupply_ = SafeMath.add(tokenSupply_, _amountOfTokens);
 
@@ -811,7 +718,7 @@ contract Exchange {
         payoutsTo_[msg.sender] += _updatedPayouts;
 
         // fire event
-        onTokenPurchase(msg.sender, _incomingEthereum, _amountOfTokens, _referredBy);
+        emit onTokenPurchase(msg.sender, _incomingEthereum, _amountOfTokens, _referredBy);
 
         return _amountOfTokens;
     }
