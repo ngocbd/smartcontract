@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZUR at 0x8218a33eb15901ce71b3b8123e58b7e312ce638a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZUR at 0x3a4b527dcd618ccea50adb32b3369117e5442a2f
 */
 pragma solidity ^0.4.24;
 
@@ -388,12 +388,11 @@ contract MintableToken is StandardToken, Ownable {
 contract ZUR is MintableToken {
   using SafeMath for uint;
 
-  string public constant name = "ZUR Check by Zurcoin";
-  string public constant symbol = "ZUR";
+  string public constant name = "Zur Drafts by Zurcoin Core";
+  string public constant symbol = "ZUR-D";
   uint8 public constant decimals = 0;
 
   address public admin;
-  uint public cap = 35*10**13;
   uint public totalEthReleased = 0;
 
   mapping(address => uint) public ethReleased;
@@ -432,7 +431,7 @@ contract ZUR is MintableToken {
     uint totalReceived = address(this).balance.add(totalEthReleased);
     uint payment = totalReceived.mul(
       balances[payee]).div(
-        cap).sub(
+        totalSupply_).sub(
           ethReleased[payee]
     );
 
@@ -490,7 +489,7 @@ contract ZUR is MintableToken {
     uint totalReceived = Token.balanceOf(address(this)).add(totalTokensReleased[address(Token)]);
     uint payment = totalReceived.mul(
       balances[payee]).div(
-        cap).sub(
+        totalSupply_).sub(
           tokensReleased[address(Token)][payee]
     );
     return payment;
