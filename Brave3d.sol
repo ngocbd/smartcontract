@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Brave3d at 0xa189f0456961b8cdc2b02a887fc21ac09c8b7ee3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Brave3d at 0x2df5be73b0bf30e1dcb65460ee7e6f6617d709ef
 */
 pragma solidity ^0.4.25;
 
@@ -198,14 +198,6 @@ contract Brave3d {
 
         msg.sender.transfer(amount);
 
-        overStage(1);
-        overStage(5);
-        overStage(10);
-    }
-
-    function forceOverStage()
-    external
-    {
         overStage(1);
         overStage(5);
         overStage(10);
