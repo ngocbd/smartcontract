@@ -1,107 +1,106 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TopToken at 0x0e6bb94b7f25b96f13e0baf5bc04b8ba39b897a8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TOPToken at 0x1a2b6dcd99e8d2d9d84e2fd176494c078e11e435
 */
-pragma solidity 0.4.20;
+pragma solidity ^0.4.8;
+contract Token{
+    // token???????public??????getter????????totalSupply().
+    uint256 public totalSupply;
 
-contract TopTokenBase {
-    uint256                                            _supply;
-    mapping (address => uint256)                       _balances;
-    
-    event Transfer( address indexed from, address indexed to, uint256 value);
+    /// ????_owner??token??? 
+    function balanceOf(address _owner) constant returns (uint256 balance);
 
-    function TopTokenBase() public {    }
-    
-    function totalSupply() public view returns (uint256) {
-        return _supply;
-    }
-    function balanceOf(address src) public view returns (uint256) {
-        return _balances[src];
-    }
-    
-    function transfer(address dst, uint256 wad) public returns (bool) {
-        require(_balances[msg.sender] >= wad);
-        
-        _balances[msg.sender] = sub(_balances[msg.sender], wad);
-        _balances[dst] = add(_balances[dst], wad);
-        
-        Transfer(msg.sender, dst, wad);
-        
-        return true;
-    }
-    
-    function add(uint256 x, uint256 y) internal pure returns (uint256) {
-        uint256 z = x + y;
-        require(z >= x && z>=y);
-        return z;
-    }
+    //??????????_to??????_value?token
+    function transfer(address _to, uint256 _value) returns (bool success);
 
-    function sub(uint256 x, uint256 y) internal pure returns (uint256) {
-        uint256 z = x - y;
-        require(x >= y && z <= x);
-        return z;
-    }
+    //???_from????_to????_value?token??approve??????
+    function transferFrom(address _from, address _to, uint256 _value) returns   
+    (bool success);
+
+    //??????????_spender????????????_value?token
+    function approve(address _spender, uint256 _value) returns (bool success);
+
+    //????_spender?????_owner???token???
+    function allowance(address _owner, address _spender) constant returns 
+    (uint256 remaining);
+
+    //????????????? 
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+
+    //???approve(address _spender, uint256 _value)????????????
+    event Approval(address indexed _owner, address indexed _spender, uint256 
+    _value);
 }
 
-contract TopToken is TopTokenBase {
-    string  public  symbol = "TOP";
-    string  public name = "Top.One Coin";
-    uint256  public  decimals = 18; 
-    uint256 public freezedValue = 640000000*(10**18);
-    uint256 public eachUnfreezeValue = 160000000*(10**18);
-    uint256 public releaseTime = 1525017600; 
-    uint256 public latestReleaseTime = 1525017600; // Apr/30/2018
-    address public owner;
-
-    struct FreezeStruct {
-        uint256 unfreezeTime;
-        bool freezed;
+contract StandardToken is Token {
+    function transfer(address _to, uint256 _value) returns (bool success) {
+        //??totalSupply ??????? (2^256 - 1).
+        //??????????????token??????????????????
+        //require(balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]);
+        require(balances[msg.sender] >= _value);
+        balances[msg.sender] -= _value;//???????????token??_value
+        balances[_to] += _value;//???????token??_value
+        Transfer(msg.sender, _to, _value);//????????
+        return true;
     }
 
-    FreezeStruct[] public unfreezeTimeMap;
 
-    function TopToken() public {
-        _supply = 20*(10**8)*(10**18);
-        _balances[0x01] = freezedValue;
-        _balances[msg.sender] = sub(_supply,freezedValue);
-        owner = msg.sender;
-
-        unfreezeTimeMap.push(FreezeStruct({unfreezeTime:1554048000, freezed: true})); // Apr/01/2019
-        unfreezeTimeMap.push(FreezeStruct({unfreezeTime:1585670400, freezed: true})); // Apr/01/2020
-        unfreezeTimeMap.push(FreezeStruct({unfreezeTime:1617206400, freezed: true})); // Apr/01/2021
-        unfreezeTimeMap.push(FreezeStruct({unfreezeTime:1648742400, freezed: true})); // Apr/01/2022
+    function transferFrom(address _from, address _to, uint256 _value) returns 
+    (bool success) {
+        //require(balances[_from] >= _value && allowed[_from][msg.sender] >= 
+        // _value && balances[_to] + _value > balances[_to]);
+        require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value);
+        balances[_to] += _value;//??????token??_value
+        balances[_from] -= _value; //????_from??token??_value
+        allowed[_from][msg.sender] -= _value;//??????????_from????????_value
+        Transfer(_from, _to, _value);//????????
+        return true;
+    }
+    function balanceOf(address _owner) constant returns (uint256 balance) {
+        return balances[_owner];
     }
 
-    function transfer(address dst, uint256 wad) public returns (bool) {
-        require (now >= releaseTime || now >= latestReleaseTime);
 
-        return super.transfer(dst, wad);
+    function approve(address _spender, uint256 _value) returns (bool success)   
+    {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
     }
 
-    function distribute(address dst, uint256 wad) public returns (bool) {
-        require(msg.sender == owner);
 
-        return super.transfer(dst, wad);
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+        return allowed[_owner][_spender];//??_spender?_owner????token?
+    }
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
+}
+
+contract TOPToken is StandardToken { 
+
+    /* Public variables of the token */
+    string public name;                   //??: eg Simon Bucks
+    uint8 public decimals;               //????????How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
+    string public symbol;               //token??: eg SBX
+    string public version = 'H0.1';    //??
+
+    function TOPToken(uint256 _initialAmount, string _tokenName, uint8 _decimalUnits, string _tokenSymbol) {
+        balances[msg.sender] = _initialAmount; // ??token?????????
+        totalSupply = _initialAmount;         // ??????
+        name = _tokenName;                   // token??
+        decimals = _decimalUnits;           // ????
+        symbol = _tokenSymbol;             // token??
     }
 
-    function setRelease(uint256 _release) public {
-        require(msg.sender == owner);
-        require(_release <= latestReleaseTime);
-
-        releaseTime = _release;
+    /* Approves and then calls the receiving contract */
+    
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
+        //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
+        //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
+        require(_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData));
+        return true;
     }
 
-    function unfreeze(uint256 i) public {
-        require(msg.sender == owner);
-        require(i>=0 && i<unfreezeTimeMap.length);
-        require(now >= unfreezeTimeMap[i].unfreezeTime && unfreezeTimeMap[i].freezed);
-        require(_balances[0x01] >= eachUnfreezeValue);
-
-        _balances[0x01] = sub(_balances[0x01], eachUnfreezeValue);
-        _balances[owner] = add(_balances[owner], eachUnfreezeValue);
-
-        freezedValue = sub(freezedValue, eachUnfreezeValue);
-        unfreezeTimeMap[i].freezed = false;
-
-        Transfer(0x01, owner, eachUnfreezeValue);
-    }
 }
