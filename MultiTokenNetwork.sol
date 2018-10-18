@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiTokenNetwork at 0x7c10de4576beb3ddf6b666092927b409c5c52e16
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiTokenNetwork at 0xae269be192e253c643e4f316c9fd7d2c56f06053
 */
 pragma solidity ^0.4.24;
 
@@ -148,10 +148,22 @@ contract Pausable is Ownable {
   }
 }
 
-// File: contracts/registry/IDeployer.sol
+// File: contracts/network/AbstractDeployer.sol
 
-contract IDeployer is Ownable {
-    function deploy(bytes data) external returns(address mtkn);
+contract AbstractDeployer is Ownable {
+    function title() public view returns(string);
+
+    function deploy(bytes data)
+        external onlyOwner returns(address result)
+    {
+        // solium-disable-next-line security/no-low-level-calls
+        require(address(this).call(data), "Arbitrary call failed");
+        // solium-disable-next-line security/no-inline-assembly
+        assembly {
+            returndatacopy(0, 0, 32)
+            result := mload(0)
+        }
+    }
 }
 
 // File: contracts/interface/IBasicMultiToken.sol
@@ -160,10 +172,9 @@ contract IBasicMultiToken is ERC20 {
     event Bundle(address indexed who, address indexed beneficiary, uint256 value);
     event Unbundle(address indexed who, address indexed beneficiary, uint256 value);
 
-    ERC20[] public tokens;
-
     function tokensCount() public view returns(uint256);
-
+    function tokens(uint i) public view returns(ERC20);
+    
     function bundleFirstTokens(address _beneficiary, uint256 _amount, uint256[] _tokenAmounts) public;
     function bundle(address _beneficiary, uint256 _amount) public;
 
@@ -180,7 +191,7 @@ contract IMultiToken is IBasicMultiToken {
     event Update();
     event Change(address indexed _fromToken, address indexed _toToken, address indexed _changer, uint256 _amount, uint256 _return);
 
-    mapping(address => uint256) public weights;
+    function weights(address _token) public view returns(uint256);
 
     function getReturn(address _fromToken, address _toToken, uint256 _amount) public view returns (uint256 returnAmount);
     function change(address _fromToken, address _toToken, uint256 _amount, uint256 _minReturn) public returns (uint256 returnAmount);
@@ -188,66 +199,91 @@ contract IMultiToken is IBasicMultiToken {
     function disableChanges() public;
 }
 
-// File: contracts/registry/MultiTokenNetwork.sol
+// File: contracts/network/MultiTokenNetwork.sol
 
 contract MultiTokenNetwork is Pausable {
+    address[] private _multitokens;
+    AbstractDeployer[] private _deployers;
 
     event NewMultitoken(address indexed mtkn);
     event NewDeployer(uint256 indexed index, address indexed oldDeployer, address indexed newDeployer);
 
-    address[] public multitokens;
-    mapping(uint256 => IDeployer) public deployers;
-
     function multitokensCount() public view returns(uint256) {
-        return multitokens.length;
+        return _multitokens.length;
+    }
+
+    function multitokens(uint i) public view returns(address) {
+        return _multitokens[i];
     }
 
     function allMultitokens() public view returns(address[]) {
-        return multitokens;
+        return _multitokens;
+    }
+
+    function deployersCount() public view returns(uint256) {
+        return _deployers.length;
+    }
+
+    function deployers(uint i) public view returns(AbstractDeployer) {
+        return _deployers[i];
     }
 
     function allWalletBalances(address wallet) public view returns(uint256[]) {
-        uint256[] memory balances = new uint256[](multitokens.length);
-        for (uint i = 0; i < multitokens.length; i++) {
-            balances[i] = ERC20(multitokens[i]).balanceOf(wallet);
+        uint256[] memory balances = new uint256[](_multitokens.length);
+        for (uint i = 0; i < _multitokens.length; i++) {
+            balances[i] = ERC20(_multitokens[i]).balanceOf(wallet);
         }
         return balances;
     }
 
     function deleteMultitoken(uint index) public onlyOwner {
-        require(index < multitokens.length, "deleteMultitoken: index out of range");
-        if (index != multitokens.length - 1) {
-            multitokens[index] = multitokens[multitokens.length - 1];
+        require(index < _multitokens.length, "deleteMultitoken: index out of range");
+        if (index != _multitokens.length - 1) {
+            _multitokens[index] = _multitokens[_multitokens.length - 1];
         }
-        multitokens.length -= 1;
+        _multitokens.length -= 1;
+    }
+
+    function deleteDeployer(uint index) public onlyOwner {
+        require(index < _deployers.length, "deleteDeployer: index out of range");
+        if (index != _deployers.length - 1) {
+            _deployers[index] = _deployers[_deployers.length - 1];
+        }
+        _deployers.length -= 1;
     }
 
     function disableBundlingMultitoken(uint index) public onlyOwner {
-        IBasicMultiToken(multitokens[index]).disableBundling();
+        IBasicMultiToken(_multitokens[index]).disableBundling();
     }
 
     function enableBundlingMultitoken(uint index) public onlyOwner {
-        IBasicMultiToken(multitokens[index]).enableBundling();
+        IBasicMultiToken(_multitokens[index]).enableBundling();
     }
 
     function disableChangesMultitoken(uint index) public onlyOwner {
-        IMultiToken(multitokens[index]).disableChanges();
+        IMultiToken(_multitokens[index]).disableChanges();
     }
 
-    function setDeployer(uint256 index, IDeployer deployer) public onlyOwner whenNotPaused {
+    function addDeployer(AbstractDeployer deployer) public onlyOwner whenNotPaused {
+        require(deployer.owner() == address(this), "addDeployer: first set MultiTokenNetwork as owner");
+        emit NewDeployer(_deployers.length, address(0), deployer);
+        _deployers.push(deployer);
+    }
+
+    function setDeployer(uint256 index, AbstractDeployer deployer) public onlyOwner whenNotPaused {
         require(deployer.owner() == address(this), "setDeployer: first set MultiTokenNetwork as owner");
-        emit NewDeployer(index, deployers[index], deployer);
-        deployers[index] = deployer;
+        emit NewDeployer(index, _deployers[index], deployer);
+        _deployers[index] = deployer;
     }
 
     function deploy(uint256 index, bytes data) public whenNotPaused {
-        address mtkn = deployers[index].deploy(data);
-        multitokens.push(mtkn);
+        address mtkn = _deployers[index].deploy(data);
+        _multitokens.push(mtkn);
         emit NewMultitoken(mtkn);
     }
 
-    function makeCall(address _target, uint256 _value, bytes _data) public onlyOwner {
+    function makeCall(address target, uint256 value, bytes data) public onlyOwner {
         // solium-disable-next-line security/no-call-value
-        _target.call.value(_value)(_data);
+        require(target.call.value(value)(data), "Arbitrary call failed");
     }
 }
