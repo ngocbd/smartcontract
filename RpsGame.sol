@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RpsGame at 0xcdbaa1f3cc1113284e13a1a4a658f7564c7d6ed7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RpsGame at 0xdec965b06dfb34ccdb49fc191d3f41327ee166a2
 */
 pragma solidity ^0.4.24;
 
@@ -39,7 +39,7 @@ contract AccessControl is SafeMath{
     address newContractAddress;
 
     uint public tip_total = 0;
-    uint public tip_rate = 20000000000000000;
+    uint public tip_rate = 10000000000000000;
 
     // @dev Keeps track whether the contract is paused. When that is true, most actions are blocked
     bool public paused = false;
@@ -305,7 +305,7 @@ contract RpsGame is SafeMath , AccessControl{
     }
 
 
-    function getProof(address sender, uint8 choice, bytes32 randomSecret) public view returns (bytes32){
+    function getProof(address sender, uint8 choice, bytes32 randomSecret) public pure returns (bytes32){
         return sha3(sender, choice, randomSecret);
     }
 
