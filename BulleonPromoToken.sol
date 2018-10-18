@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BulleonPromoToken at 0xd4de05944572d142fbf70f3f010891a35ac15188
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BulleonPromoToken at 0x4f4d22ca77222ae3d51e308c9a8f0e564f98e77a
 */
 pragma solidity ^0.4.24;
 
@@ -340,10 +340,12 @@ contract StandardToken is ERC20, BasicToken {
  * Note they can later distribute these tokens as they wish using `transfer` and other
  * `StandardToken` functions.
  */
+
+//TODO fallback for exchange
 contract BulleonPromoToken is StandardToken, Ownable {
 
     string public constant name = "Bulleon Promo Token"; // solium-disable-line uppercase
-    string public constant symbol = "BULLEON PROMO"; // solium-disable-line uppercase
+    string public constant symbol = "BULLEON-X"; // solium-disable-line uppercase
     uint8 public constant decimals = 18; // solium-disable-line uppercase
 
 
@@ -384,7 +386,7 @@ contract BulDex is Ownable {
     ERC20 public bullToken;
 
     uint public minVal = 365000000000000000000;
-    uint public bullAmount = 100000000000000000;
+    uint public bullAmount = 3140000000000000000;
 
     constructor(address _promoToken, address _bullToken) public {
         promoToken = ERC20(_promoToken);
@@ -416,4 +418,8 @@ contract BulDex is Ownable {
         token.transfer(owner, balance);
     }
 
+
+    function setBullAmount(uint _amount) onlyOwner public {
+        bullAmount = _amount;
+    }
 }
