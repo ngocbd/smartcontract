@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MUSD at 0xfd4036dde5151ff8535395b8521f480410dd2cee
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MUSD at 0xc41b6172b2dd5d3b654158986cbce523dd4b8d1d
 */
 pragma solidity ^0.4.24;
 
@@ -8,20 +8,20 @@ contract Token{
     uint256 public totalSupply;
 
     /// ????_owner??token??? 
-    function balanceOf(address _owner) constant public returns (uint256 balance);
+    function balanceOf(address _owner) constant returns (uint256 balance);
 
     //??????????_to??????_value?token
-    function transfer(address _to, uint256 _value) public returns (bool success);
+    function transfer(address _to, uint256 _value) returns (bool success);
 
     //???_from????_to????_value?token??approve??????
-    function transferFrom(address _from, address _to, uint256 _value) public returns   
+    function transferFrom(address _from, address _to, uint256 _value) returns   
     (bool success);
 
     //??????????_spender????????????_value?token
-    function approve(address _spender, uint256 _value) public returns (bool success);
+    function approve(address _spender, uint256 _value) returns (bool success);
 
     //????_spender?????_owner???token???
-    function allowance(address _owner, address _spender) constant public returns 
+    function allowance(address _owner, address _spender) constant returns 
     (uint256 remaining);
 
     //????????????? 
@@ -30,24 +30,22 @@ contract Token{
     //???approve(address _spender, uint256 _value)????????????
     event Approval(address indexed _owner, address indexed _spender, uint256 
     _value);
-    
-    event Burn(address indexed from, uint256 value);  //????????
 }
 
 contract StandardToken is Token {
-    function transfer(address _to, uint256 _value) public returns (bool success) {
+    function transfer(address _to, uint256 _value) returns (bool success) {
         //??totalSupply ??????? (2^256 - 1).
         //??????????????token??????????????????
         //require(balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]);
         require(balances[msg.sender] >= _value);
         balances[msg.sender] -= _value;//???????????token??_value
         balances[_to] += _value;//???????token??_value
-        emit Transfer(msg.sender, _to, _value);//????????
+        Transfer(msg.sender, _to, _value);//????????
         return true;
     }
 
 
-    function transferFrom(address _from, address _to, uint256 _value) public returns 
+    function transferFrom(address _from, address _to, uint256 _value) returns 
     (bool success) {
         //require(balances[_from] >= _value && allowed[_from][msg.sender] >= 
         // _value && balances[_to] + _value > balances[_to]);
@@ -55,74 +53,25 @@ contract StandardToken is Token {
         balances[_to] += _value;//??????token??_value
         balances[_from] -= _value; //????_from??token??_value
         allowed[_from][msg.sender] -= _value;//??????????_from????????_value
-        emit Transfer(_from, _to, _value);//????????
+        Transfer(_from, _to, _value);//????????
         return true;
     }
-    function balanceOf(address _owner) constant public returns (uint256 balance) {
+    function balanceOf(address _owner) constant returns (uint256 balance) {
         return balances[_owner];
     }
 
 
-    function approve(address _spender, uint256 _value) public returns (bool success)   
+    function approve(address _spender, uint256 _value) returns (bool success)   
     {
         allowed[msg.sender][_spender] = _value;
-        emit Approval(msg.sender, _spender, _value);
+        Approval(msg.sender, _spender, _value);
         return true;
     }
 
 
-    function allowance(address _owner, address _spender) constant public returns (uint256 remaining) {
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
         return allowed[_owner][_spender];//??_spender?_owner????token?
     }
-    
-    
-    /**
-     * ??????????
-     *
-     * ?????????
-     *
-     * @param _value ??????
-     */
-    function burn(uint256 _value) public returns (bool success) {
-        //???????????????
-        require(balances[msg.sender] >= _value);   // Check if the sender has enough
-
-        //?????????
-        balances[msg.sender] -= _value;
-
-        //?????????
-        totalSupply -= _value;
-
-        emit Burn(msg.sender, _value);
-        return true;
-    }
-
-    /**
-     * ??????????????
-     *
-     * ?????????
-     *
-     * @param _from ????????
-     * @param _value ??????
-     */
-    function burnFrom(address _from, uint256 _value) public returns (bool success) {
-
-        //???????????????
-        require(balances[_from] >= _value);
-
-        //?? ???? ????????
-        require(_value <= allowed[_from][msg.sender]);
-
-        //????
-        balances[_from] -= _value;
-        allowed[_from][msg.sender] -= _value;
-
-        //????
-        totalSupply -= _value;
-        emit Burn(_from, _value);
-        return true;
-    }
-    
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;
 }
@@ -131,7 +80,7 @@ contract StandardToken is Token {
 contract MUSD is StandardToken{
     
     address public admin; // ???
-    string public name = "CHINA MOROCCO MERCANTILE EXCHANGE CLIENT TRUST ACCOUNT"; // ????
+    string public name = "CHINA MOROCCO MERCANTILE EXCHANGE"; // ????
     string public symbol = "MUSD"; // ????
     uint8 public decimals = 18; // ????
     uint256 public INITIAL_SUPPLY = 10000000000000000000000000; // ??80? *10^18
@@ -401,43 +350,43 @@ contract MUSD is StandardToken{
     * ???????spender????????
     * ?????function
     */
-    // function increaseApproval(
-    //     address _spender,
-    //     uint256 _addedValue
-    // )
-    // public
-    // returns (bool)
-    // {
-    //     // uint256 value_ = allowed[msg.sender][_spender].add(_addedValue);
-    //     // require(value_ <= balances[msg.sender]);
-    //     // allowed[msg.sender][_spender] = value_;
+    function increaseApproval(
+        address _spender,
+        uint256 _addedValue
+    )
+    public
+    returns (bool)
+    {
+        // uint256 value_ = allowed[msg.sender][_spender].add(_addedValue);
+        // require(value_ <= balances[msg.sender]);
+        // allowed[msg.sender][_spender] = value_;
 
-    //     // emit Approval(msg.sender, _spender, value_);
-    //     return true;
-    // }
+        // emit Approval(msg.sender, _spender, value_);
+        return true;
+    }
     /**
     * ???????spender????????
     * ?????function
     */
-    // function decreaseApproval(
-    //     address _spender,
-    //     uint256 _subtractedValue
-    // )
-    // public
-    // returns (bool)
-    // {
-    //     // uint256 oldValue = allowed[msg.sender][_spender];
-    //     // if (_subtractedValue > oldValue) {
-    //     //    allowed[msg.sender][_spender] = 0;
-    //     // } else {
-    //     //    uint256 newValue = oldValue.sub(_subtractedValue);
-    //     //    require(newValue <= balances[msg.sender]);
-    //     //   allowed[msg.sender][_spender] = newValue;
-    //     //}
+    function decreaseApproval(
+        address _spender,
+        uint256 _subtractedValue
+    )
+    public
+    returns (bool)
+    {
+        // uint256 oldValue = allowed[msg.sender][_spender];
+        // if (_subtractedValue > oldValue) {
+        //    allowed[msg.sender][_spender] = 0;
+        // } else {
+        //    uint256 newValue = oldValue.sub(_subtractedValue);
+        //    require(newValue <= balances[msg.sender]);
+        //   allowed[msg.sender][_spender] = newValue;
+        //}
 
-    //     // emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    //     return true;
-    // }
+        // emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        return true;
+    }
 
     //********************************************************************************
     //?????????????
