@@ -1,10 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WorldwideGiftCode at 0x14befec5d161aa47ec7dec57d2fb622990148a17
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WorldwideGiftCode at 0x51d02573097a18a1492e35d139a874ce6c8057da
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.24;
 
 // ----------------------------------------------------------------------------
-// 'WorldwideGiftCode' CROWDSALE token contract
+// 'WorldwideGiftCode' token contract
 //
 // Deployed to : 0x3A88237E1a9129aB8e674C9EbCf01FeEEa1306F9
 // Symbol      : WGC
@@ -14,7 +14,7 @@ pragma solidity ^0.4.18;
 //
 // Enjoy.
 //
-// (c) by Moritz Neto & Daniel Bar with BokkyPooBah / Bok Consulting Pty Ltd Au 2017. The MIT Licence.
+// (c) by Moritz Neto with BokkyPooBah / Bok Consulting Pty Ltd Au 2017. The MIT Licence.
 // ----------------------------------------------------------------------------
 
 
@@ -22,19 +22,19 @@ pragma solidity ^0.4.18;
 // Safe maths
 // ----------------------------------------------------------------------------
 contract SafeMath {
-    function safeAdd(uint a, uint b) internal pure returns (uint c) {
+    function safeAdd(uint a, uint b) public pure returns (uint c) {
         c = a + b;
         require(c >= a);
     }
-    function safeSub(uint a, uint b) internal pure returns (uint c) {
+    function safeSub(uint a, uint b) public pure returns (uint c) {
         require(b <= a);
         c = a - b;
     }
-    function safeMul(uint a, uint b) internal pure returns (uint c) {
+    function safeMul(uint a, uint b) public pure returns (uint c) {
         c = a * b;
         require(a == 0 || c / a == b);
     }
-    function safeDiv(uint a, uint b) internal pure returns (uint c) {
+    function safeDiv(uint a, uint b) public pure returns (uint c) {
         require(b > 0);
         c = a / b;
     }
@@ -77,7 +77,7 @@ contract Owned {
 
     event OwnershipTransferred(address indexed _from, address indexed _to);
 
-    function Owned() public {
+    constructor() public {
         owner = msg.sender;
     }
 
@@ -91,7 +91,7 @@ contract Owned {
     }
     function acceptOwnership() public {
         require(msg.sender == newOwner);
-        OwnershipTransferred(owner, newOwner);
+        emit OwnershipTransferred(owner, newOwner);
         owner = newOwner;
         newOwner = address(0);
     }
@@ -107,9 +107,6 @@ contract WorldwideGiftCode is ERC20Interface, Owned, SafeMath {
     string public  name;
     uint8 public decimals;
     uint public _totalSupply;
-    uint public startDate;
-    uint public bonusEnds;
-    uint public endDate;
 
     mapping(address => uint) balances;
     mapping(address => mapping(address => uint)) allowed;
@@ -118,13 +115,13 @@ contract WorldwideGiftCode is ERC20Interface, Owned, SafeMath {
     // ------------------------------------------------------------------------
     // Constructor
     // ------------------------------------------------------------------------
-    function WorldwideGiftCode() public {
+    function worldwidegiftcode() public {
         symbol = "WGC";
         name = "Worldwide Gift Code";
         decimals = 0;
-        bonusEnds = now + 1 weeks;
-        endDate = now + 7 weeks;
-
+        _totalSupply = 999999999999;
+        balances[msg.sender] = _totalSupply;
+        emit Transfer(address(0), 0x3A88237E1a9129aB8e674C9EbCf01FeEEa1306F9, _totalSupply);
     }
 
 
@@ -137,7 +134,7 @@ contract WorldwideGiftCode is ERC20Interface, Owned, SafeMath {
 
 
     // ------------------------------------------------------------------------
-    // Get the token balance for account `tokenOwner`
+    // Get the token balance for account tokenOwner
     // ------------------------------------------------------------------------
     function balanceOf(address tokenOwner) public constant returns (uint balance) {
         return balances[tokenOwner];
@@ -145,38 +142,38 @@ contract WorldwideGiftCode is ERC20Interface, Owned, SafeMath {
 
 
     // ------------------------------------------------------------------------
-    // Transfer the balance from token owner's account to `to` account
+    // Transfer the balance from token owner's account to to account
     // - Owner's account must have sufficient balance to transfer
     // - 0 value transfers are allowed
     // ------------------------------------------------------------------------
     function transfer(address to, uint tokens) public returns (bool success) {
         balances[msg.sender] = safeSub(balances[msg.sender], tokens);
         balances[to] = safeAdd(balances[to], tokens);
-        Transfer(msg.sender, to, tokens);
+        emit Transfer(msg.sender, to, tokens);
         return true;
     }
 
 
     // ------------------------------------------------------------------------
-    // Token owner can approve for `spender` to transferFrom(...) `tokens`
+    // Token owner can approve for spender to transferFrom(...) tokens
     // from the token owner's account
     //
     // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
     // recommends that there are no checks for the approval double-spend attack
-    // as this should be implemented in user interfaces
+    // as this should be implemented in user interfaces 
     // ------------------------------------------------------------------------
     function approve(address spender, uint tokens) public returns (bool success) {
         allowed[msg.sender][spender] = tokens;
-        Approval(msg.sender, spender, tokens);
+        emit Approval(msg.sender, spender, tokens);
         return true;
     }
 
 
     // ------------------------------------------------------------------------
-    // Transfer `tokens` from the `from` account to the `to` account
-    //
+    // Transfer tokens from the from account to the to account
+    // 
     // The calling account must already have sufficient tokens approve(...)-d
-    // for spending from the `from` account and
+    // for spending from the from account and
     // - From account must have sufficient balance to transfer
     // - Spender must have sufficient allowance to transfer
     // - 0 value transfers are allowed
@@ -185,7 +182,7 @@ contract WorldwideGiftCode is ERC20Interface, Owned, SafeMath {
         balances[from] = safeSub(balances[from], tokens);
         allowed[from][msg.sender] = safeSub(allowed[from][msg.sender], tokens);
         balances[to] = safeAdd(balances[to], tokens);
-        Transfer(from, to, tokens);
+        emit Transfer(from, to, tokens);
         return true;
     }
 
@@ -200,34 +197,24 @@ contract WorldwideGiftCode is ERC20Interface, Owned, SafeMath {
 
 
     // ------------------------------------------------------------------------
-    // Token owner can approve for `spender` to transferFrom(...) `tokens`
-    // from the token owner's account. The `spender` contract function
-    // `receiveApproval(...)` is then executed
+    // Token owner can approve for spender to transferFrom(...) tokens
+    // from the token owner's account. The spender contract function
+    // receiveApproval(...) is then executed
     // ------------------------------------------------------------------------
     function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
         allowed[msg.sender][spender] = tokens;
-        Approval(msg.sender, spender, tokens);
+        emit Approval(msg.sender, spender, tokens);
         ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, this, data);
         return true;
     }
 
+
     // ------------------------------------------------------------------------
-    // 1,000 FWD Tokens per 1 ETH
+    // Don't accept ETH
     // ------------------------------------------------------------------------
     function () public payable {
-        require(now >= startDate && now <= endDate);
-        uint tokens;
-        if (now <= bonusEnds) {
-            tokens = msg.value * 0;
-        } else {
-            tokens = msg.value * 0;
-        }
-        balances[msg.sender] = safeAdd(balances[msg.sender], tokens);
-        _totalSupply = safeAdd(_totalSupply, tokens);
-        Transfer(address(0), msg.sender, tokens);
-        owner.transfer(msg.value);
+        revert();
     }
-
 
 
     // ------------------------------------------------------------------------
