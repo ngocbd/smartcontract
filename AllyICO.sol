@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AllyICO at 0x6420f46897dd4460bd9c1671e80177b0df65c9c4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AllyICO at 0x012910aa43d4be652a67935db4cc4db4b14593f5
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.25;
 
 library SafeMath {
 
@@ -57,7 +57,7 @@ contract AllyICO is ERC20 {
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;    
 
-    address _tokenContract = 0x34A0263cEC3d616677df10962e24f97EF283891a;
+    address _tokenContract = 0x03e2cE0C0B99998e6906B90Ab6F9eac0deFAFf16;
     AltcoinToken cddtoken = AltcoinToken(_tokenContract);
 
     string public constant name = "AllyICO";
