@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BITRICH at 0x21b6639b8b10fdab5c7f110f81b23156522c67bb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bitrich at 0x4785fcc25aa2b24526ff97e5e431bddeb73659c9
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.18;
 
 /**
  * @title SafeMath
@@ -9,7 +9,7 @@ pragma solidity ^0.4.24;
 library SafeMath {
 
     /**
-    * @dev Multiplies two numbers, throws on overflow.
+    * Multiplies two numbers, throws on overflow.
     */
     function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
         if (a == 0) {
@@ -21,7 +21,7 @@ library SafeMath {
     }
 
     /**
-    * @dev Integer division of two numbers, truncating the quotient.
+    * Integer division of two numbers, truncating the quotient.
     */
     function div(uint256 a, uint256 b) internal pure returns (uint256) {
         // assert(b > 0); // Solidity automatically throws when dividing by 0
@@ -31,7 +31,7 @@ library SafeMath {
     }
 
     /**
-    * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+    * Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
     */
     function sub(uint256 a, uint256 b) internal pure returns (uint256) {
         assert(b <= a);
@@ -39,7 +39,7 @@ library SafeMath {
     }
 
     /**
-    * @dev Adds two numbers, throws on overflow.
+    * Adds two numbers, throws on overflow.
     */
     function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
         c = a + b;
@@ -48,7 +48,7 @@ library SafeMath {
     }
 }
 
-contract ForeignToken {
+contract AltcoinToken {
     function balanceOf(address _owner) constant public returns (uint256);
     function transfer(address _to, uint256 _value) public returns (bool);
 }
@@ -67,7 +67,7 @@ contract ERC20 is ERC20Basic {
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-contract BITRICH is ERC20 {
+contract Bitrich is ERC20 {
     
     using SafeMath for uint256;
     address owner = msg.sender;
@@ -76,20 +76,24 @@ contract BITRICH is ERC20 {
     mapping (address => mapping (address => uint256)) allowed;    
 
     string public constant name = "BITRICH";
-    string public constant symbol = "BTH";
-    uint public constant decimals = 18;
+    string public constant symbol = "BTRC";
+    uint public constant decimals = 8;
     
-    uint256 public totalSupply = 7000000000e18; // Supply
-    uint256 public totalDistributed = 5000000000e18;    
-    uint256 public constant MIN_CONTRIBUTION = 1 ether / 100; // 0.01 Ether
-    uint256 public tokensPerEth = 10000000e18;
+    uint256 public totalSupply = 79000000e8;
+    uint256 public totalDistributed = 0;        
+    uint256 public tokensPerEth = 100000e8;
+    uint256 public constant minContribution = 1 ether / 100; // 0.01 Ether
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    
     event Distr(address indexed to, uint256 amount);
     event DistrFinished();
+
     event Airdrop(address indexed _owner, uint _amount, uint _balance);
+
     event TokensPerEthUpdated(uint _tokensPerEth);
+    
     event Burn(address indexed burner, uint256 value);
 
     bool public distributionFinished = false;
@@ -105,9 +109,10 @@ contract BITRICH is ERC20 {
     }
     
     
-    function BITRICH () public {
-        owner = msg.sender;        
-        distr(owner, totalDistributed);
+       function BluechipToken() public {
+        owner = msg.sender;
+        uint256 devTokens = 0;
+        distr(owner, devTokens);
     }
     
     function transferOwnership(address newOwner) onlyOwner public {
@@ -121,8 +126,10 @@ contract BITRICH is ERC20 {
         distributionFinished = true;
         emit DistrFinished();
         return true;
+        distributionFinished = false;
+        emit DistrFinished();
+        return false;
     }
-    
     function distr(address _to, uint256 _amount) canDistr private returns (bool) {
         totalDistributed = totalDistributed.add(_amount);        
         balances[_to] = balances[_to].add(_amount);
@@ -145,6 +152,7 @@ contract BITRICH is ERC20 {
             distributionFinished = true;
         }
 
+        // log
         emit Airdrop(_participant, _amount, balances[_participant]);
         emit Transfer(address(0), _participant, _amount);
     }
@@ -152,7 +160,6 @@ contract BITRICH is ERC20 {
     function adminClaimAirdrop(address _participant, uint _amount) public onlyOwner {        
         doAirdrop(_participant, _amount);
     }
-
 
     function adminClaimAirdropMultiple(address[] _addresses, uint _amount) public onlyOwner {        
         for (uint i = 0; i < _addresses.length; i++) doAirdrop(_addresses[i], _amount);
@@ -170,10 +177,10 @@ contract BITRICH is ERC20 {
     function getTokens() payable canDistr  public {
         uint256 tokens = 0;
 
-        require( msg.value >= MIN_CONTRIBUTION );
+        require( msg.value >= minContribution );
 
         require( msg.value > 0 );
-
+        
         tokens = tokensPerEth.mul(msg.value) / 1 ether;        
         address investor = msg.sender;
         
@@ -233,7 +240,7 @@ contract BITRICH is ERC20 {
     }
     
     function getTokenBalance(address tokenAddress, address who) constant public returns (uint){
-        ForeignToken t = ForeignToken(tokenAddress);
+        AltcoinToken t = AltcoinToken(tokenAddress);
         uint bal = t.balanceOf(who);
         return bal;
     }
@@ -246,8 +253,7 @@ contract BITRICH is ERC20 {
     
     function burn(uint256 _value) onlyOwner public {
         require(_value <= balances[msg.sender]);
-
-
+        
         address burner = msg.sender;
         balances[burner] = balances[burner].sub(_value);
         totalSupply = totalSupply.sub(_value);
@@ -255,8 +261,8 @@ contract BITRICH is ERC20 {
         emit Burn(burner, _value);
     }
     
-    function withdrawForeignTokens(address _tokenContract) onlyOwner public returns (bool) {
-        ForeignToken token = ForeignToken(_tokenContract);
+    function withdrawAltcoinTokens(address _tokenContract) onlyOwner public returns (bool) {
+        AltcoinToken token = AltcoinToken(_tokenContract);
         uint256 amount = token.balanceOf(address(this));
         return token.transfer(owner, amount);
     }
