@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BRBasketballConfig at 0x2eea5d700c49e89cbfcb4ac6982a342b6c00b061
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BRBasketballConfig at 0xe04c5271ee336cc7b499a2765a752f3f99e65fee
 */
 pragma solidity ^0.4.7;
 contract MobaBase {
@@ -55,45 +55,79 @@ contract MobaBase {
 }
 
 contract IRandomUtil{
-    function getRandom(bytes32 param) public returns (bytes32);
+     function getBaseRandom() public view returns (bytes32);
+     function addContractAddr() public;
 }
 
-contract RandomUtil{
+contract BRRandom {
     
-    function getRandom(bytes32 param) public returns (bytes32){
-           bytes32 value = keccak256(abi.encodePacked((block.timestamp) + (block.difficulty) 
-           +((uint256(keccak256(abi.encodePacked(block.coinbase)))) / (now)) 
-           +(block.gaslimit) +((uint256(keccak256(abi.encodePacked(msg.sender)))) / (now)) + (block.number)));
-           return value;
+    IRandomUtil private baseRandom;
+    address internal mainnet_random_addr = 0x31E0d4b2d086e8Bfc25A10bE133dEc09cb5284d2;
+    
+    function initRandom (address addr) internal  {
+        
+        require(baseRandom == address(0x0),"BRRandom has been init!");
+        baseRandom = IRandomUtil(addr);
+        baseRandom.addContractAddr();
+        require(getBaseRandom() != 0,"random init has error");
     }
+    
+    function getBaseRandom() public view returns (bytes32) {
+         return baseRandom.getBaseRandom();
+     }
 }
+
+///////////////////////////////////////////////yaoq??///////////////////////////
 
 contract IInviteData{
+    
     function GetAddressByName(bytes32 name) public view returns (address);
 }
+contract BRInvite{
+    
+    uint private inviteRate = 10;
+    IInviteData public mInviteData;
+
+    address internal mainnet_invite_addr = 0x008796E9e3b15869D444B8AabdA0d3ea7eEafDEa96;
+    
+    function initInviteAddr (address addr,uint rate) internal  {
+        
+        require(mInviteData == address(0x0),"BRInvite has been init!");
+        mInviteData = IInviteData(addr);
+        inviteRate  = rate;
+    }
+    
+    function GetAddressByName(bytes32 name) public view returns (address) {
+         return mInviteData.GetAddressByName(name);
+    }
+    
+    
+   function getInviteRate() public view returns (uint) {
+       return inviteRate;
+   }
+}
+
 contract IConfigData {
    function getPrice() public view returns (uint256);
    function getWinRate(uint8 winCount) public pure returns (uint);
    function getOverRate(uint8 winCount) public pure returns (uint);
    function getPumpRate() public view returns(uint8);
-   function getRandom(bytes32 param) public returns (bytes32);
+   function getBaseRandom() public returns (bytes32);
    function GetAddressByName(bytes32 name) public view returns (address);
    function getInviteRate() public view returns (uint);
    function loseHandler(address addr,uint8 wincount) public ;
 }
 
-contract BRBasketballConfig is MobaBase {
+contract BRBasketballConfig is MobaBase,BRRandom,BRInvite {
     
    uint256 mPrice    = 10;
    uint8 mPumpRate   = 10;
-   uint8 mInviteRate = 10;
    uint8 mWinRate    = 50;
-   IRandomUtil public mRandomUtil;
-   IInviteData public mInviteData;
    
-   constructor(address randomUtil,address inviteData) public {
-        mRandomUtil = IRandomUtil(randomUtil);
-        mInviteData = IInviteData(inviteData);
+   constructor() public {
+       
+      initRandom(mainnet_random_addr);
+      initInviteAddr(mainnet_invite_addr,10);
    }
    
    function getPrice() public view returns (uint256) {
@@ -131,17 +165,7 @@ contract BRBasketballConfig is MobaBase {
         return 80;  
    }
    
-   function getRandom(bytes32 param) public returns (bytes32) {
-       return mRandomUtil.getRandom(param);
-   }
-   function GetAddressByName(bytes32 name) public view returns (address) {
-       if(mInviteData != address(0)) {
-            return mInviteData.GetAddressByName(name);
-       }
-   }
-   function getInviteRate() public view returns (uint) {
-       return mInviteRate;
-   }
+
    
    function loseHandler(address addr,uint8 wincount) public {}
 }
