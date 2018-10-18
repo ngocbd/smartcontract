@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EnishiCoin at 0xccdfa3325354899e42b46474207f6b3e1a2d415a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EnishiCoin at 0xf49c09c31245f27504f01f60186be5127458c08a
 */
 pragma solidity ^0.4.18;
 
@@ -99,19 +99,25 @@ contract ERC223
 {
   uint public totalSupply;
 
-  // ERC223 functions
-  function name() public view returns (string _name);
-  function symbol() public view returns (string _symbol);
-  function decimals() public view returns (uint8 _decimals);
-  function totalSupply() public view returns (uint256 _supply);
+  // ERC223 and ERC20 functions and events
   function balanceOf(address who) public view returns (uint);
-
-  // ERC223 functions and events
+  function totalSupply() public view returns (uint256 _supply);
   function transfer(address to, uint value) public returns (bool ok);
   function transfer(address to, uint value, bytes data) public returns (bool ok);
   function transfer(address to, uint value, bytes data, string custom_fallback) public returns (bool ok);
   event Transfer(address indexed from, address indexed to, uint value, bytes indexed data);
+
+  // ERC223 functions
+  function name() public view returns (string _name);
+  function symbol() public view returns (string _symbol);
+  function decimals() public view returns (uint8 _decimals);
+
+  // ERC20 functions and events
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+  function approve(address _spender, uint256 _value) public returns (bool success);
+  function allowance(address _owner, address _spender) public view returns (uint256 remaining);
   event Transfer(address indexed _from, address indexed _to, uint256 _value);
+  event Approval(address indexed _owner, address indexed _spender, uint _value);
 }
 
 /**
@@ -136,6 +142,7 @@ contract EnishiCoin is ERC223, OwnerSigneture
   address public temporaryAddress = 0x092dEBAEAD027b43301FaFF52360B2B0538b0c98;
 
   mapping (address => uint) balances;
+  mapping(address => mapping (address => uint256)) public allowance;
   mapping (address => bool) public frozenAccount;
   mapping (address => uint256) public unlockUnixTime;
 
@@ -502,6 +509,54 @@ contract EnishiCoin is ERC223, OwnerSigneture
     balances[_to] = SafeMath.add(balances[_to], amount);
     Transfer(temporaryAddress, _to, amount);
     return true;
+  }
+
+
+  /**
+   * @dev Transfer tokens from one address to another
+   *      Added due to backwards compatibility with ERC20
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amount of tokens to be transferred
+   */
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+      require(true
+        && _to != address(0)
+        && _value > 0
+        && balances[_from] >= _value
+        && allowance[_from][msg.sender] >= _value
+        && frozenAccount[_from] == false 
+        && frozenAccount[_to] == false
+        && now > unlockUnixTime[_from] 
+        && now > unlockUnixTime[_to]);
+
+      balances[_from] = balances[_from].sub(_value);
+      balances[_to] = balances[_to].add(_value);
+      allowance[_from][msg.sender] = allowance[_from][msg.sender].sub(_value);
+      Transfer(_from, _to, _value);
+      return true;
+  }
+
+  /**
+   * @dev Allows _spender to spend no more than _value tokens in your behalf
+   *      Added due to backwards compatibility with ERC20
+   * @param _spender The address authorized to spend
+   * @param _value the max amount they can spend
+   */
+  function approve(address _spender, uint256 _value) public returns (bool success) {
+    allowance[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender
+   *      Added due to backwards compatibility with ERC20
+   * @param _owner address The address which owns the funds
+   * @param _spender address The address which will spend the funds
+   */
+  function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
+    return allowance[_owner][_spender];
   }
 }
 
