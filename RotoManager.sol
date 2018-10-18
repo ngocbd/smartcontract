@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RotoManager at 0xc0b3abbb785d7da4c52691c587311c572bf8812d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RotoManager at 0x0d19d264207a3afad4094f26b693ff5590361b0d
 */
 pragma solidity 0.4.24;
 
@@ -26,6 +26,8 @@ library SafeMath {
         return c;
     }
 }
+
+
 /**
  * @title ERC20 interface
  * @dev see https://github.com/ethereum/EIPs/issues/20
@@ -323,7 +325,7 @@ contract RotoToken is StandardToken {
       balances[_user] = balances[_user].add(_value);
       balances[roto] = balances[roto].sub(_value);
 
-      emit RotoRewarded(roto, _user, _value);
+      emit Transfer(roto, _user, _value);
       return true;
     }
     /**
@@ -356,6 +358,7 @@ contract RotoToken is StandardToken {
       owner = _newOwner;
     }
 }
+
 contract RotoBasic {
 
     mapping (bytes32 => Tournament) public tournaments;  // tournamentID
