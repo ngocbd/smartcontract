@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VoteProxyFactory at 0x05d26410b401ebffa48c7eb2fe43bf9e20e35fd1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VoteProxyFactory at 0xa63e145309cadaa6a903a19993868ef7e85058be
 */
 // hevm: flattened sources of src/VoteProxyFactory.sol
 pragma solidity ^0.4.24;
@@ -18,7 +18,7 @@ pragma solidity ^0.4.24;
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-/* pragma solidity ^0.4.13; */
+/* pragma solidity ^0.4.23; */
 
 contract DSAuthority {
     function canCall(
@@ -35,9 +35,9 @@ contract DSAuth is DSAuthEvents {
     DSAuthority  public  authority;
     address      public  owner;
 
-    function DSAuth() public {
+    constructor() public {
         owner = msg.sender;
-        LogSetOwner(msg.sender);
+        emit LogSetOwner(msg.sender);
     }
 
     function setOwner(address owner_)
@@ -45,7 +45,7 @@ contract DSAuth is DSAuthEvents {
         auth
     {
         owner = owner_;
-        LogSetOwner(owner);
+        emit LogSetOwner(owner);
     }
 
     function setAuthority(DSAuthority authority_)
@@ -53,7 +53,7 @@ contract DSAuth is DSAuthEvents {
         auth
     {
         authority = authority_;
-        LogSetAuthority(authority);
+        emit LogSetAuthority(authority);
     }
 
     modifier auth {
@@ -308,7 +308,7 @@ contract DSMath {
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-/* pragma solidity ^0.4.13; */
+/* pragma solidity ^0.4.23; */
 
 contract DSNote {
     event LogNote(
@@ -329,7 +329,7 @@ contract DSNote {
             bar := calldataload(36)
         }
 
-        LogNote(msg.sig, msg.sender, foo, bar, msg.value, msg.data);
+        emit LogNote(msg.sig, msg.sender, foo, bar, msg.value, msg.data);
 
         _;
     }
@@ -353,7 +353,7 @@ contract DSNote {
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-/* pragma solidity ^0.4.13; */
+/* pragma solidity ^0.4.23; */
 
 /* import 'ds-auth/auth.sol'; */
 /* import 'ds-note/note.sol'; */
@@ -362,7 +362,7 @@ contract DSNote {
 contract DSThing is DSAuth, DSNote, DSMath {
 
     function S(string s) internal pure returns (bytes4) {
-        return bytes4(keccak256(s));
+        return bytes4(keccak256(abi.encodePacked(s)));
     }
 
 }
@@ -385,7 +385,7 @@ contract DSThing is DSAuth, DSNote, DSMath {
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-/* pragma solidity ^0.4.13; */
+/* pragma solidity ^0.4.23; */
 
 /* import "ds-auth/auth.sol"; */
 /* import "ds-note/note.sol"; */
@@ -453,7 +453,7 @@ contract ERC20 is ERC20Events {
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-/* pragma solidity ^0.4.13; */
+/* pragma solidity ^0.4.23; */
 
 /* import "erc20/erc20.sol"; */
 /* import "ds-math/math.sol"; */
@@ -463,7 +463,7 @@ contract DSTokenBase is ERC20, DSMath {
     mapping (address => uint256)                       _balances;
     mapping (address => mapping (address => uint256))  _approvals;
 
-    function DSTokenBase(uint supply) public {
+    constructor(uint supply) public {
         _balances[msg.sender] = supply;
         _supply = supply;
     }
@@ -493,7 +493,7 @@ contract DSTokenBase is ERC20, DSMath {
         _balances[src] = sub(_balances[src], wad);
         _balances[dst] = add(_balances[dst], wad);
 
-        Transfer(src, dst, wad);
+        emit Transfer(src, dst, wad);
 
         return true;
     }
@@ -501,7 +501,7 @@ contract DSTokenBase is ERC20, DSMath {
     function approve(address guy, uint wad) public returns (bool) {
         _approvals[msg.sender][guy] = wad;
 
-        Approval(msg.sender, guy, wad);
+        emit Approval(msg.sender, guy, wad);
 
         return true;
     }
@@ -525,7 +525,7 @@ contract DSTokenBase is ERC20, DSMath {
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-/* pragma solidity ^0.4.13; */
+/* pragma solidity ^0.4.23; */
 
 /* import "ds-stop/stop.sol"; */
 
@@ -536,7 +536,7 @@ contract DSToken is DSTokenBase(0), DSStop {
     bytes32  public  symbol;
     uint256  public  decimals = 18; // standard token precision. override to customize
 
-    function DSToken(bytes32 symbol_) public {
+    constructor(bytes32 symbol_) public {
         symbol = symbol_;
     }
 
@@ -563,7 +563,7 @@ contract DSToken is DSTokenBase(0), DSStop {
         _balances[src] = sub(_balances[src], wad);
         _balances[dst] = add(_balances[dst], wad);
 
-        Transfer(src, dst, wad);
+        emit Transfer(src, dst, wad);
 
         return true;
     }
@@ -587,7 +587,7 @@ contract DSToken is DSTokenBase(0), DSStop {
     function mint(address guy, uint wad) public auth stoppable {
         _balances[guy] = add(_balances[guy], wad);
         _supply = add(_supply, wad);
-        Mint(guy, wad);
+        emit Mint(guy, wad);
     }
     function burn(address guy, uint wad) public auth stoppable {
         if (guy != msg.sender && _approvals[guy][msg.sender] != uint(-1)) {
@@ -596,7 +596,7 @@ contract DSToken is DSTokenBase(0), DSStop {
 
         _balances[guy] = sub(_balances[guy], wad);
         _supply = sub(_supply, wad);
-        Burn(guy, wad);
+        emit Burn(guy, wad);
     }
 
     // Optional token name
@@ -625,7 +625,7 @@ contract DSToken is DSTokenBase(0), DSStop {
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-/* pragma solidity ^0.4.17; */
+/* pragma solidity ^0.4.23; */
 
 /* import 'ds-token/token.sol'; */
 /* import 'ds-roles/roles.sol'; */
@@ -649,7 +649,7 @@ contract DSChiefApprovals is DSThing {
 
     // IOU constructed outside this contract reduces deployment costs significantly
     // lock/free/vote are quite sensitive to token invariants. Caution is advised.
-    function DSChiefApprovals(DSToken GOV_, DSToken IOU_, uint MAX_YAYS_) public
+    constructor(DSToken GOV_, DSToken IOU_, uint MAX_YAYS_) public
     {
         GOV = GOV_;
         IOU = IOU_;
@@ -684,16 +684,16 @@ contract DSChiefApprovals is DSThing {
         require( yays.length <= MAX_YAYS );
         requireByteOrderedSet(yays);
 
-        bytes32 hash = keccak256(yays);
+        bytes32 hash = keccak256(abi.encodePacked(yays));
         slates[hash] = yays;
-        Etch(hash);
+        emit Etch(hash);
         return hash;
     }
 
     function vote(address[] yays) public returns (bytes32)
         // note  both sub-calls note
     {
-        var slate = etch(yays);
+        bytes32 slate = etch(yays);
         vote(slate);
         return slate;
     }
@@ -720,7 +720,7 @@ contract DSChiefApprovals is DSThing {
     function addWeight(uint weight, bytes32 slate)
         internal
     {
-        var yays = slates[slate];
+        address[] storage yays = slates[slate];
         for( uint i = 0; i < yays.length; i++) {
             approvals[yays[i]] = add(approvals[yays[i]], weight);
         }
@@ -729,7 +729,7 @@ contract DSChiefApprovals is DSThing {
     function subWeight(uint weight, bytes32 slate)
         internal
     {
-        var yays = slates[slate];
+        address[] storage yays = slates[slate];
         for( uint i = 0; i < yays.length; i++) {
             approvals[yays[i]] = sub(approvals[yays[i]], weight);
         }
@@ -755,7 +755,7 @@ contract DSChiefApprovals is DSThing {
 // unique owner of role 0 (typically 'sys' or 'internal')
 contract DSChief is DSRoles, DSChiefApprovals {
 
-    function DSChief(DSToken GOV, DSToken IOU, uint MAX_YAYS)
+    constructor(DSToken GOV, DSToken IOU, uint MAX_YAYS)
              DSChiefApprovals (GOV, IOU, MAX_YAYS)
         public
     {
@@ -795,8 +795,7 @@ contract DSChiefFab {
 }
 
 ////// src/VoteProxy.sol
-// VoteProxy - vote w/ a hot or cold wallet using a proxy identity 
-
+// VoteProxy - vote w/ a hot or cold wallet using a proxy identity
 /* pragma solidity ^0.4.24; */
 
 /* import "ds-token/token.sol"; */
@@ -826,13 +825,18 @@ contract VoteProxy {
     }
     
     function lock(uint256 wad) public auth {
-        gov.pull(cold, wad);   // mkr from cold 
+        gov.pull(cold, wad);   // mkr from cold
         chief.lock(wad);       // mkr out, ious in
     }
 
     function free(uint256 wad) public auth {
         chief.free(wad);       // ious out, mkr in
         gov.push(cold, wad);   // mkr to cold
+    }
+
+    function freeAll() public auth {
+        chief.free(chief.deposits(this));            
+        gov.push(cold, gov.balanceOf(this)); 
     }
 
     function vote(address[] yays) public auth returns (bytes32) {
@@ -846,11 +850,9 @@ contract VoteProxy {
 
 ////// src/VoteProxyFactory.sol
 // VoteProxyFactory - create and keep record of proxy identities
-
 /* pragma solidity ^0.4.24; */
 
 /* import "./VoteProxy.sol"; */
-
 
 contract VoteProxyFactory {
     DSChief public chief;
@@ -889,11 +891,11 @@ contract VoteProxyFactory {
     function breakLink() public {
         require(hasProxy(msg.sender), "No VoteProxy found for this sender");
 
-        VoteProxy voteProxy = coldMap[msg.sender] != address(0) 
+        VoteProxy voteProxy = coldMap[msg.sender] != address(0)
             ? coldMap[msg.sender] : hotMap[msg.sender];
         address cold = voteProxy.cold();
         address hot = voteProxy.hot();
-        require(chief.IOU().balanceOf(voteProxy) == 0, "VoteProxy still has funds attached to it");
+        require(chief.deposits(voteProxy) == 0, "VoteProxy still has funds attached to it");
 
         delete coldMap[cold];
         delete hotMap[hot];
