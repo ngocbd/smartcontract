@@ -1,321 +1,269 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MainSale at 0x96695a4940d82dcf9bac7a8ef0b56c38d3261b8a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MainSale at 0x2c8154b76f68f9b69de0d6d079c340e939451d8a
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.24;
 
+/*** @title SafeMath
+ * @dev https://github.com/OpenZeppelin/openzeppelin-solidity/blob/master/contracts/math/SafeMath.sol */
 library SafeMath {
-
-    function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
-        if (a == 0) {
-            return 0;
-        }
-        c = a * b;
-        assert(c / a == b);
-        return c;
+  
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    if (a == 0) {
+      return 0;
     }
-
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        return a / b;
-    }
-
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
-
-    function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-        c = a + b;
-        assert(c >= a);
-        return c;
-    }
+    c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+  
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    return a / b;
+  }
+  
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+  
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
-    interface ERC20 {
-        function transfer(address _beneficiary, uint256 _tokenAmount) external returns (bool);
-        function transferFromICO(address _to, uint256 _value) external returns(bool);
-    }
+interface ERC20 {
+  function transfer (address _beneficiary, uint256 _tokenAmount) external returns (bool);
+  function mintFromICO(address _to, uint256 _amount) external  returns(bool);
+  function buyTokenICO(address _investor, uint256 _value) external  returns(bool);
+}
 
+/**
+ * @title Ownable
+ * @dev https://github.com/OpenZeppelin/openzeppelin-solidity/blob/master/contracts/ownership/Ownable.sol */
 contract Ownable {
   address public owner;
-
-
-  event OwnershipRenounced(address indexed previousOwner);
-  event OwnershipTransferred(
-    address indexed previousOwner,
-    address indexed newOwner
-  );
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
+  
   constructor() public {
     owner = msg.sender;
   }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
+  
   modifier onlyOwner() {
     require(msg.sender == owner);
     _;
   }
-
-  /**
-   * @dev Allows the current owner to relinquish control of the contract.
-   * @notice Renouncing to ownership will leave the contract without an owner.
-   * It will not be possible to call the functions with the `onlyOwner`
-   * modifier anymore.
-   */
-  function renounceOwnership() public onlyOwner {
-    emit OwnershipRenounced(owner);
-    owner = address(0);
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param _newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address _newOwner) public onlyOwner {
-    _transferOwnership(_newOwner);
-  }
-
-  /**
-   * @dev Transfers control of the contract to a newOwner.
-   * @param _newOwner The address to transfer ownership to.
-   */
-  function _transferOwnership(address _newOwner) internal {
-    require(_newOwner != address(0));
-    emit OwnershipTransferred(owner, _newOwner);
-    owner = _newOwner;
-  }
 }
 
+/**
+ * @title MainCrowdSale
+ * @dev https://github.com/elephant-marketing/*/
+
 contract MainSale is Ownable {
-
-    using SafeMath for uint;
-
-    ERC20 public token;
+  
+  ERC20 public token;
+  
+  ERC20 public BuyBackContract;
+  
+  using SafeMath for uint;
+  
+  address public backEndOperator = msg.sender;
+  
+  address team = 0x550cBC2C3Ac03f8f1d950FEf755Cd664fc498036; // 10 % - founders
+  
+  address bounty = 0x8118317911B0De31502aC978e1dD38e9EeE92538; // 2 % - bounty
+  
+  
+  mapping(address=>bool) public whitelist;
+  
+  mapping(address => uint256) public investedEther;
+  
+  mapping(address => uint8) public typeOfInvestors;
+  
+  
+  uint256 public startMainSale = 1539561600; // Monday, 15-Oct-18 00:00:00 UTC
+  
+  uint256 public endMainSale = 1544831999; // Friday, 14-Dec-18 23:59:59 UTC
+  
+  
+  uint256 public stage1Sale = startMainSale + 14 days; // 0- 7  days
+  
+  uint256 public stage2Sale = startMainSale + 28 days; // 8 - 14 days
+  
+  uint256 public stage3Sale = startMainSale + 42 days; // 15 - 21  days
+  
+  
+  uint256 public investors;
+  
+  uint256 public weisRaised;
+  
+  uint256 public buyPrice; // 1 USD
+  
+  uint256 public dollarPrice;
+  
+  uint256 public soldTokensMainSale;
+  
+  uint256 public softcapMainSale = 18500000*1e18; // 18,500,000 ANG - !!! ? ????? ?????? ????????
+  
+  uint256 public hardCapMainSale = 103500000*1e18; // 103,500,000 ANG - !!! ? ????? ?????? ????????
+  
+  
+  event Authorized(address wlCandidate, uint timestamp, uint8 investorType);
+  
+  event Revoked(address wlCandidate, uint timestamp);
+  
+  event UpdateDollar(uint256 time, uint256 _rate);
+  
+  event Refund(uint256 sum, address investor);
+  
+  
+  
+  modifier backEnd() {
+    require(msg.sender == backEndOperator || msg.sender == owner);
+    _;
+  }
+  
+  
+  constructor(ERC20 _token, uint256 usdETH) public {
+    token = _token;
+    dollarPrice = usdETH;
+    buyPrice = (1e18/dollarPrice); // 1 usd
+  }
+  
+  
+  function setStartMainSale(uint256 newStartMainSale) public onlyOwner {
+    startMainSale = newStartMainSale;
+  }
+  
+  function setEndMainSale(uint256 newEndMainSale) public onlyOwner {
+    endMainSale = newEndMainSale;
+  }
+  
+  function setBackEndAddress(address newBackEndOperator) public onlyOwner {
+    backEndOperator = newBackEndOperator;
+  }
+  
+  function setBuyBackAddress(ERC20 newBuyBackAddress) public onlyOwner {
+    BuyBackContract = newBuyBackAddress;
+  }
+  
+  function setBuyPrice(uint256 _dollar) public onlyOwner {
+    dollarPrice = _dollar;
+    buyPrice = (1e18/dollarPrice); // 1 usd
+    emit UpdateDollar(now, dollarPrice);
+  }
+  
+  /*******************************************************************************
+   * Whitelist's section */
+  
+  function authorize(address wlCandidate, uint8 investorType) public backEnd  {
+    require(wlCandidate != address(0x0));
+    require(!isWhitelisted(wlCandidate));
+    require(investors == 1 || investorType == 2);
     
-    address reserve = 0x611200beabeac749071b30db84d17ec205654463;
-    address promouters = 0x2632d043ac8bbbad07c7dabd326ade3ca4f6b53e;
-    address bounty = 0xff5a1984fade92bfb0e5fd7986186d432545b834;
-
-    uint256 public constant decimals = 18;
-    uint256 constant dec = 10**decimals;
-
-    mapping(address=>bool) whitelist;
-
-    uint256 public startCloseSale = now; // start // 1.07.2018 10:00 UTC
-    uint256 public endCloseSale = 1532987999; // Monday, 30-Jul-18 23:59:59 UTC-2
-
-    uint256 public startStage1 = 1532988001; // Tuesday, 31-Jul-18 00:00:01 UTC-2
-    uint256 public endStage1 = 1533074399; // Tuesday, 31-Jul-18 23:59:59 UTC-2
-
-    uint256 public startStage2 = 1533074400; // Wednesday, 01-Aug-18 00:00:00 UTC-2
-    uint256 public endStage2 = 1533679199; // Tuesday, 07-Aug-18 23:59:59 UTC-2
-
-    uint256 public startStage3 = 1533679200; // Wednesday, 08-Aug-18 00:00:00 UTC-2 
-    uint256 public endStage3 = 1535752799; // Friday, 31-Aug-18 23:59:59 UTC-2
-
-    uint256 public buyPrice = 920000000000000000; // 0.92 Ether
+    whitelist[wlCandidate] = true;
+    investors++;
     
-    uint256 public ethUSD;
-
-    uint256 public weisRaised = 0;
-
-    string public stageNow = "NoSale";
+    if (investorType == 1) {
+      typeOfInvestors[wlCandidate] = 1;
+    } else {
+      typeOfInvestors[wlCandidate] = 2;
+    }
+    emit Authorized(wlCandidate, now, investorType);
+  }
+  
+  
+  function revoke(address wlCandidate) public  onlyOwner {
+    whitelist[wlCandidate] = false;
+    investors--;
+    emit Revoked(wlCandidate, now);
+  }
+  
+  
+  function isWhitelisted(address wlCandidate) internal view returns(bool) {
+    return whitelist[wlCandidate];
+  }
+  
+  
+  /*******************************************************************************
+   * Payable's section */
+  
+  function isMainSale() public constant returns(bool) {
+    return now >= startMainSale && now <= endMainSale;
+  }
+  
+  
+  function () public payable {
+    require(isWhitelisted(msg.sender));
+    require(isMainSale());
+    mainSale(msg.sender, msg.value);
+    require(soldTokensMainSale<=hardCapMainSale);
+    investedEther[msg.sender] = investedEther[msg.sender].add(msg.value);
+  }
+  
+  
+  function mainSale(address _investor, uint256 _value) internal {
+    uint256 tokens = _value.mul(1e18).div(buyPrice);
+    uint256 tokensByDate = tokens.mul(bonusDate()).div(100);
+    tokens = tokens.add(tokensByDate);
+    token.mintFromICO(_investor, tokens);
+    BuyBackContract.buyTokenICO(_investor, tokens);//Set count token for periods ICO
+    soldTokensMainSale = soldTokensMainSale.add(tokens); // only sold
+	 
+    uint256 tokensTeam = tokens.mul(5).div(44); // 10 %
+    token.mintFromICO(team, tokensTeam);
     
-    event Authorized(address wlCandidate, uint timestamp);
-    event Revoked(address wlCandidate, uint timestamp);
-
-    constructor() public {}
-
-    function setToken (ERC20 _token) public onlyOwner {
-        token = _token;
-    }
+    uint256 tokensBoynty = tokens.div(44); // 2 %
+    token.mintFromICO(bounty, tokensBoynty);
     
-    /*******************************************************************************
-     * Whitelist's section
-     */
-    function authorize(address wlCandidate) public onlyOwner  {
-        require(wlCandidate != address(0x0));
-        require(!isWhitelisted(wlCandidate));
-        whitelist[wlCandidate] = true;
-        emit Authorized(wlCandidate, now);
+    weisRaised = weisRaised.add(_value);
+  }
+  
+  
+  function bonusDate() private view returns (uint256){
+    if (now > startMainSale && now < stage1Sale) {  // 0 - 14 days preSale
+      return 30;
     }
-
-    function revoke(address wlCandidate) public  onlyOwner {
-        whitelist[wlCandidate] = false;
-        emit Revoked(wlCandidate, now);
+    else if (now > stage1Sale && now < stage2Sale) { // 15 - 28 days preSale
+      return 20;
     }
-
-    function isWhitelisted(address wlCandidate) public view returns(bool) {
-        return whitelist[wlCandidate];
+    else if (now > stage2Sale && now < stage3Sale) { // 29 - 42 days preSale
+      return 10;
     }
-    
-    /*******************************************************************************
-     * Setter's Section
-     */
-
-    function setStartCloseSale(uint256 newStartSale) public onlyOwner {
-        startCloseSale = newStartSale;
-    }
-
-    function setEndCloseSale(uint256 newEndSale) public onlyOwner{
-        endCloseSale = newEndSale;
-    }
-
-    function setStartStage1(uint256 newsetStage2) public onlyOwner{
-        startStage1 = newsetStage2;
-    }
-
-    function setEndStage1(uint256 newsetStage3) public onlyOwner{
-        endStage1 = newsetStage3;
-    }
-
-    function setStartStage2(uint256 newsetStage4) public onlyOwner{
-        startStage2 = newsetStage4;
-    }
-
-    function setEndStage2(uint256 newsetStage5) public onlyOwner{
-        endStage2 = newsetStage5;
-    }
-
-    function setStartStage3(uint256 newsetStage5) public onlyOwner{
-        startStage3 = newsetStage5;
-    }
-
-    function setEndStage3(uint256 newsetStage5) public onlyOwner{
-        endStage3 = newsetStage5;
-    }
-
-    function setPrices(uint256 newPrice) public onlyOwner {
-        buyPrice = newPrice;
-    }
-    
-    function setETHUSD(uint256 _ethUSD) public onlyOwner { 
-        ethUSD = _ethUSD;
-    
-    
-    }
-    
-    /*******************************************************************************
-     * Payable Section
-     */
-    function ()  public payable {
-        
-        require(msg.value >= (1*1e18/ethUSD*100));
-
-        if (now >= startCloseSale || now <= endCloseSale) {
-            require(isWhitelisted(msg.sender));
-            closeSale(msg.sender, msg.value);
-            stageNow = "Close Sale for Whitelist's members";
-            
-        } else if (now >= startStage1 || now <= endStage1) {
-            sale1(msg.sender, msg.value);
-            stageNow = "Stage 1";
-
-        } else if (now >= startStage2 || now <= endStage2) {
-            sale2(msg.sender, msg.value);
-             stageNow = "Stage 2";
-
-        } else if (now >= startStage3 || now <= endStage3) {
-            sale3(msg.sender, msg.value);
-             stageNow = "Stage 3";
-
-        } else {
-            stageNow = "No Sale";
-            revert();
-        } 
-    }
-    
-    // issue token in a period of closed sales
-    function closeSale(address _investor, uint256 _value) internal {
-
-        uint256 tokens = _value.mul(1e18).div(buyPrice); // 68%
-        uint256 bonusTokens = tokens.mul(30).div(100); // + 30% per stage
-        tokens = tokens.add(bonusTokens); 
-        token.transferFromICO(_investor, tokens);
-        weisRaised = weisRaised.add(msg.value);
-
-        uint256 tokensReserve = tokens.mul(15).div(68); // 15 %
-        token.transferFromICO(reserve, tokensReserve);
-
-        uint256 tokensBoynty = tokens.div(34); // 2 %
-        token.transferFromICO(bounty, tokensBoynty);
-
-        uint256 tokensPromo = tokens.mul(15).div(68); // 15%
-        token.transferFromICO(promouters, tokensPromo);
-    }
-    
-    // the issue of tokens in period 1 sales
-    function sale1(address _investor, uint256 _value) internal {
-
-        uint256 tokens = _value.mul(1e18).div(buyPrice); // 66% 
-
-        uint256 bonusTokens = tokens.mul(10).div(100); // + 10% per stage
-        tokens = tokens.add(bonusTokens); // 66 %
-
-        token.transferFromICO(_investor, tokens);
-
-        uint256 tokensReserve = tokens.mul(5).div(22); // 15 %
-        token.transferFromICO(reserve, tokensReserve);
-
-        uint256 tokensBoynty = tokens.mul(2).div(33); // 4 %
-        token.transferFromICO(bounty, tokensBoynty);
-
-        uint256 tokensPromo = tokens.mul(5).div(22); // 15%
-        token.transferFromICO(promouters, tokensPromo);
-
-        weisRaised = weisRaised.add(msg.value);
+    else if (now > stage3Sale && now < endMainSale) { // 43 - endSale
+      return 6;
     }
     
-    // the issue of tokens in period 2 sales
-    function sale2(address _investor, uint256 _value) internal {
-
-        uint256 tokens = _value.mul(1e18).div(buyPrice); // 64 %
-
-        uint256 bonusTokens = tokens.mul(5).div(100); // + 5% 
-        tokens = tokens.add(bonusTokens);
-
-        token.transferFromICO(_investor, tokens);
-
-        uint256 tokensReserve = tokens.mul(15).div(64); // 15 %
-        token.transferFromICO(reserve, tokensReserve);
-
-        uint256 tokensBoynty = tokens.mul(3).div(32); // 6 %
-        token.transferFromICO(bounty, tokensBoynty);
-
-        uint256 tokensPromo = tokens.mul(15).div(64); // 15%
-        token.transferFromICO(promouters, tokensPromo);
-
-        weisRaised = weisRaised.add(msg.value);
+    else {
+      return 0;
     }
-
-    // the issue of tokens in period 3 sales
-    function sale3(address _investor, uint256 _value) internal {
-
-        uint256 tokens = _value.mul(1e18).div(buyPrice); // 62 %
-        token.transferFromICO(_investor, tokens);
-
-        uint256 tokensReserve = tokens.mul(15).div(62); // 15 %
-        token.transferFromICO(reserve, tokensReserve);
-
-        uint256 tokensBoynty = tokens.mul(4).div(31); // 8 %
-        token.transferFromICO(bounty, tokensBoynty);
-
-        uint256 tokensPromo = tokens.mul(15).div(62); // 15%
-        token.transferFromICO(promouters, tokensPromo);
-
-        weisRaised = weisRaised.add(msg.value);
-    }
-
-    /*******************************************************************************
-     * Manual Management
-     */
-    function transferEthFromContract(address _to, uint256 amount) public onlyOwner {
-        _to.transfer(amount);
-    }
+  }
+  
+  
+  function mintManual(address receiver, uint256 _tokens) public backEnd {
+    token.mintFromICO(receiver, _tokens);
+    soldTokensMainSale = soldTokensMainSale.add(_tokens);
+    BuyBackContract.buyTokenICO(receiver, _tokens);//Set count token for periods ICO
+	 
+    uint256 tokensTeam = _tokens.mul(5).div(44); // 10 %
+    token.mintFromICO(team, tokensTeam);
+    
+    uint256 tokensBoynty = _tokens.div(44); // 2 %
+    token.mintFromICO(bounty, tokensBoynty);
+  }
+  
+  
+  function transferEthFromContract(address _to, uint256 amount) public onlyOwner {
+    _to.transfer(amount);
+  }
+  
+  
+  function refundPreSale() public {
+    require(soldTokensMainSale < soldTokensMainSale && now > endMainSale);
+    uint256 rate = investedEther[msg.sender];
+    require(investedEther[msg.sender] >= 0);
+    investedEther[msg.sender] = 0;
+    msg.sender.transfer(rate);
+    weisRaised = weisRaised.sub(rate);
+    emit Refund(rate, msg.sender);
+  }
 }
