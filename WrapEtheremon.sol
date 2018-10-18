@@ -1,18 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WrapEtheremon at 0x0f659be38db6439f7ef5efd218f2ebfaf6deb2e5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WrapEtheremon at 0xffa4bee0b9cd2c2e4eacb8d8f11096baa3e6c55d
 */
 pragma solidity ^0.4.24;
-
-interface ERC20 {
-    function totalSupply() public view returns (uint supply);
-    function balanceOf(address _owner) public view returns (uint balance);
-    function transfer(address _to, uint _value) public returns (bool success);
-    function transferFrom(address _from, address _to, uint _value) public returns (bool success);
-    function approve(address _spender, uint _value) public returns (bool success);
-    function allowance(address _owner, address _spender) public view returns (uint remaining);
-    function decimals() public view returns(uint digits);
-    event Approval(address indexed _owner, address indexed _spender, uint _value);
-}
 
 contract BasicAccessControl {
     address public owner;
@@ -40,30 +29,56 @@ contract BasicAccessControl {
         _;
     }
 
-    function ChangeOwner(address _newOwner) onlyOwner public {
+    function ChangeOwner(address _newOwner) public onlyOwner {
         if (_newOwner != address(0)) {
             owner = _newOwner;
         }
     }
 
 
-    function AddModerator(address _newModerator) onlyOwner public {
+    function AddModerator(address _newModerator) public onlyOwner {
         if (moderators[_newModerator] == false) {
             moderators[_newModerator] = true;
             totalModerators += 1;
         }
     }
 
-    function RemoveModerator(address _oldModerator) onlyOwner public {
+    function RemoveModerator(address _oldModerator) public onlyOwner {
         if (moderators[_oldModerator] == true) {
             moderators[_oldModerator] = false;
             totalModerators -= 1;
         }
     }
 
-    function UpdateMaintaining(bool _isMaintaining) onlyOwner public {
+    function UpdateMaintaining(bool _isMaintaining) public onlyOwner {
         isMaintaining = _isMaintaining;
     }
+}
+
+interface ERC20 {
+    function totalSupply() public view returns (uint supply);
+    function balanceOf(address _owner) public view returns (uint balance);
+    function transfer(address _to, uint _value) public returns (bool success);
+    function transferFrom(address _from, address _to, uint _value) public returns (bool success);
+    function approve(address _spender, uint _value) public returns (bool success);
+    function allowance(address _owner, address _spender) public view returns (uint remaining);
+    function decimals() public view returns(uint digits);
+    event Approval(address indexed _owner, address indexed _spender, uint _value);
+}
+
+contract EtheremonDataBase {
+    uint64 public totalMonster;
+    uint32 public totalClass;
+
+    // write
+    function addElementToArrayType(EtheremonEnum.ArrayType _type, uint64 _id, uint8 _value) external returns(uint);
+    function addMonsterObj(uint32 _classId, address _trainer, string _name) external returns(uint64);
+    function removeMonsterIdMapping(address _trainer, uint64 _monsterId) external;
+
+    // read
+    function getElementInArrayType(EtheremonEnum.ArrayType _type, uint64 _id, uint _index) external constant returns(uint8);
+    function getMonsterClass(uint32 _classId) external constant returns(uint32 classId, uint256 price, uint256 returnPrice, uint32 total, bool catchable);
+    function getMonsterObj(uint64 _objId) external constant returns(uint64 objId, uint32 classId, address trainer, uint32 exp, uint32 createIndex, uint32 lastClaimIndex, uint createTime);
 }
 
 contract EtheremonEnum {
@@ -91,16 +106,12 @@ contract EtheremonEnum {
     }
 }
 
-interface EtheremonDataBase {
-    function addMonsterObj(uint32 _classId, address _trainer, string _name) external returns(uint64);
-    function addElementToArrayType(EtheremonEnum.ArrayType _type, uint64 _id, uint8 _value) external returns(uint);
-
-    // read
-    function getElementInArrayType(EtheremonEnum.ArrayType _type, uint64 _id, uint _index) constant external returns(uint8);
-    function getMonsterClass(uint32 _classId) constant external returns(uint32 classId, uint256 price, uint256 returnPrice, uint32 total, bool catchable);
+interface EtheremonMonsterNFTInterface {
+   function triggerTransferEvent(address _from, address _to, uint _tokenId) external;
+   function getMonsterCP(uint64 _monsterId) constant external returns(uint cp);
 }
 
-contract EtheremonExternalPayment is EtheremonEnum, BasicAccessControl {
+contract EtheremonWorldNFT is BasicAccessControl {
     uint8 constant public STAT_COUNT = 6;
     uint8 constant public STAT_MAX = 32;
 
@@ -112,42 +123,75 @@ contract EtheremonExternalPayment is EtheremonEnum, BasicAccessControl {
         bool catchable;
     }
 
+    struct MonsterObjAcc {
+        uint64 monsterId;
+        uint32 classId;
+        address trainer;
+        string name;
+        uint32 exp;
+        uint32 createIndex;
+        uint32 lastClaimIndex;
+        uint createTime;
+    }
+
     address public dataContract;
-    uint public gapFactor = 0.001 ether;
-    uint16 public priceIncreasingRatio = 1000;
-    uint seed = 0;
+    address public monsterNFT;
 
-    event Transfer(address indexed _from, address indexed _to, uint256 _tokenId);
+    mapping(uint32 => bool) public classWhitelist;
+    mapping(address => bool) public addressWhitelist;
 
-    function setDataContract(address _contract) onlyOwner public {
-        dataContract = _contract;
+    uint public gapFactor = 5;
+    uint public priceIncreasingRatio = 1000;
+
+    function setContract(address _dataContract, address _monsterNFT) external onlyModerators {
+        dataContract = _dataContract;
+        monsterNFT = _monsterNFT;
     }
 
-    function setPriceIncreasingRatio(uint16 _ratio) onlyModerators external {
-        priceIncreasingRatio = _ratio;
-    }
-
-    function setFactor(uint _gapFactor) onlyOwner public {
+    function setConfig(uint _gapFactor, uint _priceIncreasingRatio) external onlyModerators {
         gapFactor = _gapFactor;
+        priceIncreasingRatio = _priceIncreasingRatio;
     }
 
-    function withdrawEther(address _sendTo, uint _amount) onlyOwner public {
-        // no user money is kept in this contract, only trasaction fee
-        if (_amount > address(this).balance) {
-            revert();
+    function setClassWhitelist(uint32 _classId, bool _status) external onlyModerators {
+        classWhitelist[_classId] = _status;
+    }
+
+    function setAddressWhitelist(address _smartcontract, bool _status) external onlyModerators {
+        addressWhitelist[_smartcontract] = _status;
+    }
+
+    function mintMonster(uint32 _classId, address _trainer, string _name) external onlyModerators returns(uint) {
+        EtheremonDataBase data = EtheremonDataBase(dataContract);
+        // add monster
+        uint64 objId = data.addMonsterObj(_classId, _trainer, _name);
+        uint8 value;
+        uint seed = getRandom(_trainer, block.number-1, objId);
+        // generate base stat for the previous one
+        for (uint i=0; i < STAT_COUNT; i += 1) {
+            seed /= 100;
+            value = uint8(seed % STAT_MAX) + data.getElementInArrayType(EtheremonEnum.ArrayType.STAT_START, uint64(_classId), i);
+            data.addElementToArrayType(EtheremonEnum.ArrayType.STAT_BASE, objId, value);
         }
-        _sendTo.transfer(_amount);
+
+        EtheremonMonsterNFTInterface(monsterNFT).triggerTransferEvent(address(0), _trainer, objId);
+        return objId;
     }
 
-    function getRandom(address _player, uint _block, uint _seed, uint _count) constant public returns(uint) {
-        return uint(keccak256(abi.encodePacked(blockhash(_block), _player, _seed, _count)));
+    function burnMonster(uint64 _tokenId) external onlyModerators {
+        // need to check condition before calling this function
+        EtheremonDataBase data = EtheremonDataBase(dataContract);
+        MonsterObjAcc memory obj;
+        (obj.monsterId, obj.classId, obj.trainer, obj.exp, obj.createIndex, obj.lastClaimIndex, obj.createTime) = data.getMonsterObj(_tokenId);
+        require(obj.trainer != address(0));
+        data.removeMonsterIdMapping(obj.trainer, _tokenId);
+        EtheremonMonsterNFTInterface(monsterNFT).triggerTransferEvent(obj.trainer, address(0), _tokenId);
     }
 
-    function catchMonster(address _player, uint32 _classId, string _name) onlyModerators external payable returns(uint tokenId) {
+    function catchMonsterNFT(uint32 _classId, string _name) external isActive payable {
         EtheremonDataBase data = EtheremonDataBase(dataContract);
         MonsterClassAcc memory class;
         (class.classId, class.price, class.returnPrice, class.total, class.catchable) = data.getMonsterClass(_classId);
-
         if (class.classId == 0 || class.catchable == false) {
             revert();
         }
@@ -155,27 +199,76 @@ contract EtheremonExternalPayment is EtheremonEnum, BasicAccessControl {
         uint price = class.price;
         if (class.total > 0)
             price += class.price*(class.total-1)/priceIncreasingRatio;
-        if (msg.value + gapFactor < price) {
+        if (msg.value < price) {
+            revert();
+        }
+
+        // add new monster
+        uint64 objId = data.addMonsterObj(_classId, msg.sender, _name);
+        uint8 value;
+        uint seed = getRandom(msg.sender, block.number-1, objId);
+        // generate base stat for the previous one
+        for (uint i=0; i < STAT_COUNT; i += 1) {
+            seed /= 100;
+            value = uint8(seed % STAT_MAX) + data.getElementInArrayType(EtheremonEnum.ArrayType.STAT_START, uint64(_classId), i);
+            data.addElementToArrayType(EtheremonEnum.ArrayType.STAT_BASE, objId, value);
+        }
+
+        EtheremonMonsterNFTInterface(monsterNFT).triggerTransferEvent(address(0), msg.sender, objId);
+        // refund extra
+        if (msg.value > price) {
+            msg.sender.transfer((msg.value - price));
+        }
+    }
+
+    // for whitelist contracts, no refund extra
+    function catchMonster(address _player, uint32 _classId, string _name) external isActive payable returns(uint tokenId) {
+        if (addressWhitelist[msg.sender] == false) {
+            revert();
+        }
+
+        EtheremonDataBase data = EtheremonDataBase(dataContract);
+        MonsterClassAcc memory class;
+        (class.classId, class.price, class.returnPrice, class.total, class.catchable) = data.getMonsterClass(_classId);
+        if (class.classId == 0) {
+            revert();
+        }
+
+        if (class.catchable == false && classWhitelist[_classId] == false) {
+            revert();
+        }
+
+        uint price = class.price;
+        if (class.total > gapFactor) {
+            price += class.price*(class.total - gapFactor)/priceIncreasingRatio;
+        }
+        if (msg.value < price) {
             revert();
         }
 
         // add new monster
         uint64 objId = data.addMonsterObj(_classId, _player, _name);
         uint8 value;
-        seed = getRandom(_player, block.number, seed, objId);
+        uint seed = getRandom(_player, block.number-1, objId);
         // generate base stat for the previous one
-        for (uint i=0; i < STAT_COUNT; i+= 1) {
-            value = uint8(seed % STAT_MAX) + data.getElementInArrayType(ArrayType.STAT_START, uint64(_classId), i);
-            data.addElementToArrayType(ArrayType.STAT_BASE, objId, value);
+        for (uint i=0; i < STAT_COUNT; i += 1) {
+            seed /= 100;
+            value = uint8(seed % STAT_MAX) + data.getElementInArrayType(EtheremonEnum.ArrayType.STAT_START, uint64(_classId), i);
+            data.addElementToArrayType(EtheremonEnum.ArrayType.STAT_BASE, objId, value);
         }
 
-        emit Transfer(address(0), _player, objId);
-
+        EtheremonMonsterNFTInterface(monsterNFT).triggerTransferEvent(address(0), _player, objId);
         return objId;
     }
 
-    // public
-    function getPrice(uint32 _classId) constant external returns(bool catchable, uint price) {
+    function getMonsterClassBasic(uint32 _classId) external constant returns(uint256, uint256, uint256, bool) {
+        EtheremonDataBase data = EtheremonDataBase(dataContract);
+        MonsterClassAcc memory class;
+        (class.classId, class.price, class.returnPrice, class.total, class.catchable) = data.getMonsterClass(_classId);
+        return (class.price, class.returnPrice, class.total, class.catchable);
+    }
+
+    function getPrice(uint32 _classId) external constant returns(bool catchable, uint price) {
         EtheremonDataBase data = EtheremonDataBase(dataContract);
         MonsterClassAcc memory class;
         (class.classId, class.price, class.returnPrice, class.total, class.catchable) = data.getMonsterClass(_classId);
@@ -184,7 +277,23 @@ contract EtheremonExternalPayment is EtheremonEnum, BasicAccessControl {
         if (class.total > 0)
             price += class.price*(class.total-1)/priceIncreasingRatio;
 
-        return (class.catchable, price);
+        if (class.catchable == false) {
+            return (classWhitelist[_classId], price);
+        } else {
+            return (true, price);
+        }
+    }
+
+    // public api
+    function getRandom(address _player, uint _block, uint _count) public view returns(uint) {
+        return uint(keccak256(abi.encodePacked(blockhash(_block), _player, _count)));
+    }
+
+    function withdrawEther(address _sendTo, uint _amount) public onlyOwner {
+        if (_amount > address(this).balance) {
+            revert();
+        }
+        _sendTo.transfer(_amount);
     }
 }
 
@@ -244,7 +353,7 @@ contract Utils {
     function calcSrcQty(uint dstQty, uint srcDecimals, uint dstDecimals, uint rate) internal pure returns(uint) {
         require(dstQty <= MAX_QTY);
         require(rate <= MAX_RATE);
-
+        
         //source quantity is rounded up. to avoid dest quantity being too low.
         uint numerator;
         uint denominator;
@@ -313,12 +422,12 @@ interface WrapEtheremonInterface {
     function setKyberNetwork(address _KyberNetwork) public;
 
     /// @dev Get the ETH price of the Etheremon monster and if it is catchable
-    /// @param _etheremon EtheremonExternalPayment address
+    /// @param _etheremon EtheremonWorldNFT address
     /// @param _classId Class ID of monster
     /// @param _payPrice Price of monster passed from Etheremon server
     /// @return catchable, monsterInETH
     function getMonsterPriceInETH(
-        EtheremonExternalPayment _etheremon,
+        EtheremonWorldNFT _etheremon,
         uint32 _classId,
         uint _payPrice
     )
@@ -362,7 +471,7 @@ interface WrapEtheremonInterface {
 
     /// @dev Acquires the monster from Etheremon using tokens
     /// @param _kyberProxy KyberNetworkProxyInterface address
-    /// @param _etheremon EtheremonExternalPayment address
+    /// @param _etheremon EtheremonWorldNFT address
     /// @param _classId Class ID of monster
     /// @param _name Name of the monster
     /// @param token ERC20 token address
@@ -373,7 +482,7 @@ interface WrapEtheremonInterface {
     /// @return monsterId
     function catchMonster(
         KyberNetworkProxyInterface _kyberProxy,
-        EtheremonExternalPayment _etheremon,
+        EtheremonWorldNFT _etheremon,
         uint32 _classId,
         string _name,
         ERC20 token,
@@ -468,12 +577,12 @@ contract WrapEtheremon is WrapEtheremonInterface, WrapEtheremonPermissions, Util
     }
 
     /// @dev Get the ETH price of the Etheremon monster and if it is catchable
-    /// @param _etheremon EtheremonExternalPayment address
+    /// @param _etheremon EtheremonWorldNFT address
     /// @param _classId Class ID of monster
     /// @param _payPrice Price of monster passed from Etheremon server
     /// @return catchable, monsterInETH
     function getMonsterPriceInETH(
-        EtheremonExternalPayment _etheremon,
+        EtheremonWorldNFT _etheremon,
         uint32 _classId,
         uint _payPrice
     )
@@ -543,7 +652,7 @@ contract WrapEtheremon is WrapEtheremonInterface, WrapEtheremonPermissions, Util
 
     /// @dev Acquires the monster from Etheremon using tokens
     /// @param _kyberProxy KyberNetworkProxyInterface address
-    /// @param _etheremon EtheremonExternalPayment address
+    /// @param _etheremon EtheremonWorldNFT address
     /// @param _classId Class ID of monster
     /// @param _name Name of the monster
     /// @param token ERC20 token address
@@ -554,7 +663,7 @@ contract WrapEtheremon is WrapEtheremonInterface, WrapEtheremonPermissions, Util
     /// @return monsterId
     function catchMonster(
         KyberNetworkProxyInterface _kyberProxy,
-        EtheremonExternalPayment _etheremon,
+        EtheremonWorldNFT _etheremon,
         uint32 _classId,
         string _name,
         ERC20 token,
