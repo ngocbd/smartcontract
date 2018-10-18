@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CGCG at 0x34c7563dedd62fd968f5460803b33b398ee2fe2e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CGCG at 0x0126c64e02d0d498a2a9ab44e5a9ef02acce8b7b
 */
 pragma solidity ^0.4.11;
 contract SafeMath {
@@ -116,7 +116,7 @@ contract CGCG is StandardToken {
   
   function CGCG() {
     _totalSupply = INITIAL_SUPPLY;
-	_creator = 0x4B76a15083F80d920008d2B893a1f1c8D96fd794;
+	_creator = 0xD402334273338472993dD88bDEC0fE70F1Fa271D;
 	balances[_creator] = INITIAL_SUPPLY;
 	bIsFreezeAll = false;
   }
