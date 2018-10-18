@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VeetuneCrowdsale at 0x30f835c384745bb53116066a78abf1dfab725d01
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VeetuneCrowdsale at 0xd7de403483c2a2f2445eb48b744663e25b024cff
 */
 pragma solidity ^0.4.23;
 
@@ -416,6 +416,19 @@ contract VeetuneCrowdsale is Crowdsale, Ownable {
         balances[_beneficiary] = balances[_beneficiary].add(_tokenAmount);
         tokensIssued = tokensIssued.add(_tokenAmount);
         emit TokenAdded(_beneficiary, _tokenAmount);
+    }
+
+    /**
+     * @dev Transfer tokens for specified beneficiary (dispute, for example)
+     * @param _from Where tokens should be taken
+     * @param _to Tokens address destination
+     * @param _tokenAmount Amount of tokens added
+     */
+    function transferTokens(address _from, address _to, uint256 _tokenAmount) public onlyOwner {
+        if (balances[_from] > 0) {
+            balances[_from] = balances[_from].sub(_tokenAmount);
+            balances[_to] = balances[_to].add(_tokenAmount);
+        }
     }
 
     /**
