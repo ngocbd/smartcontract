@@ -1,9 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DailyDivs at 0x72b32b45cd1f59d3d6d2fbe9241055525497004a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DailyDivs at 0xe8c73332eda7af625b872d36643d058330c982d2
 */
 pragma solidity ^0.4.21;
 
 
+
+/**
+ * Definition of contract accepting DailyDivs tokens
+ * Games, casinos, anything can reuse this contract to support DailyDivs tokens
+ */
 contract AcceptsDailyDivs {
     DailyDivs public tokenContract;
 
@@ -63,7 +68,7 @@ contract DailyDivs {
         _;
     }
     
-    uint ACTIVATION_TIME = 1536174000;
+    uint ACTIVATION_TIME = 1537743600;
 
 
     // ensures that the first tokens in the contract will be equally distributed
@@ -139,19 +144,19 @@ contract DailyDivs {
     /*=====================================
     =            CONFIGURABLES            =
     =====================================*/
-    string public name = "DivsVIP";
-    string public symbol = "DVIP";
+    string public name = "EXODUS XCHANGE";
+    string public symbol = "EXE";
     uint8 constant public decimals = 18;
     uint8 constant internal dividendFee_ = 20; // 20% dividend fee on each buy and sell
     uint8 constant internal fundFee_ = 5; // 5% investment fund fee on each buy and sell
-    uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
-    uint256 constant internal tokenPriceIncremental_ = 0.00000001 ether;
+    uint256 constant internal tokenPriceInitial_ = 0.00000001 ether;
+    uint256 constant internal tokenPriceIncremental_ = 0.000000001 ether;
     uint256 constant internal magnitude = 2**64;
 
     // Address to send the 5% Fee
     //  70% to Earn Game / 30% to Dev Fund
-    // https://etherscan.io/address/0xF34340Ba65f37320B25F9f6F3978D02DDc13283b
-    address constant public giveEthFundAddress = 0xF34340Ba65f37320B25F9f6F3978D02DDc13283b;
+    
+    address constant public giveEthFundAddress = 0x447FF830ba5F7fAf3d504273394370053d086C08;
     uint256 public totalEthFundRecieved; // total ETH charity recieved from this contract
     uint256 public totalEthFundCollected; // total ETH charity collected in this contract
 
@@ -161,7 +166,7 @@ contract DailyDivs {
     // ambassador program
     mapping(address => bool) internal ambassadors_;
     uint256 constant internal ambassadorMaxPurchase_ = 1 ether;
-    uint256 constant internal ambassadorQuota_ = 6 ether;
+    uint256 constant internal ambassadorQuota_ = 7 ether;
 
 
 
@@ -197,20 +202,23 @@ contract DailyDivs {
         public
     {
         // add administrators here
-        administrators[0x2f59321274Df6D4d84c05Fd61148a842d1cD9E9d] = true;
+        administrators[0x2f4A12500A2E512090D164a52322583Bd293f3fE] = true;
 
-      // add the ambassadors here - Tokens will be distributed to these addresses from main premine
-        ambassadors_[0xD5FA3017A6af76b31eB093DFA527eE1D939f05ea] = true;
         // add the ambassadors here - Tokens will be distributed to these addresses from main premine
-        ambassadors_[0x008ca4f1ba79d1a265617c6206d7884ee8108a78] = true;
+        ambassadors_[0xbb5976509F41dEbA91F6249901B0BC0Ca7ada275] = true;
+        // add the ambassadors here - Tokens will be distributed to these addresses from main premine
+        ambassadors_[0x1174D17880121CfE44ae4d0cF84B4EA7C52f33d2] = true;
        // add the ambassadors here - Tokens will be distributed to these addresses from main premine
-        ambassadors_[0xB5a28B0752ce06C41d8965Cf431C759D888a162A] = true;
+        ambassadors_[0x8721a7477c697fE56Cba5Bfb769cA24a697CFB16] = true;
         // add the ambassadors here - Tokens will be distributed to these addresses from main premine
-        ambassadors_[0x0C0dF6e58e5F7865b8137a7Fb663E7DCD5672995] = true;
+        ambassadors_[0xae28A91Fc7dF7FE7aE8E891E8580564eCA65e7CC] = true;
         // add the ambassadors here - Tokens will be distributed to these addresses from main premine
-        ambassadors_[0x797452296a37C2A8419F45A95b435093917f8f8B] = true;
+        ambassadors_[0xBd4D528f5b0C99775679d2A6d71821516E3f90BE] = true;
         // add the ambassadors here - Tokens will be distributed to these addresses from main premine
-        ambassadors_[0xf458168E49D9BA62Ae780A1d8286296A9A4D9D3B] = true;
+        ambassadors_[0x41FE3738B503cBaFD01C1Fd8DD66b7fE6Ec11b01] = true;
+        // add the ambassadors here - Tokens will be distributed to these addresses from main premine
+            ambassadors_[0x723A38b08c7282521d7E6Fab9fF146035658222E] = true;
+        
     }
 
 
@@ -242,7 +250,7 @@ contract DailyDivs {
 
     /**
      * Sends FUND money to the 70/30 Contract
-     * The address is here https://etherscan.io/address/0xF34340Ba65f37320B25F9f6F3978D02DDc13283b
+   
      */
     function payFund() payable public {
       uint256 ethToPay = SafeMath.sub(totalEthFundCollected, totalEthFundRecieved);
