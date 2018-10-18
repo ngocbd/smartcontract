@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EducationToken at 0x5847ad74b0cfa928ef1a0aba9098926527ce003f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EducationToken at 0xccf53f59fb03eee2eec59308e730dbcb9e7027f0
 */
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////// ERC223 ///////////////////////////////////////
@@ -56,12 +56,12 @@ contract EducationToken is ERC223Interface {
     
     using SafeMath for uint;
     
-    string public constant name = "Education Token Test";
-    string public constant symbol = "KEDUTest";
+    string public constant name = "Education Token";
+    string public constant symbol = "KEDU";
     uint8  public constant decimals = 18;
     
-    uint256 public constant totalSupply =  2 * (10 ** 9) * (10 ** 18); // 2 billion "KEDU"
-    uint256 public constant Million     =      (10 ** 6);
+    uint256 public constant totalSupply =  2000 * (10 ** 6) * (10 ** 18); // 2 billion "KEDU"
+    uint256 public constant Million     =         (10 ** 6);
     //uint256 public nowSupply = 0;
     
     address public constant contractOwner = 0x21bA616f20a14bc104615Cc955F818310E725aBA;
@@ -72,17 +72,17 @@ contract EducationToken is ERC223Interface {
         preAllocation();
     }
 	function preAllocation() internal {
-        balances[0x21bA616f20a14bc104615Cc955F818310E725aBA] =   0*(10**6)*(10**18); //  0% ,code writer
-        balances[0x6F34740F96C76B4C228D8EFA5EC9C71205733102] = 200*(10**6)*(10**18); // 10% ,contractOwner1
-        balances[0x33fa06cD9A1451961890532bB3F2F2b6fB817976] = 200*(10**6)*(10**18); // 10% ,contractOwner2
-        balances[0x5d49508ab79A149663F036C9e1f820F2B78EC230] = 200*(10**6)*(10**18); // 10% ,contractOwner3
-        balances[0x45bC7Ac57f10b42133abf5a92861D4AA3C5EA3e8] = 200*(10**6)*(10**18); // 10% ,contractOwner4
-        balances[0xc157F7DcA6c101Cc2c63462d4E81bF5C335EFB49] = 200*(10**6)*(10**18); // 10% ,contractOwner5
-        balances[0x1306E082444370f11039b1eC19D85Bf3dF35Bb62] = 200*(10**6)*(10**18); // 10% ,contractOwner6
-        balances[0xC45E047cD81356d655D5c061311f62BBe2d2908C] = 200*(10**6)*(10**18); // 10% ,contractOwner7
-        balances[0x42b4B6BBb2619Afd619A56aeBa1533699c3A8e8d] = 200*(10**6)*(10**18); // 10% ,contractOwner8
-        balances[0xA8e5986C88556180Db85b3288CD10f383c1C04a6] = 200*(10**6)*(10**18); // 10% ,contractOwner9
-        balances[0xA6B60801869c732B75Ee980fC53458dAc75ebe7E] = 200*(10**6)*(10**18); // 10% ,contractOwner10
+        balances[0x21bA616f20a14bc104615Cc955F818310E725aBA] =1400*(10**6)*(10**18); //  0% ,code writer
+        balances[0x6F34740F96C76B4C228D8EFA5EC9C71205733102] =  60*(10**6)*(10**18); // 10% ,contractOwner1
+        balances[0x33fa06cD9A1451961890532bB3F2F2b6fB817976] =  60*(10**6)*(10**18); // 10% ,contractOwner2
+        balances[0x5d49508ab79A149663F036C9e1f820F2B78EC230] =  60*(10**6)*(10**18); // 10% ,contractOwner3
+        balances[0x45bC7Ac57f10b42133abf5a92861D4AA3C5EA3e8] =  60*(10**6)*(10**18); // 10% ,contractOwner4
+        balances[0xc157F7DcA6c101Cc2c63462d4E81bF5C335EFB49] =  60*(10**6)*(10**18); // 10% ,contractOwner5
+        balances[0x1306E082444370f11039b1eC19D85Bf3dF35Bb62] =  60*(10**6)*(10**18); // 10% ,contractOwner6
+        balances[0xC45E047cD81356d655D5c061311f62BBe2d2908C] =  60*(10**6)*(10**18); // 10% ,contractOwner7
+        balances[0x42b4B6BBb2619Afd619A56aeBa1533699c3A8e8d] =  60*(10**6)*(10**18); // 10% ,contractOwner8
+        balances[0xA8e5986C88556180Db85b3288CD10f383c1C04a6] =  60*(10**6)*(10**18); // 10% ,contractOwner9
+        balances[0xA6B60801869c732B75Ee980fC53458dAc75ebe7E] =  60*(10**6)*(10**18); // 10% ,contractOwner10
 	}
     function() payable {
         require(msg.value >= 0.00001 ether);
