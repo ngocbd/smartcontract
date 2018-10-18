@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProductionBoiler at 0xe65b98625D8C61941ECEBB3Dec241393966f9831
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProductionBoiler at 0xe699d364ea2abb729f1f7232bd1063e182dcf78f
 */
 pragma solidity ^0.4.24;
 
@@ -21,7 +21,7 @@ contract Base
         creator = msg.sender;
     }
 
-    modifier MasterAble()
+    modifier CreatorAble()
     {
         require(msg.sender == creator);
         _;
@@ -47,42 +47,23 @@ contract Base
         return 5;
     }
 
-}
-
-contract BasicTime
-{
-    uint constant DAY_SECONDS = 60 * 60 * 24;
-
-    function GetDayCount(uint timestamp) pure internal returns(uint)
+    function GetPartLimit(uint8 level, uint part) internal pure returns(uint8)
     {
-        return timestamp/DAY_SECONDS;
-    }
-
-    function GetExpireTime(uint timestamp, uint dayCnt) pure internal returns(uint)
-    {
-        uint dayEnd = GetDayCount(timestamp) + dayCnt;
-        return dayEnd * DAY_SECONDS;
+        if (!IsLimitPart(level, part)) return 0;
+        if (level == 5) return 1;
+        if (level == 4) return 8;
+        return 15;
     }
 
 }
+
+
+
 
 contract BasicAuth is Base
 {
 
-    address master;
     mapping(address => bool) auth_list;
-
-    function InitMaster(address acc) internal
-    {
-        require(address(0) != acc);
-        master = acc;
-    }
-
-    modifier MasterAble()
-    {
-        require(msg.sender == creator || msg.sender == master);
-        _;
-    }
 
     modifier OwnerAble(address acc)
     {
@@ -96,20 +77,19 @@ contract BasicAuth is Base
         _;
     }
 
-    function CanHandleAuth(address from) internal view returns(bool)
+    modifier ValidHandleAuth()
     {
-        return from == creator || from == master;
+        require(tx.origin==creator || msg.sender==creator);
+        _;
     }
-    
-    function SetAuth(address target) external
+   
+    function SetAuth(address target) external ValidHandleAuth
     {
-        require(CanHandleAuth(tx.origin) || CanHandleAuth(msg.sender));
         auth_list[target] = true;
     }
 
-    function ClearAuth(address target) external
+    function ClearAuth(address target) external ValidHandleAuth
     {
-        require(CanHandleAuth(tx.origin) || CanHandleAuth(msg.sender));
         delete auth_list[target];
     }
 
@@ -117,6 +97,11 @@ contract BasicAuth is Base
 
 
 
+
+contract OldProductionBoiler
+{
+    function GetBoilerInfo(address acc, uint idx) external view returns(uint, uint32[]);
+}
 
 contract ProductionBoiler is BasicAuth
 {
@@ -129,11 +114,25 @@ contract ProductionBoiler is BasicAuth
 
     mapping(address => mapping(uint => Boiler)) g_Boilers;
 
-    constructor(address Master) public
+    bool g_Synced = false;
+    function SyncOldData(OldProductionBoiler oldBoiler, address[] accounts) external CreatorAble
     {
-        InitMaster(Master);
+        require(!g_Synced);
+        g_Synced = true;
+        for (uint i=0; i<accounts.length; i++)
+        {
+            address acc = accounts[i];
+            for (uint idx=0; idx<3; idx++)
+            {
+                (uint expire, uint32[] memory chips) = oldBoiler.GetBoilerInfo(acc,idx);
+                if (expire == 0) continue;
+                g_Boilers[acc][idx].m_Expire = expire;
+                g_Boilers[acc][idx].m_Chips = chips;
+            }
+        }
     }
 
+    //=========================================================================
     function IsBoilerValid(address acc, uint idx) external view returns(bool)
     {
         Boiler storage obj = g_Boilers[acc][idx];
@@ -159,14 +158,8 @@ contract ProductionBoiler is BasicAuth
     function CollectChips(address acc, uint idx) external AuthAble OwnerAble(acc) returns(uint32[] chips)
     {
         Boiler storage obj = g_Boilers[acc][idx];
-        chips = new uint32[](obj.m_Chips.length);
-        for (uint i=0; i<obj.m_Chips.length; i++)
-        {
-            chips[i] = obj.m_Chips[i];
-            delete obj.m_Chips[i];
-        }
-        obj.m_Chips.length = 0;
-        obj.m_Expire = 0;
+        chips = obj.m_Chips;
+        delete g_Boilers[acc][idx];
     }
 
     function GetBoilerInfo(address acc, uint idx) external view returns(uint, uint32[])
