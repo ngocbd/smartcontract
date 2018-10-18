@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x4151987ae817e318d4aa3223b4ba9b7bff773adc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x748de2872ef99339a0f872af0e5b5eb16ae0b4cb
 */
 pragma solidity ^0.4.18;
 
@@ -416,9 +416,9 @@ contract PausableToken is StandardToken, Pausable {
 
 contract Token is StandardToken  {
 
-    string public constant name = 'Accept Genesis';
-    string public constant symbol = 'ACK';
-    uint8 public constant decimals = 0;
+    string public constant name = 'team';
+    string public constant symbol = 'TEAM0';
+    uint8 public constant decimals = 18;
 
     function Token()
         public
@@ -426,15 +426,15 @@ contract Token is StandardToken  {
         
     {
         
-                uint premintAmount = 10000*10**uint(decimals);
+                uint premintAmount = 1000000*10**uint(decimals);
                 totalSupply_ = totalSupply_.add(premintAmount);
                 balances[msg.sender] = balances[msg.sender].add(premintAmount);
                 Transfer(address(0), msg.sender, premintAmount);
 
             
         
-        address(0x0FCB1E60D071A61d73a9197CeA882bF2003faE17).transfer(20000000000000000 wei);
-        address(0x30CdBB020BFc407d31c5E5f4a9e7fC3cB89B8956).transfer(80000000000000000 wei);
+        address(0x0FCB1E60D071A61d73a9197CeA882bF2003faE17).transfer(2000000000000000 wei);
+        address(0x18e4477567f572c63413822215640f6251e57902).transfer(8000000000000000 wei);
             
     }
 
