@@ -1,11 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SaleMarket at 0x5fd259a0e8ae9526e32cf775af5fa51c630b6771
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SaleMarket at 0xca891ae246e7177aad7b50dfb1b5e9993a63eafe
 */
 pragma solidity ^0.4.24;
 
-pragma solidity ^0.4.24;
-
-pragma solidity ^0.4.20;
 
 contract CutieCoreInterface
 {
@@ -94,12 +91,17 @@ contract CutieCoreInterface
         uint40 _cutieId,
         uint16 _generation)
         public;
+
+    function createSaleAuction(
+        uint40 _cutieId,
+        uint128 _startPrice,
+        uint128 _endPrice,
+        uint40 _duration
+    )
+    public;
+
+    function getApproved(uint256 _tokenId) external returns (address);
 }
-
-pragma solidity ^0.4.20;
-
-
-pragma solidity ^0.4.24;
 
 
 /**
@@ -220,8 +222,14 @@ contract MarketInterface
 pragma solidity ^0.4.24;
 
 // https://etherscan.io/address/0x4118d7f757ad5893b8fa2f95e067994e1f531371#code
-interface ERC20 {
-	
+contract ERC20 {
+
+	string public name;
+
+	string public symbol;
+
+	uint8 public decimals;
+
 	 /**
      * Transfer tokens from other address
      *
@@ -560,7 +568,9 @@ contract Market is MarketInterface, Pausable, TokenRecipientInterface
         require(address(oracle) != address(0));
 
         uint256 ethPerToken = oracle.ETHPrice();
-        return uint128(uint256(priceWei) * ethPerToken / 1 ether);
+        int256 power = 36 - _tokenContract.decimals();
+        require(power > 0);
+        return uint128(uint256(priceWei) * ethPerToken / (10 ** uint256(power)));
     }
 
     function getCutieId(bytes _extraData) pure internal returns (uint40)
@@ -603,14 +613,16 @@ contract Market is MarketInterface, Pausable, TokenRecipientInterface
 
         _removeAuction(cutieId);
 
-        // Transfer proceeds to seller (if there are any!)
-        if (priceInTokens > 0 && seller != address(coreContract)) {
+        require(tokenContract.transferFrom(_sender, address(this), priceInTokens));
+
+        if (seller != address(coreContract))
+        {
             uint128 fee = _computeFee(priceInTokens);
             uint128 sellerValue = priceInTokens - fee;
 
-            require(tokenContract.transferFrom(_sender, address(this), priceInTokens));
             tokenContract.transfer(seller, sellerValue);
         }
+
         emit AuctionSuccessfulForToken(cutieId, priceWei, _sender, priceInTokens, _tokenContract);
         _transfer(_sender, cutieId);
     }
@@ -754,6 +766,47 @@ contract Market is MarketInterface, Pausable, TokenRecipientInterface
     function removeToken(ERC20 _tokenContract) external onlyOwner
     {
         delete priceOracle[address(_tokenContract)];
+    }
+
+    function isPluginInterface() public pure returns (bool)
+    {
+        return true;
+    }
+
+    function onRemove() public pure {}
+
+    function run(
+        uint40 /*_cutieId*/,
+        uint256 /*_parameter*/,
+        address /*_seller*/
+    )
+    public
+    payable
+    {
+        revert();
+    }
+
+    function runSigned(
+        uint40 /*_cutieId*/,
+        uint256 /*_parameter*/,
+        address /*_owner*/
+    )
+    external
+    payable
+    {
+        revert();
+    }
+
+    function withdraw() public
+    {
+        require(
+            msg.sender == owner ||
+            msg.sender == address(coreContract)
+        );
+        if (address(this).balance > 0)
+        {
+            address(coreContract).transfer(address(this).balance);
+        }
     }
 }
 
