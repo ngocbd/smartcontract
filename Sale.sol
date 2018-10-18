@@ -1,235 +1,105 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sale at 0x08bf43432bfac307d0a18a5b2a7c27cd858c5cfb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sale at 0xf2fb97a06a655a602bf87317f8fedf4285313777
 */
-pragma solidity ^0.4.13;
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() {
-    owner = msg.sender;
-  }
-
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) onlyOwner {
-    require(newOwner != address(0));      
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-}
+pragma solidity ^0.4.21;
 
 /*
- * ??????? ????????, ??????? ???????????? ????????? ??????
- */
 
-contract Haltable is Ownable {
-    bool public halted;
+  BASIC ERC20 Sale Contract
+  
+  Create this Sale contract first! 
+  
+     Sale(address ethwallet)   // this will send the received ETH funds to this address
 
-    modifier stopInEmergency {
-        require(!halted);
-        _;
-    }
 
-    /* ???????????, ??????? ?????????? ? ???????? */
-    modifier onlyInEmergency {
-        require(halted);
-        _;
-    }
+  @author Hunter Long
+  @repo https://github.com/hunterlong/ethereum-ico-contract
 
-    /* ????? ??????? ??????? ???????, ???????? ????? ?????? ???????? */
-    function halt() external onlyOwner {
-        halted = true;
-    }
+*/
 
-    /* ????? ?????????? ????? ?????? */
-    function unhalt() external onlyOwner onlyInEmergency {
-        halted = false;
-    }
 
+contract ERC20 {
+  uint public totalSupply;
+  function balanceOf(address who) constant returns (uint);
+  function allowance(address owner, address spender) constant returns (uint);
+  function transfer(address to, uint value) returns (bool ok);
+  function transferFrom(address from, address to, uint value) returns (bool ok);
+  function approve(address spender, uint value) returns (bool ok);
+  function mintToken(address to, uint256 value) returns (uint256);
+  function changeTransfer(bool allowed);
 }
 
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-uint256 public totalSupply;
-function balanceOf(address who) constant returns (uint256);
-function transfer(address to, uint256 value) returns (bool);
-event Transfer(address indexed from, address indexed to, uint256 value);
-}
 
-/**
- * ????????? ????????? ??????
- */
+contract Sale {
 
-contract ImpToken is ERC20Basic {
-    function decimals() public returns (uint) {}
-}
+    uint256 public maxMintable;
+    uint256 public totalMinted;
+    uint public exchangeRate;
+    bool public isFunding;
+    ERC20 public Token;
+    address public ETHWallet;
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
+    bool private configSet;
+    address public creator;
 
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
+    event Contribution(address from, uint256 amount);
 
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
-/* ???????? ?????? */
-
-contract Sale is Haltable {
-    using SafeMath for uint;
-
-    /* ?????, ??????? ??????? */
-    ImpToken public impToken;
-
-    /* ????????? ???????? ????? ???????????? ???? */
-    address public destinationWallet;
-
-    /*  ??????? ?????? ????? 1 IMP ? wei */
-    uint public oneImpInWei;
-
-    /*  ??????????? ???-?? ???????, ??????? ????? ??????? */
-    uint public minBuyTokenAmount;
-
-    /*  ???????????? ???-?? ???????, ??????? ????? ?????? ?? 1 ??? */
-    uint public maxBuyTokenAmount;
-
-    /* ??????? ??????? ?????? */
-    event Invested(address receiver, uint weiAmount, uint tokenAmount);
-
-    /* ??????????? */
-    function Sale(address _impTokenAddress, address _destinationWallet) {
-        require(_impTokenAddress != 0);
-        require(_destinationWallet != 0);
-
-        impToken = ImpToken(_impTokenAddress);
-
-        destinationWallet = _destinationWallet;
+    function Sale(address _wallet) {
+        maxMintable = 10000000000000000000000000000; 
+        ETHWallet = _wallet;
+        isFunding = true;
+        creator = msg.sender;
+        exchangeRate = 25000;
     }
 
-    /**
-     * Fallback ??????? ???????????? ??? ???????? ?????
-     */
-    function() payable stopInEmergency {
-        uint weiAmount = msg.value;
-        address receiver = msg.sender;
-
-        uint tokenMultiplier = 10 ** impToken.decimals();
-        uint tokenAmount = weiAmount.mul(tokenMultiplier).div(oneImpInWei);
-
-        require(tokenAmount > 0);
-
-        require(tokenAmount >= minBuyTokenAmount && tokenAmount <= maxBuyTokenAmount);
-
-        // ??????? ???????? ??????? ?? ????????? ??????
-        uint tokensLeft = getTokensLeft();
-
-        require(tokensLeft > 0);
-
-        require(tokenAmount <= tokensLeft);
-
-        // ????????? ?????? ?????????
-        assignTokens(receiver, tokenAmount);
-
-        // ???? ?? ??????? ????
-        destinationWallet.transfer(weiAmount);
-
-        // ???????? ???????
-        Invested(receiver, weiAmount, tokenAmount);
+    // setup function to be ran only 1 time
+    // setup token address
+    function setup(address token_address) {
+        require(!configSet);
+        Token = ERC20(token_address);
+        configSet = true;
     }
 
-    /**
-     * ????? ???????? ??? ????? ???????
-     */
-    function setDestinationWallet(address destinationAddress) external onlyOwner {
-        destinationWallet = destinationAddress;
+    function closeSale() external {
+      require(msg.sender==creator);
+      isFunding = false;
+    }
+    
+    function () payable {
+        this.contribute();
     }
 
-    /**
-     *  ??????????? ???-?? ???????, ??????? ????? ???????
-     */
-    function setMinBuyTokenAmount(uint value) external onlyOwner {
-        minBuyTokenAmount = value;
+    // CONTRIBUTE FUNCTION
+    // converts ETH to TOKEN and sends new TOKEN to the sender
+    function contribute() external payable {
+        require(msg.value>0);
+        require(isFunding);
+        uint256 amount = msg.value * exchangeRate;
+        uint256 total = totalMinted + amount;
+        require(total<=maxMintable);
+        totalMinted += amount;
+        ETHWallet.transfer(msg.value);
+        Token.mintToken(msg.sender, amount);
+        Contribution(msg.sender, amount);
     }
 
-    /**
-     *  ???????????? ???-?? ???????, ??????? ????? ???????
-     */
-    function setMaxBuyTokenAmount(uint value) external onlyOwner {
-        maxBuyTokenAmount = value;
+    // update the ETH/COIN rate
+    function updateRate(uint256 rate) external {
+        require(msg.sender==creator);
+        require(isFunding);
+        exchangeRate = rate;
     }
 
-    /**
-     * ???????, ??????? ?????? ??????? ???? ETH ? ??????
-     */
-    function setOneImpInWei(uint value) external onlyOwner {
-        require(value > 0);
-
-        oneImpInWei = value;
+    // change creator address
+    function changeCreator(address _creator) external {
+        require(msg.sender==creator);
+        creator = _creator;
     }
 
-    /**
-     * ??????? ??????? ??????????
-     */
-    function assignTokens(address receiver, uint tokenAmount) private {
-        impToken.transfer(receiver, tokenAmount);
+    // change transfer status for ERC20 token
+    function changeTransferStats(bool _allowed) external {
+        require(msg.sender==creator);
+        Token.changeTransfer(_allowed);
     }
 
-    /**
-     * ?????????? ???-?? ?????????????? ???????
-     */
-    function getTokensLeft() public constant returns (uint) {
-        return impToken.balanceOf(address(this));
-    }
 }
