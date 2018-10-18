@@ -1,7 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract dappVolumeAd at 0xdd8f1fc3f9eb03e151abb5afcc42644e28a1e797
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DappVolumeAd at 0x0d7c864bf6c86bf11da2c8068b4c4edee4d76080
 */
 pragma solidity ^0.4.24;
+
+// THE LAST SMART CONTRACT HAD SOME SECURITY HOLES
+// THIS IS THE SECOND SMART CONTRACT
+// OLD CONTRACT CAN BE SEEN AT https://etherscan.io/address/0xdd8f1fc3f9eb03e151abb5afcc42644e28a1e797
+// DATA IS IMPORTED FROM THE LAST CONTRACT
+// BIG SHOUTOUT TO CASTILLO NETWORK FOR FINDING THE SECURITY HOLE AND PERFORMING AN AUDIT ON THE LAST CONTRACT
+// https://github.com/EthereumCommonwealth/Auditing
 
 /**
  * @title SafeMath
@@ -57,10 +64,10 @@ library SafeMath {
 // Investors can get bought out by new investors
 // when an invester is bought out, they get 120% of their investment back
 
-contract dappVolumeAd {
+contract DappVolumeAd {
 
-// import safemath
-using SafeMath for uint256;
+	// import safemath
+	using SafeMath for uint256;
 
 	// set variables
 	uint256 public dappId;
@@ -84,14 +91,14 @@ using SafeMath for uint256;
 
 	// set constructor
 	constructor() public {
-		investmentMin = 1000000000000000;
+		investmentMin = 4096000000000000000;
 		adPriceHour = 5000000000000000;
 		adPriceHalfDay = 50000000000000000;
 		adPriceDay = 100000000000000000;
 		adPriceWeek = 500000000000000000;
-		adPriceMultiple = 1;
+		adPriceMultiple = 2;
 		contractOwner = msg.sender;
-		theInvestor = contractOwner;
+		theInvestor = 0x1C26d2dFDACe03F0F6D0AaCa233D00728b9e58da;
 		lastOwner = contractOwner;
 	}
 
@@ -109,8 +116,13 @@ using SafeMath for uint256;
 	function updateAd(uint256 id) public payable {
 		// set minimum amount and make sure ad hasnt expired
 		require(msg.value >= adPriceMultiple.mul(adPriceHour));
-		require(block.timestamp > purchaseTimestamp + purchaseSeconds);
+		require(block.timestamp > purchaseTimestamp.add(purchaseSeconds));
 		require(id > 0);
+
+		// send 10% to the investor
+		theInvestor.send(msg.value.div(10));
+		// send 50% of the money to the last person
+		lastOwner.send(msg.value.div(2));
 
 		// set ad time limit in seconds
 		if (msg.value >= adPriceMultiple.mul(adPriceWeek)) {
@@ -123,24 +135,23 @@ using SafeMath for uint256;
 			purchaseSeconds = 3600; // 1 hour
 		}
 
-		// set new timestamp
-		purchaseTimestamp = block.timestamp;
-		// send 50% of the money to the last person
-		lastOwner.transfer(msg.value.div(2));
-		// send 10% to the investor
-		theInvestor.transfer(msg.value.div(10));
-		// set last owner
-		lastOwner = msg.sender;
 		// set dapp id
 		dappId = id;
+		// set new timestamp
+		purchaseTimestamp = block.timestamp;
+		// set last owner
+		lastOwner = msg.sender;
 	}
 
 	// update the investor
 	function updateInvestor() public payable {
 		require(msg.value >= investmentMin);
-		theInvestor.transfer(msg.value.div(100).mul(60)); // send 60% to last investor (120% of original purchase)
-		theInvestor = msg.sender; // set new investor
-		investmentMin = investmentMin.mul(2); // double the price to become the investor
+		// send 60% to last investor (120% of original purchase)
+		theInvestor.send(msg.value.div(100).mul(60));
+		// double the price to become the investor
+		investmentMin = investmentMin.mul(2);
+		// set new investor
+		theInvestor = msg.sender;
 	}
 
 	// get timestamp when ad ends
