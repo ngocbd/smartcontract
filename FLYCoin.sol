@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FLYCoin at 0x43a25127f0286d406d789ae86edc48564df44feb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FLYCoin at 0x5c16e51efe6d9eb6d7920053a344ec6939751e95
 */
-pragma solidity ^0.4.24;
+pragma solidity 0.4.24;
 
 // File: contracts/ERC20.sol
 
@@ -61,7 +61,6 @@ library SafeMath {
 /**
  * FLYCoin ERC20 token
  * Based on the OpenZeppelin Standard Token
- * https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/token/ERC20/StandardToken.sol
  */
 
 contract MigrationSource {
@@ -97,6 +96,12 @@ contract FLYCoin is MigrationSource, ERC20 {
     _;
   }
 
+  modifier value_less_than_balance(address _user, uint256 _value){
+    User storage user = users[_user];
+    require(_value <= user.balance);
+    _;
+  }
+
   event Approval(address indexed owner, address indexed spender, uint256 value);
   event Transfer(address indexed from, address indexed to, uint256 value);
 
@@ -118,7 +123,7 @@ contract FLYCoin is MigrationSource, ERC20 {
     return users[_addr].balance;
   }
 
-  function transfer(address _to, uint256 _value) public returns (bool success) {
+  function transfer(address _to, uint256 _value) public value_less_than_balance(msg.sender, _value) returns (bool success) {
     User storage user = users[msg.sender];
     user.balance = user.balance.sub(_value);
     users[_to].balance = users[_to].balance.add(_value);
@@ -126,7 +131,7 @@ contract FLYCoin is MigrationSource, ERC20 {
     return true;
   }
 
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+  function transferFrom(address _from, address _to, uint256 _value) public value_less_than_balance(msg.sender, _value) returns (bool success) {
     User storage user = users[_from];
     user.balance = user.balance.sub(_value);
     users[_to].balance = users[_to].balance.add(_value);
@@ -179,9 +184,8 @@ contract FLYCoin is MigrationSource, ERC20 {
   function optIn() public returns (bool success) {
     require(migrateFrom != MigrationSource(0));
     User storage user = users[msg.sender];
-    uint256 balance;
-    (balance) =
-        migrateFrom.vacate(msg.sender);
+    
+    uint256 balance = migrateFrom.vacate(msg.sender);
 
     emit OptIn(msg.sender, balance);
     
@@ -208,8 +212,5 @@ contract FLYCoin is MigrationSource, ERC20 {
     emit Vacate(_addr, o_balance);
   }
 
-  // Don't accept ETH.
-  function () public payable {
-    revert();
-  }
+  // Don't accept ETH. Starting from Solidity 0.4.0, contracts without a fallback function automatically revert payments
 }
