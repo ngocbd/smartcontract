@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Trazair at 0x3530cb4af4226db4af47bd022bb6f2e0b462e1aa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Trazair at 0xac49f52bab845947a4e981aac2157365b9535b96
 */
 pragma solidity ^0.4.24;
 
@@ -122,7 +122,7 @@ event Transfer(address indexed from, address indexed to, uint256 value);
  uint256 public RATE = 1 ether;
  string public symbol = "TRZA";                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
  uint8 public decimals = 5;
- uint public INITIAL_SUPPLY = 50000000000;
+ uint public INITIAL_SUPPLY = 50000000000 * 10 ** uint256(decimals);
  uint public totalSold_ = 0;
  bool public FirstTimeTransfer = false;
  
