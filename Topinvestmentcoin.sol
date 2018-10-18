@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Topinvestmentcoin at 0x7f4b2a690605a7cbb66f7aa6885ebd906a5e2e9e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Topinvestmentcoin at 0xf924d95c1682fb5095d7448cbc8f93b9754ed963
 */
 pragma solidity ^0.4.25;
 
@@ -35,7 +35,7 @@ library SafeMath {
         string public constant name = "Topinvestmentcoin";
         string public constant symbol = "TICO";
         uint8 public constant decimals = 8;
-        uint public _totalSupply = 20000000000000000;
+        uint public _totalSupply = 200000000;
         uint256 public RATE = 500;
         bool public isMinting = true;
         
