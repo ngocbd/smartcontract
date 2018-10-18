@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract lbcCoin at 0xd075c653f552068951fa83dc9ace50726f8cb5c1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract lbcCoin at 0x8c0a0d815aeb795883c8aa8376cf535c87676230
 */
 pragma solidity ^0.4.24;
 
@@ -427,7 +427,7 @@ contract PausableToken is StandardToken, HasNoEther, Blacklist {
 
 contract lbcCoin is PausableToken {
     string public constant name = "BIO";
-    uint8 public constant decimals = 18;
+    uint8 public constant decimals = 0;
     string public constant symbol = "BIO";
     uint256 public constant INITIAL_SUPPLY = 1e10 * (10 ** uint256(decimals)); 
 
