@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GMOON at 0x6bc4cd236de09d6334c428c7d59212ac8ea704f8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GMOON at 0x87f8089be205cb34c9e77019a60d3afea8644894
 */
 pragma solidity ^0.4.21;
 
@@ -263,7 +263,6 @@ contract GMOON {
         payable
         returns(uint256)
     {
-		require(tx.gasprice <= 0.05 szabo);	
         purchaseInternal(msg.value, _referredBy);
     }
 
@@ -275,8 +274,6 @@ contract GMOON {
         payable
         public
     {
-		//Max gas limit 50 Gwei( to avoid gas war especialy in early stage )
-        require(tx.gasprice <= 0.05 szabo);	
         purchaseInternal(msg.value, 0x0);
     }
 
