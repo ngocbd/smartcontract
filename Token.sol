@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x860eeea9170052f8aeef585f2deac968b2f57b10
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x71d822f8acb13d509771993c8f646f11067830d6
 */
 pragma solidity ^0.4.11;
  
@@ -10,7 +10,7 @@ contract Token {
     uint256 _totalSupply = 0;
     address owner = 0;
     bool setupDone = false;
-	
+   
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
  
@@ -19,23 +19,23 @@ contract Token {
     mapping(address => mapping (address => uint256)) allowed;
  
     function Token(address adr) {
-		owner = adr;        
+        owner = adr;        
     }
-	
-	function SetupToken(string tokenName, string tokenSymbol, uint256 tokenSupply)
-	{
-		if (msg.sender == owner && setupDone == false)
-		{
-			symbol = tokenSymbol;
-			name = tokenName;
-			_totalSupply = tokenSupply * 1000000000000000000;
-			balances[owner] = _totalSupply;
-			setupDone = true;
-		}
-	}
+   
+    function SetupToken(string tokenName, string tokenSymbol, uint256 tokenSupply)
+    {
+        if (msg.sender == owner && setupDone == false)
+        {
+            symbol = tokenSymbol;
+            name = tokenName;
+            _totalSupply = tokenSupply * 1000000000000000000;
+            balances[owner] = _totalSupply;
+            setupDone = true;
+        }
+    }
  
     function totalSupply() constant returns (uint256 totalSupply) {        
-		return _totalSupply;
+        return _totalSupply;
     }
  
     function balanceOf(address _owner) constant returns (uint256 balance) {
@@ -43,7 +43,7 @@ contract Token {
     }
  
     function transfer(address _to, uint256 _amount) returns (bool success) {
-        if (balances[msg.sender] >= _amount 
+        if (balances[msg.sender] >= _amount
             && _amount > 0
             && balances[_to] + _amount > balances[_to]) {
             balances[msg.sender] -= _amount;
