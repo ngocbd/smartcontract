@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ALMToken at 0x5a877d40c6c95180bbcb3604530a716ec68a28a6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ALMToken at 0x3e2ac221625b8e232ee8c3af97d5e8608c3fc58c
 */
 pragma solidity ^0.4.24;
 
@@ -391,17 +391,10 @@ contract MintableToken is StandardToken, Ownable {
   }
 }
 
-// import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 
 contract ALMToken is MintableToken {
-    
     string public constant name = "Almee Token";
     string public constant symbol = "ALM";
     uint8 public constant decimals = 18;
 
-    // constructor (string _name, string _symbol, uint8 _decimals)
-    // public {
-    //     // totalSupply_ = INITIAL_SUPPLY;
-    //     // balances[msg.sender] = INITIAL_SUPPLY;
-    // }
 }
