@@ -1,7 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BigOne at 0x9eefd01e00ff980fa3f4c5419003c8a925fe08df
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BigOne at 0xdbef8a8e4ae5b2222d6696c0740f36af342bd9d7
 */
 pragma solidity ^0.4.24;
+
 /*
 *???????????????????? ? ? ???
 *???????????????????????|???i
@@ -17,7 +18,7 @@ pragma solidity ^0.4.24;
 *?                  ?????? ,': : : : : ?|? |??i |?|: ',
 *?????????????????,': : : : : : :Vi|? |??i |?|: : ',
 *????????????????, ': : : : : : : ? }?{??| |?|: : :;
-*    BigOne Game v0.1??  ,': : : : : : : : ::?????|: |?i: : ::,
+*    BigOne Game v0.5??  ,': : : : : : : : ::?????|: |?i: : ::,
 *??????????? ? ? ,': : : : : : : : :/?????: :!?!: : ::;
 *????????? ? ? ? ,': : : : : : : : /?????!, |?!: : : ,
 *??????? ? ? ? ? ,': : : : : : : : ::??????Y {?i: : : :,
@@ -38,6 +39,8 @@ pragma solidity ^0.4.24;
 *???????????? ? ? ? ? ? ? ?  |??k?
 *                            ???????????='.  93511761c3aa73c0a197c55537328f7f797c4429 
 */
+
+
 contract BigOneEvents {
     event onNewPlayer
     (
@@ -95,14 +98,14 @@ contract BigOne is BigOneEvents {
     using SafeMath for *;
     using NameFilter for string;
 
-    UserDataManagerInterface constant private UserDataManager = UserDataManagerInterface(0x2E1c02A6Bc5fC77bfc740A505000846545193Beb);
+    UserDataManagerInterface constant private UserDataManager = UserDataManagerInterface(0xD7c181F8de81f90020D5c7c3Dcb4DEED86ed8450);
 
     //****************
     // constant
     //****************
     address private admin = msg.sender;
-    address private shareCom = 0x2F0839f736197117796967452310F025a330DA45;
-    address private groupCut = 0x9ebfB7a9105124204E4E18BE73B2B1979aDbc713;
+    address private shareCom = 0xdc02C8B983c52292672b95b057b7F004244e333A;
+    address private groupCut = 0xC153a27a8e460A46fA28F796D5221Dc28828c5A4;
 
     string constant public name = "bigOne";
     string constant public symbol = "bigOne";   
@@ -111,7 +114,8 @@ contract BigOne is BigOneEvents {
     // var
     //****************
     uint256 public rID_;    
-    uint256 public rTypeID_;   
+    uint256 public rTypeID_;
+
     //****************
     // PLAYER DATA
     //****************
@@ -119,6 +123,7 @@ contract BigOne is BigOneEvents {
     mapping (bytes32 => uint256) public pIDxName_;          // (name => pID) returns player id by name
     mapping (uint256 => BigOneData.Player) public plyr_;   // (pID => data) player data
     mapping (uint256 => mapping (uint256 => BigOneData.PlayerRoundData)) public plyrRnds_;   // (pID => rID => data) 
+    mapping (uint256 => uint256) private playerSecret_;
 
     //****************
     // ROUND DATA
@@ -126,6 +131,7 @@ contract BigOne is BigOneEvents {
     mapping (uint256 => BigOneData.RoundSetting) public rSettingXTypeID_;   //(rType => setting)
     mapping (uint256 => BigOneData.Round) public round_;   // (rID => data) round data
     mapping (uint256 => uint256) public currentRoundxType_;
+    mapping (uint256 => uint256) private roundCommonSecret_;
 
     mapping (uint256 => address[]) private winners_; //(rType => winners_)
     mapping (uint256 => uint256[]) private winNumbers_; //(rType => winNumbers_)
@@ -176,7 +182,7 @@ contract BigOne is BigOneEvents {
     // admin
     //==============================================================================
     bool public activated_ = false;
-    function activate()
+    function activate(uint256 _initSecret)
         onlyDevs()
         public
     {
@@ -190,7 +196,7 @@ contract BigOne is BigOneEvents {
             round_[rID_].typeID = i + 1;
             round_[rID_].count = 1;
             round_[rID_].pot = 0;
-
+            generateRndSecret(rID_,_initSecret);
             currentRoundxType_[i + 1] = rID_;
         }
     }
@@ -202,6 +208,7 @@ contract BigOne is BigOneEvents {
         require(activated_ == false, "BigOne already started");
 
         rTypeID_++;
+        rSettingXTypeID_[rTypeID_].id = rTypeID_;
         rSettingXTypeID_[rTypeID_].limit = _limit;
         rSettingXTypeID_[rTypeID_].perShare = _perShare;
         rSettingXTypeID_[rTypeID_].shareMax = _shareMax;
@@ -413,10 +420,10 @@ contract BigOne is BigOneEvents {
         bytes32 _name = _nameString.nameFilter();
         address _addr = msg.sender;
         uint256 _paid = msg.value;
-        (bool _isNewPlayer, uint256 _affID) = UserDataManager.registerNameXIDFromDapp.value(_paid)(_addr, _name, _affCode, _all);
+        (bool _isNewPlayer, uint256 _affID) = UserDataManager.registerNameXIDFromDapp.value(msg.value)(msg.sender, _name, _affCode, _all);
 
         uint256 _pID = pIDxAddr_[_addr];
-
+        if(_isNewPlayer) generatePlayerSecret(_pID);
         emit BigOneEvents.onNewPlayer(_pID, _addr, _name, _isNewPlayer, _affID, plyr_[_affID].addr, plyr_[_affID].name, _paid, now);
     }
 
@@ -431,7 +438,7 @@ contract BigOne is BigOneEvents {
         (bool _isNewPlayer, uint256 _affID) = UserDataManager.registerNameXaddrFromDapp.value(msg.value)(msg.sender, _name, _affCode, _all);
 
         uint256 _pID = pIDxAddr_[_addr];
-
+        if(_isNewPlayer) generatePlayerSecret(_pID);
         emit BigOneEvents.onNewPlayer(_pID, _addr, _name, _isNewPlayer, _affID, plyr_[_affID].addr, plyr_[_affID].name, _paid, now);
     }
 
@@ -446,7 +453,7 @@ contract BigOne is BigOneEvents {
         (bool _isNewPlayer, uint256 _affID) = UserDataManager.registerNameXnameFromDapp.value(msg.value)(msg.sender, _name, _affCode, _all);
 
         uint256 _pID = pIDxAddr_[_addr];
-
+        if(_isNewPlayer) generatePlayerSecret(_pID);
         emit BigOneEvents.onNewPlayer(_pID, _addr, _name, _isNewPlayer, _affID, plyr_[_affID].addr, plyr_[_affID].name, _paid, now);
     }
 
@@ -485,41 +492,40 @@ contract BigOne is BigOneEvents {
         public
         view
         //win,gen,aff
-        returns(uint256,uint256,uint256)
+        returns(uint256[])
     {
-        return (plyr_[_pID].win,plyr_[_pID].gen,plyr_[_pID].aff);
+        uint256[] memory _vaults = new uint256[](3);
+        _vaults[0] = plyr_[_pID].win;
+        _vaults[1] = plyr_[_pID].gen;
+        _vaults[2] = plyr_[_pID].aff;
+
+        return _vaults;
     }
 
     function getCurrentRoundInfo(uint256 _mode)
         modeCheck(_mode)
         public
         view
-        returns(uint256, uint256, uint256, uint256, uint256, uint256, uint256, address, bytes32)
+        returns(uint256[])
     {
         uint256 _rID = currentRoundxType_[_mode];
 
-        return 
-        (
-            _rID,                           //0
-            round_[_rID].count,             //1            
-            round_[_rID].keyCount,          //2
+        uint256[] memory _roundInfos = new uint256[](6);
+        _roundInfos[0] = _mode;
+        _roundInfos[1] = _rID;
+        _roundInfos[2] = round_[_rID].count;
+        _roundInfos[3] = round_[_rID].keyCount;
+        _roundInfos[4] = round_[_rID].eth;
+        _roundInfos[5] = round_[_rID].pot;
 
-            round_[_rID].start,              //3
-            round_[_rID].end,               //4
-
-            round_[_rID].eth,               //5    
-            round_[_rID].pot,               //6
-
-            plyr_[round_[_rID].plyr].addr,  //7
-            plyr_[round_[_rID].plyr].name   //8
-        );
+        return _roundInfos;
     }
 
     function getPlayerInfoByAddress(address _addr,uint256 _mode)
         modeCheck(_mode)
         public
         view
-        returns(uint256, bytes32, uint256[], uint256, uint256, uint256, uint256)
+        returns(uint256, uint256, bytes32)
     {
         uint256 _rID = currentRoundxType_[_mode];
 
@@ -532,20 +538,24 @@ contract BigOne is BigOneEvents {
         return
         (
             _pID,                               //0
-            plyr_[_pID].name,                   //1
-            getPlayerKeys(_pID,_rID),           //2
-            plyr_[_pID].win,                    //3
-            plyr_[_pID].gen,  
-            plyr_[_pID].aff,                    //5
-            plyrRnds_[_pID][_rID].eth           //6
+            plyrRnds_[_pID][_rID].eth,          //1
+            plyr_[_pID].name                   //2
         );
     }
 
-    function getPlayerKeys(uint256 _pID, uint256 _rID)
-        private
+    function getPlayerKeys(address _addr,uint256 _mode)
+        public
         view
         returns(uint256[]) 
     {
+        uint256 _rID = currentRoundxType_[_mode];
+
+        if (_addr == address(0))
+        {
+            _addr == msg.sender;
+        }
+        uint256 _pID = pIDxAddr_[_addr];
+
         uint256[] memory _keys = new uint256[](plyrRnds_[_pID][_rID].keyCount);
         uint256 _keyIndex = 0;
         for(uint256 i = 0;i < plyrRnds_[_pID][_rID].purchaseIDs.length;i++) {
@@ -564,21 +574,23 @@ contract BigOne is BigOneEvents {
     function getPlayerAff(uint256 _pID)
         public
         view
-        returns (uint256,uint256,uint256)
+        returns (uint256[])
     {
-        uint256 _affID = plyr_[_pID].laffID;
-        if (_affID != 0)
+        uint256[] memory _affs = new uint256[](3);
+
+        _affs[0] = plyr_[_pID].laffID;
+        if (_affs[0] != 0)
         {
             //second level aff
-            uint256 _secondLaff = plyr_[_affID].laffID;
+            _affs[1] = plyr_[_affs[0]].laffID;
 
-            if(_secondLaff != 0)
+            if(_affs[1] != 0)
             {
                 //third level aff
-                uint256 _thirdAff = plyr_[_secondLaff].laffID;
+                _affs[2] = plyr_[_affs[1]].laffID;
             }
         }
-        return (_affID,_secondLaff,_thirdAff);
+        return _affs;
     }
 
 //==============================================================================
@@ -597,10 +609,10 @@ contract BigOne is BigOneEvents {
             if (round_[_rID].pot >= rSettingXTypeID_[_mode].limit && round_[_rID].plyr == 0 && round_[_rID].ended == false)
             {
                 round_[_rID].ended = true;
-                endRound(_mode);
+                endRound(_mode); 
             }
-
-            plyr_[_pID].gen = plyr_[_pID].gen.add(msg.value);
+            //directly refund player
+            plyr_[_pID].addr.transfer(msg.value);
         }
     }
 
@@ -612,11 +624,13 @@ contract BigOne is BigOneEvents {
         if (round_[_rID].pot < rSettingXTypeID_[_mode].limit && round_[_rID].plyr == 0)
         {
             plyr_[_pID].gen = withdrawEarnings(_pID).sub(_eth);
-
             core(_rID, _pID, _eth, _affID,_mode);
-        } else if (round_[_rID].pot >= rSettingXTypeID_[_mode].limit && round_[_rID].plyr == 0 && round_[_rID].ended == false) {
-            round_[_rID].ended = true;
-            endRound(_mode);
+        } else {
+            if (round_[_rID].pot >= rSettingXTypeID_[_mode].limit && round_[_rID].plyr == 0 && round_[_rID].ended == false) 
+            {
+                round_[_rID].ended = true;
+                endRound(_mode);      
+            }
         }
     }
 
@@ -638,18 +652,18 @@ contract BigOne is BigOneEvents {
             }
 
             uint256 _keyAdd = _ethAdd.div(rSettingXTypeID_[_mode].perShare);
-            uint256 _ketEnd = (round_[_rID].keyCount).add(_keyAdd);
+            uint256 _keyEnd = (round_[_rID].keyCount).add(_keyAdd);
             
             BigOneData.PurchaseRecord memory _pr;
             _pr.plyr = _pID;
             _pr.start = round_[_rID].keyCount;
-            _pr.end = _ketEnd - 1;
+            _pr.end = _keyEnd - 1;
             round_[_rID].purchases.push(_pr);
             plyrRnds_[_pID][_rID].purchaseIDs.push(round_[_rID].purchases.length - 1);
             plyrRnds_[_pID][_rID].keyCount += _keyAdd;
 
             plyrRnds_[_pID][_rID].eth = _ethAdd.add(plyrRnds_[_pID][_rID].eth);
-            round_[_rID].keyCount = _ketEnd;
+            round_[_rID].keyCount = _keyEnd;
             round_[_rID].eth = _ethAdd.add(round_[_rID].eth);
             round_[_rID].pot = (round_[_rID].pot).add((_ethAdd.mul(80)).div(100));
 
@@ -658,7 +672,7 @@ contract BigOne is BigOneEvents {
             if (round_[_rID].pot >= rSettingXTypeID_[_mode].limit && round_[_rID].plyr == 0 && round_[_rID].ended == false) 
             {
                 round_[_rID].ended = true;
-                endRound(_mode);
+                endRound(_mode); 
             }
 
             emit BigOneEvents.onEndTx
@@ -721,6 +735,7 @@ contract BigOne is BigOneEvents {
             {
                 plyr_[_pID].laff = _laff;
             }
+            generatePlayerSecret(_pID);
         }
     }
 
@@ -810,13 +825,24 @@ contract BigOne is BigOneEvents {
         return(_addP3d);
     }
 
+    function generateRndSecret(uint256 _rID, uint256 _lastSecret)
+        private
+    {
+        roundCommonSecret_[_rID] = uint256(keccak256(abi.encodePacked(_lastSecret, _rID, block.difficulty, now)));
+    }
+
+    function generatePlayerSecret(uint256 _pID)
+        private
+    {
+        playerSecret_[_pID] = uint256(keccak256(abi.encodePacked(block.blockhash(block.number), msg.sender, block.difficulty, now)));
+    }
+
     function endRound(uint256 _mode)
         private
     {
         uint256 _rID = currentRoundxType_[_mode];
 
-        // grab our winning player and team id's
-        uint256 _winKey = uint256(keccak256(abi.encodePacked(block.timestamp, block.difficulty))).mod(round_[_rID].keyCount);
+        uint256 _winKey = uint256(keccak256(abi.encodePacked(roundCommonSecret_[_rID], playerSecret_[pIDxAddr_[msg.sender]], block.difficulty, now))).mod(round_[_rID].keyCount);
         uint256 _winPID;
         for(uint256 i = 0;i < round_[_rID].purchases.length; i++) {
             if(round_[_rID].purchases[i].start <= _winKey && round_[_rID].purchases[i].end >= _winKey) {
@@ -851,10 +877,9 @@ contract BigOne is BigOneEvents {
         round_[rID_].typeID = _mode;
         round_[rID_].count = round_[_rID].count + 1;
         round_[rID_].pot = 0;
-
+        generateRndSecret(rID_,roundCommonSecret_[_rID]);
         currentRoundxType_[_mode] = rID_;
     }
-
 }
 
 //==============================================================================
@@ -893,6 +918,7 @@ library BigOneData {
         uint256 keyCount;
     }
     struct RoundSetting {
+        uint256 id;
         uint256 limit;   
         uint256 perShare; 
         uint256 shareMax;   
