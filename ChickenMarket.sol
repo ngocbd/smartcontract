@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChickenMarket at 0x58ab239b029e80132f907f098285055fa0c6a774
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChickenMarket at 0x4173f6defa23000b851e4d4be1d20254605067d6
 */
 pragma solidity ^0.4.24;
 
@@ -154,7 +154,7 @@ contract ChickenMarket is Owned{
     bool public isOpen = true;
 
     uint256 public updateTime;
-    address public mainContract = 0x211f3175e3632ed194368311223bd4f4e834fc33;
+    address public mainContract = 0x1d6B371B0D23d169E87DB2fC14Ab34f82D190988;
     ERC20Interface ChickenParkCoin;
 
     event Buy(
@@ -172,9 +172,9 @@ contract ChickenMarket is Owned{
     );
     
     constructor() public{
-        card1 = Card(1000e18, msg.sender, 0, 10);
-        card2 = Card(1000e18, msg.sender, 0, 20);
-        card3 = Card(1000e18, msg.sender, 0, 70);
+        card1 = Card(1e18,msg.sender,0,10);
+        card2 = Card(1e18,msg.sender,0,20);
+        card3 = Card(1e18,msg.sender,0,70);
         
         ChickenParkCoin = ERC20Interface(mainContract);
         updateTime = now;
@@ -251,14 +251,14 @@ contract ChickenMarket is Owned{
     }
     
     function reSet() onlyOwner public {
-        require(now >= updateTime + 7 days);
+        //require(now >= updateTime + 7 days);
         withdraw(1);
         withdraw(2);
         withdraw(3);
         
-        card1.price = 1000e18;
-        card2.price = 1000e18;
-        card3.price = 1000e18;
+        card1.price = 1e18;
+        card2.price = 1e18;
+        card3.price = 1e18;
         
         card1.owner = owner;
         card2.owner = owner;
@@ -268,13 +268,9 @@ contract ChickenMarket is Owned{
         card2.payout = 0;
         card3.payout = 0;
         
-        ChickenParkCoin.transfer(owner, ChickenParkCoin.balanceOf(address(this)));
         owner.transfer(address(this).balance);
+        ChickenParkCoin.transfer(owner, ChickenParkCoin.balanceOf(address(this)));
         updateTime = now;
-    }
-    
-    function withdrawMainDivi() public onlyOwner {
-       ChickenParkCoin.withdraw();
     }
     
     function setStatus(bool _status) onlyOwner public {
