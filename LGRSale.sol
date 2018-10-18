@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LGRSale at 0x70b920cecc28effe8fe451c0beecc12f234bf9d3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LGRSale at 0xe5f298fa6ab18babefafd5154909dea2b1540a68
 */
 // GYM Ledger Token Sale Contract - Project website: www.gymledger.com
 
@@ -64,13 +64,14 @@ contract LGRSale is Ownable {
   TokenContract public tkn;
   uint256[3] public pricePerToken = [1400 szabo, 1500 szabo, 2000 szabo];
   uint256[3] public levelEndDate = [1539648000, 1541030400, 1546300740];
-  uint256 public startDate = 1538352000;
   uint8 public currentLevel;
   uint256 public tokensSold;
+  uint256 public ethRised;
 
   constructor() public {
     currentLevel = 0;
     tokensSold = 0;
+    ethRised = 0;
     walletAddress = 0xE38cc3F48b4F98Cb3577aC75bB96DBBc87bc57d6;
     tkn = TokenContract(0x7172433857c83A68F6Dc98EdE4391c49785feD0B);
   }
@@ -92,9 +93,10 @@ contract LGRSale is Ownable {
   function executeSell() private {
     uint256 tokensToSell;
     require(msg.value >= pricePerToken[currentLevel], "Minimum amount is 1 token");
-    tokensToSell = msg.value.div(pricePerToken[currentLevel]);
+    tokensToSell = msg.value.div(pricePerToken[currentLevel]) * 1 ether;
     tkn.mintTo(msg.sender, tokensToSell);
     tokensSold = tokensSold.add(tokensToSell);
+    ethRised = ethRised.add(msg.value);
     walletAddress.transfer(msg.value);
   }
 
