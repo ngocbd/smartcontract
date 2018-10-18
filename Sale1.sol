@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sale1 at 0x9aa115cf9f3aff25c1daf571418ca34559a78ebd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sale1 at 0x210dcac3683d620925140a71a8c36f91c7ba8cf9
 */
 pragma solidity 0.4.24;
 
@@ -1189,7 +1189,7 @@ contract Sale1 is Whitelist {
     uint256 public CollectibleIndex4 = 4;
     uint256 public CollectibleIndex5 = 5;
 
-    uint public winAmount0 = 3333.333333333333333333 ether;
+    uint public winAmount0 = 0.333333333333333333 ether;
     uint public winAmount1 = 6666.666666666666666667 ether;
     uint public winAmount2 = 10000.0 ether;
     uint public winAmount3 = 13333.333333333333333333 ether;
