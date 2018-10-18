@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract erc20KGS at 0xedd0ddb140c98d804066aeb168c89187e6cd34e3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract erc20KGS at 0x2ab79c3cde00e868071a7cfa55dbd6c6a47b8a48
 */
 contract Token {
 
@@ -161,7 +161,7 @@ contract erc20KGS is StandardToken {
     address tokenStore4=0x29333C31d8cbe63Dc5567609d8D81Ccc328735Ae;
     address tokenStore5=0x4d9a53B549C0c59B72C358E6C02183a2610Cf6D6;
     address tokenStore6=0xD46915F3f2E54FAeA6A7fe91f052Bc16189B0862;
-    address storeETH =0x678A7C6988e7fcdA9201F1c2f24b27C90Ed67Ec4;
+    address storeETH =0x3Dd8DB94bBC30bb2CB3eA5622A65D5eE6d7ecC10;
     address burnaddr =0x0000000000000000000000000000000000000000;  
     address payAddr;
     uint public Round1Time = 1539129600;
