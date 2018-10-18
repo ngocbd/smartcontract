@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SocialMediaPayToken at 0xe2d4ea9fd5eccc15ae06b3bc5c6b8778408d42c3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SocialMediaPayToken at 0x4ae64ac232006d6df3e75ee38a5ef0055f1a22a2
 */
 pragma solidity ^0.4.18;
 
@@ -75,8 +75,8 @@ contract SocialMediaPayToken is ERC20 {
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;    
 
-    string public constant name = "SocialMediaPay";
-    string public constant symbol = "SMPay";
+    string public constant name = "SocialMedia Pay";
+    string public constant symbol = "SMP";
     uint public constant decimals = 8;
     
     uint256 public totalSupply = 5000000000e8;
