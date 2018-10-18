@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract tHena at 0x3f5b4afae259c95108c720f4eb997bc3ddb20686
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract tHena at 0x8f5b83e1999507dc6d57b5b6afd020cacb0dafa3
 */
 pragma solidity ^0.4.24;
 
@@ -1098,8 +1098,8 @@ contract tHena is
 
     constructor() public
     {
-        name = "tHena";
-        symbol = "THENA";
+        name = "dHena";
+        symbol = "DHENA";
         decimals = 18;
         totalSupply_ = MAX_SUFFLY * 10 ** uint(decimals);
 
@@ -1171,7 +1171,7 @@ contract tHena is
     /**
      * @dev Distribute the amount of tokens to owner's balance.
      * @param _to The address to transfer to.
-     * @param _value The amount to be transferred.
+     * @param _value The amount to be transffered.
      */
     function distribute(address _to, uint256 _value) public
         onlyOwner
@@ -1189,7 +1189,7 @@ contract tHena is
     }
 
     /**
-     * @dev Burns a specific amount of tokens by owner.
+     * @dev Burns a specific amount of tokens.
      * @param _value The amount of token to be burned.
      */
      function burn(uint256 _value) public
