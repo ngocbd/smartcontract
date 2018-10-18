@@ -1,79 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0x38926c81bf68130fffc6972f7b5dbc550272eb4e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0x6384fe27b7b6cc999aa750689c6b04acaeab78d7
 */
 pragma solidity ^0.4.24;
 
-library SafeMath {
-    function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
-        if (a == 0) {
-            return 0;
-        }
-        c = a * b;
-        require(c / a == b, "SafeMath mul failed");
-        return c;
-    }
-
-    function div(uint256 a, uint256 b) internal pure returns (uint256 c) {
-        return a / b;
-    }
-
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        require(b <= a, "SafeMath sub failed");
-        return a - b;
-    }
-
-    function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-        c = a + b;
-        require(c >= a, "SafeMath add failed");
-        return c;
-    }
-}
-
-library NameFilter {
-    function nameFilter(string _input) internal pure returns(bytes32) {
-        bytes memory _temp = bytes(_input);
-        uint256 _length = _temp.length;
-
-        require (_length <= 32 && _length > 0, "string must be between 1 and 32 characters");
-        require(_temp[0] != 0x20 && _temp[_length-1] != 0x20, "string cannot start or end with space");
-        if (_temp[0] == 0x30) {
-            require(_temp[1] != 0x78, "string cannot start with 0x");
-            require(_temp[1] != 0x58, "string cannot start with 0X");
-        }
-
-        bool _hasNonNumber;
-
-        for (uint256 i = 0; i < _length; i++) {
-            if (_temp[i] > 0x40 && _temp[i] < 0x5b) {
-                _temp[i] = byte(uint(_temp[i]) + 32);
-
-                if (_hasNonNumber == false) {
-                    _hasNonNumber = true;
-                }
-            } else {
-                require(_temp[i] == 0x20 || (_temp[i] > 0x60 && _temp[i] < 0x7b) || (_temp[i] > 0x2f && _temp[i] < 0x3a), "string contains invalid characters");
-                if (_temp[i] == 0x20) {
-                    require( _temp[i+1] != 0x20, "string cannot contain consecutive spaces");
-                }
-
-                if (_hasNonNumber == false && (_temp[i] < 0x30 || _temp[i] > 0x39)) {
-                    _hasNonNumber = true;
-                }
-            }
-        }
-
-        require(_hasNonNumber == true, "string cannot be only numbers");
-
-        bytes32 _ret;
-        assembly {
-            _ret := mload(add(_temp, 32))
-        }
-
-        return (_ret);
-    }
-}
-
-interface PartnershipInterface {
+interface FoundationInterface {
     function deposit() external payable returns(bool);
 }
 
@@ -109,7 +39,7 @@ contract PlayerBook is Ownable {
     using SafeMath for uint256;
     using NameFilter for string;
 
-    PartnershipInterface constant private partnership = PartnershipInterface(0x59Ff25C4E2550bc9E2115dbcD28b949d7670d134);
+    FoundationInterface private foundation;
 
     uint256 public registrationFee_ = 10 finney;
     mapping(uint256 => PlayerBookReceiverInterface) public games_;
@@ -144,18 +74,6 @@ contract PlayerBook is Ownable {
         uint256 timeStamp
     );
 
-    constructor() public {
-        plyr_[1].addr = 0x98EF158e8EA887AF8F2F4fecfEd25857b0A699c6;
-        plyr_[1].name = "asia";
-        plyr_[1].names = 1;
-        pIDxAddr_[0x98EF158e8EA887AF8F2F4fecfEd25857b0A699c6] = 1;
-        pIDxName_["asia"] = 1;
-        plyrNames_[1]["asia"] = true;
-        plyrNameList_[1][1] = "asia";
-
-        pID_ = 1;
-    }
-
     modifier isHuman() {
         address _addr = msg.sender;
         uint256 _codeLength;
@@ -173,23 +91,43 @@ contract PlayerBook is Ownable {
         _;
     }
 
+    constructor() public {
+        foundation = FoundationInterface(0xC00C9ed7f35Ca2373462FD46d672084a6a128E2B);
+
+        plyr_[1].addr = 0xC464F4001C76558AD802bBA405A9E0658dcb1F75;
+        plyr_[1].name = "asia";
+        plyr_[1].names = 1;
+        pIDxAddr_[0xC464F4001C76558AD802bBA405A9E0658dcb1F75] = 1;
+        pIDxName_["asia"] = 1;
+        plyrNames_[1]["asia"] = true;
+        plyrNameList_[1][1] = "asia";
+
+        pID_ = 1;
+    }
+
+    function setFoundationInterface(address _who) public onlyOwner {
+        foundation = FoundationInterface(_who);
+    }
+
     function checkIfNameValid(string _nameStr) public view returns(bool) {
         bytes32 _name = _nameStr.nameFilter();
         if (pIDxName_[_name] == 0) {
-            return true;
+            return (true);
+        } else {
+            return (false);
         }
-        return false;
     }
 
     function registerNameXID(string _nameString, uint256 _affCode, bool _all) public payable isHuman {
         require (msg.value >= registrationFee_, "umm.....  you have to pay the name fee");
 
         bytes32 _name = NameFilter.nameFilter(_nameString);
-
         address _addr = msg.sender;
+
         bool _isNewPlayer = determinePID(_addr);
 
         uint256 _pID = pIDxAddr_[_addr];
+
         if (_affCode != 0 && _affCode != plyr_[_pID].laff && _affCode != _pID) {
             plyr_[_pID].laff = _affCode;
         } else if (_affCode == _pID) {
@@ -203,11 +141,12 @@ contract PlayerBook is Ownable {
         require (msg.value >= registrationFee_, "umm.....  you have to pay the name fee");
 
         bytes32 _name = NameFilter.nameFilter(_nameString);
-
         address _addr = msg.sender;
+
         bool _isNewPlayer = determinePID(_addr);
 
         uint256 _pID = pIDxAddr_[_addr];
+
         uint256 _affID;
         if (_affCode != address(0) && _affCode != _addr) {
             _affID = pIDxAddr_[_affCode];
@@ -223,11 +162,12 @@ contract PlayerBook is Ownable {
         require (msg.value >= registrationFee_, "umm.....  you have to pay the name fee");
 
         bytes32 _name = NameFilter.nameFilter(_nameString);
-
         address _addr = msg.sender;
+
         bool _isNewPlayer = determinePID(_addr);
 
         uint256 _pID = pIDxAddr_[_addr];
+
         uint256 _affID;
         if (_affCode != "" && _affCode != _name) {
             _affID = pIDxName_[_affCode];
@@ -243,6 +183,7 @@ contract PlayerBook is Ownable {
         require(_gameID <= gID_, "silly player, that game doesn't exist yet");
 
         address _addr = msg.sender;
+
         uint256 _pID = pIDxAddr_[_addr];
         require(_pID != 0, "hey there buddy, you dont even have an account");
 
@@ -258,6 +199,7 @@ contract PlayerBook is Ownable {
 
     function addMeToAllGames() public isHuman {
         address _addr = msg.sender;
+
         uint256 _pID = pIDxAddr_[_addr];
         require(_pID != 0, "hey there buddy, you dont even have an account");
 
@@ -273,9 +215,10 @@ contract PlayerBook is Ownable {
                 }
             }
         }
+
     }
 
-    function useMyOldName(string _nameString) isHuman public {
+    function useMyOldName(string _nameString) public isHuman {
         bytes32 _name = _nameString.nameFilter();
         uint256 _pID = pIDxAddr_[msg.sender];
 
@@ -297,7 +240,7 @@ contract PlayerBook is Ownable {
             plyrNameList_[_pID][plyr_[_pID].names] = _name;
         }
 
-        partnership.deposit.value(address(this).balance)();
+        foundation.deposit.value(address(this).balance)();
 
         if (_all == true) {
             for (uint256 i = 1; i <= gID_; i++) {
@@ -313,14 +256,16 @@ contract PlayerBook is Ownable {
             pID_++;
             pIDxAddr_[_addr] = pID_;
             plyr_[pID_].addr = _addr;
-            return true;
-        }
 
-        return false;
+            return (true);
+        } else {
+            return (false);
+        }
     }
 
     function getPlayerID(address _addr) external isRegisteredGame returns (uint256) {
         determinePID(_addr);
+
         return (pIDxAddr_[_addr]);
     }
 
@@ -369,7 +314,6 @@ contract PlayerBook is Ownable {
         uint256 _affID;
         if (_affCode != address(0) && _affCode != _addr) {
             _affID = pIDxAddr_[_affCode];
-
             if (_affID != plyr_[_pID].laff) {
                 plyr_[_pID].laff = _affID;
             }
@@ -390,7 +334,6 @@ contract PlayerBook is Ownable {
         uint256 _affID;
         if (_affCode != "" && _affCode != _name) {
             _affID = pIDxName_[_affCode];
-
             if (_affID != plyr_[_pID].laff) {
                 plyr_[_pID].laff = _affID;
             }
@@ -415,5 +358,55 @@ contract PlayerBook is Ownable {
 
     function setRegistrationFee(uint256 _fee) public onlyOwner {
         registrationFee_ = _fee;
+    }
+}
+
+library NameFilter {
+    function nameFilter(string _input) internal pure returns(bytes32) {
+        bytes memory _temp = bytes(_input);
+        uint256 _length = _temp.length;
+
+        require (_length <= 32 && _length > 0, "string must be between 1 and 32 characters");
+
+        require(_temp[0] != 0x20 && _temp[_length-1] != 0x20, "string cannot start or end with space");
+        if (_temp[0] == 0x30) {
+            require(_temp[1] != 0x78, "string cannot start with 0x");
+            require(_temp[1] != 0x58, "string cannot start with 0X");
+        }
+
+        bool _hasNonNumber;
+
+        for (uint256 i = 0; i < _length; i++) {
+            if (_temp[i] > 0x40 && _temp[i] < 0x5b) {
+                _temp[i] = byte(uint(_temp[i]) + 32);
+                if (_hasNonNumber == false) {
+                    _hasNonNumber = true;
+                }
+            } else {
+                require(_temp[i] == 0x20 || (_temp[i] > 0x60 && _temp[i] < 0x7b) || (_temp[i] > 0x2f && _temp[i] < 0x3a), "string contains invalid characters");
+                if (_temp[i] == 0x20) {
+                    require( _temp[i + 1] != 0x20, "string cannot contain consecutive spaces");
+                }
+                if (_hasNonNumber == false && (_temp[i] < 0x30 || _temp[i] > 0x39)) {
+                    _hasNonNumber = true;
+                }
+            }
+        }
+
+        require(_hasNonNumber == true, "string cannot be only numbers");
+
+        bytes32 _ret;
+        assembly {
+            _ret := mload(add(_temp, 32))
+        }
+        return (_ret);
+    }
+}
+
+library SafeMath {
+    function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        c = a + b;
+        require(c >= a, "SafeMath add failed");
+        return c;
     }
 }
