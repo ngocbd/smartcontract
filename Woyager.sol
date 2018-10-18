@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Woyager at 0x86d7889aa3d2ac9a7ae197f76e807ce24e7083e0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Woyager at 0x05edffbda103d90d5040829a105f687443e0ca3e
 */
 pragma solidity ^0.4.19;
 
@@ -102,8 +102,8 @@ contract Woyager is BaseToken, AirdropToken, ICOToken {
         name = 'Woyager';
         symbol = 'WYX';
         decimals = 18;
-        balanceOf[0x6e3a106E91f7ddB1C52F68fd3dB61AdCAbfbAa33] = totalSupply;
-        Transfer(address(0), 0x6e3a106E91f7ddB1C52F68fd3dB61AdCAbfbAa33, totalSupply);
+        balanceOf[0xb10Fe1906AC8d491e69bd21268786f7De4481e4c] = totalSupply;
+        Transfer(address(0), 0xb10Fe1906AC8d491e69bd21268786f7De4481e4c, totalSupply);
 
         airAmount = 5000e18;
         airBegintime = 1533992400;
@@ -111,9 +111,9 @@ contract Woyager is BaseToken, AirdropToken, ICOToken {
         airSender = 0xCB554264736B84325ec6e8dAe71cA549F5B34649;
         airLimitCount = 1;
 
-        icoRatio = 10e6;
+        icoRatio = 25e5;
         icoBegintime = 1533992400;
-        icoEndtime = 1517443140;
+        icoEndtime = 1551398340;
         icoSender = 0x1Bd8917f60d528a0FcF87660CFC80Bf3ed48a353;
         icoHolder = 0x1Bd8917f60d528a0FcF87660CFC80Bf3ed48a353;
     }
