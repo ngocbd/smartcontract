@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HACHIKO at 0x255A789315018fc59b3064655189D07049eb05f3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HACHIKO at 0x6ec2e2e2bd43d4deaa883533f80ea61682236073
 */
 pragma solidity ^0.4.24;
 
@@ -49,7 +49,7 @@ contract HACHIKO is Ownable {
      */
     
     constructor() public {
-        totalSupply = 21000000 * 10 ** uint256(decimals);  // Update total supply with the decimal amount
+        totalSupply = 10000000 * 10 ** uint256(decimals);  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
         name = "HACHIKO";                                   // Set the name for display purposes
         symbol = "HACHI";                               // Set the symbol for display purposes
