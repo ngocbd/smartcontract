@@ -1,266 +1,270 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BurnableToken at 0x06b9737a7a625478fe5a65bf4bff4390ff6ace96
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BurnableToken at 0xc1699a22a00c72c62bd60ad7ec40943aaa2d2a8b
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.24;
 
-/**
- *
- * @author  <newtwist@protonmail.com>
- *
- * Version D
- *
- * Overview:
- * This is an implimentation of a `burnable` token. The tokens do not pay any dividends; however if/when tokens
- * are `burned`, the burner gets a share of whatever funds the contract owns at that time. No provision is made
- * for how tokens are sold; all tokens are initially credited to the contract owner. There is a provision to
- * establish a single `restricted` account. The restricted account can own tokens, but cannot transfer them or
- * burn them until after a certain date. . There is also a function to burn tokens without getting paid. This is
- * useful, for example, if the sale-contract/owner wants to reduce the supply of tokens.
- *
+/* 
+ * KureCoin Token Contract
+ * =======================
+ * 
+ * BASED on the OpenZeppelin Contracts. 
+ * ASSEMBLED, MODIFIED & DELIVERED by Codemelt.
+ * FOR KureCoin (https://kurecoinhub.io/).
  */
-//import './SafeMath.sol';
-pragma solidity ^0.4.11;
 
-/*
-    Overflow protected math functions
-*/
-contract SafeMath {
-    /**
-        constructor
-    */
-    function SafeMath() public {
-    }
 
-    /**
-        @dev returns the sum of _x and _y, asserts if the calculation overflows
 
-        @param _x   value 1
-        @param _y   value 2
+library SafeMath {
 
-        @return sum
-    */
-    function safeAdd(uint256 _x, uint256 _y) pure internal returns (uint256) {
-        uint256 z = _x + _y;
-        assert(z >= _x);
-        return z;
-    }
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    if (a == 0) { return 0; }
+    c = a * b;
+    assert(c / a == b);
+    return c;
+  }
 
-    /**
-        @dev returns the difference of _x minus _y, asserts if the subtraction results in a negative number
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    return a / b;
+  }
 
-        @param _x   minuend
-        @param _y   subtrahend
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
 
-        @return difference
-    */
-    function safeSub(uint256 _x, uint256 _y) pure internal returns (uint256) {
-        assert(_x >= _y);
-        return _x - _y;
-    }
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
+    assert(c >= a);
+    return c;
+  }
 
-    /**
-        @dev returns the product of multiplying _x by _y, asserts if the calculation overflows
-
-        @param _x   factor 1
-        @param _y   factor 2
-
-        @return product
-    */
-    function safeMul(uint256 _x, uint256 _y) pure internal returns (uint256) {
-        uint256 z = _x * _y;
-        assert(_x == 0 || z / _x == _y);
-        return z;
-    }
 }
 
-//import './iBurnableToken.sol';
 
-pragma solidity ^0.4.15;
-
-//Burnable Token interface
-
-//import './iERC20Token.sol';
-pragma solidity ^0.4.15;
-
-// Token standard API
-// https://github.com/ethereum/EIPs/issues/20
-
-contract iERC20Token {
-  function totalSupply() public constant returns (uint supply);
-  function balanceOf( address who ) public constant returns (uint value);
-  function allowance( address owner, address spender ) public constant returns (uint remaining);
-
-  function transfer( address to, uint value) public returns (bool ok);
-  function transferFrom( address from, address to, uint value) public returns (bool ok);
-  function approve( address spender, uint value ) public returns (bool ok);
-
-  event Transfer( address indexed from, address indexed to, uint value);
-  event Approval( address indexed owner, address indexed spender, uint value);
-}
-
-contract iBurnableToken is iERC20Token {
-  function burnTokens(uint _burnCount) public;
-  function unPaidBurnTokens(uint _burnCount) public;
-}
-
-contract BurnableToken is iBurnableToken, SafeMath {
-
-  event PaymentEvent(address indexed from, uint amount);
-  event TransferEvent(address indexed from, address indexed to, uint amount);
-  event ApprovalEvent(address indexed from, address indexed to, uint amount);
-  event BurnEvent(address indexed from, uint count, uint value);
-
-  string  public symbol;
-  string  public name;
-  bool    public isLocked;
-  uint    public decimals;
-  uint    public restrictUntil;                              //vesting for developer tokens
-  uint           tokenSupply;                                //can never be increased; but tokens can be burned
+contract Ownable {
   address public owner;
-  address public restrictedAcct;                             //no transfers from this addr during vest time
-  mapping (address => uint) balances;
-  mapping (address => mapping (address => uint)) approvals;  //transfer approvals, from -> to
+  address public pendingOwner;
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
 
-  modifier ownerOnly {
+  constructor() public {
+    owner = msg.sender;
+    pendingOwner = address(0);
+  }
+
+
+
+  modifier onlyOwner() {
     require(msg.sender == owner);
     _;
   }
 
-  modifier unlockedOnly {
-    require(!isLocked);
+
+  function transferOwnership(address newOwner) onlyOwner external {
+    pendingOwner = newOwner;
+  }
+
+  function claimOwnership() external {
+    require(msg.sender == pendingOwner);
+    emit OwnershipTransferred(owner, pendingOwner);
+    owner = pendingOwner;
+    pendingOwner = address(0);
+  }
+
+}
+
+
+contract Pausable is Ownable {
+  event Pause();
+  event Unpause();
+
+  bool public paused = false;
+
+
+  modifier whenNotPaused() {
+    require(!paused || msg.sender == owner);
     _;
   }
 
-  modifier preventRestricted {
-    require((msg.sender != restrictedAcct) || (now >= restrictUntil));
+  modifier whenPaused() {
+    require(paused);
+    _;
+  }
+
+  function pause() onlyOwner whenNotPaused external {
+    paused = true;
+    emit Pause();
+  }
+
+  function unpause() onlyOwner whenPaused external {
+    paused = false;
+    emit Unpause();
+  }
+
+}
+
+
+contract ERC20 {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+
+contract TokenBase is ERC20, Pausable {
+  using SafeMath for uint256;
+
+  mapping (address => uint256) balances;
+  mapping (address => mapping (address => uint256)) internal allowed;
+
+  uint256 totalSupply_;
+
+  modifier isValidDestination(address _to) {
+    require(_to != address(0x0));
+    require(_to != address(this));
     _;
   }
 
 
-  //
-  //constructor
-  //
-  function BurnableToken() public {
-    owner = msg.sender;
+  function totalSupply() public view returns (uint256) {
+    return totalSupply_;
+  }
+
+  function balanceOf(address _owner) public view returns (uint256) {
+    return balances[_owner];
+  }
+
+  function allowance(address _owner, address _spender) public view returns (uint256) {
+    return allowed[_owner][_spender];
   }
 
 
-  //
-  // ERC-20
-  //
 
-  function totalSupply() public constant returns (uint supply) { supply = tokenSupply; }
+  function transfer(address _to, uint256 _value) public whenNotPaused isValidDestination(_to) returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[msg.sender]);
 
-  function transfer(address _to, uint _value) public preventRestricted returns (bool success) {
-    //if token supply was not limited then we would prevent wrap:
-    //if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to])
-    if (balances[msg.sender] >= _value && _value > 0) {
-      balances[msg.sender] -= _value;
-      balances[_to] += _value;
-      TransferEvent(msg.sender, _to, _value);
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-
-  function transferFrom(address _from, address _to, uint _value) public returns (bool success) {
-    //if token supply was not limited then we would prevent wrap:
-    //if (balances[_from] >= _value && approvals[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to])
-    if (balances[_from] >= _value && approvals[_from][msg.sender] >= _value && _value > 0) {
-      balances[_from] -= _value;
-      balances[_to] += _value;
-      approvals[_from][msg.sender] -= _value;
-      TransferEvent(_from, _to, _value);
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-
-  function balanceOf(address _owner) public constant returns (uint balance) {
-    balance = balances[_owner];
-  }
-
-
-  function approve(address _spender, uint _value) public preventRestricted returns (bool success) {
-    approvals[msg.sender][_spender] = _value;
-    ApprovalEvent(msg.sender, _spender, _value);
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    emit Transfer(msg.sender, _to, _value);
     return true;
   }
 
+  function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused isValidDestination(_to) returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
 
-  function allowance(address _owner, address _spender) public constant returns (uint remaining) {
-    return approvals[_owner][_spender];
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    emit Transfer(_from, _to, _value);
+    return true;
   }
 
-
-  //
-  // END ERC20
-  //
-
-
-  //
-  // default payable function.
-  //
-  function () public payable {
-    PaymentEvent(msg.sender, msg.value);
+  function approve(address _spender, uint256 _value) public whenNotPaused returns (bool) {
+    allowed[msg.sender][_spender] = _value;
+    emit Approval(msg.sender, _spender, _value);
+    return true;
   }
 
-  function initTokenSupply(uint _tokenSupply, uint _decimals) public ownerOnly {
-    require(tokenSupply == 0);
-    tokenSupply = _tokenSupply;
-    balances[owner] = tokenSupply;
-    decimals = _decimals;
+  function increaseApproval(address _spender, uint256 _addedValue) public whenNotPaused returns (bool) {
+    allowed[msg.sender][_spender] = (allowed[msg.sender][_spender].add(_addedValue));
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
   }
 
-  function setName(string _name, string _symbol) public ownerOnly {
-    name = _name;
-    symbol = _symbol;
-  }
-
-  function lock() public ownerOnly {
-    isLocked = true;
-  }
-
-  function setRestrictedAcct(address _restrictedAcct, uint _restrictUntil) public ownerOnly unlockedOnly {
-    restrictedAcct = _restrictedAcct;
-    restrictUntil = _restrictUntil;
-  }
-
-  function tokenValue() constant public returns (uint _value) {
-    _value = this.balance / tokenSupply;
-  }
-
-  function valueOf(address _owner) constant public returns (uint _value) {
-    _value = (this.balance * balances[_owner]) / tokenSupply;
-  }
-
-  function burnTokens(uint _burnCount) public preventRestricted {
-    if (balances[msg.sender] >= _burnCount && _burnCount > 0) {
-      uint _value = safeMul(this.balance, _burnCount) / tokenSupply;
-      tokenSupply = safeSub(tokenSupply, _burnCount);
-      balances[msg.sender] = safeSub(balances[msg.sender], _burnCount);
-      msg.sender.transfer(_value);
-      BurnEvent(msg.sender, _burnCount, _value);
+  function decreaseApproval(address _spender, uint256 _subtractedValue) public whenNotPaused returns (bool) {
+    uint256 oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
     }
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
   }
 
-  function unPaidBurnTokens(uint _burnCount) public preventRestricted {
-    if (balances[msg.sender] >= _burnCount && _burnCount > 0) {
-      tokenSupply = safeSub(tokenSupply, _burnCount);
-      balances[msg.sender] = safeSub(balances[msg.sender], _burnCount);
-      BurnEvent(msg.sender, _burnCount, 0);
+}
+
+
+contract MintableToken is TokenBase {
+  event Mint(address indexed to, uint256 amount);
+  event MintFinished();
+
+  bool public mintingFinished = false;
+
+
+  modifier canMint() {
+    require(!mintingFinished);
+    _;
+  }
+
+
+  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
+    totalSupply_ = totalSupply_.add(_amount);
+    balances[_to] = balances[_to].add(_amount);
+    emit Mint(_to, _amount);
+    emit Transfer(address(0), _to, _amount);
+    return true;
+  }
+
+  function finishMinting() onlyOwner canMint external returns (bool) {
+    mintingFinished = true;
+    emit MintFinished();
+    return true;
+  }
+
+}
+
+
+contract BurnableToken is MintableToken {
+  event Burn(address indexed burner, uint256 value);
+
+
+  function burn(uint256 _value) external {
+    require(_value <= balances[msg.sender]);
+
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    totalSupply_ = totalSupply_.sub(_value);
+    emit Burn(msg.sender, _value);
+    emit Transfer(msg.sender, address(0), _value);
+  }
+
+}
+
+
+contract KurecoinToken is BurnableToken {
+  string public constant name = "Kurecoin Token";
+  string public constant symbol = "KRC";
+  uint8 public constant decimals = 18;
+
+
+  /**
+  * @dev Allows the owner to take out tokens to this contract by mistake.
+  * @param _token The contract address of the token that is getting pulled out.
+  * @param _amount The amount to pull out.
+  */
+  function pullOut(ERC20 _token, uint256 _amount) external onlyOwner {
+    _token.transfer(owner, _amount);
+  }
+
+  /**
+  * @dev 'tokenFallback' function in accordance to the ERC223 standard. Rejects all incoming ERC223 token transfers.
+  */
+  function tokenFallback(address from_, uint256 value_, bytes data_) public {
+    from_; value_; data_;
+    revert();
+  }
+
+  function() external payable {
+      revert("This contract does not accept Ethereum!");
     }
-  }
-
-  //for debug
-  //only available before the contract is locked
-  function haraKiri() public ownerOnly unlockedOnly {
-    selfdestruct(owner);
-  }
 
 }
