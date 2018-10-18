@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitmassExchangeToken at 0x874b936cc69a68d4cb6f5f24ab90ba60eb376ad6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitmassExchangeToken at 0x96c2848f32e91c5d53796e37affb7f1331aa0635
 */
 pragma solidity ^0.4.23;
 
@@ -112,8 +112,8 @@ contract BitmassExchangeToken is StandardToken { // CHANGE THIS. Update the cont
         totalSupply = 21000000000000000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
         name = "BitmassExchangeToken";                                   // Set the name for display purposes (CHANGE THIS)
         decimals = 18;                                               // Amount of decimals for display purposes (CHANGE THIS)
-        symbol = "BMEV";                                             // Set the symbol for display purposes (CHANGE THIS)
-        unitsOneEthCanBuy = 30000000;                                      // Set the price of your token for the ICO (CHANGE THIS)
+        symbol = "BMEX";                                             // Set the symbol for display purposes (CHANGE THIS)
+        unitsOneEthCanBuy = 10000000;                                      // Set the price of your token for the ICO (CHANGE THIS)
         fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
     }
 
