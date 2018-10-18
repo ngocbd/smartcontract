@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WanChainToken at 0x2bb8de3d3c9423164a6e1cb6ca1cf3019685b4c5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WanChainToken at 0xf6848903a8968dfee46767596d32bfec10aee3bc
 */
 pragma solidity ^0.4.24;
 contract Ownable {
@@ -89,7 +89,7 @@ contract WanChainToken is StandardToken {
         totalSupply = 10000000000;         
         name = "Wan Chain Token";                   
         decimals = 1;           
-        symbol = "WLZJ";  
+        symbol = "WL";  
         createTime = now;
     }
 
