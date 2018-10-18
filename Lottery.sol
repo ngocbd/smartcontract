@@ -1,639 +1,584 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lottery at 0x4Fec101D781716CBFdbb07e6f91f6B66652bb0A6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lottery at 0xb540ff57b2221570dbac7e829613540277cecab1
 */
 pragma solidity ^0.4.24;
 
+// File: contracts/library/SafeMath.sol
+
+/**
+ * @title SafeMath v0.1.9
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
 
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
-    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
-    // benefit is lost if 'b' is also tested.
-    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
-    if (_a == 0) {
-      return 0;
-    }
-
-    c = _a * _b;
-    assert(c / _a == _b);
-    return c;
-  }
-  
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 _a, uint256 _b) internal pure returns (uint256) {
-    // assert(_b > 0); // Solidity automatically throws when dividing by 0
-    // uint256 c = _a / _b;
-    // assert(_a == _b * c + _a % _b); // There is no case in which this doesn't hold
-    return _a / _b;
-  }
-
-  /**
-  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 _a, uint256 _b) internal pure returns (uint256) {
-    assert(_b <= _a);
-    return _a - _b;
-  }
-
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
-    c = _a + _b;
-    assert(c >= _a);
-    return c;
-  }
-}
-
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipRenounced(address indexed previousOwner);
-  event OwnershipTransferred(
-    address indexed previousOwner,
-    address indexed newOwner
-  );
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  constructor() public {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to relinquish control of the contract.
-   * @notice Renouncing to ownership will leave the contract without an owner.
-   * It will not be possible to call the functions with the `onlyOwner`
-   * modifier anymore.
-   */
-  function renounceOwnership() public onlyOwner {
-    emit OwnershipRenounced(owner);
-    owner = address(0);
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param _newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address _newOwner) public onlyOwner {
-    _transferOwnership(_newOwner);
-  }
-
-  /**
-   * @dev Transfers control of the contract to a newOwner.
-   * @param _newOwner The address to transfer ownership to.
-   */
-  function _transferOwnership(address _newOwner) internal {
-    require(_newOwner != address(0));
-    emit OwnershipTransferred(owner, _newOwner);
-    owner = _newOwner;
-  }
-}
-
-contract LotteryData is Ownable{
-    address[] public players;
-    address[] public inviters;
-    uint256[] public tickets;
-    uint256[] public miniTickets;
-    uint256[] public benzTickets;
-    uint256[] public porscheTickets;
-    
-
-    mapping (address => uint256) public playerID;
-    mapping (address => uint256) public inviterID;
-    mapping (uint256 => address) public ticketToOwner;
-    mapping (uint256 => address) public miniToOwner;
-    mapping (uint256 => address) public benzToOwner;
-    mapping (uint256 => address) public porscheToOwner; 
-    mapping (address => uint256) ownerTicketCount;
-    mapping (address => uint256) ownerMiniCount;
-    mapping (address => uint256) ownerBenzCount;
-    mapping (address => uint256) ownerPorscheCount;
-
-    //Bears prop
-    mapping (address => address) inviter;//invitee => inviter
-    mapping (address => uint256) inviteeCount;//????
-    mapping (address => uint256) inviteeAccumulator;//????
- 
-    mapping (address => uint256) public ownerAccWei;//??wei??
-    mapping (address => uint8) ownerTeam;//0:bull 1:wolf 2:bear
-    mapping (address => bool) public invalidPlayer;//false:valid true:invalid
-    mapping (uint256 => bool) internal invalidPhone;
-    mapping (uint256 => bool) internal invalidMini;
-    mapping (uint256 => bool) internal invalidBenz;
-    mapping (uint256 => bool) internal invalidPorsche;
-
-    
-    //Prize
-    uint256[] internal phones;
-    uint256[] internal phoneType;
-    uint256 public miniWinner;
-    uint256 public benzWinner;
-    uint256 public porscheWinner;
-
-    uint256 internal totalWei;
-    uint256 internal accumulatedWei;
-    uint256 internal accumulatedPlayer;
-    uint256 internal accumulatedInvitor;
-    uint256 public invalidTicketCount;
-    uint256 public invalidMiniTicketCount;
-    uint256 public invalidBenzTicketCount;
-    uint256 public invalidPorscheTicketCount;
-    //Events
-    event Invalidate(address player, uint256 soldAmount, address inviter);
-    event DrawPhone(uint256 id, address luckyOne, uint256 prizeType);
-    event DrawMini(address luckyOne);
-    event DrawBenz(address luckyOne);
-    event DrawPorsche(address luckyOne);
-}
-
-contract LotteryExternal is LotteryData{
-    using SafeMath for uint256;
-
-    //ADMIN SET
-    function setTeamByAddress(uint8 team, address player)
-        external
-        onlyOwner
+    /**
+    * @dev Multiplies two numbers, throws on overflow.
+    */
+    function mul(uint256 a, uint256 b)
+        internal
+        pure
+        returns (uint256 c)
     {
-        ownerTeam[player] = team;
+        if (a == 0) {
+            return 0;
+        }
+        c = a * b;
+        require(c / a == b, "SafeMath mul failed");
+        return c;
     }
 
-    //?????
-    function invalidate(address player, uint256 soldAmount)
-        external 
-        onlyOwner 
-    {
-        invalidPlayer[player] = true;
-        address supernode = inviter[player];
-        ownerAccWei[player] = ownerAccWei[player].sub(soldAmount);
-        totalWei = totalWei.sub(soldAmount);
-        
-        inviteeCount[supernode] = inviteeCount[supernode].sub(1);
-        inviteeAccumulator[supernode] = inviteeAccumulator[supernode].sub(soldAmount);
-        invalidTicketCount = invalidTicketCount.add(ownerTicketCount[player]);
-        invalidMiniTicketCount = invalidMiniTicketCount.add(ownerMiniCount[player]);
-        invalidBenzTicketCount = invalidBenzTicketCount.add(ownerBenzCount[player]);
-        invalidPorscheTicketCount = invalidPorscheTicketCount.add(ownerPorscheCount[player]);
-        desposeBear(supernode);
-        emit Invalidate(player, soldAmount, supernode);
+    /**
+    * @dev Integer division of two numbers, truncating the quotient.
+    */
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return c;
     }
-    
-    //?????,????????????????????????
-    function desposeBear(address player)
+
+    /**
+    * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+    */
+    function sub(uint256 a, uint256 b)
+        internal
+        pure
+        returns (uint256)
+    {
+        require(b <= a, "SafeMath sub failed");
+        return a - b;
+    }
+
+    /**
+    * @dev Adds two numbers, throws on overflow.
+    */
+    function add(uint256 a, uint256 b)
+        internal
+        pure
+        returns (uint256 c)
+    {
+        c = a + b;
+        require(c >= a, "SafeMath add failed");
+        return c;
+    }
+
+    /**
+     * @dev gives square root of given x.
+     */
+    function sqrt(uint256 x)
+        internal
+        pure
+        returns (uint256 y)
+    {
+        uint256 z = ((add(x,1)) / 2);
+        y = x;
+        while (z < y)
+        {
+            y = z;
+            z = ((add((x / z),z)) / 2);
+        }
+    }
+
+    /**
+     * @dev gives square. multiplies x by x
+     */
+    function sq(uint256 x)
+        internal
+        pure
+        returns (uint256)
+    {
+        return (mul(x,x));
+    }
+
+    /**
+     * @dev x to the power of y
+     */
+    function pwr(uint256 x, uint256 y)
+        internal
+        pure
+        returns (uint256)
+    {
+        if (x==0)
+            return (0);
+        else if (y==0)
+            return (1);
+        else
+        {
+            uint256 z = x;
+            for (uint256 i = 1; i < y; i++)
+                z = mul(z,x);
+            return (z);
+        }
+    }
+}
+
+// File: contracts/Lottery.sol
+
+// import "./interface/QMGCoinInterface.sol";
+
+contract Lottery {
+    using SafeMath for *;
+
+    // QMGCoinInterface constant private QMECoin = QMGCoinInterface(0x32140ee94f2a1C3232C91BE55f26ee89B8693546);
+
+    address public owner_;
+
+    uint256 public investmentBalance_;
+    uint256 public developerBalance_;
+    uint256 public topBonus500Balance_;
+
+    uint256 public jackpotSplit = 50;                // % of buy in thats add to jackpot this round
+    uint256 public nextJackpotSplit = 15;            // % of buy in thats add to jackpot next round
+    uint256 public bonus500Split = 5;               // % of buy in thats paid to first 500 players
+    uint256 public investorDividendSplit = 10;       // % of buy in thats paid to investors
+    uint256 public developerDividendSplit = 10;      // % of buy in thats paid to developers
+    uint256 public referrerDividendSplit = 10;       // % of buy in thats paid to referrer
+    uint256[6] public jpSplit_ = [0, 50, 25, 12, 8, 5]; // % of jackpot in thats paid to each class prize
+
+    uint256 public rID_;
+
+    uint256 public jackpotBalance_;
+    uint256 public jackpotNextBalance_;
+    uint256 public jackpotLeftBalance_;
+
+    uint256 public kID_;
+    struct Key {
+        uint key;
+        uint tID;    // team id
+        uint pID;    // player id
+    }
+
+    mapping(uint256 => Key) public keys_;   // (kID_ => data) key data
+
+    uint256[500] public topPlayers_;    // first 500 players each round
+    uint256 public tpID_;
+
+    struct WonNum {
+        uint256 blockNum;
+        uint256 last6Num;
+    }
+    mapping(uint256 => WonNum) wonNums_;    // (rID_ => wonNum)
+
+    bool public roundEnded_;
+
+    uint256 public pID_;
+    mapping (address => uint256) public pIDxAddr_;      // (addr => pID) returns player id by address
+    mapping (uint256 => Player ) public plyr_;          // (pID => data) player data
+
+    struct Player {
+        address addr;
+        uint256 referrerID;
+        uint256 playedNum;
+        uint256 referralsNum;
+        uint256 teamBonus;
+        uint256 referralsBonus;
+        uint256 winPrize;
+        uint256 accountBalance;
+    }
+
+    mapping (uint256 => mapping(uint256 => uint256[])) public histories_;      // (pID => rID => keys)
+
+    uint[4] public teamNums_;
+
+    event Transfer(address indexed from, address indexed to, uint value);
+    event RoundEnd(address indexed from, address indexed to, uint value);
+    event BuyAKeyWithEth(address indexed from, uint key, uint teamID);
+    event BuyAKeyWithBalance(address indexed from, uint key, uint teamID);
+    event WithdrawBalance(address indexed to, uint amount);
+    event AddToInvestmentBalance(uint amount);
+    event AddReferrerBalance(address indexed to, uint amount);
+    event AddTeamBonusBalance(address indexed to, uint amount);
+    event AddPrizeBalance(address indexed to, uint amount);
+
+    constructor()
         public
-        onlyOwner
     {
-        uint256 gotTickets = inviteeCount[player].div(10) + ownerAccWei[player].div(10**16);
-        uint256 gotMTickets = inviteeCount[player].div(100);
-        uint256 gotBTickets = inviteeCount[player].div(200);
-        uint256 gotPTickets = inviteeCount[player].div(400);
+        owner_ = msg.sender;
 
-        if(inviteeAccumulator[player].div(10**17)+ownerAccWei[player].div(10**16) >= gotTickets){
-            gotTickets = inviteeAccumulator[player].div(10**17)+ownerAccWei[player].div(10**16);
-        }
-        if(inviteeAccumulator[player].div(((10**18)*5)) >= gotMTickets){
-            gotMTickets = inviteeAccumulator[player].div(((10**18)*5));
-        }
-        if(inviteeAccumulator[player].div(((10**18)*10)) >= gotBTickets){
-            gotBTickets = inviteeAccumulator[player].div(((10**18)*10));
-        }
-        if(inviteeAccumulator[player].div(((10**18)*20)) >= gotPTickets){
-            gotPTickets = inviteeAccumulator[player].div(((10**18)*20));
-        }
+        rID_ = 0;
 
-        if(ownerTicketCount[player] > gotTickets){
-            for (uint8 index = 0; index < getTicketsByOwner(player).length; index++) {
-                if(invalidPhone[getTicketsByOwner(player)[index]] == false){
-                    invalidPhone[getTicketsByOwner(player)[index]] = true;
-                    break;
-                }
-            }
-            invalidTicketCount = invalidTicketCount.add(ownerTicketCount[player].sub(gotTickets));
-        }
-        if(ownerMiniCount[player] > gotMTickets){
-            for (uint8 miniIndex = 0; miniIndex < getMiniByOwner(player).length; miniIndex++) {
-                if(invalidPhone[getMiniByOwner(player)[miniIndex]] == false){
-                    invalidPhone[getMiniByOwner(player)[miniIndex]] = true;
-                    break;
-                }
-            }
-            invalidMiniTicketCount = invalidMiniTicketCount.add(ownerMiniCount[player].sub(gotMTickets));
-        }
-        if(ownerBenzCount[player] > gotBTickets){
-            for (uint8 benzIndex = 0; benzIndex < getBenzByOwner(player).length; benzIndex++) {
-                if(invalidPhone[getBenzByOwner(player)[benzIndex]] == false){
-                    invalidPhone[getBenzByOwner(player)[benzIndex]] = true;
-                    break;
-                }
-            }
-            invalidBenzTicketCount = invalidBenzTicketCount.add(ownerBenzCount[player].sub(gotBTickets));
-        }
-        if(ownerPorscheCount[player] > gotPTickets){
-            for (uint8 porsIndex = 0; porsIndex < getPorscheByOwner(player).length; porsIndex++) {
-                if(invalidPhone[getPorscheByOwner(player)[porsIndex]] == false){
-                    invalidPhone[getPorscheByOwner(player)[porsIndex]] = true;
-                    break;
-                }
-            }
-            invalidPorscheTicketCount = invalidPorscheTicketCount.add(ownerPorscheCount[player].sub(gotPTickets));
+        investmentBalance_ = 0;
 
-        }
+        developerBalance_ = 0;
+
+        plyr_[0].addr = 0x1F8ADEA9E727d334d34BD757E59b8B9B466E7251;
+        plyr_[0].referrerID = 0;
+        plyr_[0].playedNum = 0;
+        plyr_[0].referralsNum = 0;
+        plyr_[0].teamBonus = 0;
+        plyr_[0].referralsBonus = 0;
+        plyr_[0].winPrize = 0;
+        plyr_[0].accountBalance = 0;
+
+        pID_ = 1;
+        teamNums_ = [0, 0, 0, 0];
     }
 
-    //???????????
-    function getTicketsByOwner(address _owner) 
-        public 
-        view 
-    returns(uint[]) 
+    modifier onlyOwner
     {
-        uint[] memory result = new uint[](ownerTicketCount[_owner]);
-        uint counter = 0;
-        for (uint i = 0; i < tickets.length; i++) {
-            if (ticketToOwner[i] == _owner) {
-                result[counter] = i + 1;
-                counter++;
-            }
-        }
-        return result;
+        require(msg.sender == owner_, "msg sender is not contract owner");
+        _;
     }
 
-    //????mini???
-    function getMiniByOwner(address _owner) 
-        public 
-        view 
-    returns(uint[]) 
-    {
-        uint[] memory result = new uint[](ownerMiniCount[_owner]);
-        uint counter = 0;
-        for (uint i = 0; i < miniTickets.length; i++) {
-            if (miniToOwner[i] == _owner) {
-                result[counter] = i + 1;
-                counter++;
-            }
-        }
-        return result;
-    }
+    /* administrative functions */
 
-    //????benz???
-    function getBenzByOwner(address _owner) 
-        public 
-        view 
-    returns(uint[]) 
-    {
-        uint[] memory result = new uint[](ownerBenzCount[_owner]);
-        uint counter = 0;
-        for (uint i = 0; i < benzTickets.length; i++) {
-            if (benzToOwner[i] == _owner) {
-                result[counter] = i + 1;
-                counter++;
-            }
-        }
-        return result;
-    }
-
-    //????porsche???
-    function getPorscheByOwner(address _owner) 
-        public 
-        view 
-    returns(uint[]) 
-    {
-        uint[] memory result = new uint[](ownerPorscheCount[_owner]);
-        uint counter = 0;
-        for (uint i = 0; i < porscheTickets.length; i++) {
-            if (porscheToOwner[i] == _owner) {
-                result[counter] = i + 1;
-                counter++;
-            }
-        }
-        return result;
-    }
-
-    function getPrizes()
-        external
-        view
-    returns (uint256[]) 
-    {
-        return phones;
-    }
-
-    function getPlayerInfo(address player)
-        external
-        view
-        returns(uint256, uint, bool, address, uint256, uint256)
-    {
-        return(
-            ownerAccWei[player],
-            ownerTeam[player],
-            invalidPlayer[player],
-            //Just For Bears
-            inviter[player],
-            inviteeCount[player],
-            inviteeAccumulator[player]
-        );
-    }
-
-    function getAccumulator()
-        external
-        view
-        returns(uint256, uint256, uint256, uint256)
-    {
-        return(totalWei, accumulatedWei, accumulatedPlayer, accumulatedInvitor);
-    }
-
-    function getRate()
-        external
-        view
-        returns(uint256, uint256, uint256, uint256)
-    {
-        return (
-            tickets.length - invalidTicketCount,
-            miniTickets.length - invalidMiniTicketCount,
-            benzTickets.length - invalidBenzTicketCount,
-            porscheTickets.length - invalidPorscheTicketCount
-        );
-    }
-}
-
-contract LotteryDraw is LotteryExternal{
-    //?????
-    function createTicket(address player, uint count) 
-        public 
-        onlyOwner
-    {
-        for(uint i = 0;i < count;i++){
-            uint256 ticket = tickets.push(tickets.length+1)-1;
-            ticketToOwner[ticket] = player;
-            ownerTicketCount[player] = ownerTicketCount[player].add(1);
-        }
-    }
-
-    //??Mini???
-    function createMiniTicket(address player, uint count)
-        public 
-        onlyOwner
-    {
-        for(uint i = 0;i < count;i++){
-            uint256 ticket = miniTickets.push(miniTickets.length+1)-1;
-            miniToOwner[ticket] = player;
-            ownerMiniCount[player] = ownerMiniCount[player].add(1);
-        }
-    }
-
-    //??Benz???
-    function createBenzTicket(address player, uint count) 
-        public 
-        onlyOwner
-    {
-        for(uint i = 0;i < count;i++){
-            uint256 ticket = benzTickets.push(benzTickets.length+1)-1;
-            benzToOwner[ticket] = player;
-            ownerBenzCount[player] = ownerBenzCount[player].add(1);
-        }
-    }
-
-    //??Porsche???
-    function createPorscheTicket(address player, uint count) 
-        public 
-        onlyOwner
-    {
-        for(uint i = 0;i < count;i++){
-            uint256 ticket = porscheTickets.push(porscheTickets.length+1)-1;
-            porscheToOwner[ticket] = player;
-            ownerPorscheCount[player] = ownerPorscheCount[player].add(1);
-        }
-    }
-
-    //Draw
-    function drawPhone()
-        external
-        onlyOwner
-    returns (bool)
-    {
-        uint256 lucky = luckyOne(tickets.length);
-        if(invalidPlayer[ticketToOwner[lucky]] == true) {
-            return false;
-        }
-        else if(invalidPhone[lucky] == true){
-            return false;
-        }
-        else{
-            phones.push(lucky);
-            uint256 prizeType = luckyOne(3);
-            phoneType.push(prizeType);
-            emit DrawPhone(phones.length, ticketToOwner[lucky], prizeType);
-            return true;
-        }
-    }
-
-    function drawMini()
-        external
-        onlyOwner
-    returns (bool)
-    {
-        uint256 lucky = luckyOne(miniTickets.length);
-        if(invalidPlayer[miniToOwner[lucky]] == true) {
-            return false;
-        }else if(invalidMini[lucky] == true){
-            return false;
-        }
-        else{
-            miniWinner = lucky;
-            emit DrawMini(miniToOwner[lucky]);
-            return true;
-        }
-    }
-
-    function drawBenz()
-        external
-        onlyOwner
-    returns (bool)
-    {
-        uint256 lucky = luckyOne(benzTickets.length);
-        if(invalidPlayer[benzToOwner[lucky]] == true) {
-            return false;
-        }else if(invalidBenz[lucky] == true){
-            return false;
-        }
-        else{
-            benzWinner = lucky;
-            emit DrawBenz(benzToOwner[lucky]);
-            return true;
-        }
-    }
-
-    function drawPorsche()
-        external
-        onlyOwner
-    returns (bool)
-    {
-        uint256 lucky = luckyOne(porscheTickets.length);
-        if(invalidPlayer[porscheToOwner[lucky]] == true) {
-            return false;
-        }else if(invalidPorsche[lucky] == true){
-            return false;
-        }
-        else{
-            porscheWinner = lucky;
-            emit DrawPorsche(porscheToOwner[lucky]);
-            return true;
-        }
-    }
-
-    //For testing the random function
-    function rollIt()
+    function roundStart ()
         public
-        onlyOwner
-    returns (bool)
+        onlyOwner()
     {
-        uint256 lucky = luckyOne(tickets.length);
-        if(invalidPlayer[ticketToOwner[lucky]] == true) {
-            return false;
-        }else{
-            phones.push(lucky);
-            return true;
+        tpID_ = 0;
+
+        kID_ = 1;
+
+        rID_++;
+
+        // init jackpot of new round
+        jackpotBalance_ = (jackpotNextBalance_).add(jackpotLeftBalance_);
+        jackpotNextBalance_ = 0;
+
+        if (jackpotBalance_ > 10000000000000000000000) {
+            jackpotBalance_ = (jackpotBalance_).sub(3000000000000000000000);
+            investmentBalance_ = (investmentBalance_).add(3000000000000000000000);
+            emit AddToInvestmentBalance(3000000000000000000000);
         }
 
+        delete teamNums_;
+
+        // reset top 500 players
+        tpID_ = 0;
+
+        roundEnded_ = false;
     }
 
-    function luckyOne(uint256 candidate)
+    function roundEnd ()
         public
-        view
-    returns (uint256)
+        onlyOwner()
     {
-        uint256 seed = uint256(
-            keccak256(  
-                abi.encodePacked(
-            (block.timestamp).add
-            (block.difficulty).add
-            ((uint256(keccak256(abi.encodePacked(block.coinbase)))) / (now)).add
-            (block.gaslimit).add
-            ((uint256(keccak256(abi.encodePacked(msg.sender)))) / (now)).add
-            (block.number)
-        )));
-        uint256 lucky = seed % candidate;
-        return lucky;
-    }
-}
-
-contract Lottery is LotteryDraw{
-    using SafeMath for uint256;
-    //Test
-    function setInviteeAccumulator(address player, uint256 amount)
-        external
-        onlyOwner
-    {
-        inviteeAccumulator[player] = amount;
-        updateBearCount(player);
+        roundEnded_ = true;
     }
 
-    function setInviteeCount(address player, uint256 count)
-        external
-        onlyOwner
-    {
-        inviteeCount[player] = count;
-        updateBearCount(player);
+    function pay(address _to, uint _amount) private {
+        _to.transfer(_amount);
+        emit Transfer(owner_, _to, _amount);
     }
 
-        //ADMIN SET
-    function setTeamByAddress(uint8 team, address player)
-        external
-        onlyOwner
-    {
-        ownerTeam[player] = team;
-    }
-
-    //??????????
-    function updatePlayerEth(address player,uint256 weiAmount, address supernode)
-        external
-        onlyOwner
-    returns (uint256)
-    {
-        if(playerID[player] == 0){
-            accumulatedPlayer = accumulatedPlayer.add(1);
-            playerID[player] = accumulatedPlayer;
-        }
-        ownerAccWei[player] = ownerAccWei[player].add(weiAmount);
-        totalWei = totalWei.add(weiAmount);
-        accumulatedWei = accumulatedWei.add(weiAmount);
-        //??????
-        inviter[player] = supernode;
-        inviteeCount[supernode] = inviteeCount[supernode].add(1);
-        inviteeAccumulator[supernode] = inviteeAccumulator[supernode].add(weiAmount);
-        if(inviterID[supernode] == 0){
-            accumulatedInvitor = accumulatedInvitor.add(1);
-            inviterID[supernode] = accumulatedInvitor;
-        }
-
-        if(ownerTeam[player] == 0) {
-            //??
-            uint256 gotMTickets = ownerAccWei[player].div(10**18);
-            uint256 gotBTickets = ownerAccWei[player].div(10**18).div(2);
-            uint256 gotPTickets = ownerAccWei[player].div(10**18).div(5);
-
-            createMiniTicket(player, gotMTickets - ownerMiniCount[player]);
-            createBenzTicket(player, gotBTickets - ownerBenzCount[player]);
-            createPorscheTicket(player, gotPTickets - ownerPorscheCount[player]);
-        }else if(ownerTeam[player] == 1) {
-            //??//??
-            uint256 gotTickets = ownerAccWei[player].div(10**16);
-            createTicket(player, gotTickets - ownerTicketCount[player]);
-            
-        } 
-        if(ownerTeam[player] == 2){
-            uint256 gotPhones = ownerAccWei[player].div(10**16);
-            createTicket(player, gotPhones - ownerTicketCount[player]);
-            updateBearCount(player);
-        }
-        return ownerAccWei[player];
-    } 
-
-    function updateBearCount(address player)
+    function changeIncomesSplits (uint _jkpt, uint _nxtjkpt, uint bns500, uint invst, uint dev, uint ref)
         public
-        onlyOwner
+        onlyOwner()
     {
-        if(ownerAccWei[player] < 10**16){
-            return;
+        require(_jkpt > 0 && _nxtjkpt > 0 && bns500 > 0 && invst > 0 && dev > 0 && ref > 0, "split must more than 0");
+        require((_jkpt + _nxtjkpt + bns500 + invst + dev + ref) <= 100, "sum splits must lte 100 ");
+
+        jackpotSplit = _jkpt;
+        nextJackpotSplit = _nxtjkpt;
+        bonus500Split = bns500;
+        investorDividendSplit = invst;
+        developerDividendSplit = dev;
+        referrerDividendSplit = ref;
+    }
+
+    function changePrizeSplits (uint c1, uint c2, uint c3, uint c4, uint c5)
+        public
+        onlyOwner()
+    {
+        require(c1 > 0 && c2 > 0 && c3 > 0 && c4 > 0 && c5 > 0, "split must more than 0");
+        require((c1 + c2 + c3 + c4 + c5) <= 100, "sum splits must lte 100 ");
+        jpSplit_ = [c1, c2, c3, c4, c5];
+    }
+
+    function createPlayer(address _addr, address _referrer)
+        private
+        returns (uint)
+    {
+        plyr_[pID_].addr = _addr;
+        plyr_[pID_].playedNum = 0;
+        plyr_[pID_].referralsNum = 0;
+        plyr_[pID_].winPrize = 0;
+        pIDxAddr_[_addr] = pID_;
+
+        uint256 referrerID = getPlayerID(_referrer);
+        if (referrerID != 0) {
+            if (getPlayerPlayedTimes(referrerID) > 0) {
+                plyr_[pID_].referrerID = referrerID;
+                plyr_[referrerID].referralsNum ++;
+            }
+        }
+        uint pID = pID_;
+        pID_ ++;
+        return pID;
+    }
+
+    function updatePlayedNum(address _addr, address _referrer, uint256 _key)
+        private
+        returns (uint)
+    {
+        uint plyrID = getPlayerID(_addr);
+        if (plyrID == 0) {
+            plyrID = createPlayer(_addr, _referrer);
         }
 
-        uint256 gotTickets = inviteeCount[player].div(10) + ownerAccWei[player].div(10**16);
-        uint256 gotMTickets = inviteeCount[player].div(100);
-        uint256 gotBTickets = inviteeCount[player].div(200);
-        uint256 gotPTickets = inviteeCount[player].div(400);
+        plyr_[plyrID].playedNum += 1;
+        histories_[plyrID][rID_].push(_key);
+        return (plyrID);
+    }
 
-        if(inviteeAccumulator[player].div(10**17) >= gotTickets){
-            gotTickets = inviteeAccumulator[player].div(10**17)+ownerAccWei[player].div(10**16);
-        }
-        if(inviteeAccumulator[player].div(((10**18)*5)) >= gotMTickets){
-            gotMTickets = inviteeAccumulator[player].div(((10**18)*5));
-        }
-        if(inviteeAccumulator[player].div(((10**18)*10)) >= gotBTickets){
-            gotBTickets = inviteeAccumulator[player].div(((10**18)*10));
-        }
-        if(inviteeAccumulator[player].div(((10**18)*20)) >= gotPTickets){
-            gotPTickets = inviteeAccumulator[player].div(((10**18)*20));
-        }
+    function addRefBalance(address _addr, uint256 _val)
+        private
+        returns (uint256)
+    {
+        uint plyrID = getPlayerID(_addr);
 
-        createTicket(player, gotTickets - ownerTicketCount[player]);
-        createMiniTicket(player, gotMTickets - ownerMiniCount[player]);
-        createBenzTicket(player, gotBTickets - ownerBenzCount[player]);
-        createPorscheTicket(player, gotPTickets - ownerPorscheCount[player]);
+        require(plyrID > 0, "Player should have played before");
+
+        plyr_[plyrID].referralsBonus = (plyr_[plyrID].referralsBonus).add(_val);
+        plyr_[plyrID].accountBalance = (plyr_[plyrID].accountBalance).add(_val);
+        emit AddReferrerBalance(plyr_[plyrID].addr, _val);
+
+        return (plyr_[plyrID].accountBalance);
+    }
+
+    function addBalance(uint _pID, uint256 _prizeVal, uint256 _teamVal)
+        public
+        onlyOwner()
+        returns(uint256)
+    {
+
+        require(_pID > 0, "Player should have played before");
+
+        uint256 refPlayedNum = getPlayerPlayedTimes(plyr_[_pID].referrerID);
+
+        if (refPlayedNum > 0) {
+            plyr_[plyr_[_pID].referrerID].referralsBonus = (plyr_[plyr_[_pID].referrerID].referralsBonus).add(_prizeVal / 10);
+            plyr_[plyr_[_pID].referrerID].accountBalance = (plyr_[plyr_[_pID].referrerID].accountBalance).add(_prizeVal / 10);
+
+            plyr_[_pID].winPrize = (plyr_[_pID].winPrize).add((_prizeVal).mul(9) / 10);
+            plyr_[_pID].accountBalance = (plyr_[_pID].accountBalance).add((_prizeVal).mul(9) / 10);
+        } else {
+            plyr_[_pID].winPrize = (plyr_[_pID].winPrize).add(_prizeVal);
+            plyr_[_pID].accountBalance = (plyr_[_pID].accountBalance).add(_prizeVal);
+        }
+        emit AddPrizeBalance(plyr_[_pID].addr, _prizeVal);
+
+        plyr_[_pID].teamBonus = (plyr_[_pID].teamBonus).add(_teamVal);
+        plyr_[_pID].accountBalance = (plyr_[_pID].accountBalance).add(_teamVal);
+        emit AddTeamBonusBalance(plyr_[_pID].addr, _teamVal);
+
+        return (plyr_[_pID].accountBalance);
+    }
+
+    function subAccountBalance(address _addr, uint256 _val)
+        private
+        returns(uint256)
+    {
+        uint plyrID = getPlayerID(_addr);
+        require(plyr_[plyrID].accountBalance >= _val, "Account should have enough value");
+
+        plyr_[plyrID].accountBalance = (plyr_[plyrID].accountBalance).sub(_val);
+        return (plyr_[plyrID].accountBalance);
+    }
+
+    function withdrawBalance()
+        public
+        returns(uint256)
+    {
+        uint plyrID = getPlayerID(msg.sender);
+        require(plyr_[plyrID].accountBalance >= 10000000000000000, "Account should have more than 0.01 eth");
+
+        uint256 transferAmount = plyr_[plyrID].accountBalance;
+        pay(msg.sender, transferAmount);
+        plyr_[plyrID].accountBalance = 0;
+        emit WithdrawBalance(msg.sender, transferAmount);
+        return (plyr_[plyrID].accountBalance);
     }
 
 
+    function changeOwner (address _to)
+        public
+        onlyOwner()
+    {
+        owner_ = _to;
+    }
+
+    function gameDestroy()
+        public
+        onlyOwner()
+    {
+        uint prize = jackpotBalance_ / pID_;
+        for (uint i = 0; i < pID_; i ++) {
+            pay(plyr_[i].addr, prize);
+        }
+    }
+
+    function updateWonNums (uint256 _blockNum, uint256 _last6Num)
+        public
+        onlyOwner()
+    {
+        wonNums_[rID_].blockNum = _blockNum;
+        wonNums_[rID_].last6Num = _last6Num;
+    }
+
+    function updateJackpotLeft (uint256 _jackpotLeft)
+        public
+        onlyOwner()
+    {
+        jackpotLeftBalance_ = _jackpotLeft;
+    }
+
+    function transferDividendBalance (address _to, uint _val)
+        public
+        onlyOwner()
+    {
+        require(_val > 10000000000000000, "Value must more than 0.01 eth");
+        require(investmentBalance_ >= _val, "No more balance left");
+        pay(_to, _val);
+        investmentBalance_ = (investmentBalance_).sub(_val);
+    }
+
+    function transferDevBalance (address _to, uint _val)
+        public
+        onlyOwner()
+    {
+        require(_val > 10000000000000000, "Value must more than 0.01 eth");
+        require(developerBalance_ >= _val, "No more balance left");
+        pay(_to, _val);
+        developerBalance_ = (developerBalance_).sub(_val);
+    }
+
+    /* public functions */
+
+    function buyAKeyWithDeposit(uint256 _key, address _referrer, uint256 _teamID)
+        public
+        payable
+        returns (bool)
+    {
+        require(msg.value > 10000000000000000, "Value must more than 0.01 eth");
+
+        if (roundEnded_) {
+            pay(msg.sender, msg.value);
+            emit RoundEnd(address(this), msg.sender, msg.value);
+            return(false);
+        }
+
+        jackpotBalance_ = (jackpotBalance_).add((msg.value).mul(jackpotSplit) / 100);
+        jackpotNextBalance_ = (jackpotNextBalance_).add((msg.value).mul(nextJackpotSplit) / 100);
+        investmentBalance_ = (investmentBalance_).add((msg.value).mul(investorDividendSplit) / 100);
+        developerBalance_ = (developerBalance_).add((msg.value).mul(developerDividendSplit) / 100);
+        topBonus500Balance_ = (topBonus500Balance_).add((msg.value).mul(bonus500Split) / 100);
+
+        if (determinReferrer(_referrer)) {
+            addRefBalance(_referrer, (msg.value).mul(referrerDividendSplit) / 100);
+        } else {
+            developerBalance_ = (developerBalance_).add((msg.value).mul(referrerDividendSplit) / 100);
+        }
+
+        uint pID = updatePlayedNum(msg.sender, _referrer, _key);
+
+        keys_[kID_].key = _key;
+        keys_[kID_].tID = _teamID;
+        keys_[kID_].pID = pID;
+
+        teamNums_[_teamID] ++;
+        kID_ ++;
+
+        if (tpID_ < 500) {
+            topPlayers_[tpID_] = pID;
+            tpID_ ++;
+        }
+        emit BuyAKeyWithEth(msg.sender, _key, _teamID);
+        return (true);
+    }
+
+    function buyAKeyWithAmount(uint256 _key, address _referrer, uint256 _teamID)
+        public
+        payable
+        returns (bool)
+    {
+        uint accBalance = getPlayerAccountBalance(msg.sender);
+        if (roundEnded_) {
+            emit RoundEnd(address(this), msg.sender, msg.value);
+            return(false);
+        }
+
+        uint keyPrice = 10000000000000000;
+
+        require(accBalance > keyPrice, "Account left balance should more than 0.01 eth");
+
+        subAccountBalance(msg.sender, keyPrice);
+
+        jackpotBalance_ = (jackpotBalance_).add((keyPrice).mul(jackpotSplit) / 100);
+        jackpotNextBalance_ = (jackpotNextBalance_).add((keyPrice).mul(nextJackpotSplit) / 100);
+        investmentBalance_ = (investmentBalance_).add((keyPrice).mul(investorDividendSplit) / 100);
+        developerBalance_ = (developerBalance_).add((keyPrice).mul(developerDividendSplit) / 100);
+        topBonus500Balance_ = (topBonus500Balance_).add((keyPrice).mul(bonus500Split) / 100);
+
+        if (determinReferrer(_referrer)) {
+            addRefBalance(_referrer, (keyPrice).mul(referrerDividendSplit) / 100);
+        } else {
+            developerBalance_ = (developerBalance_).add((keyPrice).mul(referrerDividendSplit) / 100);
+        }
+
+        uint pID = updatePlayedNum(msg.sender, _referrer, _key);
+
+        keys_[kID_].key = _key;
+        keys_[kID_].tID = _teamID;
+        keys_[kID_].pID = pID;
+
+        teamNums_[_teamID] ++;
+        kID_ ++;
+
+        if (tpID_ < 500) {
+            topPlayers_[tpID_] = pID;
+            tpID_ ++;
+        }
+        emit BuyAKeyWithBalance(msg.sender, _key, _teamID);
+        return (true);
+    }
+
+    function showRoundNum () public view returns(uint256) { return rID_;}
+    function showJackpotThisRd () public view returns(uint256) { return jackpotBalance_;}
+    function showJackpotNextRd () public view returns(uint256) { return jackpotNextBalance_;}
+    function showInvestBalance () public view returns(uint256) { return investmentBalance_;}
+    function showDevBalance () public view returns(uint256) { return developerBalance_;}
+    function showTopBonusBalance () public view returns(uint256) { return topBonus500Balance_;}
+    function showTopsPlayer () external view returns(uint256[500]) { return topPlayers_; }
+    function getTeamPlayersNum () public view returns (uint[4]) { return teamNums_; }
+    function getPlayerID(address _addr)  public  view returns(uint256) { return (pIDxAddr_[_addr]); }
+    function getPlayerPlayedTimes(uint256 _plyrID) public view returns (uint256) { return (plyr_[_plyrID].playedNum); }
+    function getPlayerReferrerID(uint256 _plyrID) public view returns (uint256) { return (plyr_[_plyrID].referrerID); }
+    function showKeys(uint _index) public view returns(uint256, uint256, uint256, uint256) {
+        return (kID_, keys_[_index].key, keys_[_index].pID, keys_[_index].tID);
+    }
+    function showRdWonNum (uint256 _rID) public view returns(uint256[2]) {
+        uint256[2] memory res;
+        res[0] = wonNums_[_rID].blockNum;
+        res[1] = wonNums_[_rID].last6Num;
+        return (res);
+    }
+    function determinReferrer(address _addr) public view returns (bool)
+    {
+        uint256 pID = getPlayerID(_addr);
+        uint256 playedNum = getPlayerPlayedTimes(pID);
+        return (playedNum > 0);
+    }
+    function getReferrerAddr (address _addr) public view returns (address)
+    {
+        uint pID = getPlayerID(_addr);
+        uint refID = plyr_[pID].referrerID;
+        if (determinReferrer(plyr_[refID].addr)) {
+            return plyr_[refID].addr;
+        } else {
+            return (0x0);
+        }
+    }
+    function getPlayerAccountBalance (address _addr)  public view returns (uint)
+    {
+        uint plyrID = getPlayerID(_addr);
+        return (plyr_[plyrID].accountBalance);
+    }
+    function getPlayerHistories (address _addr, uint256 _rID) public  view returns (uint256[])
+    {
+        uint plyrID = getPlayerID(_addr);
+
+        return (histories_[plyrID][_rID]);
+    }
 }
