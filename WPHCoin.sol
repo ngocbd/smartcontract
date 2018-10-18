@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WPHCoin at 0x2b5589b42eba49241abb57d2e8e287da742d43c2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WPHCoin at 0x6fc619aa9889a2822167065146650acf7a2f1127
 */
 pragma solidity ^0.4.16;
 
@@ -36,7 +36,7 @@ contract WPHCoin {
         string tokenName,
         string tokenSymbol
     ) public {
-        totalSupply = 5000000000000000000000;  // Update total supply with the decimal amount
+        totalSupply = 5000;  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
         name = "WPHCoin";                                   // Set the name for display purposes
         symbol = "WPH";                               // Set the symbol for display purposes
