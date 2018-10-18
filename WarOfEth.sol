@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WarOfEth at 0xd7de6ddb0b65ad4995c88cd12d3d4f7a717f8eba
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WarOfEth at 0x8ef2c5a579d779b79584773d6da1fd637676136e
 */
 pragma solidity 0.4.24;
 
@@ -158,8 +158,10 @@ contract WarOfEth {
     string constant public name = "War of Eth Official";
     string constant public symbol = "WOE";
     address public owner;
-    uint256 constant private roundGap_ = 86400;    // ?????????state?0?????24??
-    uint256 constant private killingGap_ = 86400;   // ???????????? + ???? = ?????????24??
+    uint256 public minTms_ = 3;    //???????
+    uint256 public maxTms_ = 16;    //?????
+    uint256 public roundGap_ = 86400;    // ?????????state?0?????24??
+    uint256 public killingGap_ = 86400;   // ???????????? + ???? = ?????????24??
     uint256 constant private registrationFee_ = 10 finney;    // ?????
 
     // Player
@@ -280,8 +282,8 @@ contract WarOfEth {
             // Buy
             buyCore(_pID, _affID, _tID, msg.value);
 
-            // ??16???????????state: 2?
-            if (round_[rID_].tID_ >= 16){
+            // ???????????????state: 2?
+            if (round_[rID_].tID_ >= minTms_){
                 // ??????
                 round_[rID_].state = 2;
 
@@ -426,6 +428,20 @@ contract WarOfEth {
 
         // event
         emit onNewTeamName(_tID, _name, _pID, plyr_[_pID].name, msg.value, now);
+    }
+
+    // ???????
+    function deposit()
+        public
+        payable
+        isActivated()
+        isHuman()
+        isWithinLimits(msg.value)
+    {
+        determinePID(msg.sender);
+        uint256 _pID = pIDxAddr_[msg.sender];
+
+        plyr_[_pID].gen = (msg.value).add(plyr_[_pID].gen);
     }
 
     //==============
@@ -910,8 +926,8 @@ contract WarOfEth {
         private
         returns (uint256)
     {
-        // ????????99?
-        require(round_[rID_].tID_ < 99, "No more than 99 teams.");
+        // ??????????maxTms_
+        require(round_[rID_].tID_ < maxTms_, "The number of teams has reached the maximum limit.");
 
         // ??????????1eth
         require(_eth >= 1000000000000000000, "You need at least 1 eth to create a team, though creating a new team is free.");
@@ -1042,11 +1058,46 @@ contract WarOfEth {
         round_[1].state = 1;
     }
 
+    //============================
+    // SETTINGS (Only owner)
+    //============================
+
+    // ???????
+    function setMinTms(uint256 _tms)
+        public
+        onlyOwner()
+    {
+        minTms_ = _tms;
+    }
+
+    // ???????
+    function setMaxTms(uint256 _tms)
+        public
+        onlyOwner()
+    {
+        maxTms_ = _tms;
+    }
+
+    // ?????????
+    function setRoundGap(uint256 _gap)
+        public
+        onlyOwner()
+    {
+        roundGap_ = _gap;
+    }
+
+    // ?????????
+    function setKillingGap(uint256 _gap)
+        public
+        onlyOwner()
+    {
+        killingGap_ = _gap;
+    }
+
 }   // main contract ends here
 
 
 // Keys??????
-// ?????keys??????1000?
 library WoeKeysCalc {
     using SafeMath for *;
 
