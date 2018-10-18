@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x634fef1dbf47640b16d2c0a9bf09c85a5b1f6b71
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x3a213f667c8cb6d5ed91e5bf8571532bf60edf76
 */
-/*! abs.sol | (c) 2018 Develop by BelovITLab LLC (smartcontract.ru), author @stupidlovejoy | License: MIT */
+/*! nbc.sol | (c) 2018 Develop by BelovITLab LLC (smartcontract.ru), author @stupidlovejoy | License: MIT */
 
 pragma solidity 0.4.24;
 
@@ -326,10 +326,10 @@ contract Manageable is Ownable {
 
 
 /*
-    ABS Token
+    NERA BANK COIN
 */
 contract Token is CappedToken, BurnableToken, Withdrawable {
-    constructor() CappedToken(146880432e7) StandardToken("ABSOLUTMEN", "ABS", 7) public {
+    constructor() CappedToken(2000000000e8) StandardToken("NERA BANK COIN", "NBC", 8) public {
         
     }
 }
