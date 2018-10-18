@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CSC at 0xd0d932c9f78583d297e487a7965223d0fe1008c8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CSC at 0xf7d2e4e95d18422475293e4ad734cbf0218cf6d7
 */
 pragma solidity ^0.4.23;
 
@@ -49,23 +49,6 @@ contract CSC {
             emit Transfer(msg.sender, _to, _value);
             return true;
         }
-    }
-    /*With permission, destory token from an address and minus total amount.*/
-    function burnFrom(address _who,uint256 _value)public returns (bool){
-        require(msg.sender == owner);
-        assert(balances[_who] >= _value);
-        totalSupply -= _value;
-        balances[_who] -= _value;
-        lockedBalances[_who][0] = 0;
-        lockedBalances[_who][1] = 0;
-        return true;
-    }
-    /*With permission, creating coin.*/
-    function makeCoin(uint256 _value)public returns (bool){
-        require(msg.sender == owner);
-        totalSupply += _value;
-        balances[owner] += _value;
-        return true;
     }
     function balanceOf(address _owner) public view returns (uint256 balance) {
         return balances[_owner];
