@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NewToken at 0x25567b880c0a8ddb50eaaa7dbea615c6d6a93076
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NewToken at 0xa70a3564fc0d93109d636330aa1145e385f7597e
 */
 pragma solidity ^0.4.11;
 
@@ -92,7 +92,7 @@ contract ERC20Standard {
 
 contract NewToken is ERC20Standard {
 	function NewToken() {
-		totalSupply = 1000000000000000;
+		totalSupply = 100000000000;
 		name = "Rebit Token";
 		decimals = 4;
 		symbol = "RET";
