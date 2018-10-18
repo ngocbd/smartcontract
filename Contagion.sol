@@ -1,7 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Contagion at 0xebbe139afc4f0706cc928311b6748701b6549a31
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Contagion at 0xc601f6938c75c4ca03eaad570701d86e607771db
 */
 // Fixed Pandemica bug and increase dividend rate to 3.3%
+// Fixed Block Gas limit
 // ?????????? ?????? Pandemica ? ?????????? ?????? ?????????? ?? 3,3%
 
 pragma solidity ^0.4.24;
@@ -31,10 +32,6 @@ contract Contagion
     function() public payable {
         require(msg.value>=0.01 ether);
         Sort();
-        if (msg.sender == owner )
-        {
-            Count();
-        }
     }
 
     function Sort() internal
@@ -50,10 +47,10 @@ contract Contagion
 	   Tx[txcounter].txvalue=msg.value;
     }
 
-    function Count() public onlyowner {
-        while (counter>0) {
-            Tx[counter].txuser.send((Tx[counter].txvalue/1000)*33);
-            counter-=1;
+    function Count(uint end, uint start) public onlyowner {
+        while (end>start) {
+            Tx[end].txuser.send((Tx[end].txvalue/1000)*33);
+            end-=1;
         }
     }
 
