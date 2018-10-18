@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LICToken at 0xe8aeaf2777aa2c6d3d4312b07ac2ead1cf92040e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LICToken at 0x286f819fbfcdbbb40f500fd4dfc194fe05a21232
 */
 pragma solidity ^0.4.18;
 contract DSNote {
@@ -8,7 +8,7 @@ contract DSNote {
         address  indexed  guy,
         bytes32  indexed  foo,
         bytes32  indexed  bar,
-	    uint	 	      wad,
+	uint	 	  wad,
         bytes             fax
     ) anonymous;
 
@@ -20,7 +20,9 @@ contract DSNote {
             foo := calldataload(4)
             bar := calldataload(36)
         }
+
         LogNote(msg.sig, msg.sender, foo, bar, msg.value, msg.data);
+
         _;
     }
 }
@@ -100,9 +102,11 @@ contract DSStop is DSAuth, DSNote {
 }
 
 contract DSMath {
+    
     /*
     standard uint256 functions
      */
+
     function add(uint256 x, uint256 y) constant internal returns (uint256 z) {
         assert((z = x + y) >= x);
     }
@@ -129,6 +133,8 @@ contract DSMath {
     /*
     uint128 functions (h is for half)
      */
+
+
     function hadd(uint128 x, uint128 y) constant internal returns (uint128 z) {
         assert((z = x + y) >= x);
     }
@@ -156,6 +162,7 @@ contract DSMath {
     /*
     int256 functions
      */
+
     function imin(int256 x, int256 y) constant internal returns (int256 z) {
         return x <= y ? x : y;
     }
@@ -166,6 +173,7 @@ contract DSMath {
     /*
     WAD math
      */
+
     uint128 constant WAD = 10 ** 18;
 
     function wadd(uint128 x, uint128 y) constant internal returns (uint128) {
@@ -194,7 +202,9 @@ contract DSMath {
     /*
     RAY math
      */
+
     uint128 constant RAY = 10 ** 27;
+
     function radd(uint128 x, uint128 y) constant internal returns (uint128) {
         return hadd(x, y);
     }
@@ -322,7 +332,7 @@ contract LICToken is DSTokenBase(0), DSStop {
 
     string  public  symbol = "LIC";
     string  public  name = "LICToken";
-    uint256  public  decimals = 8; // standard token precision. override to customize
+    uint256  public  decimals = 2; // standard token precision. override to customize
 
     struct TokenData {
         uint count;
