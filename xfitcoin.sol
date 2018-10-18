@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract xfitcoin at 0xef3b63ba992c1a9f64b937840d6e8eb125598b7b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract xfitcoin at 0x463fb5a898eb2840bbf51b9e5b09d9ef9b7092a5
 */
 pragma solidity ^0.4.4;
 
@@ -107,8 +107,8 @@ contract xfitcoin is StandardToken { // CHANGE THIS. Update the contract name.
      // This is a constructor function 
     // which means the following function name has to match the contract name declared above
     function xfitcoin() {
-        balances[msg.sender] = 200000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
-        totalSupply = 200000000000000000;                        // Update total supply (1000 for example) 
+        balances[msg.sender] = 2000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
+        totalSupply = 2000000000;                        // Update total supply (1000 for example) 
         name = "xfitcoin";                                   // Set the name for display purposes 
         decimals = 8;                                               // Amount of decimals for display purposes 
         symbol = "XFIT";                                             // Set the symbol for display purposes 
