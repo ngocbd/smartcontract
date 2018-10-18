@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BRMobaInviteData at 0xd20d1e07f238f049f21801cff6e9db213f05ffbf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BRMobaInviteData at 0x8796e9e3b15869d444b8aabda0d3ea7eeafdea96
 */
 pragma solidity ^0.4.7;
 contract MobaBase {
@@ -9,6 +9,8 @@ contract MobaBase {
         owner = msg.sender;
     }
     
+    event transferToOwnerEvent(uint256 price);
+       
     modifier onlyOwner {
         require(msg.sender == owner,"only owner can call this function");
         _;
@@ -39,14 +41,36 @@ contract MobaBase {
         require(isLock != b," updateLock new status == old status");
         isLock = b;
     }
+    
+    function transferToOwner()    
+    onlyOwner 
+    msgSendFilter 
+    public {
+        uint256 totalBalace = address(this).balance;
+        owner.transfer(totalBalace);
+        emit transferToOwnerEvent(totalBalace);
+    }
 }
 
+contract IOldInviteData{
+    
+    function checkUp(address addr,bytes32 name) public view returns (uint8);
+    function GetAddressByName(bytes32 name) public view returns (address);
+    function m_addrToName(address addr) public view returns (bytes32 name);
+        
+}
 contract BRMobaInviteData is MobaBase {
    
     address owner = 0x0;
     uint256 price = 10 finney;
     mapping(bytes32 => address) public m_nameToAddr;
     mapping(address => bytes32) public m_addrToName;
+    IOldInviteData public oldInviteAddr;
+    
+    constructor(IOldInviteData oldAddr) public {
+        oldInviteAddr = IOldInviteData(oldAddr);
+    }
+    event createInviteNameEvent(address addr,bytes32 name);
     
     function createInviteName(bytes32 name) 
     notLock 
@@ -56,6 +80,7 @@ contract BRMobaInviteData is MobaBase {
         require(checkUp(msg.sender,name) == 0,"current name has been used or current address has been one name"); 
         m_nameToAddr[name] = msg.sender;
         m_addrToName[msg.sender] = name;
+        emit createInviteNameEvent(msg.sender,name);
     }
     
     function checkUp(address addr,bytes32 name) public view returns (uint8) {
@@ -65,10 +90,26 @@ contract BRMobaInviteData is MobaBase {
         if ( m_addrToName[addr] != 0){
             return 2;
         }
+        uint8  oldResult = oldInviteAddr.checkUp(addr,name);
+        if(oldResult != 0) {
+             return oldResult;
+        }
         return 0;
     }
     
     function GetAddressByName(bytes32 name) public view returns (address){
+        address oldAddr =  oldInviteAddr.GetAddressByName(name);
+        if(oldAddr != address(0)) {
+            return oldAddr;
+        }
         return m_nameToAddr[name];
+    }
+    
+     function GetNameByAddr(address addr) public view returns (bytes32 name){
+        bytes32 oldName =  oldInviteAddr.m_addrToName(addr);
+        if(oldName != 0) {
+            return oldName;
+        }
+        return m_addrToName[addr];
     }
 }
