@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SecureCryptoToken at 0xe047e4178169a3aa21d5422dcc948e1de9af0479
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SecureCryptoToken at 0xc749df809247a2a7f5997c5d91264d49d11314e7
 */
 pragma solidity ^0.4.24;
 
@@ -437,7 +437,7 @@ contract SecureCryptoToken is StandardToken, Ownable {
     }
 
     function transfer(address _to, uint256 _value) public isReleased returns (bool) {
-        if (released) {
+        if (released && balances[_to] == 0) {
             verifiedKYCAddresses[_to] = true;
         }
 
@@ -458,7 +458,7 @@ contract SecureCryptoToken is StandardToken, Ownable {
     }
 
     function transferFrom(address _from, address _to, uint256 _value) public isReleased returns (bool) {
-        if (released) {
+        if (released && balances[_to] == 0) {
             verifiedKYCAddresses[_to] = true;
         }
 
