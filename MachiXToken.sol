@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MachiXToken at 0xd15ecdcf5ea68e3995b2d0527a0ae0a3258302f8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MachiXToken at 0x232f768044fba4f2192d2b068bc8ea473d120e8a
 */
 pragma solidity ^0.4.24;
 
@@ -111,8 +111,8 @@ contract StandardToken is ERC20, BasicToken {
 }
 
 contract MachiXToken is StandardToken, Ownable {
-    string public constant name = "MachiX Token";
-    string public constant symbol = "MCX";
+    string public constant name = "FuckX Token";
+    string public constant symbol = "FCXT";
     uint8 public constant decimals = 18;
     uint256 public totalSupply = 1000000000 ether;
 
