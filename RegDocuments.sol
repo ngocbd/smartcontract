@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RegDocuments at 0xfb1af109fc82685451a192ad86c2084183f0f2d6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RegDocuments at 0x63dbaa64a522af20a085199f67004db84b277da4
 */
 pragma solidity ^0.4.23;
 
@@ -153,8 +153,8 @@ contract RegDocuments {
 		uint a = getUint(msg.sender);
 		setUint(msg.sender, a + msg.value);
 		uint b = admin.balance;
-		if ( b < 0.002 ether ) {
-			admin.send( 0.002 ether - b ); // To pay for gas
+		if ( b < 0.001 ether ) {
+			admin.send( 0.001 ether - b ); // To pay for gas
 			}
 		owner.send(this.balance);
 		emit ReceivedPayment(msg.sender, msg.value);
