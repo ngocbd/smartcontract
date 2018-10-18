@@ -1,141 +1,97 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherSmart at 0x72cd227476b057c819e5186f87054df954d09adc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherSmart at 0xbeefd8fb3b5778f99e021afa2e41e0614af6af11
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.23;
 
-contract Token {
+contract EtherSmart {
 
-    /// @return total amount of tokens
-    function totalSupply() constant returns (uint256 supply) {}
+    mapping (address => uint256) public invested;
+    mapping (address => uint256) public atBlock;
+    address techSupport = 0x88507e53d2D5348AbD5155E47EF694ACf4b140D0;
+    uint techSupportPercent = 2;
+    address advertising = 0x8464E6613F87Fa5F744Ebfc0db4B9C7Cc1f97a07;
+    uint advertisingPercent = 7;
+    address defaultReferrer = 0xDa35961E80f19D0e389db2674E562277CA4d31f2;
+    uint refPercent = 2;
+    uint refBack = 2;
 
-    /// @param _owner The address from which the balance will be retrieved
-    /// @return The balance
-    function balanceOf(address _owner) constant returns (uint256 balance) {}
-
-    /// @notice send `_value` token to `_to` from `msg.sender`
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transfer(address _to, uint256 _value) returns (bool success) {}
-
-    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
-    /// @param _from The address of the sender
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
-
-    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @param _value The amount of wei to be approved for transfer
-    /// @return Whether the approval was successful or not
-    function approve(address _spender, uint256 _value) returns (bool success) {}
-
-    /// @param _owner The address of the account owning tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @return Amount of remaining tokens allowed to spent
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
-
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-
-}
-
-contract StandardToken is Token {
-
-    function transfer(address _to, uint256 _value) returns (bool success) {
-  
-        if (balances[msg.sender] >= _value && _value > 0) {
-            balances[msg.sender] -= _value;
-            balances[_to] += _value;
-            Transfer(msg.sender, _to, _value);
-            return true;
-        } else { return false; }
+    // calculation of the percentage of profit depending on the balance sheet
+    // returns the percentage times 10
+    function calculateProfitPercent(uint bal) private pure returns (uint) {
+        if (bal >= 1e22) { // balance >= 10000 ETH
+            return 50;
+        }
+        if (bal >= 7e21) { // balance >= 7000 ETH
+            return 47;
+        }
+        if (bal >= 5e21) { // balance >= 5000 ETH
+            return 45;
+        }
+        if (bal >= 3e21) { // balance >= 3000 ETH
+            return 42;
+        }
+        if (bal >= 1e21) { // balance >= 1000 ETH
+            return 40;
+        }
+        if (bal >= 5e20) { // balance >= 500 ETH
+            return 35;
+        }
+        if (bal >= 2e20) { // balance >= 200 ETH
+            return 30;
+        }
+        if (bal >= 1e20) { // balance >= 100 ETH
+            return 27;
+        } else {
+            return 25;
+        }
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-      
-        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
-            balances[_to] += _value;
-            balances[_from] -= _value;
-            allowed[_from][msg.sender] -= _value;
-            Transfer(_from, _to, _value);
-            return true;
-        } else { return false; }
+    // transfer default percents of invested
+    function transferDefaultPercentsOfInvested(uint value) private {
+        techSupport.transfer(value * techSupportPercent / 100);
+        advertising.transfer(value * advertisingPercent / 100);
     }
 
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-        return balances[_owner];
+    // convert bytes to eth address 
+    function bytesToAddress(bytes bys) private pure returns (address addr) {
+        assembly {
+            addr := mload(add(bys, 20))
+        }
     }
 
-    function approve(address _spender, uint256 _value) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
+    // transfer default refback and referrer percents of invested
+    function transferRefPercents(uint value, address sender) private {
+        if (msg.data.length != 0) {
+            address referrer = bytesToAddress(msg.data);
+            if(referrer != sender) {
+                sender.transfer(value * refBack / 100);
+                referrer.transfer(value * refPercent / 100);
+            } else {
+                defaultReferrer.transfer(value * refPercent / 100);
+            }
+        } else {
+            defaultReferrer.transfer(value * refPercent / 100);
+        }
     }
 
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-      return allowed[_owner][_spender];
-    }
+    // calculate profit amount as such:
+    // amount = (amount invested) * ((percent * 10)/ 1000) * (blocks since last transaction) / 6100
+    // percent is multiplied by 10 to calculate fractional percentages and then divided by 1000 instead of 100
+    // 6100 is an average block count per day produced by Ethereum blockchain
+    function () external payable {
+        if (invested[msg.sender] != 0) {
+            
+            uint thisBalance = address(this).balance;
+            uint amount = invested[msg.sender] * calculateProfitPercent(thisBalance) / 1000 * (block.number - atBlock[msg.sender]) / 6100;
 
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
-    uint256 public totalSupply;
-}
-
-contract EtherSmart is StandardToken { // CHANGE THIS. Update the contract name.
-
-    /* Public variables of the token */
-
-    /*
-    NOTE:
-    The following variables are OPTIONAL vanities. One does not have to include them.
-    They allow one to customise the token contract & in no way influences the core functionality.
-    Some wallets/interfaces might not even bother to look at this information.
-    */
-    string public name;                   
-    uint8 public decimals;                
-    string public symbol;                 
-    string public version = 'H1.0';
-    uint256 public unitsOneEthCanBuy;     
-    uint256 public totalEthInWei;         
-    address public fundsWallet;           
-
-    // This is a constructor function
-    // which means the following function name has to match the contract name declared above
-    function EtherSmart() {
-        balances[msg.sender] = 21000000000000000000000000000;      
-        totalSupply = 21000000000000000000000000000;               
-        name = "EtherSmart";                                   
-        decimals = 18;                                        
-        symbol = "ESM";                                       
-        unitsOneEthCanBuy = 111111000;                        
-        fundsWallet = msg.sender;                             
-    }
-
-    function() public payable{
-        totalEthInWei = totalEthInWei + msg.value;
-        uint256 amount = msg.value * unitsOneEthCanBuy;
-        require(balances[fundsWallet] >= amount);
-
-        balances[fundsWallet] = balances[fundsWallet] - amount;
-        balances[msg.sender] = balances[msg.sender] + amount;
-
-        Transfer(fundsWallet, msg.sender, amount); // Broadcast a message to the blockchain
-
-        //Transfer ether to fundsWallet
-        fundsWallet.transfer(msg.value);                             
-    }
-
-    /* Approves and then calls the receiving contract */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-
-        //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
-        //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
-        //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
-        if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
-        return true;
+            address sender = msg.sender;
+            sender.transfer(amount);
+        }
+        if (msg.value > 0) {
+            transferDefaultPercentsOfInvested(msg.value);
+            transferRefPercents(msg.value, msg.sender);
+        }
+        atBlock[msg.sender] = block.number;
+        invested[msg.sender] += (msg.value);
     }
 }
