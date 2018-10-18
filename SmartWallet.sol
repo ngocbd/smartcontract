@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartWallet at 0xE2f4B772c8a798DF1C6A8A3ED94EAfF110677077
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartWallet at 0x88f49da7ad7f9bd5caf1be580c332ade0cd135ff
 */
 pragma solidity ^0.4.24;
 
@@ -205,8 +205,8 @@ contract WithdrawalConfigurations is Ownable, Utils {
     /*
         @dev Fire the WithdrawalRequested event. 
 
-        @param _userWithdrawalAccount   User withdrawal account address
-        @param _sender                  The user account, activating this request
+        @param _sender          The user account, activating this request
+        @param _smartWallet     The smart wallet that the request was called upon   
      */
     function emitWithrawalRequestEvent(address _sender, address _smartWallet) 
         public
@@ -224,7 +224,7 @@ library SmartWalletLib {
         address operatorAccount;
         address userWithdrawalAccount;
         address feesAccount;
-        uint    withdrawAllowedAt; //In seconds
+        uint    withdrawAllowedAt; // In seconds
     }
 
     /*
