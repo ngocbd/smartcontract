@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AgroTechFarmCrowdsale at 0x585afe8fbd14cdfbe33283083e3bed2fdaa13c37
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AgroTechFarmCrowdsale at 0xbbe6217a893db165c916d1a9966d1708a748359c
 */
 pragma solidity ^0.4.23;
 
@@ -516,8 +516,8 @@ contract AgroTechFarmCrowdsale is Ownable {
          multisig = _multisig;
 	 token = _token;
 	 rate = 83333333333000000000;
-	 start = 1533038400;
-         end = 1535716800; 
+	 start = 1535700000;
+         end = 1546300799; 
     }
        
  
@@ -530,7 +530,7 @@ contract AgroTechFarmCrowdsale is Ownable {
    function createTokens() public saleIsOn payable {
      uint tokens = rate.mul(msg.value).div(1 ether);           
      multisig.transfer(msg.value); 
-     uint bonusTokens = tokens.mul(20).div(100);  
+     uint bonusTokens = tokens.mul(0).div(100);  
      tokens += bonusTokens; 
      balances[msg.sender] = balances[msg.sender].add(msg.value);
      token.mint(msg.sender, tokens);
