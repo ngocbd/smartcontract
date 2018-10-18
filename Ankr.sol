@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ankr at 0x25007b438614dc3c75245b713a2449be8df10c01
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ANKR at 0x804685cc7a7a75e109cb08fc50f669b192a8c661
 */
-pragma solidity ^0.4.4;
+pragma solidity ^0.4.23;
 
 contract Token {
 
@@ -91,7 +91,7 @@ contract StandardToken is Token {
 
 
 //name this contract whatever you'd like
-contract Ankr is StandardToken {
+contract ANKR is StandardToken {
 
     function () {
         //if ether is sent to this address, send it back.
@@ -117,11 +117,11 @@ contract Ankr is StandardToken {
 
 //make sure this function name matches the contract name above. So if you're token is called TutorialToken, make sure the //contract name above is also TutorialToken instead of ERC20Token
 
-    function Ankr(
+    function ANKR(
         ) {
-        balances[msg.sender] = 1000000000000000000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 1000000000000000000000000;                        // Update total supply (100000 for example)
-        name = "Ankr Token";                                   // Set the name for display purposes
+        balances[msg.sender] = 186000000000000000000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 186000000000000000000000000;                        // Update total supply (100000 for example)
+        name = "ANKR Network";                                   // Set the name for display purposes
         decimals = 18;                            // Amount of decimals for display purposes
         symbol = "ANKR";                               // Set the symbol for display purposes
     }
