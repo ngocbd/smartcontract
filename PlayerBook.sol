@@ -1,17 +1,49 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0xdac532ca5598ee19a2dfc1244c7608c766c6c415
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0xc4AD45a8808d577D8B08Ca5E4dD6939964EB645f
 */
 pragma solidity ^0.4.24;
 /*
- * -PlayerBook - beta
+ * -PlayerBook - v0.3.14
+ * ????????????   ?? ???????  ????????????????????????
+ *  ? ?? ??????   ?? ???? ?   ???????? ????? ??? ? ???
+ *  ? ???? ?? ?  ???????? ?   ?  ??????????????? ? ???
+ *                                  _____                      _____
+ *                                 (, /     /)       /) /)    (, /      /)          /)
+ *          ???                      /   _ (/_      // //       /  _   // _   __  _(/
+ *          ???                  ___/___(/_/(__(_/_(/_(/_   ___/__/_)_(/_(_(_/ (_(_(_
+ *          ? ?                /   /          .-/ _____   (__ /
+ *                            (__ /          (_/ (, /                                      /)™
+ *                                                 /  __  __ __ __  _   __ __  _  _/_ _  _(/
+ * ????????????? ???????                          /__/ (_(__(_)/ (_/_)_(_)/ (_(_(_(__(/_(_(_
+ * ??????? ? ??? ??   ?                      (__ /              .-/  © Jekyll Island Inc. 2018
+ * ?  ??????????????? ?                                        (_/
+ *     ______   _                                 ______                 _          
+ *====(_____ \=| |===============================(____  \===============| |=============*
+ *     _____) )| |  _____  _   _  _____   ____    ____)  )  ___    ___  | |  _
+ *    |  ____/ | | (____ || | | || ___ | / ___)  |  __  (  / _ \  / _ \ | |_/ )
+ *    | |      | | / ___ || |_| || ____|| |      | |__)  )| |_| || |_| ||  _ (
+ *====|_|=======\_)\_____|=\__  ||_____)|_|======|______/==\___/==\___/=|_|=\_)=========*
+ *                        (____/
+ * ????????????????????????  ???????????? ????????????                       
+ * ?  ? ???? ? ???????   ?   ?  ? ? ????  ? Inventor ?                      
+ * ????????? ? ???? ???? ?   ???????????? ????????????    
  */
 
+interface JIincForwarderInterface {
+    function deposit() external payable returns(bool);
+    function status() external view returns(address, address, bool);
+    function startMigration(address _newCorpBank) external returns(bool);
+    function cancelMigration() external returns(bool);
+    function finishMigration() external returns(bool);
+    function setup(address _firstCorpBank) external;
+}
+
 interface PlayerBookReceiverInterface {
-    function receivePlayerInfo(uint256 _pID, address _addr, bytes32 _name) external;
+    function receivePlayerInfo(uint256 _pID, address _addr, bytes32 _name, uint256 _laff) external;
     function receivePlayerNameList(uint256 _pID, bytes32 _name) external;
 }
 
-interface TeamInterface {
+interface TeamJustInterface {
     function requiredSignatures() external view returns(uint256);
     function requiredDevSignatures() external view returns(uint256);
     function adminCount() external view returns(uint256);
@@ -25,16 +57,18 @@ contract PlayerBook {
     using NameFilter for string;
     using SafeMath for uint256;
     
-    address constant private NameFee = 0x4a1061afb0af7d9f6c2d545ada068da68052c060;
-    TeamInterface constant private Team = TeamInterface(0x8A9E4d7Ba824ce25e0E72971B3e969383B528c06);
-    
+    // JIincForwarderInterface constant private Jekyll_Island_Inc = JIincForwarderInterface(0xdd4950F977EE28D2C132f1353D1595035Db444EE);
+    JIincForwarderInterface constant private Jekyll_Island_Inc = JIincForwarderInterface(0x1f5654082761182b50460c0E8945324aC7c62D1d);
+    // TeamJustInterface constant private TeamJust = TeamJustInterface(0x464904238b5CdBdCE12722A7E6014EC1C0B66928);
+    TeamJustInterface constant private TeamJust = TeamJustInterface(0x73A28aCF647BfB89f8c011AC7Bb057a4007205b5);
+
     MSFun.Data private msData;
-    function multiSigDev(bytes32 _whatFunction) private returns (bool) {return(MSFun.multiSig(msData, Team.requiredDevSignatures(), _whatFunction));}
+    function multiSigDev(bytes32 _whatFunction) private returns (bool) {return(MSFun.multiSig(msData, TeamJust.requiredDevSignatures(), _whatFunction));}
     function deleteProposal(bytes32 _whatFunction) private {MSFun.deleteProposal(msData, _whatFunction);}
     function deleteAnyProposal(bytes32 _whatFunction) onlyDevs() public {MSFun.deleteProposal(msData, _whatFunction);}
     function checkData(bytes32 _whatFunction) onlyDevs() public view returns(bytes32, uint256) {return(MSFun.checkMsgData(msData, _whatFunction), MSFun.checkCount(msData, _whatFunction));}
     function checkSignersByAddress(bytes32 _whatFunction, uint256 _signerA, uint256 _signerB, uint256 _signerC) onlyDevs() public view returns(address, address, address) {return(MSFun.checkSigner(msData, _whatFunction, _signerA), MSFun.checkSigner(msData, _whatFunction, _signerB), MSFun.checkSigner(msData, _whatFunction, _signerC));}
-    function checkSignersByName(bytes32 _whatFunction, uint256 _signerA, uint256 _signerB, uint256 _signerC) onlyDevs() public view returns(bytes32, bytes32, bytes32) {return(Team.adminName(MSFun.checkSigner(msData, _whatFunction, _signerA)), Team.adminName(MSFun.checkSigner(msData, _whatFunction, _signerB)), Team.adminName(MSFun.checkSigner(msData, _whatFunction, _signerC)));}
+    function checkSignersByName(bytes32 _whatFunction, uint256 _signerA, uint256 _signerB, uint256 _signerC) onlyDevs() public view returns(bytes32, bytes32, bytes32) {return(TeamJust.adminName(MSFun.checkSigner(msData, _whatFunction, _signerA)), TeamJust.adminName(MSFun.checkSigner(msData, _whatFunction, _signerB)), TeamJust.adminName(MSFun.checkSigner(msData, _whatFunction, _signerC)));}
 //==============================================================================
 //     _| _ _|_ _    _ _ _|_    _   .
 //    (_|(_| | (_|  _\(/_ | |_||_)  .
@@ -53,6 +87,7 @@ contract PlayerBook {
     struct Player {
         address addr;
         bytes32 name;
+        uint256 laff;
         uint256 names;
     }
 //==============================================================================
@@ -65,22 +100,56 @@ contract PlayerBook {
         // premine the dev names (sorry not sorry)
             // No keys are purchased with this method, it's simply locking our addresses,
             // PID's and names for referral codes.
-        plyr_[1].addr = 0x4a1061afb0af7d9f6c2d545ada068da68052c060;
-        plyr_[1].name = "deployer";
+        // plyr_[1].addr = 0x8e0d985f3Ec1857BEc39B76aAabDEa6B31B67d53;
+        // plyr_[1].name = "justo";
+        // plyr_[1].names = 1;
+        // pIDxAddr_[0x8e0d985f3Ec1857BEc39B76aAabDEa6B31B67d53] = 1;
+        // pIDxName_["justo"] = 1;
+        // plyrNames_[1]["justo"] = true;
+        // plyrNameList_[1][1] = "justo";
+        
+        // plyr_[2].addr = 0x8b4DA1827932D71759687f925D17F81Fc94e3A9D;
+        // plyr_[2].name = "mantso";
+        // plyr_[2].names = 1;
+        // pIDxAddr_[0x8b4DA1827932D71759687f925D17F81Fc94e3A9D] = 2;
+        // pIDxName_["mantso"] = 2;
+        // plyrNames_[2]["mantso"] = true;
+        // plyrNameList_[2][1] = "mantso";
+        
+        // plyr_[3].addr = 0x7ac74Fcc1a71b106F12c55ee8F802C9F672Ce40C;
+        // plyr_[3].name = "sumpunk";
+        // plyr_[3].names = 1;
+        // pIDxAddr_[0x7ac74Fcc1a71b106F12c55ee8F802C9F672Ce40C] = 3;
+        // pIDxName_["sumpunk"] = 3;
+        // plyrNames_[3]["sumpunk"] = true;
+        // plyrNameList_[3][1] = "sumpunk";
+        
+        // plyr_[4].addr = 0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C;
+        // plyr_[4].name = "inventor";
+        // plyr_[4].names = 1;
+        // pIDxAddr_[0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C] = 4;
+        // pIDxName_["inventor"] = 4;
+        // plyrNames_[4]["inventor"] = true;
+        // plyrNameList_[4][1] = "inventor";
+        
+        // pID_ = 4;
+
+        plyr_[1].addr = 0xD9A85b1eEe7718221713D5e8131d041DC417E901;
+        plyr_[1].name = "yi";
         plyr_[1].names = 1;
-        pIDxAddr_[0x4a1061afb0af7d9f6c2d545ada068da68052c060] = 1;
-        pIDxName_["deployer"] = 1;
-        plyrNames_[1]["deployer"] = true;
-        plyrNameList_[1][1] = "deployer";
+        pIDxAddr_[0xD9A85b1eEe7718221713D5e8131d041DC417E901] = 1;
+        pIDxName_["yi"] = 1;
+        plyrNames_[1]["yi"] = true;
+        plyrNameList_[1][1] = "yi";
 
         pID_ = 1;
-    }
+   }
 //==============================================================================
 //     _ _  _  _|. |`. _  _ _  .
 //    | | |(_)(_||~|~|(/_| _\  .  (these are safety checks)
 //==============================================================================    
     /**
-     * @dev prevents contracts from interacting with fomo3dx 
+     * @dev prevents contracts from interacting with fomo3d 
      */
     modifier isHuman() {
         address _addr = msg.sender;
@@ -93,7 +162,7 @@ contract PlayerBook {
     
     modifier onlyDevs() 
     {
-        require(Team.isDev(msg.sender) == true, "msg sender is not a dev");
+        require(TeamJust.isDev(msg.sender) == true, "msg sender is not a dev");
         _;
     }
     
@@ -113,6 +182,9 @@ contract PlayerBook {
         address indexed playerAddress,
         bytes32 indexed playerName,
         bool isNewPlayer,
+        uint256 affiliateID,
+        address affiliateAddress,
+        bytes32 affiliateName,
         uint256 amountPaid,
         uint256 timeStamp
     );
@@ -137,6 +209,8 @@ contract PlayerBook {
 //====|=========================================================================    
     /**
      * @dev registers a name.  UI will always display the last name you registered.
+     * but you will still own all previously registered names to use as affiliate 
+     * links.
      * - must pay a registration fee.
      * - name must be unique
      * - names will be converted to lowercase
@@ -147,11 +221,15 @@ contract PlayerBook {
      * - name must be at least 1 char
      * - max length of 32 characters long
      * - allowed characters: a-z, 0-9, and space
+     * -functionhash- 0x921dec21 (using ID for affiliate)
+     * -functionhash- 0x3ddd4698 (using address for affiliate)
+     * -functionhash- 0x685ffd83 (using name for affiliate)
      * @param _nameString players desired name
+     * @param _affCode affiliate ID, address, or name of who refered you
      * @param _all set to true if you want this to push your info to all games 
      * (this might cost a lot of gas)
      */
-    function registerNameXID(string _nameString, bool _all)
+    function registerNameXID(string _nameString, uint256 _affCode, bool _all)
         isHuman()
         public
         payable 
@@ -171,11 +249,22 @@ contract PlayerBook {
         // fetch player id
         uint256 _pID = pIDxAddr_[_addr];
         
+        // manage affiliate residuals
+        // if no affiliate code was given, no new affiliate code was given, or the 
+        // player tried to use their own pID as an affiliate code, lolz
+        if (_affCode != 0 && _affCode != plyr_[_pID].laff && _affCode != _pID) 
+        {
+            // update last affiliate 
+            plyr_[_pID].laff = _affCode;
+        } else if (_affCode == _pID) {
+            _affCode = 0;
+        }
+        
         // register name 
-        registerNameCore(_pID, _addr, _name, _isNewPlayer, _all);
+        registerNameCore(_pID, _addr, _affCode, _name, _isNewPlayer, _all);
     }
     
-    function registerNameXaddr(string _nameString, bool _all)
+    function registerNameXaddr(string _nameString, address _affCode, bool _all)
         isHuman()
         public
         payable 
@@ -195,11 +284,27 @@ contract PlayerBook {
         // fetch player id
         uint256 _pID = pIDxAddr_[_addr];
         
+        // manage affiliate residuals
+        // if no affiliate code was given or player tried to use their own, lolz
+        uint256 _affID;
+        if (_affCode != address(0) && _affCode != _addr)
+        {
+            // get affiliate ID from aff Code 
+            _affID = pIDxAddr_[_affCode];
+            
+            // if affID is not the same as previously stored 
+            if (_affID != plyr_[_pID].laff)
+            {
+                // update last affiliate
+                plyr_[_pID].laff = _affID;
+            }
+        }
+        
         // register name 
-        registerNameCore(_pID, _addr, _name, _isNewPlayer, _all);
+        registerNameCore(_pID, _addr, _affID, _name, _isNewPlayer, _all);
     }
     
-    function registerNameXname(string _nameString, bool _all)
+    function registerNameXname(string _nameString, bytes32 _affCode, bool _all)
         isHuman()
         public
         payable 
@@ -219,8 +324,24 @@ contract PlayerBook {
         // fetch player id
         uint256 _pID = pIDxAddr_[_addr];
         
+        // manage affiliate residuals
+        // if no affiliate code was given or player tried to use their own, lolz
+        uint256 _affID;
+        if (_affCode != "" && _affCode != _name)
+        {
+            // get affiliate ID from aff Code 
+            _affID = pIDxName_[_affCode];
+            
+            // if affID is not the same as previously stored 
+            if (_affID != plyr_[_pID].laff)
+            {
+                // update last affiliate
+                plyr_[_pID].laff = _affID;
+            }
+        }
+        
         // register name 
-        registerNameCore(_pID, _addr, _name, _isNewPlayer, _all);
+        registerNameCore(_pID, _addr, _affID, _name, _isNewPlayer, _all);
     }
     
     /**
@@ -242,7 +363,7 @@ contract PlayerBook {
         uint256 _totalNames = plyr_[_pID].names;
         
         // add players profile and most recent name
-        games_[_gameID].receivePlayerInfo(_pID, _addr, plyr_[_pID].name);
+        games_[_gameID].receivePlayerInfo(_pID, _addr, plyr_[_pID].name, plyr_[_pID].laff);
         
         // add list of all names
         if (_totalNames > 1)
@@ -261,12 +382,13 @@ contract PlayerBook {
         address _addr = msg.sender;
         uint256 _pID = pIDxAddr_[_addr];
         require(_pID != 0, "hey there buddy, you dont even have an account");
+        uint256 _laff = plyr_[_pID].laff;
         uint256 _totalNames = plyr_[_pID].names;
         bytes32 _name = plyr_[_pID].name;
         
         for (uint256 i = 1; i <= gID_; i++)
         {
-            games_[i].receivePlayerInfo(_pID, _addr, _name);
+            games_[i].receivePlayerInfo(_pID, _addr, _name, _laff);
             if (_totalNames > 1)
                 for (uint256 ii = 1; ii <= _totalNames; ii++)
                     games_[i].receivePlayerNameList(_pID, plyrNameList_[_pID][ii]);
@@ -299,7 +421,7 @@ contract PlayerBook {
 //     _ _  _ _   | _  _ . _  .
 //    (_(_)| (/_  |(_)(_||(_  . 
 //=====================_|=======================================================    
-    function registerNameCore(uint256 _pID, address _addr, bytes32 _name, bool _isNewPlayer, bool _all)
+    function registerNameCore(uint256 _pID, address _addr, uint256 _affID, bytes32 _name, bool _isNewPlayer, bool _all)
         private
     {
         // if names already has been used, require that current msg sender owns the name
@@ -317,15 +439,15 @@ contract PlayerBook {
         }
         
         // registration fee goes directly to community rewards
-        NameFee.transfer(address(this).balance);
+        Jekyll_Island_Inc.deposit.value(address(this).balance)();
         
         // push player info to games
         if (_all == true)
             for (uint256 i = 1; i <= gID_; i++)
-                games_[i].receivePlayerInfo(_pID, _addr, _name);
+                games_[i].receivePlayerInfo(_pID, _addr, _name, _affID);
         
         // fire event
-        emit onNewName(_pID, _addr, _name, _isNewPlayer, msg.value, now);
+        emit onNewName(_pID, _addr, _name, _isNewPlayer, _affID, plyr_[_affID].addr, plyr_[_affID].name, msg.value, now);
     }
 //==============================================================================
 //    _|_ _  _ | _  .
@@ -366,6 +488,13 @@ contract PlayerBook {
     {
         return (plyr_[_pID].name);
     }
+    function getPlayerLAff(uint256 _pID)
+        external
+        view
+        returns (uint256)
+    {
+        return (plyr_[_pID].laff);
+    }
     function getPlayerAddr(uint256 _pID)
         external
         view
@@ -380,11 +509,11 @@ contract PlayerBook {
     {
         return(registrationFee_);
     }
-    function registerNameXIDFromDapp(address _addr, bytes32 _name, bool _all)
+    function registerNameXIDFromDapp(address _addr, bytes32 _name, uint256 _affCode, bool _all)
         isRegisteredGame()
         external
         payable
-        returns(bool)
+        returns(bool, uint256)
     {
         // make sure name fees paid
         require (msg.value >= registrationFee_, "umm.....  you have to pay the name fee");
@@ -394,17 +523,29 @@ contract PlayerBook {
         
         // fetch player id
         uint256 _pID = pIDxAddr_[_addr];
-    
-        // register name 
-        registerNameCore(_pID, _addr, _name, _isNewPlayer, _all);
         
-        return(_isNewPlayer);
+        // manage affiliate residuals
+        // if no affiliate code was given, no new affiliate code was given, or the 
+        // player tried to use their own pID as an affiliate code, lolz
+        uint256 _affID = _affCode;
+        if (_affID != 0 && _affID != plyr_[_pID].laff && _affID != _pID) 
+        {
+            // update last affiliate 
+            plyr_[_pID].laff = _affID;
+        } else if (_affID == _pID) {
+            _affID = 0;
+        }
+        
+        // register name 
+        registerNameCore(_pID, _addr, _affID, _name, _isNewPlayer, _all);
+        
+        return(_isNewPlayer, _affID);
     }
-    function registerNameXaddrFromDapp(address _addr, bytes32 _name, bool _all)
+    function registerNameXaddrFromDapp(address _addr, bytes32 _name, address _affCode, bool _all)
         isRegisteredGame()
         external
         payable
-        returns(bool)
+        returns(bool, uint256)
     {
         // make sure name fees paid
         require (msg.value >= registrationFee_, "umm.....  you have to pay the name fee");
@@ -414,17 +555,33 @@ contract PlayerBook {
         
         // fetch player id
         uint256 _pID = pIDxAddr_[_addr];
-
-        // register name 
-        registerNameCore(_pID, _addr, _name, _isNewPlayer, _all);
         
-        return(_isNewPlayer);
+        // manage affiliate residuals
+        // if no affiliate code was given or player tried to use their own, lolz
+        uint256 _affID;
+        if (_affCode != address(0) && _affCode != _addr)
+        {
+            // get affiliate ID from aff Code 
+            _affID = pIDxAddr_[_affCode];
+            
+            // if affID is not the same as previously stored 
+            if (_affID != plyr_[_pID].laff)
+            {
+                // update last affiliate
+                plyr_[_pID].laff = _affID;
+            }
+        }
+        
+        // register name 
+        registerNameCore(_pID, _addr, _affID, _name, _isNewPlayer, _all);
+        
+        return(_isNewPlayer, _affID);
     }
-    function registerNameXnameFromDapp(address _addr, bytes32 _name, bool _all)
+    function registerNameXnameFromDapp(address _addr, bytes32 _name, bytes32 _affCode, bool _all)
         isRegisteredGame()
         external
         payable
-        returns(bool)
+        returns(bool, uint256)
     {
         // make sure name fees paid
         require (msg.value >= registrationFee_, "umm.....  you have to pay the name fee");
@@ -435,10 +592,26 @@ contract PlayerBook {
         // fetch player id
         uint256 _pID = pIDxAddr_[_addr];
         
-        // register name 
-        registerNameCore(_pID, _addr, _name, _isNewPlayer, _all);
+        // manage affiliate residuals
+        // if no affiliate code was given or player tried to use their own, lolz
+        uint256 _affID;
+        if (_affCode != "" && _affCode != _name)
+        {
+            // get affiliate ID from aff Code 
+            _affID = pIDxName_[_affCode];
+            
+            // if affID is not the same as previously stored 
+            if (_affID != plyr_[_pID].laff)
+            {
+                // update last affiliate
+                plyr_[_pID].laff = _affID;
+            }
+        }
         
-        return(_isNewPlayer);
+        // register name 
+        registerNameCore(_pID, _addr, _affID, _name, _isNewPlayer, _all);
+        
+        return(_isNewPlayer, _affID);
     }
     
 //==============================================================================
@@ -459,7 +632,10 @@ contract PlayerBook {
             gameNames_[_gameAddress] = _name;
             games_[gID_] = PlayerBookReceiverInterface(_gameAddress);
         
-            games_[gID_].receivePlayerInfo(1, plyr_[1].addr, plyr_[1].name);
+            games_[gID_].receivePlayerInfo(1, plyr_[1].addr, plyr_[1].name, 0);
+            // games_[gID_].receivePlayerInfo(2, plyr_[2].addr, plyr_[2].name, 0);
+            // games_[gID_].receivePlayerInfo(3, plyr_[3].addr, plyr_[3].name, 0);
+            // games_[gID_].receivePlayerInfo(4, plyr_[4].addr, plyr_[4].name, 0);
         }
     }
     
@@ -473,13 +649,33 @@ contract PlayerBook {
         }
     }
         
-}
+} 
 
 /**
-* @title -Name Filter- beta
+* @title -Name Filter- v0.1.9
+* ????????????   ?? ???????  ????????????????????????
+*  ? ?? ??????   ?? ???? ?   ???????? ????? ??? ? ???
+*  ? ???? ?? ?  ???????? ?   ?  ??????????????? ? ???
+*                                  _____                      _____
+*                                 (, /     /)       /) /)    (, /      /)          /)
+*          ???                      /   _ (/_      // //       /  _   // _   __  _(/
+*          ???                  ___/___(/_/(__(_/_(/_(/_   ___/__/_)_(/_(_(_/ (_(_(_
+*          ? ?                /   /          .-/ _____   (__ /                               
+*                            (__ /          (_/ (, /                                      /)™ 
+*                                                 /  __  __ __ __  _   __ __  _  _/_ _  _(/
+* ????????????? ???????                          /__/ (_(__(_)/ (_/_)_(_)/ (_(_(_(__(/_(_(_
+* ??????? ? ??? ??   ?                      (__ /              .-/  © Jekyll Island Inc. 2018
+* ?  ??????????????? ?                                        (_/
+*              _       __    _      ____      ____  _   _    _____  ____  ___  
+*=============| |\ |  / /\  | |\/| | |_ =====| |_  | | | |    | |  | |_  | |_)==============*
+*=============|_| \| /_/--\ |_|  | |_|__=====|_|   |_| |_|__  |_|  |_|__ |_| \==============*
+*
+* ????????????????????????  ???????????? ????????????
+* ?  ? ???? ? ???????   ?   ?  ? ? ????  ? Inventor ?
+* ????????? ? ???? ???? ?   ???????????? ????????????
 */
-
 library NameFilter {
+    
     /**
      * @dev filters name strings
      * -converts uppercase to lower case.  
@@ -584,16 +780,6 @@ library SafeMath {
     }
 
     /**
-    * @dev Integer division of two numbers, truncating the quotient.
-    */
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return c;
-    }
-    
-    /**
     * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
     */
     function sub(uint256 a, uint256 b)
@@ -669,8 +855,118 @@ library SafeMath {
 }
 
 /** @title -MSFun- v0.2.4
+ * ????????????   ?? ???????  ????????????????????????
+ *  ? ?? ??????   ?? ???? ?   ???????? ????? ??? ? ???
+ *  ? ???? ?? ?  ???????? ?   ?  ??????????????? ? ???
+ *                                  _____                      _____
+ *                                 (, /     /)       /) /)    (, /      /)          /)
+ *          ???                      /   _ (/_      // //       /  _   // _   __  _(/
+ *          ???                  ___/___(/_/(__(_/_(/_(/_   ___/__/_)_(/_(_(_/ (_(_(_
+ *          ? ?                /   /          .-/ _____   (__ /                               
+ *                            (__ /          (_/ (, /                                      /)™ 
+ *                                                 /  __  __ __ __  _   __ __  _  _/_ _  _(/
+ * ????????????? ???????                          /__/ (_(__(_)/ (_/_)_(_)/ (_(_(_(__(/_(_(_
+ * ??????? ? ??? ??   ?                      (__ /              .-/  © Jekyll Island Inc. 2018
+ * ?  ??????????????? ?                                        (_/
+ *  _           _             _  _  _  _             _  _  _  _  _                                      
+ *=(_) _     _ (_)==========_(_)(_)(_)(_)_==========(_)(_)(_)(_)(_)================================*
+ * (_)(_)   (_)(_)         (_)          (_)         (_)       _         _    _  _  _  _                 
+ * (_) (_)_(_) (_)         (_)_  _  _  _            (_) _  _ (_)       (_)  (_)(_)(_)(_)_               
+ * (_)   (_)   (_)           (_)(_)(_)(_)_          (_)(_)(_)(_)       (_)  (_)        (_)              
+ * (_)         (_)  _  _    _           (_)  _  _   (_)      (_)       (_)  (_)        (_)  _  _        
+ *=(_)=========(_)=(_)(_)==(_)_  _  _  _(_)=(_)(_)==(_)======(_)_  _  _(_)_ (_)========(_)=(_)(_)==*
+ * (_)         (_) (_)(_)    (_)(_)(_)(_)   (_)(_)  (_)        (_)(_)(_) (_)(_)        (_) (_)(_)
  *
+ * ????????????????????????  ???????????? ????????????
+ * ?  ? ???? ? ???????   ?   ?  ? ? ????  ? Inventor ?
+ * ????????? ? ???? ???? ?   ???????????? ????????????
+ *  
+ *         ????????????????????????????????????????????????????????????????????????
+ *         ? MSFun, is an importable library that gives your contract the ability ?
+ *         ? add multiSig requirement to functions.                               ?
+ *         ????????????????????????????????????????????????????????????????????????
+ *                                ??????????????????????
+ *                                ? Setup Instructions ?
+ *                                ??????????????????????
+ * (Step 1) import the library into your contract
+ * 
+ *    import "./MSFun.sol";
+ *
+ * (Step 2) set up the signature data for msFun
+ * 
+ *     MSFun.Data private msData;
+ *                                ??????????????????????
+ *                                ? Usage Instructions ?
+ *                                ??????????????????????
+ * at the beginning of a function
+ * 
+ *     function functionName() 
+ *     {
+ *         if (MSFun.multiSig(msData, required signatures, "functionName") == true)
+ *         {
+ *             MSFun.deleteProposal(msData, "functionName");
+ * 
+ *             // put function body here 
+ *         }
+ *     }
+ *                           ??????????????????????????????????
+ *                           ? Optional Wrappers For TeamJust ?
+ *                           ??????????????????????????????????
+ * multiSig wrapper function (cuts down on inputs, improves readability)
+ * this wrapper is HIGHLY recommended
+ * 
+ *     function multiSig(bytes32 _whatFunction) private returns (bool) {return(MSFun.multiSig(msData, TeamJust.requiredSignatures(), _whatFunction));}
+ *     function multiSigDev(bytes32 _whatFunction) private returns (bool) {return(MSFun.multiSig(msData, TeamJust.requiredDevSignatures(), _whatFunction));}
+ *
+ * wrapper for delete proposal (makes code cleaner)
+ *     
+ *     function deleteProposal(bytes32 _whatFunction) private {MSFun.deleteProposal(msData, _whatFunction);}
+ *                             ??????????????????????????????
+ *                             ? Utility & Vanity Functions ?
+ *                             ??????????????????????????????
+ * delete any proposal is highly recommended.  without it, if an admin calls a multiSig
+ * function, with argument inputs that the other admins do not agree upon, the function
+ * can never be executed until the undesirable arguments are approved.
+ * 
+ *     function deleteAnyProposal(bytes32 _whatFunction) onlyDevs() public {MSFun.deleteProposal(msData, _whatFunction);}
+ * 
+ * for viewing who has signed a proposal & proposal data
+ *     
+ *     function checkData(bytes32 _whatFunction) onlyAdmins() public view returns(bytes32, uint256) {return(MSFun.checkMsgData(msData, _whatFunction), MSFun.checkCount(msData, _whatFunction));}
+ *
+ * lets you check address of up to 3 signers (address)
+ * 
+ *     function checkSignersByAddress(bytes32 _whatFunction, uint256 _signerA, uint256 _signerB, uint256 _signerC) onlyAdmins() public view returns(address, address, address) {return(MSFun.checkSigner(msData, _whatFunction, _signerA), MSFun.checkSigner(msData, _whatFunction, _signerB), MSFun.checkSigner(msData, _whatFunction, _signerC));}
+ *
+ * same as above but will return names in string format.
+ *
+ *     function checkSignersByName(bytes32 _whatFunction, uint256 _signerA, uint256 _signerB, uint256 _signerC) onlyAdmins() public view returns(bytes32, bytes32, bytes32) {return(TeamJust.adminName(MSFun.checkSigner(msData, _whatFunction, _signerA)), TeamJust.adminName(MSFun.checkSigner(msData, _whatFunction, _signerB)), TeamJust.adminName(MSFun.checkSigner(msData, _whatFunction, _signerC)));}
+ *                             ????????????????????????????
+ *                             ? Functions In Depth Guide ?
+ *                             ????????????????????????????
+ * In the following examples, the Data is the proposal set for this library.  And
+ * the bytes32 is the name of the function.
+ *
+ * MSFun.multiSig(Data, uint256, bytes32) - Manages creating/updating multiSig 
+ *      proposal for the function being called.  The uint256 is the required 
+ *      number of signatures needed before the multiSig will return true.  
+ *      Upon first call, multiSig will create a proposal and store the arguments 
+ *      passed with the function call as msgData.  Any admins trying to sign the 
+ *      function call will need to send the same argument values. Once required
+ *      number of signatures is reached this will return a bool of true.
+ * 
+ * MSFun.deleteProposal(Data, bytes32) - once multiSig unlocks the function body,
+ *      you will want to delete the proposal data.  This does that.
+ *
+ * MSFun.checkMsgData(Data, bytes32) - checks the message data for any given proposal 
+ * 
+ * MSFun.checkCount(Data, bytes32) - checks the number of admins that have signed
+ *      the proposal 
+ * 
+ * MSFun.checkSigners(data, bytes32, uint256) - checks the address of a given signer.
+ *      the uint256, is the log number of the signer (ie 1st signer, 2nd signer)
  */
+
 library MSFun {
     //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     // DATA SETS
