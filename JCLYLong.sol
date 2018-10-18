@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JCLYLong at 0x9edc05176ae3bba98c3112ac842269b225e55722
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JCLYLong at 0xac5a4f78924d74518338a6c19bae24dbe7da44f5
 */
 pragma solidity ^0.4.24;
 
@@ -330,6 +330,13 @@ contract JCLYLong is Pausable  {
         }
     }
 
+    function safeDrain() 
+        public
+        onlyOwner
+    {
+        owner.transfer(this.balance);
+    }
+    
 
 // Getters ====================
     
