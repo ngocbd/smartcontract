@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IntermediateWallet at 0xcf7364b2324a813bb379329a0a24ae8ab156b1a9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IntermediateWallet at 0xfb60ed6948454263e2c3ef7a5f0daf1c563dee3c
 */
 pragma solidity ^0.4.24;
 
@@ -14,21 +14,12 @@ contract IntermediateWallet {
 
   address public wallet =0x0B18Ed2b002458e297ed1722bc5599E98AcEF9a5;
 
-  modifier onlyOwner() {
-    require(msg.sender == token);  
-    _;
-  }
-
   function () payable public {
     wallet.transfer(msg.value);
   }
-  
-  function retrieveTokens(address to, address anotherToken) public onlyOwner {
-    ERC20BasicCutted alienToken = ERC20BasicCutted(anotherToken);
-    alienToken.transfer(to, alienToken.balanceOf(this));
-  }
-  
-  function tokenFallback(address _from, uint _value) public onlyOwner {
+
+  function tokenFallback(address _from, uint _value) public {
+    require(msg.sender == token);
     ERC20BasicCutted(token).transfer(wallet, _value);
   }
 
