@@ -1,69 +1,28 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Migrations at 0xa5f3a4a1c21126f643dc10c3ea8eae8b336a5d66
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Migrations at 0x6fd5f40e21887e91cef1d5c6b12111e2b9df2d07
 */
-pragma solidity 0.4.24;
+pragma solidity ^0.4.18;
 
 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- * @dev Based on https://github.com/OpenZeppelin/zeppelin-soliditysettable
- */
-contract Ownable {
+// Provided by Truffle.
+contract Migrations {
+
     address public owner;
+    uint public last_completed_migration;
 
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Can only be called by the owner");
-        _;
+    modifier restricted() {
+        if (msg.sender == owner) _;
     }
 
-    modifier onlyValidAddress(address addr) {
-        require(addr != address(0), "Address cannot be zero");
-        _;
-    }
-
-    /**
-     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-     * account.
-     */
-    constructor() public {
+    function Migrations() public {
         owner = msg.sender;
     }
 
-    /**
-     * @dev Allows the current owner to transfer control of the contract to a newOwner.
-     * @param newOwner The address to transfer ownership to.
-     */
-    function transferOwnership(address newOwner)
-        public
-        onlyOwner
-        onlyValidAddress(newOwner)
-    {
-        emit OwnershipTransferred(owner, newOwner);
-
-        owner = newOwner;
-    }
-}
-
-
-/**
- * @title Truffle Migrations contract
- * @dev It violates standard naming convention for compatibility with Truffle suite
- * @dev It extends standard implementation with changeable owner.
- */
-contract Migrations is Ownable {
-    // solhint-disable-next-line var-name-mixedcase
-    uint256 public last_completed_migration;
-
-    function setCompleted(uint256 completed) public onlyOwner {
+    function setCompleted(uint completed) public restricted {
         last_completed_migration = completed;
     }
 
-    // solhint-disable-next-line func-param-name-mixedcase
-    function upgrade(address new_address) public onlyOwner {
+    function upgrade(address new_address) public restricted {
         Migrations upgraded = Migrations(new_address);
         upgraded.setCompleted(last_completed_migration);
     }
