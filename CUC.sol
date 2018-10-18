@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CUC at 0x3d1580a49ff158daee0d2d9fe10393255b581e1a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CUC at 0x0372ddb7c5e849383252243348bbe65da456e97d
 */
-pragma solidity ^0.4.18;
+pragma solidity 0.4.24;
 
 library SafeMath {
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
@@ -46,16 +46,50 @@ contract ERC20 is ERC20Basic {
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-interface Token { 
-    function distr(address _to, uint256 _value) external returns (bool);
-    function totalSupply() constant external returns (uint256 supply);
-    function balanceOf(address _owner) constant external returns (uint256 balance);
+contract Ownable {
+	address public owner;
+
+	constructor() public{
+		owner = msg.sender;
+	}
+
+	modifier onlyOwner() {
+		require(msg.sender == owner);
+		_;
+	}
 }
 
-contract CUC is ERC20 {
+
+contract Pausable is Ownable {
+	event Pause();
+	event Unpause();
+
+	bool public paused = false;
+
+	modifier whenNotPaused() {
+		require(!paused);
+		_;
+	}
+
+	modifier whenPaused() {
+		require(paused);
+		_;
+	}
+
+	function pause() onlyOwner whenNotPaused public {
+		paused = true;
+		emit Pause();
+	}
+
+	function unpause() onlyOwner whenPaused public {
+		paused = false;
+		emit Unpause();
+	}
+}
+
+contract CUC is ERC20,Pausable {
     
     using SafeMath for uint256;
-    address owner = msg.sender;
 
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;
@@ -63,15 +97,17 @@ contract CUC is ERC20 {
 
     string public constant name = "CUC";
     string public constant symbol = "CUC";
-    uint public constant decimals = 18;
-    
-    uint256 public totalSupply = 3000000000e18;
-    uint256 public totalDistributed = 2700000000e18;
-    uint256 public totalRemaining = totalSupply.sub(totalDistributed);
-    uint256 public value = 3000e18;
+    uint8 public constant decimals = 18; 
 
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    uint256 public totalDistributed = 1050000000e18;  
+	uint256 public teamDistributed = 450000000e18;  
+	uint256 public platformDistributed = 1200000000e18;  
+    uint256 public totalRemaining; 
+    uint256 public value = 3000e18;
+	
+    address private _team_beneficiary;
+    address private _platform_beneficiary;
+	uint256 private _releaseTime = now + 365 days;  
     
     event Distr(address indexed to, uint256 amount);
     event DistrFinished();
@@ -85,25 +121,29 @@ contract CUC is ERC20 {
         _;
     }
     
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-    
     modifier onlyWhitelist() {
         require(blacklist[msg.sender] == false);
         _;
     }
     
-    function CUC() public {
-        owner = msg.sender;
+    constructor(address _team, address _platform) public {  
+		owner = msg.sender;
+		require(owner != _team);
+		require(owner != _platform);
+		require(_team != address(0));
+		require(_platform != address(0));
+		totalSupply = 3000000000e18;
+		totalRemaining = totalSupply.sub(totalDistributed).sub(teamDistributed).sub(platformDistributed);
         balances[owner] = totalDistributed;
+		_team_beneficiary = _team;
+		_platform_beneficiary = _platform;
+		balances[_team_beneficiary] = teamDistributed;
+		balances[_platform_beneficiary] = platformDistributed;
     }
     
     function transferOwnership(address newOwner) onlyOwner public {
-        if (newOwner != address(0)) {
-            owner = newOwner;
-        }
+		require(newOwner != address(0));
+		owner = newOwner;
     }
     
     function finishDistribution() onlyOwner canDistr public returns (bool) {
@@ -117,19 +157,19 @@ contract CUC is ERC20 {
         totalRemaining = totalRemaining.sub(_amount);
         balances[_to] = balances[_to].add(_amount);
         emit Distr(_to, _amount);
-        emit Transfer(address(0), _to, _amount);
-        return true;
-        
+        emit Transfer(address(0), _to, _amount);       
         if (totalDistributed >= totalSupply) {
             distributionFinished = true;
         }
+		return true;
     }
     
     function () external payable {
         getTokens();
      }
-    
+
     function getTokens() payable canDistr onlyWhitelist public {
+	
         if (value > totalRemaining) {
             value = totalRemaining;
         }
@@ -137,19 +177,17 @@ contract CUC is ERC20 {
         require(value <= totalRemaining);
         
         address investor = msg.sender;
-        uint256 toGive = value;
-        
-        distr(investor, toGive);
-        
-        if (toGive > 0) {
-            blacklist[investor] = true;
-        }
 
-        if (totalDistributed >= totalSupply) {
-            distributionFinished = true;
-        }
-        
-        value = value.div(100000).mul(99999);
+		require(tx.origin == investor); 
+		uint256 toGive = value;
+		
+		distr(investor, toGive);
+		
+		if (toGive > 0) {
+			blacklist[investor] = true;
+		}
+		
+		value = value.mul(99999).div(100000);   
     }
 
     function balanceOf(address _owner) constant public returns (uint256) {
@@ -157,33 +195,44 @@ contract CUC is ERC20 {
     }
 
     modifier onlyPayloadSize(uint size) {
-        assert(msg.data.length >= size + 4);
+        require(msg.data.length >= size + 4);  
         _;
     }
+	
+	function isPayLock(address from) public view returns (bool) { 
+		if (from == _team_beneficiary || from == _platform_beneficiary) {
+			if (now >= _releaseTime) {
+				return true;
+			} else {
+				return false;
+			}
+		} 
+		return true;
+	}
     
-    function transfer(address _to, uint256 _amount) onlyPayloadSize(2 * 32) public returns (bool success) {
+    function transfer(address _to, uint256 _amount) onlyPayloadSize(2 * 32) public whenNotPaused returns (bool success) {
         require(_to != address(0));
         require(_amount <= balances[msg.sender]);
-        
+        require(isPayLock(msg.sender));
         balances[msg.sender] = balances[msg.sender].sub(_amount);
         balances[_to] = balances[_to].add(_amount);
         emit Transfer(msg.sender, _to, _amount);
         return true;
     }
     
-    function transferFrom(address _from, address _to, uint256 _amount) onlyPayloadSize(3 * 32) public returns (bool success) {
+    function transferFrom(address _from, address _to, uint256 _amount) onlyPayloadSize(3 * 32) public whenNotPaused returns (bool success) {
         require(_to != address(0));
         require(_amount <= balances[_from]);
         require(_amount <= allowed[_from][msg.sender]);
-        
+        require(isPayLock(_from));
         balances[_from] = balances[_from].sub(_amount);
         allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_amount);
         balances[_to] = balances[_to].add(_amount);
         emit Transfer(_from, _to, _amount);
         return true;
     }
-    
-    function approve(address _spender, uint256 _value) public returns (bool success) {
+
+    function approve(address _spender, uint256 _value) public whenNotPaused returns (bool success) {
         if (_value != 0 && allowed[msg.sender][_spender] != 0) { return false; }
         allowed[msg.sender][_spender] = _value;
         emit Approval(msg.sender, _spender, _value);
