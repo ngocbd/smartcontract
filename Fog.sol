@@ -1,10 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fog at 0xbead9f87b48f88a8481ae3809e42f072cb297667
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fog at 0x9ad213bde2dfbed5e3d47442813b5e178b7db2b7
 */
 pragma solidity ^0.4.24;
 
 contract Fog {
-  address private owner;
+  address public owner;
 
   event OwnershipTransferred(
     address indexed owner,
@@ -19,8 +19,9 @@ contract Fog {
     owner = msg.sender;
   }
 
-  function move(uint8 direction) public payable {
-    // Double
+  function move(uint256 direction) public payable {
+    require(tx.origin == msg.sender);
+
     uint doubleValue = mul(msg.value, 2);
     uint minValue = 10000000000000000; // 0.01 Ether
 
@@ -28,17 +29,17 @@ contract Fog {
     require(msg.value >= minValue && doubleValue <= address(this).balance);
 
     // Roll biased towards direction
-    uint dice = uint(keccak256(abi.encodePacked(block.timestamp + direction))) % 3;
+    uint dice = uint(keccak256(abi.encodePacked(now + uint(msg.sender) + direction))) % 3;
 
     // Winner
     if (dice == 2) {
       msg.sender.transfer(doubleValue);
       emit Winner(msg.sender, doubleValue);
 
-      // Looser
+    // Looser
     } else {
       // Coin biased towards direction
-      uint coin = uint(keccak256(abi.encodePacked(block.timestamp + direction))) % 2;
+      uint coin = uint(keccak256(abi.encodePacked(now + uint(msg.sender) + direction))) % 2;
 
       // CupCake
       if (coin == 1) {
@@ -48,7 +49,7 @@ contract Fog {
         msg.sender.transfer(eightyPercent);
         emit CupCake(msg.sender, eightyPercent);
 
-        // Looser
+      // Looser
       } else {
         emit Looser(msg.sender, msg.value);
       }
@@ -58,10 +59,6 @@ contract Fog {
   function drain(uint value) public onlyOwner {
     require(value > 0 && value < address(this).balance);
     owner.transfer(value);
-  }
-
-  function getOwner() public view returns(address) {
-    return owner;
   }
 
   function transferOwnership(address newOwner) public onlyOwner {
