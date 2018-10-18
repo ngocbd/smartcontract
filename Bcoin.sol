@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BCoin at 0x4d482dd54b9384d70e6c660814cf09c102f8d22e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BCoin at 0xa1f9015e6668e9429807fb22d09e7a61ae8532bb
 */
-pragma solidity 0.4.25;
+pragma solidity ^0.4.24;
 
 // ERC20 interface
 interface IERC20 {
