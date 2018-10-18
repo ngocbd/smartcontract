@@ -1,7 +1,32 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract lepaitoken at 0x628e43e26f2685e1162c904b1e8ca031dc6c8cdb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract lepaitoken at 0x4c1487b329f34017e02257a21953a421ce3d0417
 */
 pragma solidity ^ 0.4.25;
+
+// ----------------------------------------------------------------------------
+// ???????
+// ----------------------------------------------------------------------------
+library SafeMath {
+	function add(uint a, uint b) internal pure returns(uint c) {
+		c = a + b;
+		require(c >= a);
+	}
+
+	function sub(uint a, uint b) internal pure returns(uint c) {
+		require(b <= a);
+		c = a - b;
+	}
+
+	function mul(uint a, uint b) internal pure returns(uint c) {
+		c = a * b;
+		require(a == 0 || c / a == b);
+	}
+
+	function div(uint a, uint b) internal pure returns(uint c) {
+		require(b > 0);
+		c = a / b;
+	}
+}
 /* ??????? ????? */
 contract owned {
 
@@ -10,89 +35,94 @@ contract owned {
     constructor() public {
     owner = msg.sender;
     }
+
     /* modifier????? */
     modifier onlyOwner {
         require(msg.sender == owner);
         _;
     }
+
     /* ???????? onlyOwner????????????? */
     function transferOwnership(address newOwner) onlyOwner public {
         owner = newOwner;
     }   
 }
 contract lepaitoken is owned{
+    using SafeMath for uint;
+    //uint public lastid; //????id ??
     uint public systemprice;
     struct putusers{
 	    	address puser;//???
 	    	uint addtime;//????
 	    	uint addmoney; //????
+	    	//bool hasback;//???????
 	    	string useraddr; //????? 
     }
     struct auctionlist{
-        address adduser;//???0
-        uint opentime;//????1
-        uint endtime;//????2
-        uint openprice;//????3
-        uint endprice;//????4
-        uint onceprice;//????5
-        uint currentprice;//????6
-        string goodsname; //????7
-        string goodspic; //????8 
-        bool ifend;//????9
-        uint ifsend;//????10
-        uint lastid;//???11
-        mapping(uint => putusers) aucusers;//???????
-        mapping(address => uint) ausers;//????????
+        address adduser;//???
+        uint opentime;//????
+        uint endtime;//????
+        uint openprice;//????
+        uint endprice;//????
+        uint onceprice;//????
+        uint currentprice;//????
+        string goodsname; //????
+        string goodspic; //???? 
+        bool ifend;//????
+        uint ifsend;//????
+        uint lastid;
+        //uint[] putids; //???id?
+        //putusers lastone;//?????
+        
+        //bool ifother;
+        mapping(uint => putusers) aucusers;//???id?
+        mapping(address => uint) ausers;
+        mapping(address => address) susers;
     }
     auctionlist[] public auctionlisting; //????
     auctionlist[] public auctionlistend; //?????
     auctionlist[] public auctionlistts; //?????
-    mapping(address => uint[]) userlist;//?????????
-    mapping(address => uint[]) mypostauct;//??????????
+    mapping(address => uint[]) userlist;
+    mapping(address => uint[]) mypostauct;
     //0x56F527C3F4a24bB2BeBA449FFd766331DA840FFA
     btycInterface constant private btyc = btycInterface(0x56F527C3F4a24bB2BeBA449FFd766331DA840FFA);
     /* ?? */
-	event auctconfim(address target, uint tokens);//??????
-	event getmoneys(address target, uint tokens);//??????
+	event auctconfim(address target, uint tokens);
 	constructor() public {
 	    systemprice = 20000 ether;
+	    //lastid = 0;
 	}
 	/*???? */
 	function addauction(address addusers,uint opentimes, uint endtimes, uint onceprices, uint openprices, uint endprices, string goodsnames, string goodspics) public returns(uint){
 	    uint _now = now;
+	    //uint[] pids;
+	    //putusers lastones;
+	    //require(opentimes > _now);
 	    require(opentimes < _now + 2 days);
 	    require(endtimes > opentimes);
-	    require(endtimes > _now + 2 days);
 	    require(endtimes < opentimes + 2 days);
 	    require(btyc.balanceOf(addusers) >= systemprice);
-	    auctionlisting.push(auctionlist(addusers, opentimes, endtimes, openprices, endprices, onceprices, openprices, goodsnames, goodspics, false, 0, 0));
+	    //uint i = auctionlisting.length;
+	    //auctionlist memory pt = auctionlist(addusers, opentimes, endtimes, onceprices, openprices, openprices, endprices, goodsnames, goodspics, false, pids, lastone, 0);
+	    auctionlisting.push(auctionlist(addusers, opentimes, endtimes, onceprices, openprices, openprices, endprices, goodsnames, goodspics, false, 0, 0));
 	    uint lastid = auctionlisting.length;
 	    mypostauct[addusers].push(lastid);
 	    return(lastid);
 	}
-	//????????
 	function getmypostlastid() public view returns(uint){
 	    return(mypostauct[msg.sender].length);
 	}
-	//????????id
 	function getmypost(uint ids) public view returns(uint){
 	    return(mypostauct[msg.sender][ids]);
 	}
-	//????
 	function balanceOf(address addr) public view returns(uint) {
 	    return(btyc.balanceOf(addr));
 	}
-	//??????
 	function canuse(address addr) public view returns(uint) {
 	    return(btyc.getcanuse(addr));
 	}
-	//??????
 	function ownerof() public view returns(uint) {
 	    return(btyc.balanceOf(this));
-	}
-	//???????
-	function sendleftmoney(uint money, address toaddr) public onlyOwner{
-	    btyc.transfer(toaddr, money);
 	}
 	/*????*/
 	function inputauction(uint auctids, address pusers, uint addmoneys,string useraddrs) public {
@@ -104,38 +134,30 @@ contract lepaitoken is owned{
 	    uint userbalance = canuse(pusers);
 	    require(addmoneys > c.currentprice);
 	    require(addmoneys <= c.endprice);
-	    uint userhasmoney = c.ausers[pusers];
-	    uint money = addmoneys;
-	    if(userhasmoney > 0) {
-	        require(addmoneys > userhasmoney);
-	        money = addmoneys - userhasmoney;
-	    }
-	    
+	    uint money = addmoneys - c.ausers[pusers];
 	    require(userbalance >= money);
-	    if(c.endtime < _now) {
+	    
+	    //else{
+	    btyc.transfer(this, money);
+	    c.ausers[pusers] = addmoneys;
+	    c.susers[pusers] = pusers;
+	    //c.putids.push(_now);
+	    
+	    c.currentprice = addmoneys;
+	    c.aucusers[c.lastid++] = putusers(pusers, _now, addmoneys,  useraddrs);
+	    //c.lastid = c.aucusers.length;
+	    //c.lastone = c.aucusers[_now];
+	    if(c.endtime < _now || addmoneys == c.endprice) {
+	        //endauction(auctids);
 	        c.ifend = true;
-	    }else{
-	        if(addmoneys == c.endprice){
-	            c.ifend = true;
-	        }
-	        btyc.transfer(this, money);
-	        c.ausers[pusers] = addmoneys;
-	        c.currentprice = addmoneys;
-	        c.aucusers[c.lastid++] = putusers(pusers, _now, addmoneys,  useraddrs);
-	    
-	        userlist[pusers].push(auctids);
-	        emit auctconfim(pusers, money);
+	        //btyc.mintToken
 	    }
-	    
-	    
+	    userlist[pusers].push(auctids);
+	    emit auctconfim(pusers, money);
 	    //}
 	    
 	}
-	//???????????
-	function getuserlistlength(address uaddr) public view returns(uint len) {
-	    len = userlist[uaddr].length;
-	}
-	//??????
+	/*??*/
 	function viewauction(uint aid) public view returns(address addusers,uint opentimes, uint endtimes, uint onceprices, uint openprices, uint endprices, uint currentprices, string goodsnames, string goodspics, bool ifends, uint ifsends, uint anum){
 		auctionlist storage c = auctionlisting[aid];
 		addusers = c.adduser;//0
@@ -150,9 +172,12 @@ contract lepaitoken is owned{
 		ifends = c.ifend;//9
 		ifsends = c.ifsend;//10
 		anum = c.lastid;//11
+		//putusers storage u = c.aucusers[anum];
+		//pusers = u.puser;//12
+	    //addtimes = u.addtime;//13
+	    //addmoneys = u.addmoney;//14
 		
 	}
-	//????????????
 	function viewauctionlist(uint aid, uint uid) public view returns(address pusers,uint addtimes,uint addmoneys){
 	    auctionlist storage c = auctionlisting[aid];
 	    putusers storage u = c.aucusers[uid];
@@ -160,29 +185,39 @@ contract lepaitoken is owned{
 	    addtimes = u.addtime;//1
 	    addmoneys = u.addmoney;//2
 	}
-	//???????????
 	function getactlen() public view returns(uint) {
 	    return(auctionlisting.length);
 	}
-	//?????????
-	function getacttslen() public view returns(uint) {
-	    return(auctionlistts.length);
-	}
-	//?????????
-	function getactendlen() public view returns(uint) {
-	    return(auctionlistend.length);
-	}
-	//???????
+	/*
+    function getlastid() public view  returns(uint){
+        return(lastid);
+    }*/
+	/*
+	function viewlisting(uint start, uint num) public view{
+	    //uint len = auctionlisting.length;
+	   // auctionlist[] rt;
+	   address[] addusers;
+	    for(uint i = lastid; i > i - start - num; i--) {
+	        auctionlist c = auctionlisting[i];
+	        //uint[] pt = [c.adduser,c.opentime,c.endtime];
+	        addusers.push(c.adduser);
+	    }
+	    //return rt;
+	    return(addusers);
+	}*/
 	function setsendgoods(uint auctids) public {
 	    uint _now = now;
 	     auctionlist storage c = auctionlisting[auctids];
 	     require(c.adduser == msg.sender);
 	     require(c.endtime < _now);
+	     //if(c.endtime < _now) {
+	     //   c.ifend = true;
+	    //}
+	     //require(c.ifend == true);
 	     require(c.ifsend == 0);
 	     c.ifsend = 1;
 	     c.ifend = true;
 	}
-	//??????????
 	function setgetgoods(uint auctids) public {
 	    uint _now = now;
 	    auctionlist storage c = auctionlisting[auctids];
@@ -196,105 +231,86 @@ contract lepaitoken is owned{
 	    btyc.mintToken(c.adduser, getmoney);
 	    auctionlistend.push(c);
 	}
-	//??????????????
 	function getuseraddress(uint auctids) public view returns(string){
 	    auctionlist storage c = auctionlisting[auctids];
 	    require(c.adduser == msg.sender);
 	    //putusers memory mdata = c.aucusers[c.lastid];
 	    return(c.aucusers[c.lastid].useraddr);
 	}
-	function editusetaddress(uint aid, string setaddr) public returns(bool){
-	    auctionlist storage c = auctionlisting[aid];
-	    putusers storage data = c.aucusers[c.lastid];
-	    require(data.puser == msg.sender);
-	    data.useraddr = setaddr;
-	    return(true);
-	}
-	/*?????????????????? */
+	/*???????? */
 	function endauction(uint auctids) public {
 	    //uint _now = now;
 	    auctionlist storage c = auctionlisting[auctids];
 	    require(c.ifsend == 2);
+	    //uint[] memory ids = c.putids;
 	    uint len = c.lastid;
 	    putusers storage firstuser = c.aucusers[0];
+	    //putusers memory lasttuser = c.lastone;
         address suser = msg.sender;
 	    
 	    require(c.ifend == true);
 	    require(len > 1);
 	    require(c.ausers[suser] > 0);
-	    uint sendmoney = 0;
 	    if(len == 2) {
 	        require(firstuser.puser == suser);
-	        sendmoney = c.currentprice*3/10 + c.ausers[suser];
+	        //require(firstuser.hasback == false);
+	        btyc.mintToken(suser,c.currentprice*3/10 + c.ausers[suser]);
+	        
 	    }else{
+	       
 	        if(firstuser.puser == suser) {
-	            sendmoney = c.currentprice*1/10 + c.ausers[suser];
+	            //require(firstuser.hasback == false);
+	            btyc.mintToken(suser,c.currentprice*1/10 + c.ausers[suser]);
+	            //firstuser.hasback = true;
 	        }else{
 	            uint onemoney = (c.currentprice*2/10)/(len-2);
-	            sendmoney = onemoney + c.ausers[suser];
+	            btyc.mintToken(c.susers[suser],onemoney + c.ausers[suser]);
 	        }
 	    }
-	    require(sendmoney > 0);
-	    btyc.mintToken(suser, sendmoney);
 	    c.ausers[suser] = 0;
-	    emit getmoneys(suser, sendmoney);
 	    
 	}
-	//???????
 	function setsystemprice(uint price) public onlyOwner{
 	    systemprice = price;
 	}
-	//???????????
 	function setauctionother(uint auctids) public onlyOwner{
 	    auctionlist storage c = auctionlisting[auctids];
 	    btyc.freezeAccount(c.adduser, true);
-	    c.ifend = true;
 	    c.ifsend = 3;
 	}
-	//??????
-	function setauctionsystem(uint auctids, uint setnum) public onlyOwner{
-	    auctionlist storage c = auctionlisting[auctids]; 
-	    c.ifend = true;
-	    c.ifsend = setnum;
-	}
-	//??????
 	function setauctionotherfree(uint auctids) public onlyOwner{
 	    auctionlist storage c = auctionlisting[auctids];
 	    btyc.freezeAccount(c.adduser, false);
 	    c.ifsend = 2;
 	}
-	//?????????????
+	
 	function tsauction(uint auctids) public{
 	   auctionlist storage c = auctionlisting[auctids];
 	   uint _now = now;
-	   require(c.endtime > _now);
 	   require(c.endtime + 2 days < _now);
 	   require(c.aucusers[c.lastid].puser == msg.sender);
 	   if(c.endtime + 2 days < _now && c.ifsend == 0) {
 	       c.ifsend = 5;
-	       c.ifend = true;
 	       auctionlistts.push(c);
 	   }
 	   if(c.endtime + 9 days < _now && c.ifsend == 1) {
 	       c.ifsend = 5;
-	       c.ifend = true;
 	       auctionlistts.push(c);
 	   }
+	   
 	}
-	//??????????????
 	function endauctionother(uint auctids) public {
 	    //uint _now = now;
 	    auctionlist storage c = auctionlisting[auctids];
 	    address suser = msg.sender;
 	    require(c.ifsend == 3);
 	    require(c.ausers[suser] > 0);
-	    btyc.mintToken(suser,c.ausers[suser]);
+	    btyc.mintToken(c.susers[suser],c.ausers[suser]);
 	    c.ausers[suser] = 0;
-	    emit getmoneys(suser, c.ausers[suser]);
+	    
 	}
 	
 }
-//btyc???
 interface btycInterface {
     //mapping(address => uint) balances;
     function balanceOf(address _addr) external view returns (uint256);
