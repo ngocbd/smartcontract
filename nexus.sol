@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NEXUS at 0xf669d2963fd7daef7bfacbbe35392066ee08f9cb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NEXUS at 0x6cF1d9eEDC34a13bD385D02310d4Bfcf83CB270F
 */
 pragma solidity ^0.4.18;
 
@@ -76,12 +76,12 @@ contract NEXUS is ERC20 {
     mapping (address => mapping (address => uint256)) allowed;    
 
     string public constant name = "NEXUS";
-    string public constant symbol = "NXS";
+    string public constant symbol = "NEXUS";
     uint public constant decimals = 8;
     
     uint256 public totalSupply = 10000000000e8;
     uint256 public totalDistributed = 0;        
-    uint256 public tokensPerEth = 20000000e8;
+    uint256 public tokensPerEth = 30000000e8;
     uint256 public constant minContribution = 1 ether / 100; // 0.01 Ether
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
@@ -109,7 +109,7 @@ contract NEXUS is ERC20 {
     }
     
     
-    function nexus () public {
+    function NEXUS () public {
         owner = msg.sender;
         uint256 devTokens = 2000000000e8;
         distr(owner, devTokens);
