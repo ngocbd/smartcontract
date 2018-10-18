@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TMSYToken at 0x39a9ec2bd0f74f4aadfee0d901bbaddab2818723
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TMSYToken at 0x692dccc0560f92a3dbf795156ab8cd9e4cfb9976
 */
 pragma solidity ^0.4.21;
 
@@ -306,8 +306,8 @@ contract CommonToken is StandardToken, MultiOwnable {
         //require(tokensSold.add(_value) <= saleLimit);
         require(msg.sender == seller, "User not authorized");
 
-        require(_to != address(0));
-        require(_value > 0);
+        require(_to != address(0), "Not address authorized");
+        require(_value > 0, "Value is 0");
 
         require(_value <= balances[seller]);
 
@@ -337,7 +337,7 @@ contract CommonToken is StandardToken, MultiOwnable {
     }
 
     function burn(uint256 _value) public returns (bool) {
-        require(_value > 0, 'Value is zero');
+        require(_value > 0, "Value is zero");
 
         balances[msg.sender] = balances[msg.sender].sub(_value);
         totalSupply = totalSupply.sub(_value);
