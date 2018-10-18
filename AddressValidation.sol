@@ -1,15 +1,18 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AddressValidation at 0xdf5985e2e95028d413ec6fd63dec44d9a4573b50
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AddressValidation at 0xe93eaa895b30097825220c4d64bd3882152fee26
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.24;
+
+// File: contracts/AddressValidation.sol
 
 contract AddressValidation {
     string public name = "AddressValidation";
-    mapping (address => bytes32) public keyValidations;
+    mapping(address => bytes32) public keyValidations;
+
     event ValidateKey(address indexed account, bytes32 indexed message);
 
     function validateKey(bytes32 _message) public {
         keyValidations[msg.sender] = _message;
-        ValidateKey(msg.sender, _message);
+        emit ValidateKey(msg.sender, _message);
     }
 }
