@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WheelOfEther at 0x927764bb17ce8b9f8c3a930ca4472d611ee93173
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WheelOfEther at 0x769FFe070Eb0d083b9576eEDA5f30D9A46A32973
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.25;
 
 /**
  _ _ _  _____  _____  _____  __            ___    _____  _____  _____  _____  _____
@@ -68,14 +68,21 @@ Jörmungandr
 Etherguy
 Norsefire
 
+TY Guys
+
 **/
 
-contract WheelOfEther {
+contract WheelOfEther
+{
     using SafeMath for uint;
 
-    //  Modifiers
+    // Randomizer contract
+    Randomizer private rand;
 
-    modifier nonContract() {                // contracts pls go
+    /**
+     * MODIFIERS
+     */
+    modifier onlyHuman() {
         require(tx.origin == msg.sender);
         _;
     }
@@ -90,384 +97,282 @@ contract WheelOfEther {
         _;
     }
 
-    // Events
-
-    event onTokenPurchase(
-        address indexed customerAddress,
-        uint256 ethereumIn,
-        uint256 contractBal,
+    /**
+     * EVENTS
+     */
+    event onDeposit(
+        address indexed customer,
+        uint256 amount,
+        uint256 balance,
         uint256 devFee,
         uint timestamp
     );
 
-    event onTokenSell(
-        address indexed customerAddress,
-        uint256 ethereumOut,
-        uint256 contractBal,
+    event onWithdraw(
+        address indexed customer,
+        uint256 amount,
+        uint256 balance,
         uint timestamp
     );
 
     event spinResult(
-        address indexed customerAddress,
+        address indexed customer,
         uint256 wheelNumber,
         uint256 outcome,
-        uint256 ethSpent,
-        uint256 ethReturned,
-        uint256 userBalance,
+        uint256 betAmount,
+        uint256 returnAmount,
+        uint256 customerBalance,
         uint timestamp
     );
 
-    uint256 _seed;
-    address admin;
+    // Contract admin
+    address public admin;
+    uint256 public devBalance = 0;
+
+    // Game status
     bool public gamePaused = false;
-    uint256 minBet = 0.01 ether;
-    uint256 maxBet = 5 ether;
-    uint256 devFeeBalance = 0;
 
-    uint8[10] brackets = [1,3,6,12,24,40,56,68,76,80];
+    // Random values
+    uint8 private randMin  = 1;
+    uint8 private randMax  = 80;
 
-    uint256 internal globalFactor = 10e21;
-    uint256 constant internal constantFactor = 10e21 * 10e21;
-    mapping(address => uint256) internal personalFactorLedger_;
-    mapping(address => uint256) internal balanceLedger_;
+    // Bets limit
+    uint256 public minBet = 0.01 ether;
+    uint256 public maxBet = 10 ether;
+
+    // Win brackets
+    uint8[10] public brackets = [1,3,6,12,24,40,56,68,76,80];
+
+    // Factors
+    uint256 private          globalFactor   = 10e21;
+    uint256 constant private constantFactor = 10e21 * 10e21;
+
+    // Customer balance
+    mapping(address => uint256) private personalFactor;
+    mapping(address => uint256) private personalLedger;
 
 
-    constructor()
-        public
-    {
+    /**
+     * Constructor
+     */
+    constructor() public {
         admin = msg.sender;
     }
 
+    /**
+     * Admin methods
+     */
+    function setRandomizer(address _rand) external onlyAdmin {
+        rand = Randomizer(_rand);
+    }
 
-    function getBalance()
-        public
-        view
-        returns (uint256)
-    {
-        return this.balance;
+    function gamePause() external onlyAdmin {
+        gamePaused = true;
+    }
+
+    function gameUnpause() external onlyAdmin {
+        gamePaused = false;
+    }
+
+    function refund(address customer) external onlyAdmin {
+        uint256 amount = getBalanceOf(customer);
+        customer.transfer(amount);
+        personalLedger[customer] = 0;
+        personalFactor[customer] = constantFactor / globalFactor;
+        emit onWithdraw(customer, amount, getBalance(), now);
+    }
+
+    function withdrawDevFees() external onlyAdmin {
+        admin.transfer(devBalance);
+        devBalance = 0;
     }
 
 
-    function buyTokens()
-        public
-        payable
-        nonContract
-        gameActive
-    {
-        address _customerAddress = msg.sender;
-        // User must buy at least 0.02 eth
+    /**
+     * Get contract balance
+     */
+    function getBalance() public view returns(uint256 balance) {
+        return address(this).balance;
+    }
+
+    function getBalanceOf(address customer) public view returns(uint256 balance) {
+        return personalLedger[customer].mul(personalFactor[customer]).mul(globalFactor) / constantFactor;
+    }
+
+    function getBalanceMy() public view returns(uint256 balance) {
+        return getBalanceOf(msg.sender);
+    }
+
+    function betPool(address customer) public view returns(uint256 value) {
+        return address(this).balance.sub(getBalanceOf(customer)).sub(devBalance);
+    }
+
+
+    /**
+     * Deposit/withdrawal
+     */
+    function deposit() public payable onlyHuman gameActive {
+        address customer = msg.sender;
         require(msg.value >= (minBet * 2));
 
-        // Add 2% fee of the buy to devFeeBalance
+        // Add 2% fee of the buy to devBalance
         uint256 devFee = msg.value / 50;
-        devFeeBalance = devFeeBalance.add(devFee);
+        devBalance = devBalance.add(devFee);
 
-        // Adjust ledgers while taking the dev fee into account
-        balanceLedger_[_customerAddress] = ethBalanceOf(_customerAddress).add(msg.value).sub(devFee);
-        personalFactorLedger_[_customerAddress] = constantFactor / globalFactor;
+        personalLedger[customer] = getBalanceOf(customer).add(msg.value).sub(devFee);
+        personalFactor[customer] = constantFactor / globalFactor;
 
-        onTokenPurchase(_customerAddress, msg.value, this.balance, devFee, now);
+        emit onDeposit(customer, msg.value, getBalance(), devFee, now);
+    }
+
+    function withdraw(uint256 amount) public onlyHuman {
+        address customer = msg.sender;
+        require(amount > 0);
+        require(amount <= getBalanceOf(customer));
+
+        customer.transfer(amount);
+        personalLedger[customer] = getBalanceOf(customer).sub(amount);
+        personalFactor[customer] = constantFactor / globalFactor;
+
+        emit onWithdraw(customer, amount, getBalance(), now);
+    }
+
+    function withdrawAll() public onlyHuman {
+        withdraw(getBalanceOf(msg.sender));
     }
 
 
-    function sell(uint256 sellEth)
-        public
-        nonContract
-    {
-        address _customerAddress = msg.sender;
-        // User must have enough eth and cannot sell 0
-        require(sellEth <= ethBalanceOf(_customerAddress));
-        require(sellEth > 0);
-        // Transfer balance and update user ledgers
-        _customerAddress.transfer(sellEth);
-        balanceLedger_[_customerAddress] = ethBalanceOf(_customerAddress).sub(sellEth);
-		personalFactorLedger_[_customerAddress] = constantFactor / globalFactor;
+    /**
+     * Spin the wheel methods
+     */
+    function spin(uint256 betAmount) public onlyHuman gameActive returns(uint256 resultNum) {
+        address customer = msg.sender;
+        require(betAmount              >= minBet);
+        require(getBalanceOf(customer) >= betAmount);
 
-        onTokenSell(_customerAddress, sellEth, this.balance, now);
-    }
-
-
-    function sellAll()
-        public
-        nonContract
-    {
-        address _customerAddress = msg.sender;
-        // Set the sell amount to the user's full balance, don't sell if empty
-        uint256 sellEth = ethBalanceOf(_customerAddress);
-        require(sellEth > 0);
-        // Transfer balance and update user ledgers
-        _customerAddress.transfer(sellEth);
-        balanceLedger_[_customerAddress] = 0;
-		personalFactorLedger_[_customerAddress] = constantFactor / globalFactor;
-
-        onTokenSell(_customerAddress, sellEth, this.balance, now);
-    }
-
-
-    function ethBalanceOf(address _customerAddress)
-        public
-        view
-        returns (uint256)
-    {
-        // Balance ledger * personal factor * globalFactor / constantFactor
-        return balanceLedger_[_customerAddress].mul(personalFactorLedger_[_customerAddress]).mul(globalFactor) / constantFactor;
-    }
-
-
-    function tokenSpin(uint256 betEth)
-        public
-        nonContract
-        gameActive
-        returns (uint256 resultNum)
-    {
-        address _customerAddress = msg.sender;
-        // User must have enough eth
-        require(ethBalanceOf(_customerAddress) >= betEth);
-        // User must bet at least the minimum
-        require(betEth >= minBet);
-        // If the user bets more than maximum...they just bet the maximum
-        if (betEth > maxBet){
-            betEth = maxBet;
+        if (betAmount > maxBet) {
+            betAmount = maxBet;
         }
-        // User cannot bet more than 10% of available pool
-        if (betEth > betPool(_customerAddress)/10) {
-            betEth = betPool(_customerAddress)/10;
+        if (betAmount > betPool(customer) / 10) {
+            betAmount = betPool(customer) / 10;
         }
-        // Execute the bet and return the outcome
-        resultNum = bet(betEth, _customerAddress);
+        resultNum = bet(betAmount, customer);
     }
 
-
-    function spinAllTokens()
-        public
-        nonContract
-        gameActive
-        returns (uint256 resultNum)
-    {
-        address _customerAddress = msg.sender;
-        // set the bet amount to the user's full balance
-        uint256 betEth = ethBalanceOf(_customerAddress);
-        // User cannot bet more than 10% of available pool
-        if (betEth > betPool(_customerAddress)/10) {
-            betEth = betPool(_customerAddress)/10;
-        }
-        // User must bet more than the minimum
-        require(betEth >= minBet);
-        // If the user bets more than maximum...they just bet the maximum
-        if (betEth >= maxBet){
-            betEth = maxBet;
-        }
-        // Execute the bet and return the outcome
-        resultNum = bet(betEth, _customerAddress);
+    function spinAll() public onlyHuman gameActive returns(uint256 resultNum) {
+        resultNum = spin(getBalanceOf(msg.sender));
     }
 
+    function spinDeposit() public payable onlyHuman gameActive returns(uint256 resultNum) {
+        address customer  = msg.sender;
+        uint256 betAmount = msg.value;
 
-    function etherSpin()
-        public
-        payable
-        nonContract
-        gameActive
-        returns (uint256 resultNum)
-    {
-        address _customerAddress = msg.sender;
-        uint256 betEth = msg.value;
-
-        // All eth is converted into tokens before the bet
-        // User must buy at least 0.02 eth
-        require(betEth >= (minBet * 2));
+        require(betAmount >= (minBet * 2));
 
         // Add 2% fee of the buy to devFeeBalance
-        uint256 devFee = betEth / 50;
-        devFeeBalance = devFeeBalance.add(devFee);
-        betEth = betEth.sub(devFee);
+        uint256 devFee = betAmount / 50;
+        devBalance     = devBalance.add(devFee);
+        betAmount      = betAmount.sub(devFee);
 
-        // If the user bets more than maximum...they just bet the maximum
-        if (betEth >= maxBet){
-            betEth = maxBet;
+        personalLedger[customer] = getBalanceOf(customer).add(msg.value).sub(devFee);
+        personalFactor[customer] = constantFactor / globalFactor;
+
+        if (betAmount >= maxBet) {
+            betAmount = maxBet;
+        }
+        if (betAmount > betPool(customer) / 10) {
+            betAmount = betPool(customer) / 10;
         }
 
-        // Adjust ledgers while taking the dev fee into account
-        balanceLedger_[_customerAddress] = ethBalanceOf(_customerAddress).add(msg.value).sub(devFee);
-		personalFactorLedger_[_customerAddress] = constantFactor / globalFactor;
+        resultNum = bet(betAmount, customer);
+    }
 
-        // User cannot bet more than 10% of available pool
-        if (betEth > betPool(_customerAddress)/10) {
-            betEth = betPool(_customerAddress)/10;
+
+    /**
+     * PRIVATE
+     */
+    function bet(uint256 betAmount, address customer) private returns(uint256 resultNum) {
+        resultNum      = uint256(rand.getRandomNumber(randMin, randMax + randMin));
+        uint256 result = determinePrize(resultNum);
+
+        uint256 returnAmount;
+
+        if (result < 5) {                                               // < 5 = WIN
+            uint256 winAmount;
+            if (result == 0) {                                          // Grand Jackpot
+                winAmount = betAmount.mul(9) / 10;                      // +90% of original bet
+            } else if (result == 1) {                                   // Jackpot
+                winAmount = betAmount.mul(8) / 10;                      // +80% of original bet
+            } else if (result == 2) {                                   // Grand Prize
+                winAmount = betAmount.mul(7) / 10;                      // +70% of original bet
+            } else if (result == 3) {                                   // Major Prize
+                winAmount = betAmount.mul(6) / 10;                      // +60% of original bet
+            } else if (result == 4) {                                   // Minor Prize
+                winAmount = betAmount.mul(3) / 10;                      // +30% of original bet
+            }
+            weGotAWinner(customer, winAmount);
+            returnAmount = betAmount.add(winAmount);
+        } else if (result == 5) {                                       // 5 = Refund
+            returnAmount = betAmount;
+        } else {                                                        // > 5 = LOSE
+            uint256 lostAmount;
+            if (result == 6) {                                          // Minor Loss
+                lostAmount = betAmount / 10;                            // -10% of original bet
+            } else if (result == 7) {                                   // Major Loss
+                lostAmount = betAmount / 4;                             // -25% of original bet
+            } else if (result == 8) {                                   // Grand Loss
+                lostAmount = betAmount / 2;                             // -50% of original bet
+            } else if (result == 9) {                                   // Total Loss
+                lostAmount = betAmount;                                 // -100% of original bet
+            }
+            goodLuck(customer, lostAmount);
+            returnAmount = betAmount.sub(lostAmount);
         }
 
-        // Execute the bet while taking the dev fee into account, and return the outcome
-        resultNum = bet(betEth, _customerAddress);
-    }
-
-
-    function betPool(address _customerAddress)
-        public
-        view
-        returns (uint256)
-    {
-        // Balance of contract, minus eth balance of user and accrued dev fees
-        return this.balance.sub(ethBalanceOf(_customerAddress)).sub(devFeeBalance);
-    }
-
-    /*
-        panicButton and refundUser are here incase of an emergency, or launch of a new contract
-        The game will be frozen, and all token holders will be refunded
-    */
-
-    function panicButton(bool newStatus)
-        public
-        onlyAdmin
-    {
-        gamePaused = newStatus;
-    }
-
-
-    function refundUser(address _customerAddress)
-        public
-        onlyAdmin
-    {
-        uint256 sellEth = ethBalanceOf(_customerAddress);
-        _customerAddress.transfer(sellEth);
-        balanceLedger_[_customerAddress] = 0;
-		personalFactorLedger_[_customerAddress] = constantFactor / globalFactor;
-        onTokenSell(_customerAddress, sellEth, this.balance, now);
-    }
-
-    function getDevBalance()
-        public
-        view
-        returns (uint256)
-    {
-        return devFeeBalance;
-    }
-
-
-    function withdrawDevFees()
-        public
-        onlyAdmin
-    {
-        admin.transfer(devFeeBalance);
-        devFeeBalance = 0;
-    }
-
-
-    // Internal Functions
-
-
-    function bet(uint256 betEth, address _customerAddress)
-        internal
-        returns (uint256 resultNum)
-    {
-        // Spin the wheel
-        resultNum = random(80);
-        // Determine the outcome
-        uint result = determinePrize(resultNum);
-
-        uint256 returnedEth;
-
-		if (result < 5)                                             // < 5 = WIN
-		{
-			uint256 wonEth;
-			if (result == 0){                                       // Grand Jackpot
-				wonEth = betEth.mul(9) / 10;                        // +90% of original bet
-			} else if (result == 1){                                // Jackpot
-				wonEth = betEth.mul(8) / 10;                        // +80% of original bet
-			} else if (result == 2){                                // Grand Prize
-				wonEth = betEth.mul(7) / 10;                        // +70% of original bet
-			} else if (result == 3){                                // Major Prize
-				wonEth = betEth.mul(6) / 10;                        // +60% of original bet
-			} else if (result == 4){                                // Minor Prize
-				wonEth = betEth.mul(3) / 10;                        // +30% of original bet
-			}
-			winEth(_customerAddress, wonEth);                       // Award the user their prize
-            returnedEth = betEth.add(wonEth);
-        } else if (result == 5){                                    // 5 = Refund
-            returnedEth = betEth;
-		}
-		else {                                                      // > 5 = LOSE
-			uint256 lostEth;
-			if (result == 6){                                		// Minor Loss
-				lostEth = betEth / 10;                    		    // -10% of original bet
-			} else if (result == 7){                                // Major Loss
-				lostEth = betEth / 4;                     			// -25% of original bet
-			} else if (result == 8){                                // Grand Loss
-				lostEth = betEth / 2;                     	        // -50% of original bet
-			} else if (result == 9){                                // Total Loss
-				lostEth = betEth;                                   // -100% of original bet
-			}
-			loseEth(_customerAddress, lostEth);                     // "Award" the user their loss
-            returnedEth = betEth.sub(lostEth);
-		}
-        uint256 newBal = ethBalanceOf(_customerAddress);
-        spinResult(_customerAddress, resultNum, result, betEth, returnedEth, newBal, now);
+        uint256 newBalance = getBalanceOf(customer);
+        emit spinResult(customer, resultNum, result, betAmount, returnAmount, newBalance, now);
         return resultNum;
     }
 
-    function maxRandom()
-        internal
-        returns (uint256 randomNumber)
-    {
-        _seed = uint256(keccak256(
-            abi.encodePacked(_seed,
-                blockhash(block.number - 1),
-                block.coinbase,
-                block.difficulty,
-                now)
-        ));
-        return _seed;
-    }
 
-
-    function random(uint256 upper)
-        internal
-        returns (uint256 randomNumber)
-    {
-        return maxRandom() % upper + 1;
-    }
-
-
-    function determinePrize(uint256 result)
-        internal
-        returns (uint256 resultNum)
-    {
-        // Loop until the result bracket is determined
-        for (uint8 i=0;i<=9;i++){
-            if (result <= brackets[i]){
+    function determinePrize(uint256 result) private view returns(uint256 resultNum) {
+        for (uint8 i = 0; i < 10; i++) {
+            if (result <= brackets[i]) {
                 return i;
             }
         }
     }
 
 
-    function loseEth(address _customerAddress, uint256 lostEth)
-        internal
-    {
-        uint256 customerEth = ethBalanceOf(_customerAddress);
-        // Increase amount of eth everyone else owns
-        uint256 globalIncrease = globalFactor.mul(lostEth) / betPool(_customerAddress);
-        globalFactor = globalFactor.add(globalIncrease);
-        // Update user ledgers
-        personalFactorLedger_[_customerAddress] = constantFactor / globalFactor;
-        // User can't lose more than they have
-        if (lostEth > customerEth){
-            lostEth = customerEth;
+    function goodLuck(address customer, uint256 lostAmount) private {
+        uint256 customerBalance  = getBalanceOf(customer);
+        uint256 globalIncrease   = globalFactor.mul(lostAmount) / betPool(customer);
+        globalFactor             = globalFactor.add(globalIncrease);
+        personalFactor[customer] = constantFactor / globalFactor;
+
+        if (lostAmount > customerBalance) {
+            lostAmount = customerBalance;
         }
-        balanceLedger_[_customerAddress] = customerEth.sub(lostEth);
+        personalLedger[customer] = customerBalance.sub(lostAmount);
     }
 
-
-    function winEth(address _customerAddress, uint256 wonEth)
-        internal
-    {
-        uint256 customerEth = ethBalanceOf(_customerAddress);
-        // Decrease amount of eth everyone else owns
-        uint256 globalDecrease = globalFactor.mul(wonEth) / betPool(_customerAddress);
-        globalFactor = globalFactor.sub(globalDecrease);
-        // Update user ledgers
-        personalFactorLedger_[_customerAddress] = constantFactor / globalFactor;
-        balanceLedger_[_customerAddress] = customerEth.add(wonEth);
+    function weGotAWinner(address customer, uint256 winAmount) private {
+        uint256 customerBalance  = getBalanceOf(customer);
+        uint256 globalDecrease   = globalFactor.mul(winAmount) / betPool(customer);
+        globalFactor             = globalFactor.sub(globalDecrease);
+        personalFactor[customer] = constantFactor / globalFactor;
+        personalLedger[customer] = customerBalance.add(winAmount);
     }
 }
+
+
+/**
+ * @dev Randomizer contract interface
+ */
+contract Randomizer {
+    function getRandomNumber(int256 min, int256 max) public returns(int256);
+}
+
 
 /**
  * @title SafeMath
@@ -480,7 +385,7 @@ library SafeMath {
     */
     function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
         if (a == 0) {
-          return 0;
+            return 0;
         }
         c = a * b;
         assert(c / a == b);
