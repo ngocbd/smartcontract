@@ -1,13 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CompliantToken at 0x51c6095e4cea71da663e6ab5a1678c2d6bdd897c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CompliantToken at 0xb49a3a15bc341209bdcf47b9f96e405e5cd74e5e
 */
 pragma solidity 0.4.24;
 
-
+//55555
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
- * version 8
  */
 library SafeMath {
 
@@ -18,7 +17,7 @@ library SafeMath {
     if (a == 0) {
       return 0;
     }
-    uint256 c = a * b; //alicia 2
+    uint256 c = a * b;
     assert(c / a == b);
     return c;
   }
