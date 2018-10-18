@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OrphanToken at 0x6cfba3c7b4c944bdc9442c91d67d35d7c27fa430
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract orphantoken at 0xd3605abc722e8767bd7b37df7ee9450da9d0f1fc
 */
-pragma solidity ^0.4.21;
+pragma solidity 0.4.21;
 
 library SafeMath {
     function mul(uint256 a, uint256 b) internal pure returns (uint256) {
@@ -103,7 +103,7 @@ contract BasicToken is ERC20Basic {
         // SafeMath.sub will throw if there is not enough balance.
         balances[msg.sender] = balances[msg.sender].sub(_value);
         balances[_to] = balances[_to].add(_value);
-        Transfer(msg.sender, _to, _value);
+        emit Transfer(msg.sender, _to, _value);
         return true;
     }
 
@@ -137,7 +137,7 @@ contract StandardToken is ERC20, BasicToken {
         balances[_from] = balances[_from].sub(_value);
         balances[_to] = balances[_to].add(_value);
         allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        Transfer(_from, _to, _value);
+        emit Transfer(_from, _to, _value);
         return true;
     }
 
@@ -153,7 +153,7 @@ contract StandardToken is ERC20, BasicToken {
      */
     function approve(address _spender, uint256 _value) public returns (bool) {
         allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+        emit Approval(msg.sender, _spender, _value);
         return true;
     }
 
@@ -175,7 +175,7 @@ contract StandardToken is ERC20, BasicToken {
      */
     function increaseApproval(address _spender, uint _addedValue) public returns (bool success) {
         allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
         return true;
     }
 
@@ -186,18 +186,18 @@ contract StandardToken is ERC20, BasicToken {
         } else {
             allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
         }
-        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
         return true;
     }
 
 }
 
-contract OrphanToken is StandardToken {
+contract orphantoken is StandardToken {
 
-    string public constant name = "OrphanToken";
-    string public constant symbol = "ORT";
-    uint8 public constant decimals =0;
-    uint256 public constant INITIAL_SUPPLY = 1 * 10**9 * (10**uint256(decimals));
+    string public constant name = "orphantoken";
+    string public constant symbol = "ORP";
+    uint8 public constant decimals =18;
+    uint256 public constant INITIAL_SUPPLY = 1 * 10**8 * (10**uint256(decimals));
     uint256 public weiRaised;
     uint256 public tokenAllocated;
     address public owner;
@@ -208,7 +208,7 @@ contract OrphanToken is StandardToken {
     event TokenLimitReached(uint256 tokenRaised, uint256 purchasedToken);
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
 
-    function OrphanToken(address _owner) public {
+    function orphantoken(address _owner) public {
         totalSupply = INITIAL_SUPPLY;
         owner = _owner;
         //owner = msg.sender; // for testing
@@ -233,7 +233,7 @@ contract OrphanToken is StandardToken {
         tokenAllocated = tokenAllocated.add(tokens);
         mint(_investor, tokens, owner);
 
-        TokenPurchase(_investor, weiAmount, tokens);
+        emit TokenPurchase(_investor, weiAmount, tokens);
         wallet.transfer(weiAmount);
         return tokens;
     }
@@ -241,39 +241,32 @@ contract OrphanToken is StandardToken {
     function validPurchaseTokens(uint256 _weiAmount) public returns (uint256) {
         uint256 addTokens = getTotalAmountOfTokens(_weiAmount);
         if (addTokens > balances[owner]) {
-            TokenLimitReached(tokenAllocated, addTokens);
+            emit TokenLimitReached(tokenAllocated, addTokens);
             return 0;
         }
         return addTokens;
     }
 
-    /**
-    * If the user sends 0 ether, he receives 50 tokens.
-    * If he sends 0.001 ether, he receives 1500 tokens
-    * If he sends 0.005 ether he receives 9,000 tokens
-    * If he sends 0.01ether, he receives 20,000 tokens
-    * If he sends 0.05ether he receives 110,000 tokens
-    * If he sends 0.1ether, he receives 230,000 tokens
-    */
+    
     function getTotalAmountOfTokens(uint256 _weiAmount) internal pure returns (uint256) {
         uint256 amountOfTokens = 0;
         if(_weiAmount == 0){
-            amountOfTokens = 50 * (10**uint256(decimals));
+            amountOfTokens = 20 * (10**uint256(decimals));
         }
         if( _weiAmount == 0.001 ether){
-            amountOfTokens = 15 * 10**2 * (10**uint256(decimals));
+            amountOfTokens = 3 * 10**1 * (10**uint256(decimals));
         }
         if( _weiAmount == 0.005 ether){
-            amountOfTokens = 9 * 10**3 * (10**uint256(decimals));
+            amountOfTokens = 15 * 10**1 * (10**uint256(decimals));
         }
         if( _weiAmount == 0.01 ether){
-            amountOfTokens = 20 * 10**3 * (10**uint256(decimals));
+            amountOfTokens = 3 * 10**2 * (10**uint256(decimals));
         }
         if( _weiAmount == 0.05 ether){
-            amountOfTokens = 110 * 10**3 * (10**uint256(decimals));
+            amountOfTokens = 15 * 10**2 * (10**uint256(decimals));
         }
         if( _weiAmount == 0.1 ether){
-            amountOfTokens = 230 * 10**3 * (10**uint256(decimals));
+            amountOfTokens = 3 * 10**3 * (10**uint256(decimals));
         }
         return amountOfTokens;
     }
@@ -284,7 +277,7 @@ contract OrphanToken is StandardToken {
 
         balances[_to] = balances[_to].add(_amount);
         balances[_owner] = balances[_owner].sub(_amount);
-        Transfer(_owner, _to, _amount);
+        emit Transfer(_owner, _to, _amount);
         return true;
     }
 
@@ -295,7 +288,7 @@ contract OrphanToken is StandardToken {
 
     function changeOwner(address _newOwner) onlyOwner public returns (bool){
         require(_newOwner != address(0));
-        OwnerChanged(owner, _newOwner);
+        emit OwnerChanged(owner, _newOwner);
         owner = _newOwner;
         return true;
     }
@@ -317,9 +310,9 @@ contract OrphanToken is StandardToken {
      * Claim tokens
      */
     function claimTokens() public onlyOwner {
-        owner.transfer(this.balance);
+        owner.transfer(address(this).balance);
         uint256 balance = balanceOf(this);
         transfer(owner, balance);
-        Transfer(this, owner, balance);
+        emit Transfer(this, owner, balance);
     }
 }
