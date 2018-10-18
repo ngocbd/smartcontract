@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract fathercontract at 0x2c4089c8bae4b9364d830755874c657401ea6e9d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract fathercontract at 0x91ed8fbf68653c734a6bdda57f0db76df6b197e9
 */
 pragma solidity^0.4.24;
 
@@ -25,7 +25,7 @@ contract fathercontract{
     }
     function use(uint _value) public {
         
-        value[msg.sender] = _value*1e8;
+        value[msg.sender] = _value*1e18;
         ERC20(NEO).transferFrom(msg.sender,this,value[msg.sender]);
         
         if (contr[msg.sender] == address(0)){
