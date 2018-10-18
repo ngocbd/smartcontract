@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ClubTeamLockContract at 0x3f1d2f4092b6c7e6f23b62eb7ec8febab2c8bb6a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ClubTeamLockContract at 0x7a6bd264b499172342a097135430476e546e4cce
 */
 pragma solidity ^0.4.24;
 
@@ -103,7 +103,7 @@ contract ClubTeamLockContract {
 
     uint256 public constant RELEASE_PERIODS                = 30 days;  
 
-    CLUBERC20 public clubToken = CLUBERC20(0x8c4c3ee6dae680b1ae7b6d0ede4beef8075c2139);
+    CLUBERC20 public clubToken = CLUBERC20(0x9e85c5b1a66c0bb6ce2ffb41ce0f918b19bf3c8d);
     address public beneficiary = 0x15c4DB684856A3daB3DF679653DfF9C4eB15AF1D;
 
     uint256 public numOfReleased = 0;
