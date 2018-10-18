@@ -1,95 +1,149 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Swap at 0x4bd14c9b1f4d3027b54aa8e4bcf8ad217ca5e75a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Swap at 0x1ef463b0195e163c93981eb96808ced96949c9a5
 */
-pragma solidity 0.4.24;
+pragma solidity ^0.4.18;
+
+
+
 /**
-* Token swapper contract for CLASSY tokens
-*/
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  uint8 public decimals;
 
-library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
-    }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
+  uint256 public totalSupply;
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
+    
 
-interface Token {
-
-  function balanceOf(address _owner) external constant returns (uint256 balance);
-  function transfer(address _to, uint256 _value) external returns (bool success);
-  function transferFrom(address _from, address _to, uint256 _value) external returns (bool success);
-  function approve(address _spender, uint256 _value) external returns (bool success);
-  function allowance(address _owner, address _spender) external constant returns (uint256 remaining);
-  event Transfer(address indexed _from, address indexed _to, uint256 _value);
-  event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-
-}
-
-interface ANYtoken {
-  function balanceOf(address _owner) external constant returns (uint256 balance);
-  function transfer(address _to, uint256 _value) external;
-}
-
+/**
+ * Copyright (C) 2018  Smartz, LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND (express or implied).
+ */
+ 
+/**
+ * @title SwapTokenForEther
+ * Swap tokens of participant1 for ether of participant2
+ *
+ * @author Vladimir Khramov <vladimir.khramov@smartz.io>
+ */
 contract Swap {
 
-  using SafeMath for uint;
+    address public participant1;
+    address public participant2;
 
-  Token public tokenA;
-  Token public tokenB;
+    ERC20Basic public participant1Token;
+    uint256 public participant1TokensCount;
 
-  address public admin;
+    uint256 public participant2EtherCount;
 
-  constructor() public {
+    bool public isFinished = false;
 
-    tokenA = Token(0x30CC0e266cF33B8eaC6A99cBD98E39b890cfD69b);
-    tokenB = Token(0x8Cc3B3E4F62070afb2f0Dfece7228376626c1b0C);
-    admin = 0x71bAe8D36266F6a2115aa7E18A395e4676528100;
 
-  }
+    function Swap() public payable {
 
-  function changeAdmin(address newAdmin) public returns (bool){
+        participant1 = msg.sender;
+        participant2 = 0x6422665474ff39b0cfce217587123521c56cf33d;
 
-    require(msg.sender == admin, "You are not allowed to do this");
+        participant1Token = ERC20Basic(0x6422665474fF39B0Cfce217587123521C56cF33d);
+        require(participant1Token.decimals() <= 18);
+        
+        participant1TokensCount = 1000 ether / 10**(18-uint256(participant1Token.decimals()));
 
-    admin = newAdmin;
+        participant2EtherCount = 0.001 ether;
+        
+        assert(participant1 != participant2);
+        assert(participant1Token != address(0));
+        assert(participant1TokensCount > 0);
+        assert(participant2EtherCount > 0);
+        
+        
+    }
 
-    return true;
+    /**
+     * Ether accepted
+     */
+    function () external payable {
+        require(!isFinished);
+        require(msg.sender == participant2);
 
-  }
+        if (msg.value > participant2EtherCount) {
+            msg.sender.transfer(msg.value - participant2EtherCount);
+        }
+    }
 
-  function receiveApproval(address sender, uint value, address cont, bytes data) public returns (bool) {
+    /**
+     * Swap tokens for ether
+     */
+    function swap() external {
+        require(!isFinished);
 
-    require(cont == address(tokenA),"This is not the expected caller");
+        require(this.balance >= participant2EtherCount);
 
-    require(tokenA.transferFrom(sender,address(this),value),"An error ocurred whe getting the old tokens");
+        uint256 tokensBalance = participant1Token.balanceOf(this);
+        require(tokensBalance >= participant1TokensCount);
 
-    uint toTransfer = value.mul(1e2); //Decimals correction
-    require(tokenB.transfer(sender,toTransfer), "Not enough tokens on contract to swap");
+        isFinished = true;
+        
+        
+        //check transfer
+        uint token1Participant2InitialBalance = participant1Token.balanceOf(participant2);
+    
 
-    return true;
+        require(participant1Token.transfer(participant2, participant1TokensCount));
+        if (tokensBalance > participant1TokensCount) {
+            require(
+                participant1Token.transfer(participant1, tokensBalance - participant1TokensCount)
+            );
+        }
 
-  }
+        participant1.transfer(this.balance);
+        
+        
+        //check transfer
+        assert(participant1Token.balanceOf(participant2) >= token1Participant2InitialBalance+participant1TokensCount);
+    
+    }
 
-  function tokenRecovery(address token) public returns (bool) {
+    /**
+     * Refund tokens or ether by participants
+     */
+    function refund() external {
+        if (msg.sender == participant1) {
+            uint256 tokensBalance = participant1Token.balanceOf(this);
+            require(tokensBalance>0);
 
-    require(msg.sender == admin, "You are not allowed to do this");
+            participant1Token.transfer(participant1, tokensBalance);
+        } else if (msg.sender == participant2) {
+            require(this.balance > 0);
+            participant2.transfer(this.balance);
+        } else {
+            revert();
+        }
+    }
+    
 
-    ANYtoken toGet = ANYtoken(token);
+    /**
+     * Tokens count sent by participant #1
+     */
+    function participant1SentTokensCount() public view returns (uint256) {
+        return participant1Token.balanceOf(this);
+    }
 
-    uint balance = toGet.balanceOf(address(this));
-
-    toGet.transfer(msg.sender,balance);
-
-    return true;
-
-  }
-
+    /**
+     * Ether count sent by participant #2
+     */
+    function participant2SentEtherCount() public view returns (uint256) {
+        return this.balance;
+    }
 }
