@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheremonWorldNFT at 0x9ce8b0ebbf4f5b27dd184c80afbc44d77780ff14
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheremonWorldNFT at 0x5f480ca354304aae88d7dd66cd4735c59d543af0
 */
 pragma solidity ^0.4.23;
 
@@ -167,7 +167,8 @@ contract EtheremonWorldNFT is BasicAccessControl {
         uint seed = getRandom(_trainer, block.number-1, objId);
         // generate base stat for the previous one
         for (uint i=0; i < STAT_COUNT; i+= 1) {
-            value = uint8((seed * (i + 1)) % STAT_MAX) + data.getElementInArrayType(EtheremonEnum.ArrayType.STAT_START, uint64(_classId), i);
+            seed /= 100;
+            value = uint8(seed % STAT_MAX) + data.getElementInArrayType(EtheremonEnum.ArrayType.STAT_START, uint64(_classId), i);
             data.addElementToArrayType(EtheremonEnum.ArrayType.STAT_BASE, objId, value);
         }
         
@@ -234,7 +235,8 @@ contract EtheremonWorldNFT is BasicAccessControl {
         uint seed = getRandom(msg.sender, block.number-1, objId);
         // generate base stat for the previous one
         for (uint i=0; i < STAT_COUNT; i+= 1) {
-            value = uint8((seed * (i + 1)) % STAT_MAX) + data.getElementInArrayType(EtheremonEnum.ArrayType.STAT_START, uint64(_classId), i);
+            seed /= 100;
+            value = uint8(seed % STAT_MAX) + data.getElementInArrayType(EtheremonEnum.ArrayType.STAT_START, uint64(_classId), i);
             data.addElementToArrayType(EtheremonEnum.ArrayType.STAT_BASE, objId, value);
         }
         
@@ -276,7 +278,8 @@ contract EtheremonWorldNFT is BasicAccessControl {
         uint seed = getRandom(_player, block.number-1, objId);
         // generate base stat for the previous one
         for (uint i=0; i < STAT_COUNT; i+= 1) {
-            value = uint8((seed * (i + 1)) % STAT_MAX) + data.getElementInArrayType(EtheremonEnum.ArrayType.STAT_START, uint64(_classId), i);
+            seed /= 100;
+            value = uint8(seed % STAT_MAX) + data.getElementInArrayType(EtheremonEnum.ArrayType.STAT_START, uint64(_classId), i);
             data.addElementToArrayType(EtheremonEnum.ArrayType.STAT_BASE, objId, value);
         }
         
