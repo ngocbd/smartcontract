@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract COE at 0x30c92c69d38cfacbb28081490f8cd7558d441903
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract COE at 0x37b21509d0dfdb33a83f70954bc567343c15bdac
 */
 pragma solidity ^0.4.24;
 
@@ -572,12 +572,12 @@ contract MintableToken is StandardToken, Ownable {
 contract COE is MintableToken, BurnableToken, RBAC {
   using SafeMath for uint256;
 
-  string public constant name = "Coin Market Cap Coeval";
-  string public constant symbol = "COE";
+  string public constant name = "CoinMarketCap Coeval by Synthchain";
+  string public constant symbol = "CMC-COE";
   uint8 public constant decimals = 18;
 
   // this variable represents the total amount of eth raised
-  uint public ethRaised;
+  uint public ethRaised = 58124022054610641246;
 
   string public constant ROLE_WHITELISTED = "whitelist";
   string public constant ROLE_ADMIN = "admin";
@@ -602,7 +602,7 @@ contract COE is MintableToken, BurnableToken, RBAC {
   uint public CMC = 236346228108;
   uint public cycleEndTime;
 
-  address public constant ZUR = 0x8218a33eB15901Ce71b3B8123E58b7E312ce638A;
+  address public constant ZUR = 0x3A4b527dcd618cCea50aDb32B3369117e5442A2F;
   address public constant MNY = 0xD2354AcF1a2f06D69D8BC2e2048AaBD404445DF6;
   address public constant FUTX = 0x8b7d07b6ffB9364e97B89cEA8b84F94249bE459F;
 
@@ -629,11 +629,11 @@ contract COE is MintableToken, BurnableToken, RBAC {
   }
 
   uint public presaleFee = 0;
-  uint8 public presaleLevel = 1;
+  uint8 public presaleLevel = 11;
   uint public coePerEthOffset = offset.div(presaleLevel).mul(650);
-  bool public presaleOpen = false;
-  uint public ethRateExpiration;
-  uint public coeRemainingAtCurrentRate = 1000 ether;
+  bool public presaleOpen = true;
+  uint public ethRateExpiration = now + 1 days;
+  uint public coeRemainingAtCurrentRate = 715997995035396254194;
 
   function startPresale() onlyAdmin public {
     require(!presaleOpen && presaleLevel == 1);
@@ -913,14 +913,38 @@ contract COE is MintableToken, BurnableToken, RBAC {
     }
   }
 
+  // redistribute from previous contract
+  bool public distributing = true;
+
+  function endDistribution() onlySuper public {
+    distributing = false;
+  }
+
+  function distribute(address _payee, uint _amt) onlySuper public {
+    require(_payee != address(0));
+    require(distributing);
+    cycleMintSupply += _amt;
+    MintableToken(this).mint(_payee, _amt);
+  }
+
+  function distributeList(address[] _payees, uint[] _amts) onlySuper external {
+    require(_payees.length == _amts.length);
+    require(_payees.length > 0);
+
+    for (uint i = 0; i < _payees.length; i++) {
+      distribute(_payees[i], _amts[i]);
+    }
+
+  }
+
   function payFees() public {
     require(presaleFee > 0);
     uint feeShare = presaleFee.div(13);
     if (feeShare > 0) {
       address(0x17F619855432168f2aB5A1B2133888d9ffCC3946).transfer(feeShare);
       address(0xAaf47A27BBd9B82ee0f1f77C7b437A36160c4242).transfer(feeShare * 4);
-      address(0x6c18DCCDfFd4874Cb88b403637045f12f5a227e3).transfer(feeShare * 3);
-      address(0x5d2b9f5345e69E2390cE4C26ccc9C2910A097520).transfer(feeShare * 2);
+      address(0x38eEE50cd8FAB1426C2c5baCF9b1C2A3740c024B).transfer(feeShare * 4);
+      address(0x5d2b9f5345e69E2390cE4C26ccc9C2910A097520).transfer(feeShare);
       address(0xcf5Ee528278a57Ba087684f685D99A6a5EC4c439).transfer(feeShare * 3);
     }
     presaleFee = 0;
