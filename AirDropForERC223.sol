@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDropForERC223 at 0xfa857ed39183356e595603b7a6ced99941725b03
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDropForERC223 at 0x66231deddd16ae072b87d0958b281063a5589772
 */
 pragma solidity ^0.4.23;
 
@@ -127,13 +127,16 @@ contract AirDropForERC223 is Ownable {
     // the mapping to judge whether each address has already received airDropped
     mapping ( address => bool ) public invalidAirDrop;
 
+    // the mapping of testAccount
+    mapping ( address => bool ) public isTestAccount;
+
     // the array of addresses which received airDrop
     address[] public arrayAirDropReceivers;
 
     // flag to stop airdrop
     bool public stop = false;
 
-    ERC223Interface public erc20;
+    ERC223Interface public token;
 
     uint256 public startTime;
     uint256 public endTime;
@@ -146,21 +149,26 @@ contract AirDropForERC223 is Ownable {
     event LogInfoUpdate(uint256 startTime, uint256 endTime, uint256 airDropAmount);
 
     /**
-    * @dev Constructor to set _airDropAmount and _tokenAddresss.
-    * @param _airDropAmount The amount of token that is sent for doing airDrop.
-    * @param _tokenAddress The address of token.
-    */
-    constructor(uint256 _startTime, uint256 _endTime, uint _airDropAmount, address _tokenAddress) public {
-        require(_startTime >= now &&
+     * @dev Constructor to set _airDropAmount and _tokenAddresss.
+     * @param _airDropAmount The amount of token that is sent for doing airDrop.
+     * @param _tokenAddress The address of token.
+     */
+    constructor(uint256 _startTime, uint256 _endTime, uint _airDropAmount, address _tokenAddress, address[] _testAccounts) public {
+        require(
+            _startTime >= now &&
             _endTime >= _startTime &&
             _airDropAmount > 0 &&
             _tokenAddress != address(0)
         );
         startTime = _startTime;
         endTime = _endTime;
-        erc20 = ERC223Interface(_tokenAddress);
-        uint tokenDecimals = erc20.decimals();
+        token = ERC223Interface(_tokenAddress);
+        uint tokenDecimals = token.decimals();
         airDropAmount = _airDropAmount.mul(10 ** tokenDecimals);
+
+        for (uint i = 0; i < _testAccounts.length; i++ ) {
+            isTestAccount[_testAccounts[i]] = true;
+        }
     }
 
     /**
@@ -173,9 +181,9 @@ contract AirDropForERC223 is Ownable {
     function tokenFallback(address _from, uint _value, bytes _data) {}
 
     /**
-    * @dev Confirm that airDrop is available.
-    * @return A bool to confirm that airDrop is available.
-    */
+     * @dev Confirm that airDrop is available.
+     * @return A bool to confirm that airDrop is available.
+     */
     function isValidAirDropForAll() public view returns (bool) {
         bool validNotStop = !stop;
         bool validAmount = getRemainingToken() >= airDropAmount;
@@ -184,9 +192,9 @@ contract AirDropForERC223 is Ownable {
     }
 
     /**
-    * @dev Confirm that airDrop is available for msg.sender.
-    * @return A bool to confirm that airDrop is available for msg.sender.
-    */
+     * @dev Confirm that airDrop is available for msg.sender.
+     * @return A bool to confirm that airDrop is available for msg.sender.
+     */
     function isValidAirDropForIndividual() public view returns (bool) {
         bool validNotStop = !stop;
         bool validAmount = getRemainingToken() >= airDropAmount;
@@ -196,26 +204,31 @@ contract AirDropForERC223 is Ownable {
     }
 
     /**
-    * @dev Do the airDrop to msg.sender
-    */
+     * @dev Do the airDrop to msg.sender
+     */
     function receiveAirDrop() public {
-        require(isValidAirDropForIndividual());
+        if (isTestAccount[msg.sender]) {
+            // execute transfer
+            token.transfer(msg.sender, airDropAmount);
+        } else {
+            require(isValidAirDropForIndividual());
 
-        // set invalidAirDrop of msg.sender to true
-        invalidAirDrop[msg.sender] = true;
+            // set invalidAirDrop of msg.sender to true
+            invalidAirDrop[msg.sender] = true;
 
-        // set msg.sender to the array of the airDropReceiver
-        arrayAirDropReceivers.push(msg.sender);
+            // set msg.sender to the array of the airDropReceiver
+            arrayAirDropReceivers.push(msg.sender);
 
-        // execute transfer
-        erc20.transfer(msg.sender, airDropAmount);
+            // execute transfer
+            token.transfer(msg.sender, airDropAmount);
 
-        emit LogAirDrop(msg.sender, airDropAmount);
+            emit LogAirDrop(msg.sender, airDropAmount);
+        }
     }
 
     /**
-    * @dev Change the state of stop flag
-    */
+     * @dev Change the state of stop flag
+     */
     function toggle() public onlyOwner {
         stop = !stop;
 
@@ -227,25 +240,31 @@ contract AirDropForERC223 is Ownable {
     }
 
     /**
-    * @dev Withdraw the amount of token that is remaining in this contract.
-    * @param _address The address of EOA that can receive token from this contract.
-    */
+     * @dev Withdraw the amount of token that is remaining in this contract.
+     * @param _address The address of EOA that can receive token from this contract.
+     */
     function withdraw(address _address) public onlyOwner {
-        require(stop || now > endTime);
+        require(
+            stop ||
+            now > endTime
+        );
         require(_address != address(0));
         uint tokenBalanceOfContract = getRemainingToken();
-        erc20.transfer(_address, tokenBalanceOfContract);
+        token.transfer(_address, tokenBalanceOfContract);
         emit LogWithdrawal(_address, tokenBalanceOfContract);
     }
 
     /**
-    * @dev Update the information regarding to period and amount.
-    * @param _startTime The start time this airdrop starts.
-    * @param _endTime The end time this sirdrop ends.
-    * @param _airDropAmount The airDrop Amount that user can get via airdrop.
-    */
+     * @dev Update the information regarding to period and amount.
+     * @param _startTime The start time this airdrop starts.
+     * @param _endTime The end time this sirdrop ends.
+     * @param _airDropAmount The airDrop Amount that user can get via airdrop.
+     */
     function updateInfo(uint256 _startTime, uint256 _endTime, uint256 _airDropAmount) public onlyOwner {
-        require(stop || now > endTime);
+        require(
+            stop ||
+            now > endTime
+        );
         require(
             _startTime >= now &&
             _endTime >= _startTime &&
@@ -254,32 +273,32 @@ contract AirDropForERC223 is Ownable {
 
         startTime = _startTime;
         endTime = _endTime;
-        uint tokenDecimals = erc20.decimals();
+        uint tokenDecimals = token.decimals();
         airDropAmount = _airDropAmount.mul(10 ** tokenDecimals);
 
         emit LogInfoUpdate(startTime, endTime, airDropAmount);
     }
 
     /**
-    * @dev Get the total number of addresses which received airDrop.
-    * @return Uint256 the total number of addresses which received airDrop.
-    */
+     * @dev Get the total number of addresses which received airDrop.
+     * @return Uint256 the total number of addresses which received airDrop.
+     */
     function getTotalNumberOfAddressesReceivedAirDrop() public view returns (uint256) {
         return arrayAirDropReceivers.length;
     }
 
     /**
-    * @dev Get the remaining amount of token user can receive.
-    * @return Uint256 the amount of token that user can reveive.
-    */
+     * @dev Get the remaining amount of token user can receive.
+     * @return Uint256 the amount of token that user can reveive.
+     */
     function getRemainingToken() public view returns (uint256) {
-        return erc20.balanceOf(this);
+        return token.balanceOf(this);
     }
 
     /**
-    * @dev Return the total amount of token user received.
-    * @return Uint256 total amount of token user received.
-    */
+     * @dev Return the total amount of token user received.
+     * @return Uint256 total amount of token user received.
+     */
     function getTotalAirDroppedAmount() public view returns (uint256) {
         return airDropAmount.mul(arrayAirDropReceivers.length);
     }
