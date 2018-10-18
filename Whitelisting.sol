@@ -1,7 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Whitelisting at 0xa28412f4ff5a2b69c06e3fce407c3938caaea5be
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Whitelisting at 0x771c7777e0bb507c51137fbe91fb56df23425266
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.24;
+
 
 /**
  * @title Ownable
@@ -19,7 +20,7 @@ contract Ownable {
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() public {
+  constructor() public {
     owner = msg.sender;
   }
 
@@ -37,7 +38,7 @@ contract Ownable {
    */
   function transferOwnership(address newOwner) public onlyOwner {
     require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
+    emit OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
 
@@ -52,25 +53,25 @@ contract Whitelisting is Ownable {
 
     function approveInvestor(address toApprove) public onlyOwner {
         isInvestorApproved[toApprove] = true;
-        Approved(toApprove);
+        emit Approved(toApprove);
     }
 
     function approveInvestorsInBulk(address[] toApprove) public onlyOwner {
         for (uint i=0; i<toApprove.length; i++) {
             isInvestorApproved[toApprove[i]] = true;
-            Approved(toApprove[i]);
+            emit Approved(toApprove[i]);
         }
     }
 
     function disapproveInvestor(address toDisapprove) public onlyOwner {
         delete isInvestorApproved[toDisapprove];
-        Disapproved(toDisapprove);
+        emit Disapproved(toDisapprove);
     }
 
     function disapproveInvestorsInBulk(address[] toDisapprove) public onlyOwner {
         for (uint i=0; i<toDisapprove.length; i++) {
             delete isInvestorApproved[toDisapprove[i]];
-            Disapproved(toDisapprove[i]);
+            emit Disapproved(toDisapprove[i]);
         }
     }
 }
