@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoBossWannaCry at 0xeafd8b734e32aec64c4b445e9da401427ef63a3a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoBossWannaCry at 0x54e96d609b183196de657fc7380032a96f27f384
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.25;
 
 library SafeMath {
 
@@ -97,7 +97,7 @@ contract CryptoBossWannaCry is PullPayment{
 	address public administrator;
     uint256 public bossRoundNumber;
     uint256 private randNonce;
-    uint256 constant public BOSS_HP_DEFAULT = 100000; 
+    uint256 public BOSS_HP_DEFAULT = 10000000; 
     uint256 public HALF_TIME_ATK_BOSS = 0;
     // engineer game infomation
     uint256 constant public VIRUS_MINING_PERIOD = 86400; 
@@ -198,6 +198,14 @@ contract CryptoBossWannaCry is PullPayment{
     {
         BOSS_DEF_DEFFAULT = _value;  
     }
+    /**
+    * @dev set HP for boss
+    * @param _value number HP default
+    */
+    function setBossHPDefault(uint256 _value) public isAdministrator
+    {
+        BOSS_HP_DEFAULT = _value;  
+    }
     function setHalfTimeAtkBoss(uint256 _value) public isAdministrator
     {
         HALF_TIME_ATK_BOSS = _value;  
@@ -248,7 +256,7 @@ contract CryptoBossWannaCry is PullPayment{
         if (_value > currentVirus) { revert(); }
         EngineerContract.subVirus(msg.sender, _value);
         
-        uint256 rate = 50 + randomNumber(msg.sender, 100); // 50 -150%
+        uint256 rate = 50 + randomNumber(msg.sender, 60); // 50 - 110%
         
         uint256 atk = SafeMath.div(SafeMath.mul(_value, rate), 100);
         
