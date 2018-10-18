@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSeller at 0x0318b6ed6eab2770aeb936fea505e0866c4fc22c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSeller at 0xf1e7c45181fd876b2722bbfa5a44fa41ff5a9269
 */
 pragma solidity ^0.4.24;
 
@@ -266,6 +266,11 @@ contract CanReclaimToken is Ownable {
 
 // File: contracts/registry/MultiChanger.sol
 
+contract IEtherToken is ERC20 {
+    function deposit() public payable;
+    function withdraw(uint256 _amount) public;
+}
+
 contract IBancorNetwork {
     function convert(
         address[] _path,
@@ -372,6 +377,17 @@ contract MultiChanger is CanReclaimToken {
         uint256 amount = _fromToken.balanceOf(this).mul(_mul).div(_div);
         _fromToken.transfer(_target, amount);
         require(_target.call(_data));
+    }
+
+    // Ether token
+
+    function withdrawEtherTokenAmount(IEtherToken _etherToken, uint256 _amount) external {
+        _etherToken.withdraw(_amount);
+    }
+
+    function withdrawEtherTokenProportion(IEtherToken _etherToken, uint256 _mul, uint256 _div) external {
+        uint256 amount = _etherToken.balanceOf(this).mul(_mul).div(_div);
+        _etherToken.withdraw(amount);
     }
 
     // Bancor Network
