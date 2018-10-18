@@ -1,16 +1,22 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract test at 0x896350cc0e416727262b339e307e4ef62078a4c3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract test at 0x146ae435d023516de94aa17586c17d35b998a9b8
 */
-contract test {
+pragma solidity^0.4.24;
 
-        uint _multiplier;
 
-        constructor (uint multiplier) public {
-             _multiplier = multiplier;
-        }
-
-        function multiply(uint a) public view returns(uint d)  
-        {
-             return a * _multiplier;
-        }
+contract test{
+    address owner;
+    
+    constructor() public {
+        owner = msg.sender;
     }
+    
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+    
+    function kill() public onlyOwner {
+        uint b = address(this).balance;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         selfdestruct(owner);
+    } 
+}
