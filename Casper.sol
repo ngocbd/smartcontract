@@ -1,155 +1,230 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Casper at 0x9195c0345c5c6b88e71e5d3693ca9f5c2ca3b335
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Casper at 0x1d41e18e8ed1ef148547ceade01912e638f464b8
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.22;
 
-contract Privileges {
-    // A person who owns the contract
-    address public owner;
-    // A person who can update the CENT price
-    address public trusted;
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
 
-    function Privileges() public payable {
-        owner = msg.sender;
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a / b;
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+contract ForeignToken {
+    function balanceOf(address _owner) constant public returns (uint256);
+    function transfer(address _to, uint256 _value) public returns (bool);
+}
+
+contract ERC20Basic {
+    uint256 public totalSupply;
+    function balanceOf(address who) public constant returns (uint256);
+    function transfer(address to, uint256 value) public returns (bool);
+    event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+contract ERC20 is ERC20Basic {
+    function allowance(address owner, address spender) public constant returns (uint256);
+    function transferFrom(address from, address to, uint256 value) public returns (bool);
+    function approve(address spender, uint256 value) public returns (bool);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+interface Token { 
+    function distr(address _to, uint256 _value) external returns (bool);
+    function totalSupply() constant external returns (uint256 supply);
+    function balanceOf(address _owner) constant external returns (uint256 balance);
+}
+
+contract Casper is ERC20 {
+
+ 
+    
+    using SafeMath for uint256;
+    address owner = msg.sender;
+
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
+    mapping (address => bool) public blacklist;
+
+    string public constant name = "Casper";
+    string public constant symbol = "CPR";
+    uint public constant decimals = 18;
+    
+uint256 public totalSupply = 30000000000e18;
+    
+uint256 public totalDistributed = 15000000000e18;
+    
+uint256 public totalRemaining = totalSupply.sub(totalDistributed);
+    
+uint256 public value = 150000e18;
+
+
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    
+    event Distr(address indexed to, uint256 amount);
+    event DistrFinished();
+    
+    event Burn(address indexed burner, uint256 value);
+
+    bool public distributionFinished = false;
+    
+    modifier canDistr() {
+        require(!distributionFinished);
+        _;
     }
-
-    function setTrusted(address addr) onlyOwner public {
-        trusted = addr;
-    }
-
-    function setNewOwner(address newOwner) onlyOwner public {
-        owner = newOwner;
-    }
-
-    modifier onlyOwner {
+    
+    modifier onlyOwner() {
         require(msg.sender == owner);
         _;
     }
-
-    modifier onlyTrusted {
-        require(msg.sender == trusted || msg.sender == owner);
+    
+    modifier onlyWhitelist() {
+        require(blacklist[msg.sender] == false);
         _;
     }
-}
-
-contract SafeMath {
-    function safeAdd(uint x, uint y) internal pure returns (uint) {
-        uint256 z = x + y;
-        assert((z >= x) && (z >= y));
-        return z;
+    
+    function Casper() public {
+        owner = msg.sender;
+        balances[owner] = totalDistributed;
     }
-
-    function safeSub(uint x, uint y) internal pure returns (uint) {
-        assert(x >= y);
-        uint256 z = x - y;
-        return z;
-    }
-
-    function safeMul(uint x, uint y) internal pure returns (uint) {
-        uint256 z = x * y;
-        assert((x == 0)||(z/x == y));
-        return z;
-    }
-
-    function safeDiv(uint a, uint b) internal pure returns (uint) {
-        uint c = a / b;
-        return c;
-    }
-}
-
-contract Presale {
-
-    uint numberOfPurchasers = 0;
-
-    mapping (uint => address) presaleAddresses;
-    mapping (address => uint) tokensToSend;
-
-    function Presale() public {
-        addPurchaser(0x41c8f018d10f500d231f723017389da5FF9F45F2, 191625 * ((1 ether / 1 wei) / 10));      
-    }
-
-    function addPurchaser(address addr, uint tokens) private {
-        presaleAddresses[numberOfPurchasers] = addr;
-        tokensToSend[addr] = tokens;
-        numberOfPurchasers++;
-    }
-
-}
-
-contract Casper is SafeMath, Privileges, Presale {    
-
-    string public constant NAME = "Casper Pre-ICO Token";
-    string public constant SYMBOL = "CSPT";
-    uint public constant DECIMALS = 18;
-
-    uint public constant MIN_PRICE = 750; // 600USD per Ether
-    uint public constant MAX_PRICE = 1250; // 1000USD per Ether
-    uint public price = 1040;  // 832USD per Ehter
-    uint public totalSupply = 0;
-
-    // PreICO hard cap
-    uint public constant TOKEN_SUPPLY_LIMIT = 1300000 * (1 ether / 1 wei); // 1 300 000 CSPT
-
-    // PreICO timings
-    uint public beginTime;
-    uint public endTime;
-
-    uint public index = 0;
-
-    bool sendPresale = true;
-
-    mapping (address => uint) balances;
-    mapping (uint => address) participants;
-
-
-    function Casper() Privileges() public {
-        beginTime = now;
-        endTime = now + 2 weeks;
-    }
-
-    function() payable public {
-        require (now < endTime);
-        require (totalSupply < TOKEN_SUPPLY_LIMIT);
-        uint newTokens = msg.value * price;
-        if (newTokens + totalSupply <= TOKEN_SUPPLY_LIMIT) {
-            balances[msg.sender] = safeAdd(balances[msg.sender], newTokens);
-            totalSupply = safeAdd(totalSupply, newTokens);    
-        } else {
-            uint tokens = safeSub(TOKEN_SUPPLY_LIMIT, totalSupply); 
-            balances[msg.sender] = safeAdd(balances[msg.sender], tokens);
-            totalSupply = TOKEN_SUPPLY_LIMIT;
+    
+    function transferOwnership(address newOwner) onlyOwner public {
+        if (newOwner != address(0)) {
+            owner = newOwner;
         }
-        addParicipant(msg.sender);
     }
-
-    function balanceOf(address addr) public constant returns (uint) {
-        return balances[addr];
+    
+    function finishDistribution() onlyOwner canDistr public returns (bool) {
+        distributionFinished = true;
+        emit DistrFinished();
+        return true;
     }
-
-    function setPrice(uint newPrice) onlyTrusted public {
-        require (newPrice > MIN_PRICE && newPrice < MAX_PRICE);
-        price = newPrice;
-    }
-
-    function sendPresaleTokens() onlyOwner public {
-        require(sendPresale);
-        for (uint i = 0; i < numberOfPurchasers; i++) {
-            address addr = presaleAddresses[i];
-            uint tokens = tokensToSend[addr];
-            balances[addr] = tokens;
-            totalSupply = safeAdd(totalSupply, tokens);  
+    
+    function distr(address _to, uint256 _amount) canDistr private returns (bool) {
+        totalDistributed = totalDistributed.add(_amount);
+        totalRemaining = totalRemaining.sub(_amount);
+        balances[_to] = balances[_to].add(_amount);
+        emit Distr(_to, _amount);
+        emit Transfer(address(0), _to, _amount);
+        return true;
+        
+        if (totalDistributed >= totalSupply) {
+            distributionFinished = true;
         }
-        index = safeAdd(index, numberOfPurchasers);
-        sendPresale = false;
+    }
+    
+    function () external payable {
+        getTokens();
+     }
+    
+    function getTokens() payable canDistr onlyWhitelist public {
+        if (value > totalRemaining) {
+            value = totalRemaining;
+        }
+        
+        require(value <= totalRemaining);
+        
+        address investor = msg.sender;
+        uint256 toGive = value;
+        
+        distr(investor, toGive);
+        
+        if (toGive > 0) {
+            blacklist[investor] = true;
+        }
+
+        if (totalDistributed >= totalSupply) {
+            distributionFinished = true;
+        }
+        
+        value = value.div(100000).mul(99999);
     }
 
-    function withdrawEther(uint eth) onlyOwner public {
-        owner.transfer(eth);
+    function balanceOf(address _owner) constant public returns (uint256) {
+        return balances[_owner];
     }
 
-    function addParicipant(address addr) private {
-        participants[index] = addr;
-        index++;
+    modifier onlyPayloadSize(uint size) {
+        assert(msg.data.length >= size + 4);
+        _;
     }
+    
+    function transfer(address _to, uint256 _amount) onlyPayloadSize(2 * 32) public returns (bool success) {
+        require(_to != address(0));
+        require(_amount <= balances[msg.sender]);
+        
+        balances[msg.sender] = balances[msg.sender].sub(_amount);
+        balances[_to] = balances[_to].add(_amount);
+        emit Transfer(msg.sender, _to, _amount);
+        return true;
+    }
+    
+    function transferFrom(address _from, address _to, uint256 _amount) onlyPayloadSize(3 * 32) public returns (bool success) {
+        require(_to != address(0));
+        require(_amount <= balances[_from]);
+        require(_amount <= allowed[_from][msg.sender]);
+        
+        balances[_from] = balances[_from].sub(_amount);
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_amount);
+        balances[_to] = balances[_to].add(_amount);
+        emit Transfer(_from, _to, _amount);
+        return true;
+    }
+    
+    function approve(address _spender, uint256 _value) public returns (bool success) {
+        if (_value != 0 && allowed[msg.sender][_spender] != 0) { return false; }
+        allowed[msg.sender][_spender] = _value;
+        emit Approval(msg.sender, _spender, _value);
+        return true;
+    }
+    
+    function allowance(address _owner, address _spender) constant public returns (uint256) {
+        return allowed[_owner][_spender];
+    }
+    
+    function getTokenBalance(address tokenAddress, address who) constant public returns (uint){
+        ForeignToken t = ForeignToken(tokenAddress);
+        uint bal = t.balanceOf(who);
+        return bal;
+    }
+    
+    function withdraw() onlyOwner public {
+        uint256 etherBalance = address(this).balance;
+        owner.transfer(etherBalance);
+    }
+    
+    function burn(uint256 _value) onlyOwner public {
+        require(_value <= balances[msg.sender]);
 
+        address burner = msg.sender;
+        balances[burner] = balances[burner].sub(_value);
+        totalSupply = totalSupply.sub(_value);
+        totalDistributed = totalDistributed.sub(_value);
+        emit Burn(burner, _value);
+    }
+    
+    function withdrawForeignTokens(address _tokenContract) onlyOwner public returns (bool) {
+        ForeignToken token = ForeignToken(_tokenContract);
+        uint256 amount = token.balanceOf(address(this));
+        return token.transfer(owner, amount);
+    }
 }
