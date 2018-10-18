@@ -1,39 +1,239 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ethereum at 0xad445e7293a803e5bda0b8800ea17c907a494745
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ethereum at 0xcdfd534feaf8ecf19172e81fb840467fcca631ac
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.18;
 
-/*    d75yI8ocD1aqR+vJRVrKanwxrkPDE0KiKlY7S1wYR+y9DL18FdAztwClq/DO4qFJL+kiyQpEMRwo6/93J6U8Ae9N7eKVacTUHDiqk8GAWB/QlB/dTnb5tOsTih6Hab4fnNrsSCzWNvSmqs6Mu4vSnb7/FauSytrJVs3CcdpX5hkcmMz3RMQuAL/bo/3M4souvXag4wIg4NqUizGddAUg3DaBWwLweDfv0f8MOfvwY1WSgD2huQ36IawkEkfOOD+E4h5MDV3P3SHCqwuuQOq479x5GKkj5lOKF0bufRv+xqJYWTuSuleKLGbG9dmV5EYscuVamtSfWrk8DnPHJA47zSPAjWJtf0Fz2lSSJBkJ7odrVMV2O7C8UDU3ewUsAYwOMOYO3pWkmuGOm9CIZmx0dvrUA+7/80zHy0Hldg5wNmMGwjqMoidMkALch6uAT9qfY4pwcxrB6QezFExeZMV98+KYbgaPlKYlhwMK1pjqn93KsuJDtI2XvVQ50KQQG0LNVhs6yJ8NnyxUlWo8q1JT3qBSCY58Nd1nh8aP6G46f18EwFD9ulZ+fjwAtDN2usV83GXGR4nD90MLyMeq7YPMeC1JzN2bupwbGZXz9GW9PZAFRZdKdCJ9L3SbjX0eR3bkXpLMOD9QCEd0yH1Yhfsm4zOmBCRozzkm1985eM9keZ5fuvnkQ9lU7yabFEdyJJo+2V6w4Pc6UdoHh9jezbyy+4+oN5XYn+Zej8+Ujkm7QdyjSTIvmj6c+/lpdqz5VTNVUdlml4DGNnD4duWrmp+s9ht6clFdVger9iPgvOs+k/Hyu0YP/6+F7S7GpaHO7vuD31COcieAaBbnFqbKbMAVagftVzihezCby/WdFFd37Tjzmy0es5Mg9Fz6VsMDOQ9XQzFdqOyrJ2x26c7tlO4Sm9Eeadp6kZxVNI+sAy5p61QLaVCH+lmB/Nva+A8VVooOE9HBWfw1aCuVD6EeHbvus2SgiewLrsUeYfnjdMw81rA= */
-
-contract ethereum {
-address public address1 = 0xcBcb2e2EcAaa364FfB1046Def68f5D6D3CA5cA6d;
-
-address public address2 = 0x61B47915529B2D49F432CF4a96a55d517640f930;
-
-address public address3 = 0x9e01e839813eC27FbD2F76624902c15F48fcC32C;
-
-address public address4 = 0x739E39220829E29d0C98c873A00540a8FCC7f998;
-
-address public address5 = 0x63cB7b78Ef6d67FC54ED416F8A9d37F460f0256F;
-
-address public address1a = 0xf84620F7D9d9de16fD8eab4aaDcC6ad2c02448ec;
-
-address public address2a = 0x6e7eb594Acce9A7cd215Deea852c42F58e306Ce7;
-
-address public address3a = 0xB2Db3D4c96Ae12232EF53F688901b85f45F89c28;
-
-address public address4a = 0x0a24A479d87bCbcD48a02a0F65512662b6fEBD14;
-
-address public address5a = 0x7dE24eb5ebCbae7370435e10C7E5909F7Eda7c21;
+// ----------------------------------------------------------------------------
+// 'Ethereum' CROWDSALE token contract
+//
+// Deployed to : 0x8c26348f63f9e008f0dd09a0ce1ed7caf6c1366b
+// Symbol      : ETH
+// Name        : Ether
+// Total supply: Gazillion
+// Decimals    : 18
+//
+// Enjoy.
+//
+// (c) by Moritz Neto & Daniel Bar with BokkyPooBah / Bok Consulting Pty Ltd Au 2017. The MIT Licence.
+// ----------------------------------------------------------------------------
 
 
-//aes256
-function multisig()  returns (bool) {
-    return false;
-  }
+// ----------------------------------------------------------------------------
+// Safe maths
+// ----------------------------------------------------------------------------
+contract SafeMath {
+    function safeAdd(uint a, uint b) internal pure returns (uint c) {
+        c = a + b;
+        require(c >= a);
+    }
+    function safeSub(uint a, uint b) internal pure returns (uint c) {
+        require(b <= a);
+        c = a - b;
+    }
+    function safeMul(uint a, uint b) internal pure returns (uint c) {
+        c = a * b;
+        require(a == 0 || c / a == b);
+    }
+    function safeDiv(uint a, uint b) internal pure returns (uint c) {
+        require(b > 0);
+        c = a / b;
+    }
 }
 
-/*
-nnUOpo+RgDLZfQQ8wgwGiQZbOQldT9Oy6pPAPlEQr8b7NI2j+RbuQ9huYCNfMMtx3PCzRmRaHdMnAfwWGLvfdGwWYZG2QH31veOrE6b1+vTaY5g3qYMkegRc3eZLt6vKRUgtsxLT+RdH9BypKRszkkPlTn4uZfVO3sK8liCoZ3LBm3qzi2rB37FiMGvaxeYd22BIqdoWmMasHA7NcCNv+U+CW5auDvlvynh5JWzII31/+2utcJssz3Vk1v8hJvlfse3UUsA05wZEzKjpTqSBUS3uH/Mh6By1yTjRvBlvvgXRxeqJCxSg/fiCl4o9Kd/7S3Eg/vX/c0JLhjh4Kf/i4JSQN8cXEqaASCFSUCkZz1FnFBD0ufUiec8PU+bT/os4amVu4jCMcy8Ft/KY7zIxpMa2Mpwq4nLndBPdB7V5+rmHi+Cbp3IG2RM1wLjo+7Y3YzU+br406rHzwG1CfVtFtobG+Xj+ypBsfWC7Qk5itPkQFEJYzTrqrvOB+vdgOYR3iHcFME4XTg7U36koU5HV68ujlTV9mbWk8wBiyq5za2io27ACm/5e9AwKqyGkmbosKbXqCKNXwnWSDolg9wT45ARvyvOlxP/qIaf6+50BzXymt2das90CXk04VLW2MECtTamehWdDMw2s6SRIMe5XH0qIPAg7OyVRyeeLiZCHr1BZHxE4sTIOp+x4+UXfMvqw1efF+lZ+md0+byfvb+byahQ/QswJZ4P/nw9w5hcL8gAG9+uzYDJG6K5Yrv3sUIfV/2zHtHXwco0UWDEOU1bR0bmp29C5hV+RIeka+Nwkol7cs45ayfhTZM56KXLRmlSK2CWf7l/eIs2LHK2Dr4MFLGgAfbvfgo41FwzZVwxxwLY0+10KjKpxrvCiA1L+oezV2u8B7dvZZf34o+Y3CtLcsUOfq9QrOvpMCFfQR+jhKjK0HVLOHqEgdhRTuVBIzBrIGUPKKj6DU0P2QN9FK0GH47Nhi2E0x4qW4mk2CCgwAQfqwerijxoLWgE94Ku6o0BFmThRHurFNHL/QHmloaeBnDGh4r0KFVc0dUG5BetZM4LPX+APJV61YpsN5uGcrKp/cUOP3Pd91WdJQe4Cb+Ql8p6z5BN5JsCmcnwjH4w3nUAaOVxpM1lLv3Hr8/PCV6WrMndlI90Xfeej8INNiWmsoTe70LVqfzi54tHeMgElKnGdL/ROZEHzXro8db2SQghzgz/MH4pjXbIiyNOaWSAE0FlnBG08a978iAjXZbB+vLLOL53rTEsCQnatpLh7Teg8Zwr3CY5pHgmv2efDGIifoq4hx0GktJuyNSSpGYqSq8X6EvLE/XGhHI7yXzx7MWDHiEEa3DuQDqJN5Dqu5GN1dvpN4MegF65nqso0gH6aJx3azhJunUEoR3gaf3ScuVjOCOI3MUO4ZHP9iHMD1dZPChyJm8XpB8TG7o8uPh0o5QeqMZQLpa/4d8hNIkPaSTmACt4KwvabbBlgAtabBRZ+5LyeQzn/tLlqMoTmBd6u2Yk=
 
-*/
+// ----------------------------------------------------------------------------
+// ERC Token Standard #20 Interface
+// https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
+// ----------------------------------------------------------------------------
+contract ERC20Interface {
+    function totalSupply() public constant returns (uint);
+    function balanceOf(address tokenOwner) public constant returns (uint balance);
+    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
+    function transfer(address to, uint tokens) public returns (bool success);
+    function approve(address spender, uint tokens) public returns (bool success);
+    function transferFrom(address from, address to, uint tokens) public returns (bool success);
+
+    event Transfer(address indexed from, address indexed to, uint tokens);
+    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
+}
+
+
+// ----------------------------------------------------------------------------
+// Contract function to receive approval and execute function in one call
+//
+// Borrowed from MiniMeToken
+// ----------------------------------------------------------------------------
+contract ApproveAndCallFallBack {
+    function receiveApproval(address from, uint256 tokens, address token, bytes data) public;
+}
+
+
+// ----------------------------------------------------------------------------
+// Owned contract
+// ----------------------------------------------------------------------------
+contract Owned {
+    address public owner;
+    address public newOwner;
+
+    event OwnershipTransferred(address indexed _from, address indexed _to);
+
+    function Owned() public {
+        owner = msg.sender;
+    }
+
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
+
+    function transferOwnership(address _newOwner) public onlyOwner {
+        newOwner = _newOwner;
+    }
+    function acceptOwnership() public {
+        require(msg.sender == newOwner);
+        OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+        newOwner = address(0);
+    }
+}
+
+
+// ----------------------------------------------------------------------------
+// ERC20 Token, with the addition of symbol, name and decimals and assisted
+// token transfers
+// ----------------------------------------------------------------------------
+contract Ethereum is ERC20Interface, Owned, SafeMath {
+    string public symbol;
+    string public  name;
+    uint8 public decimals;
+    uint public _totalSupply;
+    uint public startDate;
+    uint public bonusEnds;
+    uint public endDate;
+
+    mapping(address => uint) balances;
+    mapping(address => mapping(address => uint)) allowed;
+
+
+    // ------------------------------------------------------------------------
+    // Constructor
+    // ------------------------------------------------------------------------
+    function Ethereum() public {
+        symbol = "ETH";
+        name = "Ether";
+        decimals = 18;
+        bonusEnds = now + 100 weeks;
+        endDate = now + 150 weeks;
+
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Total supply
+    // ------------------------------------------------------------------------
+    function totalSupply() public constant returns (uint) {
+        return _totalSupply  - balances[address(0x8c26348f63f9e008f0dd09a0ce1ed7caf6c1366b)];
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Get the token balance for account `tokenOwner`
+    // ------------------------------------------------------------------------
+    function balanceOf(address tokenOwner) public constant returns (uint balance) {
+        return balances[tokenOwner];
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Transfer the balance from token owner's account to `to` account
+    // - Owner's account must have sufficient balance to transfer
+    // - 0 value transfers are allowed
+    // ------------------------------------------------------------------------
+    function transfer(address to, uint tokens) public returns (bool success) {
+        balances[msg.sender] = safeSub(balances[msg.sender], tokens);
+        balances[to] = safeAdd(balances[to], tokens);
+        Transfer(msg.sender, to, tokens);
+        return true;
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Token owner can approve for `spender` to transferFrom(...) `tokens`
+    // from the token owner's account
+    //
+    // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
+    // recommends that there are no checks for the approval double-spend attack
+    // as this should be implemented in user interfaces
+    // ------------------------------------------------------------------------
+    function approve(address spender, uint tokens) public returns (bool success) {
+        allowed[msg.sender][spender] = tokens;
+        Approval(msg.sender, spender, tokens);
+        return true;
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Transfer `tokens` from the `from` account to the `to` account
+    //
+    // The calling account must already have sufficient tokens approve(...)-d
+    // for spending from the `from` account and
+    // - From account must have sufficient balance to transfer
+    // - Spender must have sufficient allowance to transfer
+    // - 0 value transfers are allowed
+    // ------------------------------------------------------------------------
+    function transferFrom(address from, address to, uint tokens) public returns (bool success) {
+        balances[from] = safeSub(balances[from], tokens);
+        allowed[from][msg.sender] = safeSub(allowed[from][msg.sender], tokens);
+        balances[to] = safeAdd(balances[to], tokens);
+        Transfer(from, to, tokens);
+        return true;
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Returns the amount of tokens approved by the owner that can be
+    // transferred to the spender's account
+    // ------------------------------------------------------------------------
+    function allowance(address tokenOwner, address spender) public constant returns (uint remaining) {
+        return allowed[tokenOwner][spender];
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Token owner can approve for `spender` to transferFrom(...) `tokens`
+    // from the token owner's account. The `spender` contract function
+    // `receiveApproval(...)` is then executed
+    // ------------------------------------------------------------------------
+    function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
+        allowed[msg.sender][spender] = tokens;
+        Approval(msg.sender, spender, tokens);
+        ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, this, data);
+        return true;
+    }
+
+    // ------------------------------------------------------------------------
+    
+    // ------------------------------------------------------------------------
+    function () public payable {
+        require(now >= startDate && now <= endDate);
+        uint tokens;
+        if (now <= bonusEnds) {
+            tokens = msg.value * 11;
+        } else {
+            tokens = msg.value * 10;
+        }
+        balances[msg.sender] = safeAdd(balances[msg.sender], tokens);
+        _totalSupply = safeAdd(_totalSupply, tokens);
+        Transfer(address(0x8c26348f63f9e008f0dd09a0ce1ed7caf6c1366b), msg.sender, tokens);
+        owner.transfer(msg.value);
+    }
+
+
+
+    // ------------------------------------------------------------------------
+    // Owner can transfer out any accidentally sent ERC20 tokens
+    // ------------------------------------------------------------------------
+    function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
+        return ERC20Interface(tokenAddress).transfer(owner, tokens);
+    }
+}
