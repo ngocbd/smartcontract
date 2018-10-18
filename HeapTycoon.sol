@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HeapTycoon at 0xa6ccae00f6d23ef5fab79dd8438e79fc42aead9f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HeapTycoon at 0x37ba8c2a3d44dfc78bfdde70c52b64a7ddd31575
 */
 pragma solidity ^0.4.24;
 
@@ -159,9 +159,9 @@ contract HeapTycoon is Ownable
 	mapping(bytes32 => bool) used_names;
 
 
-	constructor() public
+	constructor(address addr) public
 	{
-		master = msg.sender;
+		master = addr;
 
 		used_names[bytes32(0)] = true;
 	}
@@ -249,7 +249,7 @@ contract HeapTycoon is Ownable
 
 		for(uint8 i = 0; i < 10; i++)
 		{
-			hash = keccak256(abi.encodePacked(uint256(blockhash(i)) + uint256(msg.sender) + uint256(heaps.length)));
+			hash = keccak256(abi.encodePacked(uint256(blockhash(block.number - (i + 1))) + uint256(msg.sender) + uint256(heaps.length)));
 			index = uint256(hash) % heaps[id].players.length;
 			res = heaps[id].players[index].send(val);
 		}
