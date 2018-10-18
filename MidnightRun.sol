@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MidnightRun at 0xfa9eaf022f8d501a3d4bd4c5f8cb034cd333c2d5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MidnightRun at 0x5be16ecccc08d227807ed4ef83fb7390fb702d24
 */
 pragma solidity ^0.4.24;
 
@@ -84,10 +84,10 @@ contract MidnightRun is Ownable {
   event MidnightRunPayout(address indexed _address, uint value, uint totalValue, uint userValue, uint time);
 
   uint public period = 24 hours;
-  uint public startTime = 1538002800; //  Tue, 26 Sep 2018 23:00:00 +0000 UTC
+  uint public startTime = 1538089200; //  TH, 27 Sep 2018 23:00:00 +0000 UTC
 
-  uint public dailyDividendPercent = 400; //4%
-  uint public referredDividendPercent = 430; //4.3%
+  uint public dailyDividendPercent = 3000; //30%
+  uint public referredDividendPercent = 3300; //33%
 
   uint public referrerPercent = 250; //2.5%
   uint public minBetLevel = 0.01 ether;
