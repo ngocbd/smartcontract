@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSwap at 0x24Dc2Aa132aFAD8f8984cA23cAf6a27A3e1Bc803
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSwap at 0xe9d7645eb8f8138f409935141828affd151148fc
 */
 pragma solidity ^0.4.24;
 
@@ -390,33 +390,45 @@ contract ERC20 is ERC20Basic {
   );
 }
 
-// File: zeppelin-solidity/contracts/token/ERC20/SafeERC20.sol
+// File: contracts/BadERC20Aware.sol
 
-/**
- * @title SafeERC20
- * @dev Wrappers around ERC20 operations that throw on failure.
- * To use this library you can add a `using SafeERC20 for ERC20;` statement to your contract,
- * which allows you to call the safe operations as `token.safeTransfer(...)`, etc.
- */
-library SafeERC20 {
-  function safeTransfer(ERC20Basic token, address to, uint256 value) internal {
-    require(token.transfer(to, value));
-  }
+library BadERC20Aware {
+    using SafeMath for uint;
 
-  function safeTransferFrom(
-    ERC20 token,
-    address from,
-    address to,
-    uint256 value
-  )
-    internal
-  {
-    require(token.transferFrom(from, to, value));
-  }
+    function isContract(address addr) internal view returns(bool result) {
+        // solium-disable-next-line security/no-inline-assembly
+        assembly {
+            result := gt(extcodesize(addr), 0)
+        }
+    }
 
-  function safeApprove(ERC20 token, address spender, uint256 value) internal {
-    require(token.approve(spender, value));
-  }
+    function handleReturnBool() internal pure returns(bool result) {
+        // solium-disable-next-line security/no-inline-assembly
+        assembly {
+            switch returndatasize()
+            case 0 { // not a std erc20
+                result := 1
+            }
+            case 32 { // std erc20
+                returndatacopy(0, 0, 32)
+                result := mload(0)
+            }
+            default { // anything else, should revert for safety
+                revert(0, 0)
+            }
+        }
+    }
+
+    function asmTransfer(ERC20 _token, address _to, uint256 _value) internal returns(bool) {
+        require(isContract(_token));
+        // solium-disable-next-line security/no-low-level-calls
+        require(address(_token).call(bytes4(keccak256("transfer(address,uint256)")), _to, _value));
+        return handleReturnBool();
+    }
+
+    function safeTransfer(ERC20 _token, address _to, uint256 _value) internal {
+        require(asmTransfer(_token, _to, _value));
+    }
 }
 
 // File: contracts/TokenSwap.sol
@@ -437,7 +449,7 @@ contract TokenSwap is Ownable, Multiownable {
 
     // LIBRARIES
 
-    using SafeERC20 for ERC20;
+    using BadERC20Aware for ERC20;
     using SafeMath for uint256;
 
     // TYPES
@@ -574,9 +586,9 @@ contract TokenSwap is Ownable, Multiownable {
         uint256 _tokensFee,
         uint256 _tokensTotal
     )
-    external
-    onlyOwner
-    canAddParty
+        external
+        onlyOwner
+        canAddParty
     {
         require(_participant != address(0), "_participant is invalid address");
         require(_token != address(0), "_token is invalid address");
@@ -706,13 +718,16 @@ contract TokenSwap is Ownable, Multiownable {
         SwapOffer storage offer = offerByToken[token];
         uint256 currentBalance = offer.token.balanceOf(address(this));
         uint256 availableForReclaim = currentBalance
-        .sub(offer.tokensTotal.sub(offer.withdrawnTokensTotal));
+            .sub(offer.tokensTotal.sub(offer.withdrawnTokensTotal));
 
         if (status == Status.SwapCanceled) {
             availableForReclaim = currentBalance;
         }
 
-        offer.token.safeTransfer(offer.participant, availableForReclaim);
+        if (availableForReclaim > 0) {
+            offer.token.safeTransfer(offer.participant, availableForReclaim);
+        }
+
         emit Reclaim(offer.participant, offer.token, availableForReclaim);
     }
 
@@ -722,7 +737,11 @@ contract TokenSwap is Ownable, Multiownable {
      */
     function _initializeLockupStages() internal {
         _addLockupStage(LockupStage(0, 10));
-        _addLockupStage(LockupStage(10 minutes, 100));
+        _addLockupStage(LockupStage(60 days, 20));
+        _addLockupStage(LockupStage(90 days, 40));
+        _addLockupStage(LockupStage(120 days, 60));
+        _addLockupStage(LockupStage(150 days, 80));
+        _addLockupStage(LockupStage(180 days, 100));
     }
 
     /**
