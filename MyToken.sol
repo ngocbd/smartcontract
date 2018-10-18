@@ -1,552 +1,330 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0x1ce799a159ae1cfc6225da8d3f9b232c42ee9bf2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0x16387c3badd26856954e77a0161b776a7ad37a2d
 */
 pragma solidity ^0.4.18;
 
-// ----------------------------------------------------------------------------
-// Safe maths
-// ----------------------------------------------------------------------------
-contract SafeMath {
-    function safeAdd(uint a, uint b) internal pure returns (uint c) {
-        c = a + b;
-        require(c >= a);
-    }
-    function safeSub(uint a, uint b) internal pure returns (uint c) {
-        require(b <= a);
-        c = a - b;
-    }
-    function safeMul(uint a, uint b) internal pure returns (uint c) {
-        c = a * b;
-        require(a == 0 || c / a == b);
-    }
-    function safeDiv(uint a, uint b) internal pure returns (uint c) {
-        require(b > 0);
-        c = a / b;
-    }
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
 
-// ----------------------------------------------------------------------------
-// ERC Token Standard #20 Interface
-// https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
-// ----------------------------------------------------------------------------
-contract ERC20Interface {
-    function totalSupply() public constant returns (uint);
-    function balanceOf(address tokenOwner) public constant returns (uint balance);
-    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
-    function transfer(address to, uint tokens) public returns (bool success);
-    function approve(address spender, uint tokens) public returns (bool success);
-    function transferFrom(address from, address to, uint tokens) public returns (bool success);
-
-    event Transfer(address indexed from, address indexed to, uint tokens);
-    event TransferSell(address indexed from, uint tokens, uint eth);
-    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
-}
-
-
-// ----------------------------------------------------------------------------
-// Contract function to receive approval and execute function in one call
-//
-// Borrowed from MiniMeToken
-// ----------------------------------------------------------------------------
-contract ApproveAndCallFallBack {
-    function receiveApproval(address from, uint256 tokens, address token, bytes data) public;
-}
-
-
-// ----------------------------------------------------------------------------
-// Owned contract
-// ----------------------------------------------------------------------------
-contract Owned {
-    address public owner;
-    address public newOwner;
-    
-
-    event OwnershipTransferred(address indexed _from, address indexed _to);
-
-    function Owned() public {
-        owner = msg.sender;
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
     }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
 
-    modifier onlyOwner {
-        require(msg.sender == owner);
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
+ */
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint256;
+
+  mapping(address => uint256) balances;
+
+  uint256 totalSupply_;
+
+  /**
+  * @dev total number of tokens in existence
+  */
+  function totalSupply() public view returns (uint256) {
+    return totalSupply_;
+  }
+
+  /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[msg.sender]);
+
+    // SafeMath.sub will throw if there is not enough balance.
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
+
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) public view returns (uint256 balance) {
+    return balances[_owner];
+  }
+
+}
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
+contract StandardToken is ERC20, BasicToken {
+
+  mapping (address => mapping (address => uint256)) internal allowed;
+
+
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amount of tokens to be transferred
+   */
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
+
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
+
+  /**
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   *
+   * Beware that changing an allowance with this method brings the risk that someone may use both the old
+   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) public returns (bool) {
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
+   */
+  function allowance(address _owner, address _spender) public view returns (uint256) {
+    return allowed[_owner][_spender];
+  }
+
+  /**
+   * @dev Increase the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _addedValue The amount of tokens to increase the allowance by.
+   */
+  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  /**
+   * @dev Decrease the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To decrement
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _subtractedValue The amount of tokens to decrease the allowance by.
+   */
+  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    }
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+}
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+contract Freezable is Ownable {
+
+    mapping(address => bool) public frozenAccounts;
+
+    event Frozen(address indexed account, bool isFrozen);
+
+    modifier isNotFrozen () {
+        require(!frozenAccounts[msg.sender]);
         _;
     }
 
-    function transferOwnership(address _newOwner) public onlyOwner {
-        newOwner = _newOwner;
-        owner = newOwner;
+    function freezeAccount(address _addr, bool freeze) public onlyOwner {
+        require(freeze != isFrozen(_addr));
+        frozenAccounts[_addr] = freeze;
+        Frozen(_addr, freeze);
     }
-    // function acceptOwnership() public {
-    //     require(msg.sender == newOwner);
-    //     OwnershipTransferred(owner, newOwner);
-    //     owner = newOwner;
-    //     newOwner = address(0);
-    // }
+
+    function freezeAccounts(address[] _addrs, bool freeze) public onlyOwner {
+        for (uint i = 0; i < _addrs.length; i++) {
+            address _addr = _addrs[i];
+            require(freeze != isFrozen(_addr));
+            frozenAccounts[_addr] = freeze;
+            Frozen(_addr, freeze);
+        }
+    }
+
+    function isFrozen(address _addr) public view returns (bool) {
+        return frozenAccounts[_addr];
+    }
+
 }
 
-
-// ----------------------------------------------------------------------------
-// ERC20 Token, with the addition of symbol, name and decimals
-// Receives ETH and generates tokens
-// ----------------------------------------------------------------------------
-contract MyToken is ERC20Interface, Owned, SafeMath {
-    string public symbol;
+contract MyToken is StandardToken, Freezable {
+    /**
+* Public variables of the token
+* The following variables are OPTIONAL vanities. One does not have to include them.
+* They allow one to customise the token contract & in no way influences the core functionality.
+* Some wallets/interfaces might not even bother to look at this information.
+*/
     string public name;
     uint8 public decimals;
-    uint public totalSupply;
-    uint public sellRate;
-    uint public buyRate;
-    uint public startTime;
-    uint public endTime;
-    
-    address[] admins;
-    
-    struct lockPosition{
-        uint time;
-        uint count;
-        uint releaseRate;
-        uint lockTime;
-    }
-    
-    struct lockPosition1{
-        uint8 typ; // 1 2 3 4
-        uint count;
-        uint time1;
-        uint8 releaseRate1;
-        uint time2;
-        uint8 releaseRate2;
-        uint time3;
-        uint8 releaseRate3;
-        uint time4;
-        uint8 releaseRate4;
-    }
-    
-    
-    mapping(address => lockPosition) private lposition;
-    mapping(address => lockPosition1) public lposition1;
-    
-    // locked account dictionary that maps addresses to boolean
-    mapping (address => bool) public lockedAccounts;
-    mapping (address => bool) public isAdmin;
+    string public symbol;
 
-    mapping(address => uint) balances;
-    mapping(address => mapping(address => uint)) allowed;
-    
-    modifier is_not_locked(address _address) {
-        if (lockedAccounts[_address] == true) revert();
-        _;
-    }
-    
-    modifier validate_address(address _address) {
-        if (_address == address(0)) revert();
-        _;
-    }
-    
-    modifier is_admin {
-        if (isAdmin[msg.sender] != true && msg.sender != owner) revert();
-        _;
-    }
-    
-    modifier validate_position(address _address,uint count) {
-        if(count <= 0) revert();
-        if(balances[_address] < count) revert();
-        if(lposition[_address].count > 0 && safeSub(balances[_address],count) < lposition[_address].count && now < lposition[_address].time) revert();
-        if(lposition1[_address].count > 0 && safeSub(balances[_address],count) < lposition1[_address].count && now < lposition1[_address].time1) revert();
-        checkPosition1(_address,count);
-        checkPosition(_address,count);
-        _;
-    }
-    
-    function checkPosition(address _address,uint count) private view {
-        if(lposition[_address].releaseRate < 100 && lposition[_address].count > 0){
-            uint _rate = safeDiv(100,lposition[_address].releaseRate);
-            uint _time = lposition[_address].time;
-            uint _tmpRate = lposition[_address].releaseRate;
-            uint _tmpRateAll = 0;
-            uint _count = 0;
-            for(uint _a=1;_a<=_rate;_a++){
-                if(now >= _time){
-                    _count = _a;
-                    _tmpRateAll = safeAdd(_tmpRateAll,_tmpRate);
-                    _time = safeAdd(_time,lposition[_address].lockTime);
-                }
-            }
-            uint _tmp1 = safeSub(balances[_address],count);
-            uint _tmp2 = safeSub(lposition[_address].count,safeDiv(lposition[_address].count*_tmpRateAll,100));
-            if(_count < _rate && _tmp1 < _tmp2  && now >= lposition[_address].time) revert();
-        }
-    }
-    
-    function checkPosition1(address _address,uint count) private view {
-        if(lposition1[_address].releaseRate1 < 100 && lposition1[_address].count > 0){
-            uint _tmpRateAll = 0;
-            
-            if(lposition1[_address].typ == 2 && now < lposition1[_address].time2){
-                if(now >= lposition1[_address].time1){
-                    _tmpRateAll = lposition1[_address].releaseRate1;
-                }
-            }
-            
-            if(lposition1[_address].typ == 3 && now < lposition1[_address].time3){
-                if(now >= lposition1[_address].time1){
-                    _tmpRateAll = lposition1[_address].releaseRate1;
-                }
-                if(now >= lposition1[_address].time2){
-                    _tmpRateAll = safeAdd(lposition1[_address].releaseRate2,_tmpRateAll);
-                }
-            }
-            
-            if(lposition1[_address].typ == 4 && now < lposition1[_address].time4){
-                if(now >= lposition1[_address].time1){
-                    _tmpRateAll = lposition1[_address].releaseRate1;
-                }
-                if(now >= lposition1[_address].time2){
-                    _tmpRateAll = safeAdd(lposition1[_address].releaseRate2,_tmpRateAll);
-                }
-                if(now >= lposition1[_address].time3){
-                    _tmpRateAll = safeAdd(lposition1[_address].releaseRate3,_tmpRateAll);
-                }
-            }
-            
-            uint _tmp1 = safeSub(balances[_address],count);
-            uint _tmp2 = safeSub(lposition1[_address].count,safeDiv(lposition1[_address].count*_tmpRateAll,100));
-            
-            if(_tmpRateAll > 0){
-                if(_tmp1 < _tmp2) revert();
-            }
-        }
-    }
-    
-    event _lockAccount(address _add);
-    event _unlockAccount(address _add);
-    
-    function () public payable{
-        uint tokens;
-        require(owner != msg.sender);
-        require(now >= startTime && now < endTime);
-        require(buyRate > 0);
-        require(msg.value >= 0.1 ether && msg.value <= 1000 ether);
-        
-        tokens = safeDiv(msg.value,(1 ether * 1 wei / buyRate));
-        require(balances[owner] >= tokens * 10**uint(decimals));
-        balances[msg.sender] = safeAdd(balances[msg.sender], tokens * 10**uint(decimals));
-        balances[owner] = safeSub(balances[owner], tokens * 10**uint(decimals));
-        Transfer(owner,msg.sender,tokens * 10**uint(decimals));
-    }
-
-    // ------------------------------------------------------------------------
-    // Constructor
-    // ------------------------------------------------------------------------
-    function MyToken(uint _sellRate,uint _buyRate,string _symbo1,string _name,uint _startTime,uint _endTime) public payable {
-        require(_sellRate >0 && _buyRate > 0);
-        require(_startTime < _endTime);
-        symbol = _symbo1;
+    /**
+     * @dev Function to check the amount of tokens that an owner allowed to a spender.
+     * @param _totalSupply total supply of the token.
+     * @param _name token name
+     * @param _symbol token symbol
+     * @param _decimals amount of decimals.
+     */
+    function MyToken(uint256 _totalSupply, string _name, string _symbol, uint8 _decimals) public {
+        balances[msg.sender] = _totalSupply;
+        // Give the creator all initial tokens
+        totalSupply_ = _totalSupply;
         name = _name;
-        decimals = 8;
-        totalSupply = 2000000000 * 10**uint(decimals);
-        balances[owner] = totalSupply;
-        Transfer(address(0), owner, totalSupply);
-        sellRate = _sellRate;
-        buyRate = _buyRate;
-        endTime = _endTime;
-        startTime = _startTime;
-    }
-
-
-    // ------------------------------------------------------------------------
-    // Total supply
-    // ------------------------------------------------------------------------
-    function totalSupply() public constant returns (uint) {
-        return totalSupply  - balances[address(0)];
-    }
-
-
-    // ------------------------------------------------------------------------
-    // Get the token balance for account `tokenOwner`
-    // ------------------------------------------------------------------------
-    function balanceOf(address tokenOwner) public constant returns (uint balance) {
-        return balances[tokenOwner];
-    }
-
-
-    // ------------------------------------------------------------------------
-    // Transfer the balance from token owner's account to `to` account
-    // - Owner's account must have sufficient balance to transfer
-    // - 0 value transfers are allowed
-    // ------------------------------------------------------------------------
-    function transfer(address to, uint tokens) public is_not_locked(msg.sender) validate_position(msg.sender,tokens) returns (bool success) {
-        require(to != msg.sender);
-        require(tokens > 0);
-        require(balances[msg.sender] >= tokens);
-        balances[msg.sender] = safeSub(balances[msg.sender], tokens);
-        balances[to] = safeAdd(balances[to], tokens);
-        Transfer(msg.sender, to, tokens);
-        return true;
-    }
-
-
-    // ------------------------------------------------------------------------
-    // Token owner can approve for `spender` to transferFrom(...) `tokens`
-    // from the token owner's account
-    //
-    // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
-    // recommends that there are no checks for the approval double-spend attack
-    // as this should be implemented in user interfaces 
-    // ------------------------------------------------------------------------
-    function approve(address spender, uint tokens) public is_not_locked(msg.sender) is_not_locked(spender) validate_position(msg.sender,tokens) returns (bool success) {
-        require(spender != msg.sender);
-        require(tokens > 0);
-        require(balances[msg.sender] >= tokens);
-        allowed[msg.sender][spender] = tokens;
-        Approval(msg.sender, spender, tokens);
-        return true;
-    }
-
-
-    // ------------------------------------------------------------------------
-    // Transfer `tokens` from the `from` account to the `to` account
-    // 
-    // The calling account must already have sufficient tokens approve(...)-d
-    // for spending from the `from` account and
-    // - From account must have sufficient balance to transfer
-    // - Spender must have sufficient allowance to transfer
-    // - 0 value transfers are allowed
-    // ------------------------------------------------------------------------
-    function transferFrom(address from, address to, uint tokens) public is_not_locked(msg.sender) is_not_locked(from) validate_position(from,tokens) returns (bool success) {
-        require(transferFromCheck(from,to,tokens));
-        return true;
-    }
-    
-    function transferFromCheck(address from,address to,uint tokens) private returns (bool success) {
-        require(tokens > 0);
-        require(from != msg.sender && msg.sender != to && from != to);
-        require(balances[from] >= tokens && allowed[from][msg.sender] >= tokens);
-        balances[from] = safeSub(balances[from], tokens);
-        allowed[from][msg.sender] = safeSub(allowed[from][msg.sender], tokens);
-        balances[to] = safeAdd(balances[to], tokens);
-        Transfer(from, to, tokens);
-        return true;
-    }
-
-
-    // ------------------------------------------------------------------------
-    // Returns the amount of tokens approved by the owner that can be
-    // transferred to the spender's account
-    // ------------------------------------------------------------------------
-    function allowance(address tokenOwner, address spender) public constant returns (uint remaining) {
-        return allowed[tokenOwner][spender];
-    }
-
-
-    // ------------------------------------------------------------------------
-    // Token owner can approve for `spender` to transferFrom(...) `tokens`
-    // from the token owner's account. The `spender` contract function
-    // `receiveApproval(...)` is then executed
-    // ------------------------------------------------------------------------
-    function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
-        allowed[msg.sender][spender] = tokens;
-        Approval(msg.sender, spender, tokens);
-        ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, this, data);
-        return true;
-    }
-    
-
-    // ------------------------------------------------------------------------
-    // Sall a token from a contract
-    // ------------------------------------------------------------------------
-    function sellCoin(address seller, uint amount) public onlyOwner is_not_locked(seller) validate_position(seller,amount* 10**uint(decimals)) {
-        require(balances[seller] >= safeMul(amount,10**uint(decimals)));
-        require(sellRate > 0);
-        require(seller != msg.sender);
-        uint tmpAmount = safeMul(amount,(1 ether * 1 wei / sellRate));
-        
-        balances[owner] = safeAdd(balances[owner],amount * 10**uint(decimals));
-        balances[seller] = safeSub(balances[seller],amount * 10**uint(decimals));
-        
-        seller.transfer(tmpAmount);
-        TransferSell(seller, amount * 10**uint(decimals), tmpAmount);
-    }
-    
-    // set rate
-    function setConfig(uint _buyRate,uint _sellRate,string _symbol,string _name,uint _startTime,uint _endTime) public onlyOwner {
-        require((_buyRate == 0 && _sellRate == 0) || (_buyRate < _sellRate && _buyRate > 0 && _sellRate > 0) || (_buyRate < sellRate && _buyRate > 0 && _sellRate == 0) || (buyRate < _sellRate && _buyRate == 0 && _sellRate > 0));
-        
-        if(_buyRate > 0){
-            buyRate = _buyRate;
-        }
-        if(sellRate > 0){
-            sellRate = _sellRate;
-        }
-        if(_startTime > 0){
-            startTime = _startTime;
-        }
-        if(_endTime > 0){
-            endTime = _endTime;
-        }
+        decimals = _decimals;
         symbol = _symbol;
-        name = _name;
     }
-    
-    // lockAccount
-    function lockStatus(address _add,bool _success) public validate_address(_add) is_admin {
-        lockedAccounts[_add] = _success;
-        _lockAccount(_add);
+
+    /**
+    * Freezable
+    */
+    function transfer(address _to, uint256 _value) public isNotFrozen returns (bool) {
+        require(!isFrozen(_to));
+        // Call StandardToken.transfer()
+        return super.transfer(_to, _value);
     }
-    
-    // setIsAdmin
-    function setIsAdmin(address _add,bool _success) public validate_address(_add) onlyOwner {
-        isAdmin[_add] = _success;
-        if(_success == true){
-            admins[admins.length++] = _add;
-        }else{
-            for (uint256 i;i < admins.length;i++){
-                if(admins[i] == _add){
-                    delete admins[i];
-                }
-            }
-        }
+
+    function transferFrom(address _from, address _to, uint256 _value) public isNotFrozen returns (bool) {
+        require(!isFrozen(_from));
+        require(!isFrozen(_to));
+        // Call StandardToken.transferForm()
+        return super.transferFrom(_from, _to, _value);
     }
-    
-    // ------------------------------------------------------------------------
-    // Owner can transfer out any accidentally sent ERC20 tokens
-    // ------------------------------------------------------------------------
-    function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
-        return ERC20Interface(tokenAddress).transfer(owner, tokens);
-    }
-    
-    //set lock position
-    function setLockPostion(address _add,uint _count,uint _time,uint _releaseRate,uint _lockTime) public is_not_locked(_add) onlyOwner {
-        require(lposition1[_add].count == 0);
-        require(balances[_add] >= safeMul(_count,10**uint(decimals)));
-        require(_time > now);
-        require(_count > 0 && _lockTime > 0);
-        require(_releaseRate > 0 && _releaseRate < 100);
-        require(_releaseRate == 2 || _releaseRate == 4 || _releaseRate == 5 || _releaseRate == 10 || _releaseRate == 20 || _releaseRate == 25 || _releaseRate == 50);
-        lposition[_add].time = _time;
-        lposition[_add].count = _count * 10**uint(decimals);
-        lposition[_add].releaseRate = _releaseRate;
-        lposition[_add].lockTime = _lockTime;
-    }
-    
-    //get lockPosition info
-    function getLockPosition(address _add) public view returns(uint time,uint count,uint rate,uint scount,uint _lockTime) {
-        return (lposition[_add].time,lposition[_add].count,lposition[_add].releaseRate,positionScount(_add),lposition[_add].lockTime);
-    }
-    
-    function positionScount(address _add) private view returns (uint count){
-        uint _rate = safeDiv(100,lposition[_add].releaseRate);
-        uint _time = lposition[_add].time;
-        uint _tmpRate = lposition[_add].releaseRate;
-        uint _tmpRateAll = 0;
-        for(uint _a=1;_a<=_rate;_a++){
-            if(now >= _time){
-                _tmpRateAll = safeAdd(_tmpRateAll,_tmpRate);
-                _time = safeAdd(_time,lposition[_add].lockTime);
-            }
-        }
-        
-        return (lposition[_add].count - safeDiv(lposition[_add].count*_tmpRateAll,100));
-    }
-    
-    
-    //set lock position
-    function setLockPostion1(address _add,uint _count,uint8 _typ,uint _time1,uint8 _releaseRate1,uint _time2,uint8 _releaseRate2,uint _time3,uint8 _releaseRate3,uint _time4,uint8 _releaseRate4) public is_not_locked(_add) onlyOwner {
-        require(_count > 0);
-        require(_time1 > now);
-        require(_releaseRate1 > 0);
-        require(_typ >= 1 && _typ <= 4);
-        require(balances[_add] >= safeMul(_count,10**uint(decimals)));
-        require(safeAdd(safeAdd(_releaseRate1,_releaseRate2),safeAdd(_releaseRate3,_releaseRate4)) == 100);
-        require(lposition[_add].count == 0);
-        
-        if(_typ == 1){
-            require(_time2 == 0 && _releaseRate2 == 0 && _time3 == 0 && _releaseRate3 == 0 && _releaseRate4 == 0 && _time4 == 0);
-        }
-        if(_typ == 2){
-            require(_time2 > _time1 && _releaseRate2 > 0 && _time3 == 0 && _releaseRate3 == 0 && _releaseRate4 == 0 && _time4 == 0);
-        }
-        if(_typ == 3){
-            require(_time2 > _time1 && _releaseRate2 > 0 && _time3 > _time2 && _releaseRate3 > 0 && _releaseRate4 == 0 && _time4 == 0);
-        }
-        if(_typ == 4){
-            require(_time2 > _time1 && _releaseRate2 > 0 && _releaseRate3 > 0 && _time3 > _time2 && _time4 > _time3 && _releaseRate4 > 0);
-        }
-        lockPostion1Add(_typ,_add,_count,_time1,_releaseRate1,_time2,_releaseRate2,_time3,_releaseRate3,_time4,_releaseRate4);
-    }
-    
-    function lockPostion1Add(uint8 _typ,address _add,uint _count,uint _time1,uint8 _releaseRate1,uint _time2,uint8 _releaseRate2,uint _time3,uint8 _releaseRate3,uint _time4,uint8 _releaseRate4) private {
-        lposition1[_add].typ = _typ;
-        lposition1[_add].count = _count * 10**uint(decimals);
-        lposition1[_add].time1 = _time1;
-        lposition1[_add].releaseRate1 = _releaseRate1;
-        lposition1[_add].time2 = _time2;
-        lposition1[_add].releaseRate2 = _releaseRate2;
-        lposition1[_add].time3 = _time3;
-        lposition1[_add].releaseRate3 = _releaseRate3;
-        lposition1[_add].time4 = _time4;
-        lposition1[_add].releaseRate4 = _releaseRate4;
-    }
-    
-    //get lockPosition1 info
-    function getLockPosition1(address _add) public view returns(uint count,uint Scount,uint8 _typ,uint8 _rate1,uint8 _rate2,uint8 _rate3,uint8 _rate4) {
-        return (lposition1[_add].count,positionScount1(_add),lposition1[_add].typ,lposition1[_add].releaseRate1,lposition1[_add].releaseRate2,lposition1[_add].releaseRate3,lposition1[_add].releaseRate4);
-    }
-    
-    function positionScount1(address _address) private view returns (uint count){
-        uint _tmpRateAll = 0;
-        
-        if(lposition1[_address].typ == 2 && now < lposition1[_address].time2){
-            if(now >= lposition1[_address].time1){
-                _tmpRateAll = lposition1[_address].releaseRate1;
-            }
-        }
-        
-        if(lposition1[_address].typ == 3 && now < lposition1[_address].time3){
-            if(now >= lposition1[_address].time1){
-                _tmpRateAll = lposition1[_address].releaseRate1;
-            }
-            if(now >= lposition1[_address].time2){
-                _tmpRateAll = safeAdd(lposition1[_address].releaseRate2,_tmpRateAll);
-            }
-        }
-        
-        if(lposition1[_address].typ == 4 && now < lposition1[_address].time4){
-            if(now >= lposition1[_address].time1){
-                _tmpRateAll = lposition1[_address].releaseRate1;
-            }
-            if(now >= lposition1[_address].time2){
-                _tmpRateAll = safeAdd(lposition1[_address].releaseRate2,_tmpRateAll);
-            }
-            if(now >= lposition1[_address].time3){
-                _tmpRateAll = safeAdd(lposition1[_address].releaseRate3,_tmpRateAll);
-            }
-        }
-        
-        if((lposition1[_address].typ == 1 && now >= lposition1[_address].time1) || (lposition1[_address].typ == 2 && now >= lposition1[_address].time2) || (lposition1[_address].typ == 3 && now >= lposition1[_address].time3) || (lposition1[_address].typ == 4 && now >= lposition1[_address].time4)){
-            return 0;
-        }
-        
-        if(_tmpRateAll > 0){
-            return (safeSub(lposition1[_address].count,safeDiv(lposition1[_address].count*_tmpRateAll,100)));
-        }else{
-            return lposition1[_address].count;
-        }
-    }
-    
-    // batchTransfer
-    function batchTransfer(address[] _adds,uint256 _tokens) public is_admin returns(bool success) {
-        require(balances[msg.sender] >= safeMul(_adds.length,_tokens));
-        require(lposition[msg.sender].count == 0 && lposition1[msg.sender].count == 0);
-        
-        for (uint256 i = 0; i < _adds.length; i++) {
-            uint256 _tmpTokens = _tokens;
-            address _tmpAdds = _adds[i];
-            balances[msg.sender] = safeSub(balances[msg.sender], _tmpTokens);
-            balances[_tmpAdds] = safeAdd(balances[_tmpAdds], _tmpTokens);
-            Transfer(msg.sender,_tmpAdds,_tmpTokens);
-        }
-        
-        return true;
-    }
+
 }
