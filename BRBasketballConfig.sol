@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BRBasketballConfig at 0xe04c5271ee336cc7b499a2765a752f3f99e65fee
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BRBasketballConfig at 0xed9bdf04345601ba6afa89bb569ac43df5e19d57
 */
 pragma solidity ^0.4.7;
 contract MobaBase {
@@ -107,12 +107,15 @@ contract BRInvite{
    }
 }
 
+
+
+
 contract IConfigData {
    function getPrice() public view returns (uint256);
    function getWinRate(uint8 winCount) public pure returns (uint);
    function getOverRate(uint8 winCount) public pure returns (uint);
    function getPumpRate() public view returns(uint8);
-   function getBaseRandom() public returns (bytes32);
+   function getBaseRandom() public view returns (bytes32);
    function GetAddressByName(bytes32 name) public view returns (address);
    function getInviteRate() public view returns (uint);
    function loseHandler(address addr,uint8 wincount) public ;
