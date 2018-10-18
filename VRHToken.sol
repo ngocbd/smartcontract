@@ -1,30 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VRHToken at 0x41b05aa756c8fa5f236a8e107d2a9bf03849c927
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VRHToken at 0xc3f67c40c10261eb24b969a4007f582b17f88618
 */
-/*
-Copyright 2018 Virtual Rehab (http://virtualrehab.co)
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
- */
- 
- pragma solidity 0.4.24;
-
-
-
-
-
-
-
+pragma solidity 0.4.24;
 
 /**
  * @title ERC20Basic
@@ -37,9 +14,6 @@ contract ERC20Basic {
   function transfer(address _to, uint256 _value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
-
-
-
 
 /**
  * @title SafeMath
@@ -91,8 +65,6 @@ library SafeMath {
   }
 }
 
-
-
 /**
  * @title Basic token
  * @dev Basic version of StandardToken, with no allowances.
@@ -137,11 +109,6 @@ contract BasicToken is ERC20Basic {
 
 }
 
-
-
-
-
-
 /**
  * @title ERC20 interface
  * @dev see https://github.com/ethereum/EIPs/issues/20
@@ -160,8 +127,6 @@ contract ERC20 is ERC20Basic {
     uint256 value
   );
 }
-
-
 
 /**
  * @title Standard ERC20 token
@@ -282,11 +247,6 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-
-
-
-
-
 /**
  * @title Burnable Token
  * @dev Token that can be irreversibly burned (destroyed).
@@ -314,47 +274,6 @@ contract BurnableToken is BasicToken {
     emit Transfer(_who, address(0), _value);
   }
 }
-
-/*
-Copyright 2018 Binod Nirvan
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
- */
- 
- 
- 
-
-
-/*
-Copyright 2018 Binod Nirvan
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
- */
-
-
-
-
-
 
 /**
  * @title Ownable
@@ -418,126 +337,205 @@ contract Ownable {
   }
 }
 
+/*
+Copyright 2018 Binod Nirvan
 
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+ */
+
+
+
+
+
+///@title This contract enables to create multiple contract administrators.
 contract CustomAdmin is Ownable {
+  ///@notice List of administrators.
   mapping(address => bool) public admins;
-  uint256 public numberOfAdmins;
 
-  event AdminAdded(address indexed addr);
-  event AdminRemoved(address indexed addr);
+  event AdminAdded(address indexed _address);
+  event AdminRemoved(address indexed _address);
 
-  /**
-   * @dev Throws if called by any account that's not an administrator.
-   */
+  ///@notice Validates if the sender is actually an administrator.
   modifier onlyAdmin() {
     require(admins[msg.sender] || msg.sender == owner);
     _;
   }
 
-  constructor() public {
-    admins[msg.sender] = true;
-    numberOfAdmins = 1;
-    
-    emit AdminAdded(msg.sender);
-  }
-  /**
-   * @dev Add an address to the adminstrator list.
-   * @param addr address
-   */
-  function addAdmin(address addr) onlyAdmin  public {
-    require(addr != address(0));
-    require(!admins[addr]);
+  ///@notice Adds the specified address to the list of administrators.
+  ///@param _address The address to add to the administrator list.
+  function addAdmin(address _address) external onlyAdmin {
+    require(_address != address(0));
+    require(!admins[_address]);
 
-    admins[addr] = true;
-    numberOfAdmins++;
+    //The owner is already an admin and cannot be added.
+    require(_address != owner);
 
-    emit AdminAdded(addr);
+    admins[_address] = true;
+
+    emit AdminAdded(_address);
   }
 
-  /**
-   * @dev Remove an address from the administrator list.
-   * @param addr address
-   */
-  function removeAdmin(address addr) onlyAdmin  public {
-    require(addr != address(0));
-    require(admins[addr]);
-    //the owner can not be unadminsed
-    require(addr != owner);
+  ///@notice Adds multiple addresses to the administrator list.
+  ///@param _accounts The wallet addresses to add to the administrator list.
+  function addManyAdmins(address[] _accounts) external onlyAdmin {
+    for(uint8 i=0; i<_accounts.length; i++) {
+      address account = _accounts[i];
 
-    admins[addr] = false;
-    numberOfAdmins--;
+      ///Zero address cannot be an admin.
+      ///The owner is already an admin and cannot be assigned.
+      ///The address cannot be an existing admin.
+      if(account != address(0) && !admins[account] && account != owner){
+        admins[account] = true;
 
-    emit AdminRemoved(addr);
+        emit AdminAdded(_accounts[i]);
+      }
+    }
+  }
+
+  ///@notice Removes the specified address from the list of administrators.
+  ///@param _address The address to remove from the administrator list.
+  function removeAdmin(address _address) external onlyAdmin {
+    require(_address != address(0));
+    require(admins[_address]);
+
+    //The owner cannot be removed as admin.
+    require(_address != owner);
+
+    admins[_address] = false;
+    emit AdminRemoved(_address);
+  }
+
+  function isAdmin(address _account) view public returns(bool) {
+    return admins[_account] || _account == owner;
+  }
+
+  ///@notice Removes multiple addresses to the administrator list.
+  ///@param _accounts The wallet addresses to remove from the administrator list.
+  function removeManyAdmins(address[] _accounts) external onlyAdmin {
+    for(uint8 i=0; i<_accounts.length; i++) {
+      address account = _accounts[i];
+
+      ///Zero address can neither be added or removed from this list.
+      ///The owner is the super admin and cannot be removed.
+      ///The address must be an existing admin in order for it to be removed.
+      if(account != address(0) && admins[account] && account != owner){
+        admins[account] = false;
+
+        emit AdminRemoved(_accounts[i]);
+      }
+    }
   }
 }
 
+/*
+Copyright 2018 Binod Nirvan
 
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-/**
- * @title Pausable
- * @dev Base contract which allows children to implement an emergency stop mechanism.
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
  */
+
+
+
+
+
+
+
+
+///@title This contract enables you to create pausable mechanism to stop in case of emergency.
 contract CustomPausable is CustomAdmin {
-  event Pause();
-  event Unpause();
+  event Paused();
+  event Unpaused();
 
   bool public paused = false;
 
-  /**
-   * @dev Modifier to make a function callable only when the contract is not paused.
-   */
+  ///@notice Verifies whether the contract is not paused.
   modifier whenNotPaused() {
     require(!paused);
     _;
   }
 
-  /**
-   * @dev Modifier to make a function callable only when the contract is paused.
-   */
+  ///@notice Verifies whether the contract is paused.
   modifier whenPaused() {
     require(paused);
     _;
   }
 
-  /**
-   * @dev called by the owner to pause, triggers stopped state
-   */
-  function pause() onlyAdmin whenNotPaused public {
+  ///@notice Pauses the contract.
+  function pause() external onlyAdmin whenNotPaused {
     paused = true;
-    emit Pause();
+    emit Paused();
   }
 
-  /**
-   * @dev called by the owner to unpause, returns to normal state
-   */
-  function unpause() onlyAdmin whenPaused public {
+  ///@notice Unpauses the contract and returns to normal state.
+  function unpause() external onlyAdmin whenPaused {
     paused = false;
-    emit Unpause();
+    emit Unpaused();
   }
 }
+
+/*
+Copyright 2018 Virtual Rehab (http://virtualrehab.co)
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+
+
+
+
 
 
 ///@title Virtual Rehab Token (VRH) ERC20 Token Contract
 ///@author Binod Nirvan, Subramanian Venkatesan (http://virtualrehab.co)
-///@notice The Virtual Rehab Token (VRH) has been created as a centralized currency 
-///to be used within the Virtual Rehab network. Users will be able to purchase and sell 
-///VRH tokens in exchanges. The token follows the standards of Ethereum ERC20 Standard token. 
-///Its design follows the widely adopted token implementation standards. 
-///This allows token holders to easily store and manage their VRH tokens using existing solutions 
-///including ERC20-compatible Ethereum wallets. The VRH Token is a utility token 
+///@notice The Virtual Rehab Token (VRH) has been created as a centralized currency
+///to be used within the Virtual Rehab network. Users will be able to purchase and sell
+///VRH tokens in exchanges. The token follows the standards of Ethereum ERC20 Standard token.
+///Its design follows the widely adopted token implementation standards.
+///This allows token holders to easily store and manage their VRH tokens using existing solutions
+///including ERC20-compatible Ethereum wallets. The VRH Token is a utility token
 ///and is core to Virtual Rehab’s end-to-end operations.
 ///
 ///VRH utility use cases include:
-///1- Order & Download Virtual Rehab programs through the Virtual Rehab Online Portal
-///2- Request further analysis, conducted by Virtual Rehab's unique expert system (which leverages Artificial Intelligence), of the executed programs
-///3- Receive incentives (VRH rewards) for seeking help and counselling from psychologists, therapists, or medical doctors
+///1. Order & Download Virtual Rehab programs through the Virtual Rehab Online Portal
+///2. Request further analysis, conducted by Virtual Rehab's unique expert system (which leverages Artificial Intelligence), of the executed programs
+///3. Receive incentives (VRH rewards) for seeking help and counselling from psychologists, therapists, or medical doctors
+///4. Allows users to pay for services received at the Virtual Rehab Therapy Center
 contract VRHToken is StandardToken, CustomPausable, BurnableToken {
   uint8 public constant decimals = 18;
-  string public constant name = "VirtualRehab";
+  string public constant name = "Virtual Rehab";
   string public constant symbol = "VRH";
 
   uint public constant MAX_SUPPLY = 400000000 * (10 ** uint256(decimals));
-  uint public constant INITIAL_SUPPLY = (400000000 - 750000 - 2085000 - 60000000) * (10 ** uint256(decimals));
+  uint public constant INITIAL_SUPPLY = (400000000 - 1650000 - 2085000 - 60000000) * (10 ** uint256(decimals));
 
   bool public released = false;
   uint public ICOEndDate;
@@ -554,7 +552,7 @@ contract VRHToken is StandardToken, CustomPausable, BurnableToken {
   ///@param _from The address to check against if the transfer is allowed.
   modifier canTransfer(address _from) {
     if(paused || !released) {
-      if(!admins[_from]) {
+      if(!isAdmin(_from)) {
         revert();
       }
     }
@@ -580,12 +578,11 @@ contract VRHToken is StandardToken, CustomPausable, BurnableToken {
 
   constructor() public {
     mintTokens(msg.sender, INITIAL_SUPPLY);
-    emit Transfer(address(0), msg.sender, totalSupply_);
   }
 
 
 
-  ///@notice This function enables token transfers for everyone. 
+  ///@notice This function enables token transfers for everyone.
   ///Can only be enabled after the end of the ICO.
   function releaseTokenForTransfer() public onlyAdmin whenNotPaused {
     require(!released);
@@ -611,7 +608,7 @@ contract VRHToken is StandardToken, CustomPausable, BurnableToken {
     require(_date > now);
 
     ICOEndDate = _date;
-    
+
     emit ICOEndDateSet(_date);
   }
 
@@ -641,25 +638,25 @@ contract VRHToken is StandardToken, CustomPausable, BurnableToken {
     mintingList[computeHash(_key)] = true;
   }
 
-  ///@notice Mints the below-mentioned amount of tokens allocated to the Virtual Rehab advisors. 
+  ///@notice Mints the below-mentioned amount of tokens allocated to the Virtual Rehab advisors.
   //The tokens are only available to the advisors after 1 year of the ICO end.
   function mintTokensForAdvisors() public onlyAdmin {
     require(ICOEndDate != 0);
 
     require(now > (ICOEndDate + 365 days));
-    mintOnce("advisors", msg.sender, 750000);
+    mintOnce("advisors", msg.sender, 1650000);
   }
 
-  ///@notice Mints the below-mentioned amount of tokens allocated to the Virtual Rehab founders. 
-  //The tokens are only available to the founders after 1 year of the ICO end.
+  ///@notice Mints the below-mentioned amount of tokens allocated to the Virtual Rehab founders.
+  //The tokens are only available to the founders after 2 year of the ICO end.
   function mintTokensForFounders() public onlyAdmin {
     require(ICOEndDate != 0);
-    require(now > (ICOEndDate + 365 days));
+    require(now > (ICOEndDate + 720 days));
 
     mintOnce("founders", msg.sender, 60000000);
   }
 
-  ///@notice Mints the below-mentioned amount of tokens allocated to Virtual Rehab services. 
+  ///@notice Mints the below-mentioned amount of tokens allocated to Virtual Rehab services.
   //The tokens are only available to the services after 1 year of the ICO end.
   function mintTokensForServices() public onlyAdmin  {
     require(ICOEndDate != 0);
@@ -668,8 +665,8 @@ contract VRHToken is StandardToken, CustomPausable, BurnableToken {
     mintOnce("services", msg.sender, 2085000);
   }
 
-  ///@notice Transfers the specified value of VRH tokens to the destination address. 
-  //Transfers can only happen when the tranfer state is enabled. 
+  ///@notice Transfers the specified value of VRH tokens to the destination address.
+  //Transfers can only happen when the tranfer state is enabled.
   //Transfer state can only be enabled after the end of the crowdsale.
   ///@param _to The destination wallet address to transfer funds to.
   ///@param _value The amount of tokens to send to the destination address.
@@ -691,7 +688,7 @@ contract VRHToken is StandardToken, CustomPausable, BurnableToken {
   ///@notice Approves a wallet address to spend on behalf of the sender.
   ///@dev This function is overriden to leverage transfer state feature.
   ///@param _spender The address which is approved to spend on behalf of the sender.
-  ///@param _value The amount of tokens approve to spend. 
+  ///@param _value The amount of tokens approve to spend.
   function approve(address _spender, uint256 _value) public canTransfer(msg.sender) returns (bool) {
     require(_spender != address(0));
     return super.approve(_spender, _value);
@@ -717,7 +714,7 @@ contract VRHToken is StandardToken, CustomPausable, BurnableToken {
   }
 
   ///@notice Returns the sum of supplied values.
-  ///@param _values The collection of values to create the sum from.  
+  ///@param _values The collection of values to create the sum from.
   function sumOf(uint256[] _values) private pure returns(uint256) {
     uint256 total = 0;
 
@@ -727,10 +724,10 @@ contract VRHToken is StandardToken, CustomPausable, BurnableToken {
 
     return total;
   }
-  
+
   ///@notice Allows only the admins and/or whitelisted applications to perform bulk transfer operation.
   ///@param _destinations The destination wallet addresses to send funds to.
-  ///@param _amounts The respective amount of fund to send to the specified addresses. 
+  ///@param _amounts The respective amount of fund to send to the specified addresses.
   function bulkTransfer(address[] _destinations, uint256[] _amounts) public onlyAdmin {
     require(_destinations.length == _amounts.length);
 
@@ -738,7 +735,7 @@ contract VRHToken is StandardToken, CustomPausable, BurnableToken {
     //to post this transaction.
     uint256 requiredBalance = sumOf(_amounts);
     require(balances[msg.sender] >= requiredBalance);
-    
+
     for (uint256 i = 0; i < _destinations.length; i++) {
      transfer(_destinations[i], _amounts[i]);
     }
