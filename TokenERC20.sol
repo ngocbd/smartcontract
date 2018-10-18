@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x391dd2ff8ae401b36143bafa0c847218e3f60102
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x73cff2b87bf1136ac5993bfda8fbf66dc2ac1169
 */
 pragma solidity ^0.4.21;
 
@@ -43,7 +43,7 @@ contract TokenERC20 {
     using SafeMath for uint256;
     
     string public constant name       = "??";
-    string public constant symbol     = "GB.";
+    string public constant symbol     = "GB ";
     uint32 public constant decimals   = 18;
     uint256 public totalSupply;
 
