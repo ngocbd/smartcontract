@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HybridX at 0x9f16C280d58fe74D8f44A18c2913084e7768DdAb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HybridX at 0x47463c8489b9ccd53dfb51f5c40bcabde4391230
 */
 pragma solidity ^0.4.23;
 
@@ -79,10 +79,10 @@ contract HybridX is ERC20 {
     string public constant symbol = "HX";
     uint public constant decimals = 8;
     
-    uint256 public totalSupply = 800000000e8;
-    uint256 public totalDistributed =  50000000e8;    
+    uint256 public totalSupply = 20000000000e8;
+    uint256 public totalDistributed =  4000000000e8;    
     uint256 public constant MIN_CONTRIBUTION = 1 ether / 100; // 0.01 Ether
-    uint256 public tokensPerEth = 2000000e8;
+    uint256 public tokensPerEth = 20000000e8;
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
