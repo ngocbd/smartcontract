@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BCoin at 0xbdf5bf896b1fc29a75629ba7f75dba2279305eb7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BCoin at 0x94cdfe0c6cedd5103fd7a484d7105da9fec3fc23
 */
 pragma solidity 0.4.25;
 
@@ -46,8 +46,8 @@ library SafeMath {
 
 contract BCoin is IERC20 {
   using SafeMath for uint256;
-  string public name = "BCoin Token";
-  string public symbol = "BCT";
+  string public name = "BCoin Coin";
+  string public symbol = "BCN";
   uint8 public constant decimals = 18;
   uint256 public constant decimalFactor = 1000000000000000000;
   uint256 public constant totalSupply = 300000000 * decimalFactor;
