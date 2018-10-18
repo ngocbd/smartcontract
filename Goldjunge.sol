@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Goldjunge at 0x9def3e52dfa7bee8fcc403e3fffd26e94191af3c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Goldjunge at 0x6bda568625aec977db1f8a135ff1ed951a3fb891
 */
 pragma solidity ^0.4.24;
 
@@ -128,10 +128,10 @@ contract StandardToken is ERC20 {
 contract Goldjunge is StandardToken {
   string public constant name = "Goldjunge";
   string public constant symbol = "GOLD";
-  uint8 public constant decimals = 1;
+  uint8 public constant decimals = 0;
 
   function Goldjunge() public {
-    totalSupply = 21000000;
+    totalSupply = 211000000;
     balances[msg.sender] = totalSupply;
   }
 }
