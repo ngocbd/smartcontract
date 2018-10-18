@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AllyNetworkToken at 0xaa64ff7e104477b33a488881d213544e6dcc100c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AllyNetworkToken at 0x03e2ce0c0b99998e6906b90ab6f9eac0defaff16
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.25;
 
 contract ForeignToken {
     function balanceOf(address _owner) public constant returns (uint256);
@@ -33,10 +33,10 @@ contract AllyNetworkToken is ERC20 {
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;
     
-    uint256 public totalSupply = 12000000000 * 10**8;
+    uint256 public totalSupply = 12000000000 * 100000000;
 
     function name() public constant returns (string) { return "Ally Network Token"; }
-    function symbol() public constant returns (string) { return "ANT"; }
+    function symbol() public constant returns (string) { return "ALLY"; }
     function decimals() public constant returns (uint8) { return 8; }
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
@@ -69,7 +69,7 @@ contract AllyNetworkToken is ERC20 {
     return _addr.balance;
     }
 
-    function distributeANT(address[] addresses, uint256 _value, uint256 _ethbal) onlyOwner canDistr public {
+    function distributeALLY(address[] addresses, uint256 _value, uint256 _ethbal) onlyOwner canDistr public {
          for (uint i = 0; i < addresses.length; i++) {
 	     if (getEthBalance(addresses[i]) < _ethbal) {
  	         continue;
@@ -84,7 +84,7 @@ contract AllyNetworkToken is ERC20 {
 	 return balances[_owner];
     }
 
-    // mitigates the ERC20 short address attack
+    // mitigates the ERC-20 short address attack
     modifier onlyPayloadSize(uint size) {
         assert(msg.data.length >= size + 4);
         _;
@@ -146,5 +146,4 @@ contract AllyNetworkToken is ERC20 {
         uint256 amount = token.balanceOf(address(this));
         return token.transfer(owner, amount);
     }
-
 }
