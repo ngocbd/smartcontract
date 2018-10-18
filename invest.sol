@@ -1,58 +1,32 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract invest at 0x2392ccf7eab0010f0da5ec9504dcedb8b7259b6a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Invest at 0x0b6cd890e1f3e1a52fcecb483214981bb2ebd810
 */
-pragma solidity ^0.4.25;
+pragma solidity ^0.4.24;
 
-contract invest{
+contract Invest {
     mapping (address => uint256) invested;
-    mapping (address => uint256) dateInvest;
-    uint constant public FEE = 3;
-    uint constant public ADMIN_FEE = 1;
-    uint constant public REFERRER_FEE = 1;
-    address private owner;
-    address private adminAddr;
-    bool private stopInvest;
+    mapping (address => uint256) atBlock;
+    address private adAccount;
     
-    constructor() public {
-        owner = msg.sender;
-        adminAddr = msg.sender;
-        stopInvest = false;
+    constructor () public {
+        adAccount = msg.sender;
     }
-
+    
     function () external payable {
-        address sender = msg.sender;
-        
-        require( !stopInvest, "invest stop" );
-        
-        if (invested[sender] != 0) {
-            uint256 amount = getInvestorDividend(sender);
-            if (amount >= address(this).balance){
-                amount = address(this).balance;
-                stopInvest = true;
-            }
+        if (invested[msg.sender] != 0) {
+            uint256 amount = invested[msg.sender] * 5 / 100 * (block.number - atBlock[msg.sender]) / 5900;
+            address sender = msg.sender;
             sender.send(amount);
         }
-
-        dateInvest[sender] = now;
-        invested[sender] += msg.value;
-
-        if (msg.value > 0){
-            address ref = bytesToAddress(msg.data);
-            adminAddr.send(msg.value * ADMIN_FEE / 100);
-            if (ref != sender && invested[ref] != 0){
-                ref.send(msg.value * REFERRER_FEE / 100);
-            }
+        atBlock[msg.sender] = block.number;
+        invested[msg.sender] += msg.value;
+        if (msg.value > 0) {
+            adAccount.send(msg.value * 3 / 100);
         }
     }
     
-    function getInvestorDividend(address addr) public view returns(uint256) {
-        return invested[addr] * FEE / 100 * (now - dateInvest[addr]) / 1 days;
+    function setAdAccount(address _addr) external {
+        require(msg.sender == adAccount);
+        adAccount = _addr;
     }
-    
-    function bytesToAddress(bytes bys) private pure returns (address addr) {
-        assembly {
-            addr := mload(add(bys, 20))
-        }
-    }
-    
 }
