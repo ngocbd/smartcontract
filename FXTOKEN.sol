@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FXTOKEN at 0x7b94fc69c1f8929e7514e5a6080c3272d8b26d4f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FXTOKEN at 0x2273dfc2f46bfbd3bf1bc600cb5a4a73b85bb744
 */
 pragma solidity ^0.4.24;
 contract SafeMath {
@@ -143,7 +143,7 @@ contract WhiteBlockList is Ownership {
 contract FXTOKEN is WhiteBlockList {
     // FIELDS
     string public name = "FXTOKEN";
-    string public symbol = "1GBP";
+    string public symbol = "1CHF";
     uint256 public decimals = 8;
 	string public version = "1.0";
     bool public halted = true;
