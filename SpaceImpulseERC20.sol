@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SpaceImpulseERC20 at 0x418c64f80ce3ee75245123dc3b7ef5749ac7946b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SpaceImpulseERC20 at 0x896029f4e13e6d62ba0d97fb5b16110fca132c14
 */
 pragma solidity 0.4.24;
 
@@ -21,6 +21,8 @@ pragma solidity 0.4.24;
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 */
+
+
 
 library SafeMath {
     function mul(uint256 a, uint256 b) internal pure returns (uint256) {
@@ -196,7 +198,7 @@ contract SpaceImpulseERC20 is SpaceImpulse_ERC20 {
 
         ) public {
 
-        A = 0x69587ed6f526f8B3FD9eB01d4F1FCC86f0394c8f;
+        A = 0xD9614b3FaC2B523504AbC18104e4B32EE0605855;
 
         balances[A] = balances[A].add(246000000*(uint256(10)**decimals));
 
@@ -212,4 +214,5 @@ contract SpaceImpulseERC20 is SpaceImpulse_ERC20 {
             revert();
         }
     }
+
 }
