@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DigitalGame at 0x05d1319bd85736952dec658a3063f65a5910d750
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DigitalGame at 0xe6dfef4dee6b4cda74db647eb07d78c0fbc62144
 */
 pragma solidity ^0.4.24;
 
@@ -10,25 +10,22 @@ pragma solidity ^0.4.24;
 contract DigitalGame {
   /// *** Constants
 
-  uint constant MIN_BET_MONEY = 1 finney;
+  uint constant MIN_BET_MONEY = 10 finney;
   uint constant MAX_BET_MONEY = 10 ether;
   uint constant MIN_BET_NUMBER = 2;
-  uint constant MAX_STAGE = 5;
+  uint constant MAX_STAGE = 4;
 
   // Calculate invitation dividends based on bet amount
-  // - first generation reward: 0.5%
-  // - second generation reward: 0.3%
-  // - third generation reward: 0.2%
-  uint constant FIRST_GENERATION_REWARD = 5;
-  uint constant SECOND_GENERATION_REWARD = 3;
-  uint constant THIRD_GENERATION_REWARD = 2;
+  // - first generation reward: 3%
+  // - second generation reward: 2%
+  // - third generation reward: 1%
+  uint constant FIRST_GENERATION_REWARD = 3;
+  uint constant SECOND_GENERATION_REWARD = 2;
+  uint constant THIRD_GENERATION_REWARD = 1;
 
   address public OWNER_ADDR;
   address public RECOMM_ADDR;
   address public SPARE_RECOMM_ADDR;
-
-  uint public lastStage;
-  uint public lastRound;
 
   /// *** Struct
 
@@ -113,13 +110,13 @@ contract DigitalGame {
   /// *** Modifier
 
   modifier checkBetTime(uint lastTime) {
-    require(now <= lastTime + 5 minutes, 'Current time is not allowed to bet');
+    require(now <= lastTime, 'Current time is not allowed to bet');
     _;
   }
 
   modifier checkRewardTime(uint lastTime) {
     require(
-      now >= lastTime + 10 minutes,
+      now >= lastTime + 1 hours,
       'Current time is not allowed to reward'
     );
     _;
@@ -136,7 +133,7 @@ contract DigitalGame {
   modifier verifyStage(uint stage) {
     require(
       stage >= 1 && stage <= MAX_STAGE,
-      'Stage no greater than 5 (MAX_STAGE)'
+      'Stage no greater than MAX_STAGE'
     );
     _;
   }
@@ -154,21 +151,18 @@ contract DigitalGame {
     _;
   }
 
-  constructor() public {
+  constructor(bytes32[4] hashes, uint lastTime) public {
     for (uint i = 1; i <= MAX_STAGE; i++) {
       stages[i].round = 1;
-      stages[i].seedHash = 0x0;
+      stages[i].seedHash = hashes[i-1];
       stages[i].userNumber = 0;
       stages[i].amount = 0;
-      stages[i].lastTime = now;
+      stages[i].lastTime = lastTime;
     }
 
     OWNER_ADDR = msg.sender;
     RECOMM_ADDR = msg.sender;
     SPARE_RECOMM_ADDR = msg.sender;
-
-    lastStage = 1;
-    lastRound = 1;
   }
 
   function bet(
@@ -195,7 +189,6 @@ contract DigitalGame {
     );
     
     require(msg.sender != recommAddr, 'The recommender cannot be himself');
-    
     
     if (users[msg.sender] == 0) {
       if (recommAddr != RECOMM_ADDR) {
@@ -260,8 +253,8 @@ contract DigitalGame {
     ];
     uint recomms = 0;
     for (uint j = 0; j < userRecomms.length; j++) {
-      recomms += msg.value * GENERATION_REWARD[j] / 1000;
-      userRecomms[j].transfer(msg.value * GENERATION_REWARD[j] / 1000);
+      recomms += msg.value * GENERATION_REWARD[j] / 100;
+      userRecomms[j].transfer(msg.value * GENERATION_REWARD[j] / 100);
 
       emit eventDividend(
         'dividend',
@@ -273,7 +266,7 @@ contract DigitalGame {
         content,
         j,
         userRecomms[j],
-        msg.value * GENERATION_REWARD[j] / 1000,
+        msg.value * GENERATION_REWARD[j] / 100,
         now
       );
     }
@@ -311,9 +304,6 @@ contract DigitalGame {
 
       if (isReward) {
         stages[stage].amount = 0;
-        
-        lastStage = stage;
-        lastRound = stages[stage].round;
       }
       
       delete userBets[stage];
@@ -321,10 +311,10 @@ contract DigitalGame {
       stages[stage].round += 1;
       stages[stage].userNumber = 0;
       stages[stage].seedHash = seedHash;
-      
-      stages[stage].lastTime = now + 5 minutes;
+
+      stages[stage].lastTime += 24 hours;
     } else {
-      stages[stage].lastTime = now;
+      stages[stage].lastTime += 24 hours;
     }
   }
 
@@ -384,16 +374,16 @@ contract DigitalGame {
     }
 
     uint extractReward = stages[stage].amount / 100;
+    OWNER_ADDR.transfer(extractReward);
     RECOMM_ADDR.transfer(extractReward);
     SPARE_RECOMM_ADDR.transfer(extractReward);
-    OWNER_ADDR.transfer(extractReward);
 
     if (WaitAwardBets.length != 0) {
       issueReward(stage, extractReward, randoms, counts);
       delete WaitAwardBets;
       return true;
     }
-    stages[stage].amount = stages[stage].amount - extractReward - extractReward - extractReward;
+    stages[stage].amount = stages[stage].amount - (extractReward * 3);
     return false;
   }
   
@@ -403,7 +393,7 @@ contract DigitalGame {
     uint[] randoms,
     uint counts
   ) private onlyOwner {
-    uint userAward = stages[stage].amount - extractReward - extractReward - extractReward;
+    uint userAward = stages[stage].amount - (extractReward * 3);
     for (uint m = 0; m < WaitAwardBets.length; m++) {
       uint reward = userAward * WaitAwardBets[m].count / counts;
       WaitAwardBets[m].addr.transfer(reward);
@@ -438,27 +428,11 @@ contract DigitalGame {
     return randoms;
   }
 
-  function setSeedHash(uint stage, bytes32 seedHash) public onlyOwner {
-    require(
-      stages[stage].seedHash == 0,
-      'No need to set seed hash'
-    );
-    stages[stage].seedHash = seedHash;
-  }
-
   function setDefaultRecommAddr(address _RECOMM_ADDR) public onlyOwner {
     RECOMM_ADDR = _RECOMM_ADDR;
   }
 
   function setSpareRecommAddr(address _SPARE_RECOMM_ADDR) public onlyOwner {
     SPARE_RECOMM_ADDR = _SPARE_RECOMM_ADDR;
-  }
-
-  function getDefaultRecommAddr() public view returns(address) {
-    return RECOMM_ADDR;
-  }
-
-  function getSpareRecommAddr() public view returns(address) {
-    return SPARE_RECOMM_ADDR;
   }
 }
