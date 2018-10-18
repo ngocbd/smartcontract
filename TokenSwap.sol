@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSwap at 0x0504a7fd883178fa182cf63d2bb1d67e5a9d876d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSwap at 0xae46d639435f4591e01c73de44a23984379e69cf
 */
 pragma solidity ^0.4.16;
 
@@ -32,18 +32,9 @@ contract TokenSwap{
     function Swap(uint256 sendAmount) returns (bool success){
         require(swapSupply >= safeMul(safeDiv(sendAmount, 5), 6));
         if(ERC20(CYFMAddress).transferFrom(msg.sender, tokenAdmin, sendAmount)){
-            ERC20(XTEAddress).transfer(msg.sender, safeMul(safeDiv(sendAmount, 5), 6));
+            ERC20(XTEAddress).transferFrom(tokenAdmin, msg.sender, safeMul(safeDiv(sendAmount, 5), 6));
             swapSupply -= safeMul(safeDiv(sendAmount, 5), 6);
         }
-        return true;
-    }
-    
-    function Reclaim(uint256 sendAmount) returns (bool success){
-        require(msg.sender == tokenAdmin);
-        require(swapSupply >= sendAmount);
-
-        ERC20(XTEAddress).transfer(msg.sender, sendAmount);
-        swapSupply -= sendAmount;
         return true;
     }
     
