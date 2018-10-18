@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleTokenExt at 0xf3725Ff8e349Aa4ae01DD86dea24b9BffDc6a352
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleTokenExt at 0x71ab2be0d4f506fe782ee7d69f6902edf18f9e20
 */
-// Created using by the awesome team of Local Remit. Erick Jongo| Kamoho Molapo
+// Created using Token Wizard https://github.com/poanetwork/token-wizard by POA Network 
 pragma solidity ^0.4.11;
 
 
