@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract apexPlatinum at 0x160b34aa9e397e33b2d8dd712af2cf78e748985b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract apexPlatinum at 0x678f892d1fe1ad47058c1c80a350ac7f6fb8ce32
 */
 pragma solidity ^0.4.24;
 
@@ -95,7 +95,7 @@ contract apexPlatinum {
     =            CONFIGURABLES            =
     =====================================*/
 
-    string public name = "apex Platinum";
+    string public name = "apex Platinium";
     string public symbol = "AXP";
     uint8 constant public decimals = 18;
 
@@ -109,7 +109,7 @@ contract apexPlatinum {
     uint8 constant internal finalExitFee_ = 12;
 
     /// @dev Exit fee falls over period of 30 days
-    uint256 constant internal exitFeeFallDuration_ = 7 days;
+    uint256 constant internal exitFeeFallDuration_ = 30 days;
 
     /// @dev 12% masternode
     uint8 constant internal refferalFee_ = 12;
@@ -165,11 +165,11 @@ contract apexPlatinum {
      //4
      ambassadors_[0xB32435C63151527AFDdF82BE9Edd88f37f7413D3]=true;
      //5
-     ambassadors_[0xab73e01ba3a8009d682726b752c11b1e9722f059]=true;
+     ambassadors_[0xE5c1C106F920e1594327c27690B64A5dc5eB033e]=true;
      //6
-     ambassadors_[0x09cCd3b1d672aA8552CdD9807F5AEeFeAC1c21A9]=true;
+     ambassadors_[0x5fcb488584e3b63FAb9A29142ee2Fb149979eEfd]=true;
      //7
-     ambassadors_[0xc7F15d0238d207e19cce6bd6C0B85f343896F046]=true;
+     ambassadors_[0x966518F716896513d6a89fF52a4dEE5eF2BF1870]=true;
 
      apex = msg.sender;
    }
