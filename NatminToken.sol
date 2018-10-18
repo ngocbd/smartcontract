@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NatminToken at 0x4AFEa0F1252335E5E6be870139de87725e16560b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NatminToken at 0x90d46a9636b973f18186541d1b04ed3621a49cb0
 */
 pragma solidity ^0.4.22;
 
@@ -66,7 +66,7 @@ contract NatminVesting is Ownable {
     }
     mapping(address => Vesting) internal vestings;
 
-    function addVesting(address _user, uint256 _amount) public ;
+    function addVesting(address _user, uint256 _amount, uint256 _endTime) public ;
     function getVestedAmount(address _user) public view returns (uint256 _amount);
     function getVestingEndTime(address _user) public view returns (uint256 _endTime);
     function vestingEnded(address _user) public view returns (bool) ;
@@ -92,11 +92,7 @@ contract ERC223Standard {
 
 //ERC223 function to handle incoming token transfers
 contract ERC223ReceivingContract { 
-    function tokenFallback(address _from, uint256 _value, bytes _data) public pure {
-        _from;
-        _value;
-        _data;
-    }
+    function tokenFallback(address _from, uint256 _value, bytes _data) public;
 }
 
 contract BurnToken is Ownable {
@@ -158,6 +154,7 @@ contract NatminToken is ERC20Standard, ERC223Standard, Ownable, NatminVesting, B
 
     // Transfer function to be compatable with ERC20 Standard
     function transfer(address _to, uint256 _value) public returns (bool success){
+        require(_to != 0x0);
         bytes memory _empty;
         if(isContract(_to)){
             return transferToContract(_to, _value, _empty);
@@ -168,6 +165,7 @@ contract NatminToken is ERC20Standard, ERC223Standard, Ownable, NatminVesting, B
 
     // Transfer function to be compatable with ERC223 Standard
     function transfer(address _to, uint256 _value, bytes _data) public returns (bool success) {
+        require(_to != 0x0);
         if(isContract(_to)){
             return transferToContract(_to, _value, _data);
         }else{
@@ -190,16 +188,13 @@ contract NatminToken is ERC20Standard, ERC223Standard, Ownable, NatminVesting, B
     // This function to be used if the target is a contract address
     function transferToContract(address _to, uint256 _value, bytes _data) internal returns (bool) {
         require(balances[msg.sender] >= _value);
-        require(vestingEnded(msg.sender));
+        require(validateTransferAmount(msg.sender,_value));
         
-        // This will override settings and allow contract owner to send to contract
-        if(msg.sender != contractOwner){
-            ERC223ReceivingContract _tokenReceiver = ERC223ReceivingContract(_to);
-            _tokenReceiver.tokenFallback(msg.sender, _value, _data);
-        }
-
         balances[msg.sender] = balances[msg.sender].sub(_value);
         balances[_to] = balances[_to].add(_value);
+
+        ERC223ReceivingContract _tokenReceiver = ERC223ReceivingContract(_to);
+        _tokenReceiver.tokenFallback(msg.sender, _value, _data);
 
         emit Transfer(msg.sender, _to, _value);
         emit Transfer(msg.sender, _to, _value, _data);
@@ -209,7 +204,7 @@ contract NatminToken is ERC20Standard, ERC223Standard, Ownable, NatminVesting, B
     // This function to be used if the target is a normal eth/wallet address 
     function transferToAddress(address _to, uint256 _value, bytes _data) internal returns (bool) {
         require(balances[msg.sender] >= _value);
-        require(vestingEnded(msg.sender));
+        require(validateTransferAmount(msg.sender,_value));
 
         balances[msg.sender] = balances[msg.sender].sub(_value);
         balances[_to] = balances[_to].add(_value);
@@ -221,9 +216,10 @@ contract NatminToken is ERC20Standard, ERC223Standard, Ownable, NatminVesting, B
 
     // ERC20 standard function
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success){
+        require(_to != 0x0);
         require(_value <= allowed[_from][msg.sender]);
         require(_value <= balances[_from]);
-        require(vestingEnded(_from));
+        require(validateTransferAmount(_from,_value));
 
         balances[_from] = balances[_from].sub(_value);
         balances[_to] = balances[_to].add(_value);
@@ -274,9 +270,9 @@ contract NatminToken is ERC20Standard, ERC223Standard, Ownable, NatminVesting, B
     }
 
     // Create a vesting entry for the specified user
-    function addVesting(address _user, uint256 _amount) public ownerOnly {
+    function addVesting(address _user, uint256 _amount, uint256 _endTime) public ownerOnly {
         vestings[_user].amount = _amount;
-        vestings[_user].endTime = now + 180 days;
+        vestings[_user].endTime = _endTime;
     }
 
     // Returns the vested amount for a specified user
@@ -298,6 +294,24 @@ contract NatminToken is ERC20Standard, ERC223Standard, Ownable, NatminVesting, B
         }
         else {
             return false;
+        }
+    }
+
+    // This function checks the transfer amount against the current balance and vested amount
+    // Returns true if transfer amount is smaller than the difference between the balance and vested amount
+    function validateTransferAmount(address _user, uint256 _amount) internal view returns (bool) {
+        if(vestingEnded(_user)){
+            return true;
+        }else{
+            uint256 _vestedAmount = getVestedAmount(_user);
+            uint256 _currentBalance = balanceOf(_user);
+            uint256 _availableBalance = _currentBalance.sub(_vestedAmount);
+
+            if(_amount <= _availableBalance) {
+                return true;
+            }else{
+                return false;
+            }
         }
     }
 
