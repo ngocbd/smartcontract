@@ -1,13 +1,16 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleStorage at 0x9e5be319ffabb99cdf1db65e14846ae34d249043
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleStorage at 0x00223f71b749b8754963c41cba62cb61ef106e9c
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.0;
 
 contract SimpleStorage {
-    string public welcomeMsg = "Hello block chain from InfPro IT Solutions!";
-    string[] public myStorage;
-    
-    function add(string _store) public {
-        myStorage.push(_store);
+    uint storedData;
+
+    function set(uint x) public {
+        storedData = x;
+    }
+
+    function get() public view returns (uint) {
+        return storedData;
     }
 }
