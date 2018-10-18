@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hostingicos at 0x20dee0f5890426e2c09c33d78cf9b12d90875378
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hostingicos at 0x092596ddf614aca7185cba8f523ce2bae879946d
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
 // 'Hostingicos' token contract
 //
-// Deployed to : 0x60DdaaBc9f04B7bAFa4786c55E065C235aB6fA81
+// Deployed to : 0xE190F201858402f1A5Ebbe6BBaB2dF7B4d2D4f5d
 // Symbol      : HTS
 // Name        : Hostingicos
 // Total supply: 10000000000000000000000000000
