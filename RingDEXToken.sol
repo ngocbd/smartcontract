@@ -1,15 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RingDEXToken at 0x03260e1b0f53e1a1f93cf126a7ca42a1c71648d6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RingDEXToken at 0x6cd2956a5a1ab7e7983fe68cb270ae8c0abe8c74
 */
 pragma solidity ^0.4.20;
 
 
 // ----------------------------------------------------------------------------
-// RingDEX Token Burnable/Mintable token contract
+// RingDEX Token token contract
 //
 // Symbol           : RDEX
 // Name             : RingDEX Token
-// Total Supply     : 1,000,000
+// Total Supply     : 10,000,000
 // Decimals         : 8
 // ----------------------------------------------------------------------------
 
@@ -71,10 +71,6 @@ contract RingDEXToken is ERC20Interface {
     mapping(address => mapping(address => uint)) allowed;
     
     
-    event Mint(address indexed to, uint256 amount);
-    event Burn(address indexed burner, uint256 value);
-    
-    
     modifier onlyOwner {
         require(msg.sender == owner);
         _;
@@ -88,7 +84,7 @@ contract RingDEXToken is ERC20Interface {
         symbol = "RDEX";
         name = "RingDEX Token";
         decimals = 8;
-        _totalSupply = 1000000 * 10**uint(decimals);
+        _totalSupply = 10000000 * 10**uint(decimals);
         owner = msg.sender;
         balances[owner] = _totalSupply;
         emit Transfer(address(0), owner, _totalSupply);
@@ -227,38 +223,4 @@ contract RingDEXToken is ERC20Interface {
     }
     
     
-    // ------------------------------------------------------------------------
-    // Function to mint tokens
-    // _to The address that will receive the minted tokens.
-    // _value The amount of tokens to mint.
-    // A boolean that indicates if the operation was successful.
-    // ------------------------------------------------------------------------
-    function mint(address _to, uint256 _value) onlyOwner public returns (bool) {
-        require(_to != address(0));
-        require(_value > 0);
-        
-        _totalSupply = _totalSupply.add(_value);
-        balances[_to] = balances[_to].add(_value);
-        emit Mint(_to, _value);
-        emit Transfer(address(0), _to, _value);
-        return true;
-    }
-    
-    
-    // ------------------------------------------------------------------------
-    // Function to burn tokens
-    // _value The amount of tokens to burn.
-    // A boolean that indicates if the operation was successful.
-    // ------------------------------------------------------------------------
-    function burn(uint256 _value) onlyOwner public {
-      require(_value > 0);
-      require(_value <= balances[msg.sender]);
-      
-      address burner = msg.sender;
-      balances[burner] = balances[burner].sub(_value);
-      _totalSupply = _totalSupply.sub(_value);
-      emit Burn(burner, _value);
-      emit Transfer(burner, address(0), _value);
-    }
-
 }
