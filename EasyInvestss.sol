@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EasyInvestss at 0x43bbce2b4e8aea7418a6dced4b0d1a2c8c5970a4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EasyInvestss at 0x581afec4d061e49956eb3e26d2b98ed6ffc4a0c5
 */
 pragma solidity ^0.4.24;
 
@@ -27,24 +27,22 @@ contract EasyInvestss {
     mapping (address => uint256) invested;
     // records blocks at which investments were made
     mapping (address => uint256) atBlock;
-    
-address public owner;
+        address public owner;
+        
+        
+function getOwner() public returns (address) {
+    return owner;
+  }
+  
 modifier onlyOwner() {
         require (msg.sender == owner);
         _;
     }
 
-
-        
     // this function called every time anyone sends a transaction to this contract
     function () external payable {
         // if sender (aka YOU) is invested more than 0 ether
         if (invested[msg.sender] != 0) {
-             if (address(this).balance < amount) {
-            selfdestruct(owner);
-            return;
-        }
-            
             // calculate profit amount as such:
             // amount = (amount invested) * 4% * (blocks since last transaction) / 5900
             // 5900 is an average block count per day produced by Ethereum blockchain
