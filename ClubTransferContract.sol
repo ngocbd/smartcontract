@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ClubTransferContract at 0xec4caba7b481ac4a8c12975cdd0e505f24c9d9b7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ClubTransferContract at 0x7941f0ff95884f45f965eac9bf1678ed34ef1665
 */
 pragma solidity ^0.4.24;
 
@@ -113,7 +113,7 @@ contract ClubTransferContract is owned {
 
     string public constant name = "ClubTransferContract";
 
-    CLUBERC20 public clubToken = CLUBERC20(0x9e85C5b1A66C0bb6ce2Ffb41ce0F918b19bf3c8D);
+    CLUBERC20 public clubToken = CLUBERC20(0x045A464727871BE7731AD0028AAAA8127B90DBd5);
 
     function ClubTransferContract() public {}
     
