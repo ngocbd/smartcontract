@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartVows at 0x4d09401ff2d7b0e30057870752667b9b07f230da
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartVows at 0x32Ab7C6dEdbF0553E202B92eF88E9a63dDF6858F
 */
 pragma solidity ^0.4.17;
 
@@ -95,10 +95,10 @@ contract SmartVows is Ownable, Util {
     string public maritalStatus;
 
     // Couple Image Hash
-    bytes public coupleImageIPFShash;
+    string public coupleImageIPFShash;
 
     // Marriage License Image Hash
-    bytes public marriageLicenceImageIPFShash;
+    string public marriageLicenceImageIPFShash;
 
     // prenup Text
     string public prenupAgreement;
@@ -158,7 +158,7 @@ contract SmartVows is Ownable, Util {
     // Declare Contract event structure
     event ContractEvent(string ce_description, string ce_mesg);
 
-    function SmartVows(string _partner1, address _partner1_address, string _partner2, address _partner2_address, string _marriageDate, string _maritalStatus, string _officiant, string _witnesses, string _location, string coupleImageIPFShash, string marriageLicenceImageIPFShash) public{        
+    function SmartVows(string _partner1, address _partner1_address, string _partner2, address _partner2_address, string _marriageDate, string _maritalStatus, string _officiant, string _witnesses, string _location, string _coupleImageIPFShash, string _marriageLicenceImageIPFShash) public{        
         partner1_name = _partner1;
         partner2_name = _partner2;  
         partner1_address=_partner1_address;
@@ -168,8 +168,8 @@ contract SmartVows is Ownable, Util {
         officiant=_officiant;
         witnesses=_witnesses;
         location=_location;
-        //coupleImageIPFShash=_coupleImageIPFShash;
-        //marriageLicenceImageIPFShash=_marriageLicenceImageIPFShash;
+        coupleImageIPFShash = _coupleImageIPFShash;
+        marriageLicenceImageIPFShash = _marriageLicenceImageIPFShash;
 
         //Record contract creation in events
         saveContractEvent("Blockchain marriage smart contract created","Marriage smart contract added to the blockchain");
@@ -258,13 +258,13 @@ contract SmartVows is Ownable, Util {
     }
 
     // Update coupleImage hash, either partner can update
-    function updateCoupleImageIPFShash(bytes _coupleImageIPFShash) public{
+    function updateCoupleImageIPFShash(string _coupleImageIPFShash) public{
         require(msg.sender == owner || msg.sender == partner1_address || msg.sender == partner2_address);
         coupleImageIPFShash = _coupleImageIPFShash;
     }
 
     // Update marriage licence image hash, either partner can update
-    function updateMarriageLicenceImageIPFShash(bytes _marriageLicenceImageIPFShash) public{
+    function updateMarriageLicenceImageIPFShash(string _marriageLicenceImageIPFShash) public{
         require(msg.sender == owner || msg.sender == partner1_address || msg.sender == partner2_address);
         marriageLicenceImageIPFShash = _marriageLicenceImageIPFShash;
     }
