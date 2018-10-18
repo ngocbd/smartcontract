@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleVesting at 0x4bb18edba4f9f5de51b71f89f1739fe8bba3ed0a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleVesting at 0x06df31ec03abb48e0ec9bc9c050c0f485911389e
 */
 pragma solidity ^0.4.24;
 
@@ -285,7 +285,7 @@ contract TokenVesting is Ownable {
 contract SimpleVesting is TokenVesting {
      constructor(address _beneficiary) TokenVesting(
             _beneficiary,
-            1630454400,
+            1567296000,
             0,
             0,
             false
