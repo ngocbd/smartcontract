@@ -1,9 +1,23 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BCNTToken at 0xb2f71443bbdf67d35a3e6915121c118200e5b15b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BCNTToken at 0x67364797e6b7f1c80ecf47b1d7f8f8668756416c
 */
 pragma solidity ^0.4.24;
 
-pragma solidity ^0.4.24;
+
+
+
+
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * See https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
 
 
 /**
@@ -56,17 +70,7 @@ library SafeMath {
   }
 }
 
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * See https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
+
 /**
  * @title Basic token
  * @dev Basic version of StandardToken, with no allowances.
@@ -113,9 +117,6 @@ contract BasicToken is ERC20Basic {
 
 
 
-
-
-
 /**
  * @title ERC20 interface
  * @dev see https://github.com/ethereum/EIPs/issues/20
@@ -134,7 +135,6 @@ contract ERC20 is ERC20Basic {
     uint256 value
   );
 }
-
 
 
 /**
@@ -256,6 +256,80 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
+contract PrivateToken is StandardToken {
+    using SafeMath for uint256;
+
+    string public name; // solium-disable-line uppercase
+    string public symbol; // solium-disable-line uppercase
+    uint8 public decimals; // solium-disable-line uppercase
+
+    address public admin;
+    bool public isPublic;
+    uint256 public unLockTime;
+    LockToken originToken;
+
+    event StartPublicSale(uint256 unlockTime);
+    event Deposit(address indexed from, uint256 value);
+    /**
+    *  @dev check if msg.sender is allowed to deposit Origin token.
+    */
+    function isDepositAllowed() internal view{
+      // If the tokens isn't public yet all transfering are limited to origin tokens
+      require(isPublic);
+      require(msg.sender == admin || block.timestamp > unLockTime);
+    }
+
+    /**
+    * @dev Deposit msg.sender's origin token to real token
+    */
+    function deposit(address _depositor) public returns (bool){
+      isDepositAllowed();
+      uint256 _value;
+      _value = balances[_depositor];
+      require(_value > 0);
+      balances[_depositor] = 0;
+      require(originToken.deposit(_depositor, _value));
+      emit Deposit(_depositor, _value);
+
+      // This event is for those apps calculate balance from events rather than balanceOf
+      emit Transfer(_depositor, address(0), _value);
+    }
+
+    /**
+    *  @dev Start Public sale and allow admin to deposit the token.
+    *  normal users could deposit their tokens after the tokens unlocked
+    */
+    function startPublicSale(uint256 _unLockTime) public onlyAdmin {
+      require(!isPublic);
+      isPublic = true;
+      unLockTime = _unLockTime;
+      emit StartPublicSale(_unLockTime);
+    }
+
+    /**
+    *  @dev unLock the origin token and start the public sale.
+    */
+    function unLock() public onlyAdmin{
+      require(isPublic);
+      unLockTime = block.timestamp;
+    }
+
+    modifier onlyAdmin() {
+      require(msg.sender == admin);
+      _;
+    }
+
+    constructor(address _admin, string _name, string _symbol, uint8 _decimals, uint256 _totalSupply) public{
+      originToken = LockToken(msg.sender);
+      admin = _admin;
+      name = _name;
+      symbol = _symbol;
+      decimals = _decimals;
+      totalSupply_ = _totalSupply;
+      balances[admin] = _totalSupply;
+      emit Transfer(address(0), admin, _totalSupply);
+    }
+}
 
 /**
  * @title Lock Token
@@ -267,7 +341,6 @@ contract StandardToken is ERC20, BasicToken {
  contract LockToken is StandardToken {
    using SafeMath for uint256;
 
-   bool public isPublic;
    PrivateToken public privateToken;
 
    modifier onlyPrivateToken() {
@@ -289,6 +362,7 @@ contract StandardToken is ERC20, BasicToken {
      return true;
    }
  }
+
 
 /**
  * @title Eliptic curve signature operations
@@ -360,84 +434,6 @@ library ECRecovery {
   }
 }
 
-contract PrivateToken is StandardToken {
-    using SafeMath for uint256;
-
-    string public name; // solium-disable-line uppercase
-    string public symbol; // solium-disable-line uppercase
-    uint8 public decimals; // solium-disable-line uppercase
-
-    mapping (address => bool) internal superUsers;
-
-    address public admin;
-    bool public isPublic;
-    uint256 public unLockTime;
-    LockToken originToken;
-
-    event StartPublicSale(uint256 unlockTime);
-    event Deposit(address indexed from, uint256 value);
-    /**
-    *  @dev check if msg.sender is allowed to deposit Origin token.
-    */
-    function isDepositAllowed() internal view{
-      // If the tokens isn't public yet all transfering are limited to origin tokens
-      require(isPublic);
-      require(msg.sender == admin || block.timestamp > unLockTime);
-    }
-
-    /**
-    * @dev Deposit msg.sender's origin token to real token
-    */
-    function deposit(address _depositor) public returns (bool){
-      isDepositAllowed();
-      uint256 _value;
-      _value = balances[_depositor];
-      require(_value > 0);
-      balances[_depositor] = 0;
-      require(originToken.deposit(_depositor, _value));
-      emit Deposit(_depositor, _value);
-
-      // This event is for those apps calculate balance from events rather than balanceOf
-      emit Transfer(_depositor, address(0), _value);
-    }
-
-    /**
-    *  @dev Start Public sale and allow admin to deposit the token.
-    *  normal users could deposit their tokens after the tokens unlocked
-    */
-    function startPublicSale(uint256 _unLockTime) public onlyAdmin {
-      require(!isPublic);
-      isPublic = true;
-      unLockTime = _unLockTime;
-      emit StartPublicSale(_unLockTime);
-    }
-
-    /**
-    *  @dev unLock the origin token and start the public sale.
-    */
-    function unLock() public onlyAdmin{
-      require(isPublic);
-      unLockTime = block.timestamp;
-    }
-
-    modifier onlyAdmin() {
-      require(msg.sender == admin);
-      _;
-    }
-
-    constructor(address _admin, string _name, string _symbol, uint8 _decimals, uint256 _totalSupply) public{
-      originToken = LockToken(msg.sender);
-      admin = _admin;
-      name = _name;
-      symbol = _symbol;
-      decimals = _decimals;
-      totalSupply_ = _totalSupply;
-      balances[admin] = _totalSupply;
-      emit Transfer(address(0), admin, _totalSupply);
-    }
-}
-
-
 contract BCNTToken is LockToken{
   string public constant name = "Bincentive SIT Token"; // solium-disable-line uppercase
   string public constant symbol = "BCNT-SIT"; // solium-disable-line uppercase
@@ -470,7 +466,7 @@ contract BCNTToken is LockToken{
         require(signatures[_signature] == false);
         require(block.number <= _validUntil);
 
-        bytes32 hashedTx = ECRecovery.toEthSignedMessageHash(transferPreSignedHashing(address(this), _to, _value, _fee, _nonce, _validUntil));
+        bytes32 hashedTx = transferPreSignedHashing(address(this), _to, _value, _fee, _nonce, _validUntil);
 
         address from = ECRecovery.recover(hashedTx, _signature);
         require(from != address(0));
@@ -508,21 +504,7 @@ contract BCNTToken is LockToken{
         returns (bytes32)
     {
         /* "0d2d1bf5": transferPreSigned(address,address,uint256,uint256,uint256,uint256) */
-        return keccak256(bytes4(0x0a0fb66b), _token, _to, _value, _fee, _nonce, _validUntil);
-    }
-    function transferPreSignedHashingWithPrefix(
-        address _token,
-        address _to,
-        uint256 _value,
-        uint256 _fee,
-        uint256 _nonce,
-        uint256 _validUntil
-    )
-        public
-        pure
-        returns (bytes32)
-    {
-        return ECRecovery.toEthSignedMessageHash(transferPreSignedHashing(_token, _to, _value, _fee, _nonce, _validUntil));
+        return keccak256(bytes4(0x0d2d1bf5), _token, _to, _value, _fee, _nonce, _validUntil);
     }
 
     /**
@@ -531,7 +513,7 @@ contract BCNTToken is LockToken{
     constructor(address _admin) public {
         totalSupply_ = INITIAL_SUPPLY;
         privateToken = new PrivateToken(
-          _admin, "Bincentive SIT Private Token", "BCNP-SIT", decimals, INITIAL_SUPPLY
+          _admin, "Bincentive Private SIT Token", "BCNP-SIT", decimals, INITIAL_SUPPLY
        );
     }
 }
