@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Etherhero at 0x83928d7a16e0cbdf77d555c405a3975d11dcf0fa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Etherhero at 0x05f49e3e0a27efa05d60c19cd8f0ecc951d3717e
 */
 pragma solidity 0.4.25;
 
@@ -33,6 +33,32 @@ library SafeMath {
         return c;
     }
 
+}
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+
+    address public owner;
+
+    /**
+     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+     * account.
+     */
+    constructor() public {
+        owner = msg.sender;
+    }
+
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        require(msg.sender == owner, 'Only the owner can call this method');
+        _;
+    }
 }
 
 /**
@@ -78,7 +104,7 @@ contract EtherheroStabilizationFund {
     }
 }
 
-contract Etherhero{
+contract Etherhero is Ownable {
 
     using SafeMath
     for uint;
