@@ -1,132 +1,147 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BalanceSheet at 0x6dea55ba04a37fddd05e1fd979c30aa0e634e837
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BalanceSheet at 0xaabae5a35dad8976c110cef54ce22c5d64bd90f6
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.24;
+
+// File: openzeppelin-solidity/contracts/math/SafeMath.sol
 
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
+    /**
+     * @dev Multiplies two numbers, throws on overflow.
+     */
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (a == 0) {
+            return 0;
+        }
+        uint256 c = a * b;
+        assert(c / a == b);
+        return c;
     }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
 
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
+    /**
+     * @dev Integer division of two numbers, truncating the quotient.
+     */
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return c;
+    }
 
-  /**
-  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
+    /**
+     * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+     */
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
 
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
+    /**
+     * @dev Adds two numbers, throws on overflow.
+     */
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
 }
 
+// File: openzeppelin-solidity/contracts/ownership/Ownable.sol
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
 contract Ownable {
-  address public owner;
+    address public owner;
 
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    /**
+     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+     * account.
+     */
+    constructor() public {
+        owner = msg.sender;
+    }
 
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
 
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
+    /**
+     * @dev Allows the current owner to transfer control of the contract to a newOwner.
+     * @param newOwner The address to transfer ownership to.
+     */
+    function transferOwnership(address newOwner) public onlyOwner {
+        require(newOwner != address(0));
+        emit OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+    }
 }
 
+// File: openzeppelin-solidity/contracts/ownership/Claimable.sol
+
+/**
+ * @title Claimable
+ * @dev Extension for the Ownable contract, where the ownership needs to be claimed.
+ * This allows the new owner to accept the transfer.
+ */
 contract Claimable is Ownable {
-  address public pendingOwner;
+    address public pendingOwner;
 
-  /**
-   * @dev Modifier throws if called by any account other than the pendingOwner.
-   */
-  modifier onlyPendingOwner() {
-    require(msg.sender == pendingOwner);
-    _;
-  }
+    /**
+     * @dev Modifier throws if called by any account other than the pendingOwner.
+     */
+    modifier onlyPendingOwner() {
+        require(msg.sender == pendingOwner);
+        _;
+    }
 
-  /**
-   * @dev Allows the current owner to set the pendingOwner address.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) onlyOwner public {
-    pendingOwner = newOwner;
-  }
+    /**
+     * @dev Allows the current owner to set the pendingOwner address.
+     * @param newOwner The address to transfer ownership to.
+     */
+    function transferOwnership(address newOwner) onlyOwner public {
+        pendingOwner = newOwner;
+    }
 
-  /**
-   * @dev Allows the pendingOwner address to finalize the transfer.
-   */
-  function claimOwnership() onlyPendingOwner public {
-    OwnershipTransferred(owner, pendingOwner);
-    owner = pendingOwner;
-    pendingOwner = address(0);
-  }
+    /**
+     * @dev Allows the pendingOwner address to finalize the transfer.
+     */
+    function claimOwnership() onlyPendingOwner public {
+        emit OwnershipTransferred(owner, pendingOwner);
+        owner = pendingOwner;
+        pendingOwner = address(0);
+    }
 }
 
+// File: contracts/BalanceSheet.sol
+
+// A wrapper around the balanceOf mapping.
 contract BalanceSheet is Claimable {
     using SafeMath for uint256;
 
-    mapping (address => uint256) public balanceOf;
+    mapping(address => uint256) public balanceOf;
 
-    function addBalance(address addr, uint256 value) public onlyOwner {
-        balanceOf[addr] = balanceOf[addr].add(value);
+    function addBalance(address _addr, uint256 _value) public onlyOwner {
+        balanceOf[_addr] = balanceOf[_addr].add(_value);
     }
 
-    function subBalance(address addr, uint256 value) public onlyOwner {
-        balanceOf[addr] = balanceOf[addr].sub(value);
+    function subBalance(address _addr, uint256 _value) public onlyOwner {
+        balanceOf[_addr] = balanceOf[_addr].sub(_value);
     }
 
-    function setBalance(address addr, uint256 value) public onlyOwner {
-        balanceOf[addr] = value;
+    function setBalance(address _addr, uint256 _value) public onlyOwner {
+        balanceOf[_addr] = _value;
     }
 }
