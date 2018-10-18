@@ -1,41 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IcoRocketFuel at 0x7bf94bba5f0dcdef4c15e2eebef428db9eba4bfe
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IcoRocketFuel at 0x64d11a4cf5d1450c120f19396f23c8862f373a9b
 */
-pragma solidity ^0.4.24;
-
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 {
-    function totalSupply() public view returns (uint256);
-
-    function balanceOf(address _who) public view returns (uint256);
-
-    function allowance(address _owner, address _spender)
-        public view returns (uint256);
-
-    function transfer(address _to, uint256 _value) public returns (bool);
-
-    function approve(address _spender, uint256 _value)
-        public returns (bool);
-
-    function transferFrom(address _from, address _to, uint256 _value)
-        public returns (bool);
-
-    event Transfer(
-        address indexed from,
-        address indexed to,
-        uint256 value
-    );
-
-    event Approval(
-        address indexed owner,
-        address indexed spender,
-        uint256 value
-    );
-}
+pragma solidity ^0.4.25;
 
 
 /**
@@ -52,7 +18,7 @@ library SafeMath {
         // benefit is lost if 'b' is also tested.
         // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
         if (_a == 0) {
-            return 0;
+        return 0;
         }
 
         uint256 c = _a * _b;
@@ -101,6 +67,7 @@ library SafeMath {
         return a % b;
     }
 }
+
 
 /**
  * @title Ownable
@@ -166,532 +133,684 @@ contract Ownable {
 
 
 /**
- * @title ICO Rocket Fuel contract for LastMile service.
+ * @title Currency exchange rate contract
  */
-contract IcoRocketFuel is Ownable {
+contract CurrencyExchangeRate is Ownable {
 
-    using SafeMath for uint256;
-
-    // Crowdsale states
-    enum States {Active, Refunding, Closed}
-
-    struct Crowdsale {
-        address owner;        // Crowdsale proposer
-        address refundWallet; // Tokens for sale will refund to this wallet
-        uint256 cap;          // Hard cap
-        uint256 goal;         // Soft cap
-        uint256 raised;       // wei raised
-        uint256 rate;         // Sell rate. Set to 10 means 1 Wei = 10 token units
-        uint256 minInvest;    // Minimum investment in Wei
-        uint256 closingTime;  // Crowdsale closing time
-        bool earlyClosure;    // Whether allow early closure
-        uint8 commission;     // Commission percentage. Set to 10 means 10%
-        States state;         // Crowdsale current state
+    struct Currency {
+        uint256 exRateToEther; // Exchange rate: currency to Ether
+        uint8 exRateDecimals;  // Exchange rate decimals
     }
 
-    // When crowdsale is closed, commissions will transfer to this wallet.
-    address public commissionWallet;    
+    Currency[] public currencies;
 
-    // Use crowdsales[token] to get corresponding crowdsale.
-    // The token is an ERC20 token address.
-    mapping(address => Crowdsale) public crowdsales;
+    event CurrencyExchangeRateAdded(
+        address indexed setter, uint256 index, uint256 rate, uint256 decimals
+    );
 
-    // Use deposits[buyer][token] to get deposited Wei for buying the token.
-    // The buyer is the buyer address.
-    // The token is an ERC20 token address.
-    mapping (address => mapping(address => uint256)) public deposits;
+    event CurrencyExchangeRateSet(
+        address indexed setter, uint256 index, uint256 rate, uint256 decimals
+    );
 
-    modifier onlyCrowdsaleOwner(address _token) {
+    constructor() public {
+        // Add Ether to index 0
+        currencies.push(
+            Currency ({
+                exRateToEther: 1,
+                exRateDecimals: 0
+            })
+        );
+        // Add USD to index 1
+        currencies.push(
+            Currency ({
+                exRateToEther: 30000,
+                exRateDecimals: 2
+            })
+        );
+    }
+
+    function addCurrencyExchangeRate(
+        uint256 _exRateToEther, 
+        uint8 _exRateDecimals
+    ) external onlyOwner {
+        emit CurrencyExchangeRateAdded(
+            msg.sender, currencies.length, _exRateToEther, _exRateDecimals);
+        currencies.push(
+            Currency ({
+                exRateToEther: _exRateToEther,
+                exRateDecimals: _exRateDecimals
+            })
+        );
+    }
+
+    function setCurrencyExchangeRate(
+        uint256 _currencyIndex,
+        uint256 _exRateToEther, 
+        uint8 _exRateDecimals
+    ) external onlyOwner {
+        emit CurrencyExchangeRateSet(
+            msg.sender, _currencyIndex, _exRateToEther, _exRateDecimals);
+        currencies[_currencyIndex].exRateToEther = _exRateToEther;
+        currencies[_currencyIndex].exRateDecimals = _exRateDecimals;
+    }
+}
+
+
+/**
+ * @title KYC contract interface
+ */
+contract KYC {
+    
+    /**
+     * Get KYC expiration timestamp in second.
+     *
+     * @param _who Account address
+     * @return KYC expiration timestamp in second
+     */
+    function expireOf(address _who) external view returns (uint256);
+
+    /**
+     * Get KYC level.
+     * Level is ranging from 0 (lowest, no KYC) to 255 (highest, toughest).
+     *
+     * @param _who Account address
+     * @return KYC level
+     */
+    function kycLevelOf(address _who) external view returns (uint8);
+
+    /**
+     * Get encoded nationalities (country list).
+     * The uint256 is represented by 256 bits (0 or 1).
+     * Every bit can represent a country.
+     * For each listed country, set the corresponding bit to 1.
+     * To do so, up to 256 countries can be encoded in an uint256 variable.
+     * Further, if country blacklist of an ICO was encoded by the same way,
+     * it is able to use bitwise AND to check whether the investor can invest
+     * the ICO by the crowdsale.
+     *
+     * @param _who Account address
+     * @return Encoded nationalities
+     */
+    function nationalitiesOf(address _who) external view returns (uint256);
+
+    /**
+     * Set KYC status to specific account address.
+     *
+     * @param _who Account address
+     * @param _expiresAt Expire timestamp in seconds
+     * @param _level KYC level
+     * @param _nationalities Encoded nationalities
+     */
+    function setKYC(
+        address _who, uint256 _expiresAt, uint8 _level, uint256 _nationalities) 
+        external;
+
+    event KYCSet (
+        address indexed _setter,
+        address indexed _who,
+        uint256 _expiresAt,
+        uint8 _level,
+        uint256 _nationalities
+    );
+}
+
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 {
+    function totalSupply() public view returns (uint256);
+
+    function balanceOf(address _who) public view returns (uint256);
+
+    function allowance(address _owner, address _spender)
+        public view returns (uint256);
+
+    function transfer(address _to, uint256 _value) public returns (bool);
+
+    function approve(address _spender, uint256 _value)
+        public returns (bool);
+
+    function transferFrom(address _from, address _to, uint256 _value)
+        public returns (bool);
+
+    event Transfer(
+        address indexed from,
+        address indexed to,
+        uint256 value
+    );
+
+    event Approval(
+        address indexed owner,
+        address indexed spender,
+        uint256 value
+    );
+}
+
+
+contract EtherVault is Ownable {
+    using SafeMath for uint256;
+
+    enum State { Active, Refunding, Closed }
+
+    address public wallet;
+    State public state;
+
+    event Closed(address indexed commissionWallet, uint256 commission);
+    event RefundsEnabled();
+    event Refunded(address indexed beneficiary, uint256 weiAmount);
+
+    constructor(address _wallet) public {
         require(
-            msg.sender == crowdsales[_token].owner,
+            _wallet != address(0),
+            "Failed to create Ether vault due to wallet address is 0x0."
+        );
+        wallet = _wallet;
+        state = State.Active;
+    }
+
+    function deposit() public onlyOwner payable {
+        require(
+            state == State.Active,
+            "Failed to deposit Ether due to state is not Active."
+        );
+    }
+
+    function close(address _commissionWallet, uint256 _commission) public onlyOwner {
+        require(
+            state == State.Active,
+            "Failed to close due to state is not Active."
+        );
+        state = State.Closed;
+        emit Closed(_commissionWallet, _commission);
+        _commissionWallet.transfer(address(this).balance.mul(_commission).div(100));
+        wallet.transfer(address(this).balance);
+    }
+
+    function enableRefunds() public onlyOwner {
+        require(
+            state == State.Active,
+            "Failed to enable refunds due to state is not Active."
+        );
+        emit RefundsEnabled();
+        state = State.Refunding;        
+    }
+
+    function refund(address investor, uint256 depositedValue) public onlyOwner {
+        require(
+            state == State.Refunding,
+            "Failed to refund due to state is not Refunding."
+        );
+        emit Refunded(investor, depositedValue);
+        investor.transfer(depositedValue);        
+    }
+}
+
+
+
+/**
+ * @title ICO Rocket Fuel contract for FirstMile/LastMile service.
+ */
+contract IcoRocketFuel is Ownable {
+    using SafeMath for uint256;
+
+    // Crowdsale current state
+    enum States {Ready, Active, Paused, Refunding, Closed}
+    States public state = States.Ready;
+
+    // Token for crowdsale (Token contract).
+    // Replace 0x0 by deployed ERC20 token address.
+    ERC20 public token = ERC20(0x0e27b0ca1f890d37737dd5cde9de22431255f524);
+
+    // Crowdsale owner (ICO team).
+    // Replace 0x0 by wallet address of ICO team.
+    address public crowdsaleOwner = 0xf75589cac3b23f24de65fe5a3cd07966728071a3;
+
+    // When crowdsale is closed, commissions will transfer to this wallet.
+    // Replace 0x0 by commission wallet address of platform.
+    address public commissionWallet = 0xf75589cac3b23f24de65fe5a3cd07966728071a3;
+
+    // Base exchange rate (1 invested currency = N tokens) and its decimals.
+    // Ex. to present base exchange rate = 0.01 (= 1 / (10^2))
+    //     baseExRate = 1; baseExRateDecimals = 2 
+    //     (1 / (10^2)) equal to (baseExRate / (10^baseExRateDecimals))
+    uint256 public baseExRate = 20;    
+    uint8 public baseExRateDecimals = 0;
+
+    // External exchange rate contract and currency index.
+    // Use exRate.currencies(currency) to get tuple.
+    // tuple = (Exchange rate to Ether, Exchange rate decimal)
+    // Replace 0x0 by address of deployed CurrencyExchangeRate contract.
+    CurrencyExchangeRate public exRate = CurrencyExchangeRate(0x44802e3d6fb67bd8ee7b24033ee04b1290692fd9);
+    // Supported currency
+    // 0: Ether
+    // 1: USD
+    uint256 public currency = 1;
+
+    // Total raised in specified currency.
+    uint256 public raised = 0;
+    // Hard cap in specified currency.
+    uint256 public cap = 25000000 * (10**18);
+    // Soft cap in specified currency.
+    uint256 public goal = 0;
+    // Minimum investment in specified currency.
+    uint256 public minInvest = 50000 * (10**18);
+    
+    // Crowdsale closing time in second.
+    uint256 public closingTime = 1548979200;
+    // Whether allow early closure
+    bool public earlyClosure = true;
+
+    // Commission percentage. Set to 10 means 10% 
+    uint8 public commission = 10;
+
+    // When KYC is required, check KYC result with this contract.
+    // The value is initiated by constructor.
+    // The value is not allowed to change after contract deployment.
+    // Replace 0x0 by address of deployed KYC contract.
+    KYC public kyc = KYC(0x8df3064451f840285993e2a4cfc0ec56b267d288);
+
+    // Get encoded country blacklist.
+    // The uint256 is represented by 256 bits (0 or 1).
+    // Every bit can represent a country.
+    // For the country listed in the blacklist, set the corresponding bit to 1.
+    // To do so, up to 256 countries can be encoded in an uint256 variable.
+    // Further, if nationalities of an investor were encoded by the same way,
+    // it is able to use bitwise AND to check whether the investor can invest
+    // the ICO by the crowdsale.
+    // Keypasco: Natural persons from Singapore and United States cannot invest.
+    uint256 public countryBlacklist = 27606985387965724171868518586879082855975017189942647717541493312847872;
+
+    // Get required KYC level of the crowdsale.
+    // KYC level = 0 (default): Crowdsale does not require KYC.
+    // KYC level > 0: Crowdsale requires centain level of KYC.
+    // KYC level ranges from 0 (no KYC) to 255 (toughest).
+    uint8 public kycLevel = 100;
+
+    // Whether legal person can skip country check.
+    // True: can skip; False: cannot skip.  
+    bool public legalPersonSkipsCountryCheck = true;
+
+    // Use deposits[buyer] to get deposited Wei for buying the token.
+    // The buyer is the buyer address.
+    mapping(address => uint256) public deposits;
+    // Ether vault entrusts invested Wei.
+    EtherVault public vault;
+    
+    // Investment in specified currency.
+    // Use invests[buyer] to get current investments.
+    mapping(address => uint256) public invests;
+    // Token units can be claimed by buyer.
+    // Use tokenUnits[buyer] to get current bought token units.
+    mapping(address => uint256) public tokenUnits;
+    // Total token units for performing the deal.
+    // Sum of all buyers' bought token units will equal to this value.
+    uint256 public totalTokenUnits = 0;
+
+    // Bonus tiers which will be initiated in constructor.
+    struct BonusTier {
+        uint256 investSize; // Invest in specified currency
+        uint256 bonus;      // Bonus in percentage
+    }
+    // Bonus levels initiated by constructor.
+    BonusTier[] public bonusTiers;
+
+    event StateSet(
+        address indexed setter, 
+        States oldState, 
+        States newState
+    );
+
+    event CrowdsaleStarted(
+        address indexed icoTeam
+    );
+
+    event TokenBought(
+        address indexed buyer, 
+        uint256 valueWei, 
+        uint256 valueCurrency
+    );
+
+    event TokensRefunded(
+        address indexed beneficiary,
+        uint256 valueTokenUnit
+    );
+
+    event Finalized(
+        address indexed icoTeam
+    );
+
+    event SurplusTokensRefunded(
+        address indexed beneficiary,
+        uint256 valueTokenUnit
+    );
+
+    event CrowdsaleStopped(
+        address indexed owner
+    );
+
+    event TokenClaimed(
+        address indexed beneficiary,
+        uint256 valueTokenUnit
+    );
+
+    event RefundClaimed(
+        address indexed beneficiary,
+        uint256 valueWei
+    );
+
+    modifier onlyCrowdsaleOwner() {
+        require(
+            msg.sender == crowdsaleOwner,
             "Failed to call function due to permission denied."
         );
         _;
     }
 
-    modifier inState(address _token, States _state) {
+    modifier inState(States _state) {
         require(
-            crowdsales[_token].state == _state,
+            state == _state,
             "Failed to call function due to crowdsale is not in right state."
         );
         _;
     }
 
-    modifier nonZeroAddress(address _token) {
-        require(
-            _token != address(0),
-            "Failed to call function due to address is 0x0."
+    constructor() public {
+        // Must push higher bonus first.
+        bonusTiers.push(
+            BonusTier({
+                investSize: 400000 * (10**18),
+                bonus: 50
+            })
         );
-        _;
+        bonusTiers.push(
+            BonusTier({
+                investSize: 200000 * (10**18),
+                bonus: 40
+            })
+        );
+        bonusTiers.push(
+            BonusTier({
+                investSize: 100000 * (10**18),
+                bonus: 30
+            })
+        );
+        bonusTiers.push(
+            BonusTier({
+                investSize: 50000 * (10**18),
+                bonus: 20
+            })
+        );
     }
 
-    event CommissionWalletUpdated(
-        address indexed _previoudWallet, // Previous commission wallet address
-        address indexed _newWallet       // New commission wallet address
-    );
-
-    event CrowdsaleCreated(
-        address indexed _owner, // Crowdsale proposer
-        address indexed _token, // ERC20 token for crowdsale
-        address _refundWallet,  // Tokens for sale will refund to this wallet
-        uint256 _cap,           // Hard cap
-        uint256 _goal,          // Soft cap
-        uint256 _rate,          // Sell rate. Set to 10 means 1 Wei = 10 token units
-        uint256 closingTime,    // Crowdsale closing time
-        bool earlyClosure,      // Whether allow early closure
-        uint8 _commission       // Commission percentage. Set to 10 means 10%
-    );
-
-    event TokenBought(
-        address indexed _buyer, // Buyer address
-        address indexed _token, // Bought ERC20 token address
-        uint256 _value          // Spent wei amount
-    );
-
-    event CrowdsaleClosed(
-        address indexed _setter, // Address who closed crowdsale
-        address indexed _token   // Token address
-    );
-
-    event SurplusTokensRefunded(
-        address _token,       // ERC20 token for crowdsale
-        address _beneficiary, // Surplus tokens will refund to this wallet
-        uint256 _surplus      // Surplus token units
-    );
-
-    event CommissionPaid(
-        address indexed _payer,       // Commission payer        
-        address indexed _token,       // Paid from this crowdsale
-        address indexed _beneficiary, // Commission paid to this wallet
-        uint256 _value                // Paid commission in Wei amount
-    );
-
-    event RefundsEnabled(
-        address indexed _setter, // Address who enabled refunds
-        address indexed _token   // Token address
-    );
-
-    event CrowdsaleTokensRefunded(
-        address indexed _token,        // ERC20 token for crowdsale
-        address indexed _refundWallet, // Token will refund to this wallet
-        uint256 _value                 // Refuned amount
-    );
-
-    event RaisedWeiClaimed(
-        address indexed _beneficiary, // Who claimed refunds
-        address indexed _token,       // Refund from this crowdsale
-        uint256 _value                // Raised Wei amount
-    );
-
-    event TokenClaimed(
-        address indexed _beneficiary, // Who claimed refunds
-        address indexed _token,       // Refund from this crowdsale
-        uint256 _value                // Refund Wei amount 
-    );
-
-    event CrowdsalePaused(
-        address indexed _owner, // Current contract owner
-        address indexed _token  // Paused crowdsale
-    );
-
-    event WeiRefunded(
-        address indexed _beneficiary, // Who claimed refunds
-        address indexed _token,       // Refund from this crowdsale
-        uint256 _value                // Refund Wei amount 
-    );
-
-    // Note no default constructor is required, but 
-    // remember to set commission wallet before operating.
-
-    /**
-     * Set crowdsale commission wallet.
-     *
-     * @param _newWallet New commission wallet
-     */
-    function setCommissionWallet(
-        address _newWallet
-    )
-        external
-        onlyOwner
-        nonZeroAddress(_newWallet)
-    {
-        emit CommissionWalletUpdated(commissionWallet, _newWallet);
-        commissionWallet = _newWallet;
-    }
-
-    /**
-     * Create a crowdsale.
-     *
-     * @param _token Deployed ERC20 token address
-     * @param _refundWallet Tokens for sale will refund to this wallet
-     * @param _cap Crowdsale cap
-     * @param _goal Crowdsale goal
-     * @param _rate Token sell rate. Set to 10 means 1 Wei = 10 token units
-     * @param _minInvest Minimum investment in Wei
-     * @param _closingTime Crowdsale closing time
-     * @param _earlyClosure True: allow early closure; False: not allow
-     * @param _commission Commission percentage. Set to 10 means 10%
-     */
-    function createCrowdsale(
+    function setAddress(
         address _token,
-        address _refundWallet,
+        address _crowdsaleOwner,
+        address _commissionWallet,
+        address _exRate,
+        address _kyc
+    ) external onlyOwner inState(States.Ready){
+        token = ERC20(_token);
+        crowdsaleOwner = _crowdsaleOwner;
+        commissionWallet = _commissionWallet;
+        exRate = CurrencyExchangeRate(_exRate);
+        kyc = KYC(_kyc);
+    }
+
+    function setSpecialOffer(
+        uint256 _currency,
         uint256 _cap,
         uint256 _goal,
-        uint256 _rate,
         uint256 _minInvest,
-        uint256 _closingTime,
-        bool _earlyClosure,
-        uint8 _commission
-    )
-        external
-        nonZeroAddress(_token)
-        nonZeroAddress(_refundWallet)
-    {
+        uint256 _closingTime
+    ) external onlyOwner inState(States.Ready) {
+        currency = _currency;
+        cap = _cap;
+        goal = _goal;
+        minInvest = _minInvest;
+        closingTime = _closingTime;
+    }
+
+    function setInvestRestriction(
+        uint256 _countryBlacklist,
+        uint8 _kycLevel,
+        bool _legalPersonSkipsCountryCheck
+    ) external onlyOwner inState(States.Ready) {
+        countryBlacklist = _countryBlacklist;
+        kycLevel = _kycLevel;
+        legalPersonSkipsCountryCheck = _legalPersonSkipsCountryCheck;
+    }
+
+    function setState(uint256 _state) external onlyOwner {
         require(
-            crowdsales[_token].owner == address(0),
-            "Failed to create crowdsale due to the crowdsale is existed."
+            uint256(state) < uint256(States.Refunding),
+            "Failed to set state due to crowdsale was finalized."
         );
-
         require(
-            _goal <= _cap,
-            "Failed to create crowdsale due to goal is larger than cap."
+            // Only allow switch state between Active and Paused.
+            uint256(States.Active) == _state || uint256(States.Paused) == _state,
+            "Failed to set state due to invalid index."
         );
-
-        require(
-            _minInvest > 0,
-            "Failed to create crowdsale due to minimum investment is 0."
-        );
-
-        require(
-            _commission <= 100,
-            "Failed to create crowdsale due to commission is larger than 100."
-        );
-
-        // Leverage SafeMath to help potential overflow of maximum token untis.
-        _cap.mul(_rate);
-
-        crowdsales[_token] = Crowdsale({
-            owner: msg.sender,
-            refundWallet: _refundWallet,
-            cap: _cap,
-            goal: _goal,
-            raised: 0,
-            rate: _rate,
-            minInvest: _minInvest,
-            closingTime: _closingTime,
-            earlyClosure: _earlyClosure,
-            state: States.Active,
-            commission: _commission
-        });
-
-        emit CrowdsaleCreated(
-            msg.sender, 
-            _token,
-            _refundWallet,
-            _cap, 
-            _goal, 
-            _rate,
-            _closingTime,
-            _earlyClosure,
-            _commission
-        );
+        emit StateSet(msg.sender, state, States(_state));
+        state = States(_state);
     }
 
     /**
-     * Buy token with Wei.
-     *
-     * The Wei will be deposited until crowdsale is finalized.
-     * If crowdsale is success, raised Wei will be transfered to the token.
-     * If crowdsale is fail, buyer can refund the Wei.
-     *
-     * Note The minimum investment is 1 ETH.
-     * Note the big finger issue is expected to be handled by frontends.
-     *
-     * @param _token Deployed ERC20 token address
+     * Get bonus in token units.
+     * @param _investSize Total investment size in specified currency
+     * @param _tokenUnits Token units for the investment (without bonus)
+     * @return Bonus in token units
      */
-    function buyToken(
-        address _token
-    )
+    function _getBonus(uint256 _investSize, uint256 _tokenUnits) 
+        private view returns (uint256) 
+    {
+        for (uint256 _i = 0; _i < bonusTiers.length; _i++) {
+            if (_investSize >= bonusTiers[_i].investSize) {
+                return _tokenUnits.mul(bonusTiers[_i].bonus).div(100);
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Start crowdsale.
+     */
+    function startCrowdsale()
         external
-        inState(_token, States.Active)
-        nonZeroAddress(_token)
+        onlyCrowdsaleOwner
+        inState(States.Ready)
+    {
+        emit CrowdsaleStarted(msg.sender);
+        vault = new EtherVault(msg.sender);
+        state = States.Active;
+    }
+
+    /**
+     * Buy token.
+     */
+    function buyToken()
+        external
+        inState(States.Active)
         payable
     {
+        // KYC level = 0 means no KYC can invest.
+        // KYC level > 0 means certain level of KYC is required.
+        if (kycLevel > 0) {
+            require(
+                // solium-disable-next-line security/no-block-members
+                block.timestamp < kyc.expireOf(msg.sender),
+                "Failed to buy token due to KYC was expired."
+            );
+        }
+
         require(
-            msg.value >= crowdsales[_token].minInvest,
+            kycLevel <= kyc.kycLevelOf(msg.sender),
+            "Failed to buy token due to require higher KYC level."
+        );
+
+        require(
+            countryBlacklist & kyc.nationalitiesOf(msg.sender) == 0 || (
+                kyc.kycLevelOf(msg.sender) >= 200 && legalPersonSkipsCountryCheck
+            ),
+            "Failed to buy token due to country investment restriction."
+        );
+
+        // Get exchange rate of specified currency.
+        (uint256 _exRate, uint8 _exRateDecimals) = exRate.currencies(currency);
+
+        // Convert from Ether to base currency.
+        uint256 _investSize = (msg.value)
+            .mul(_exRate).div(10**uint256(_exRateDecimals));
+
+        require(
+            _investSize >= minInvest,
             "Failed to buy token due to less than minimum investment."
         );
 
         require(
-            crowdsales[_token].raised.add(msg.value) <= (
-                crowdsales[_token].cap
-            ),
+            raised.add(_investSize) <= cap,
             "Failed to buy token due to exceed cap."
         );
 
         require(
             // solium-disable-next-line security/no-block-members
-            block.timestamp < crowdsales[_token].closingTime,
+            block.timestamp < closingTime,
             "Failed to buy token due to crowdsale is closed."
         );
 
-        deposits[msg.sender][_token] = (
-            deposits[msg.sender][_token].add(msg.value)
-        );
-        crowdsales[_token].raised = crowdsales[_token].raised.add(msg.value);
-        emit TokenBought(msg.sender, _token, msg.value);        
+        // Update total invested in specified currency.
+        invests[msg.sender] = invests[msg.sender].add(_investSize);
+        // Update total invested wei.
+        deposits[msg.sender] = deposits[msg.sender].add(msg.value);
+        // Update total raised in specified currency.    
+        raised = raised.add(_investSize);
+
+        // Log previous token units.
+        uint256 _previousTokenUnits = tokenUnits[msg.sender];
+
+        // Calculate token units by base exchange rate.
+        uint256 _tokenUnits = invests[msg.sender]
+            .mul(baseExRate)
+            .div(10**uint256(baseExRateDecimals));
+
+        // Calculate bought token units (take bonus into account).
+        uint256 _tokenUnitsWithBonus = _tokenUnits.add(
+            _getBonus(invests[msg.sender], _tokenUnits));
+
+        // Update total bought token units.
+        tokenUnits[msg.sender] = _tokenUnitsWithBonus;
+
+        // Update total token units to be issued.
+        totalTokenUnits = totalTokenUnits
+            .sub(_previousTokenUnits)
+            .add(_tokenUnitsWithBonus);
+
+        emit TokenBought(msg.sender, msg.value, _investSize);
+
+        // Entrust wei to vault.
+        vault.deposit.value(msg.value)();
     }
 
     /**
-     * Check whether crowdsale goal was reached or not.
-     *
-     * Goal reached condition:
-     * 1. total raised wei >= goal (soft cap); and
-     * 2. Right amout of token is prepared for this contract.
-     *
-     * @param _token Deployed ERC20 token
-     * @return Whether crowdsale goal was reached or not
+     * Refund token units to wallet address of crowdsale owner.
      */
-    function _goalReached(
-        ERC20 _token
-    )
+    function _refundTokens()
         private
-        nonZeroAddress(_token)
-        view
-        returns(bool) 
+        inState(States.Refunding)
     {
-        return (crowdsales[_token].raised >= crowdsales[_token].goal) && (
-            _token.balanceOf(address(this)) >= 
-            crowdsales[_token].raised.mul(crowdsales[_token].rate)
-        );
-    }
-
-    /**
-     * Refund surplus tokens to refund wallet.
-     *
-     * @param _token Deployed ERC20 token
-     * @param _beneficiary Surplus tokens will refund to this wallet
-     */
-    function _refundSurplusTokens(
-        ERC20 _token,
-        address _beneficiary
-    )
-        private
-        nonZeroAddress(_token)
-        inState(_token, States.Closed)
-    {
-        uint256 _balance = _token.balanceOf(address(this));
-        uint256 _surplus = _balance.sub(
-            crowdsales[_token].raised.mul(crowdsales[_token].rate));
-        emit SurplusTokensRefunded(_token, _beneficiary, _surplus);
-
-        if (_surplus > 0) {
-            // Refund surplus tokens to refund wallet.
-            _token.transfer(_beneficiary, _surplus);
-        }
-    }
-
-    /**
-     * Pay commission by raised Wei amount of crowdsale.
-     *
-     * @param _token Deployed ERC20 token address
-     */
-    function _payCommission(
-        address _token
-    )
-        private
-        nonZeroAddress(_token)
-        inState(_token, States.Closed)
-        onlyCrowdsaleOwner(_token)
-    {
-        // Calculate commission, update rest raised Wei, and pay commission.
-        uint256 _commission = crowdsales[_token].raised
-            .mul(uint256(crowdsales[_token].commission))
-            .div(100);
-        crowdsales[_token].raised = crowdsales[_token].raised.sub(_commission);
-        emit CommissionPaid(msg.sender, _token, commissionWallet, _commission);
-        commissionWallet.transfer(_commission);
-    }
-
-    /**
-     * Refund crowdsale tokens to refund wallet.
-     *
-     * @param _token Deployed ERC20 token
-     * @param _beneficiary Crowdsale tokens will refund to this wallet
-     */
-    function _refundCrowdsaleTokens(
-        ERC20 _token,
-        address _beneficiary
-    )
-        private
-        nonZeroAddress(_token)
-        inState(_token, States.Refunding)
-    {
-        // Set raised Wei to 0 to prevent unknown issues 
-        // which might take Wei away. 
-        // Theoretically, this step is unnecessary due to there is no available
-        // function for crowdsale owner to claim raised Wei.
-        crowdsales[_token].raised = 0;
-
-        uint256 _value = _token.balanceOf(address(this));
-        emit CrowdsaleTokensRefunded(_token, _beneficiary, _value);
-
+        uint256 _value = token.balanceOf(address(this));
+        emit TokensRefunded(crowdsaleOwner, _value);
         if (_value > 0) {         
             // Refund all tokens for crowdsale to refund wallet.
-            _token.transfer(_beneficiary, _token.balanceOf(address(this)));
+            token.transfer(crowdsaleOwner, _value);
         }
     }
 
     /**
-     * Enable refunds of crowdsale.
-     *
-     * @param _token Deployed ERC20 token address
+     * Finalize this crowdsale.
      */
-    function _enableRefunds(
-        address _token
-    )
-        private
-        nonZeroAddress(_token)
-        inState(_token, States.Active)      
-    {
-        // Set state to Refunding while preventing reentry.
-        crowdsales[_token].state = States.Refunding;
-        emit RefundsEnabled(msg.sender, _token);
-    }
-
-    /**
-     * Finalize a crowdsale.
-     *
-     * Once a crowdsale is finalized, its state could be
-     * either Closed (success) or Refunding (fail).
-     *
-     * @param _token Deployed ERC20 token address
-     */
-    function finalize(
-        address _token
-    )
+    function finalize()
         external
-        nonZeroAddress(_token)
-        inState(_token, States.Active)        
-        onlyCrowdsaleOwner(_token)
+        inState(States.Active)        
+        onlyCrowdsaleOwner
     {
-        require(                    
-            crowdsales[_token].earlyClosure || (
-            // solium-disable-next-line security/no-block-members
-            block.timestamp >= crowdsales[_token].closingTime),                   
+        require(
+            // solium-disable-next-line security/no-block-members                
+            earlyClosure || block.timestamp >= closingTime,                   
             "Failed to finalize due to crowdsale is opening."
         );
 
-        if (_goalReached(ERC20(_token))) {
+        emit Finalized(msg.sender);
+
+        if (raised >= goal && token.balanceOf(address(this)) >= totalTokenUnits) {
             // Set state to Closed whiling preventing reentry.
-            crowdsales[_token].state = States.Closed;
-            emit CrowdsaleClosed(msg.sender, _token);
-            _refundSurplusTokens(
-                ERC20(_token), 
-                crowdsales[_token].refundWallet
-            );
-            _payCommission(_token);                        
+            state = States.Closed;
+
+            // Refund surplus tokens.
+            uint256 _balance = token.balanceOf(address(this));
+            uint256 _surplus = _balance.sub(totalTokenUnits);
+            emit SurplusTokensRefunded(crowdsaleOwner, _surplus);
+            if (_surplus > 0) {
+                // Refund surplus tokens to refund wallet.
+                token.transfer(crowdsaleOwner, _surplus);
+            }
+            // Close vault, and transfer commission and raised ether.
+            vault.close(commissionWallet, commission);
         } else {
-            _enableRefunds(_token);
-            _refundCrowdsaleTokens(
-                ERC20(_token), 
-                crowdsales[_token].refundWallet
-            );
+            state = States.Refunding;
+            _refundTokens();
+            vault.enableRefunds();
         }
     }
 
     /**
-     * Pause crowdsale, which will set the crowdsale state to Refunding.
-     *
-     * Note only pause crowdsales which are suspicious/scams.
-     *
-     * @param _token Deployed ERC20 token address
+     * Stop this crowdsale.
+     * Only stop suspecious projects.
      */
-    function pauseCrowdsale(
-        address _token
-    )  
-        external      
-        nonZeroAddress(_token)
-        onlyOwner
-        inState(_token, States.Active)
-    {
-        emit CrowdsalePaused(msg.sender, _token);
-        _enableRefunds(_token);
-        _refundCrowdsaleTokens(ERC20(_token), crowdsales[_token].refundWallet);
-    }
-
-    /**
-     * Claim crowdsale raised Wei.
-     *
-     * @param _token Deployed ERC20 token address
-     */
-    function claimRaisedWei(
-        address _token,
-        address _beneficiary
-    )
+    function stopCrowdsale()  
         external
-        nonZeroAddress(_token)
-        nonZeroAddress(_beneficiary)
-        inState(_token, States.Closed)
-        onlyCrowdsaleOwner(_token)        
+        onlyOwner
+        inState(States.Paused)
     {
-        require(
-            crowdsales[_token].raised > 0,
-            "Failed to claim raised Wei due to raised Wei is 0."
-        );
-
-        uint256 _raisedWei = crowdsales[_token].raised;
-        crowdsales[_token].raised = 0;
-        emit RaisedWeiClaimed(msg.sender, _token, _raisedWei);
-        _beneficiary.transfer(_raisedWei);
+        emit CrowdsaleStopped(msg.sender);
+        state = States.Refunding;
+        _refundTokens();
+        vault.enableRefunds();
     }
 
     /**
-     * Claim token, which will transfer bought token amount to buyer.
-     *
-     * @param _token Deployed ERC20 token address
+     * Investors claim bought token units.
      */
-    function claimToken(
-        address _token
-    )
+    function claimToken()
         external 
-        nonZeroAddress(_token)
-        inState(_token, States.Closed)
+        inState(States.Closed)
     {
         require(
-            deposits[msg.sender][_token] > 0,
-            "Failed to claim token due to deposit is 0."
+            tokenUnits[msg.sender] > 0,
+            "Failed to claim token due to token unit is 0."
         );
-
-        // Calculate token unit amount to be transferred. 
-        uint256 _value = (
-            deposits[msg.sender][_token].mul(crowdsales[_token].rate)
-        );
-        deposits[msg.sender][_token] = 0;
-        emit TokenClaimed(msg.sender, _token, _value);
-        ERC20(_token).transfer(msg.sender, _value);
+        uint256 _value = tokenUnits[msg.sender];
+        tokenUnits[msg.sender] = 0;
+        emit TokenClaimed(msg.sender, _value);
+        token.transfer(msg.sender, _value);
     }
 
     /**
-     * Claim refund, which will transfer refunded Wei amount back to buyer.
-     *
-     * @param _token Deployed ERC20 token address
+     * Investors claim invested Ether refunds.
      */
-    function claimRefund(
-        address _token
-    )
-        public
-        nonZeroAddress(_token)
-        inState(_token, States.Refunding)
+    function claimRefund()
+        external
+        inState(States.Refunding)
     {
         require(
-            deposits[msg.sender][_token] > 0,
+            deposits[msg.sender] > 0,
             "Failed to claim refund due to deposit is 0."
         );
 
-        uint256 _value = deposits[msg.sender][_token];
-        deposits[msg.sender][_token] = 0;
-        emit WeiRefunded(msg.sender, _token, _value);
-        msg.sender.transfer(_value);
+        uint256 _value = deposits[msg.sender];
+        deposits[msg.sender] = 0;
+        emit RefundClaimed(msg.sender, _value);
+        vault.refund(msg.sender, _value);
     }
 }
