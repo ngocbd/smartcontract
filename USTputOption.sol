@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract USTputOption at 0x0c0a918e7740f265384092edc7d0d0ebdcf1ca07
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract USTputOption at 0x1ed5c6c90f7120a0fb3abd3785c80ddc6ff50d63
 */
 pragma solidity ^0.4.21;
 
@@ -208,7 +208,7 @@ contract USTputOption is ExchangeUST {
     uint public initBlockEpoch = 40;
     uint public eachUserWeight = 10;
     uint public lastEpochBlock = block.number + initBlockEpoch;
-    uint public price1=1750 * 9991 * 10**9/10000;
+    uint public price1=1750 * 9995 * 10**9/10000;
     uint public price2=250 * 99993 * 10**9/100000;
     uint public initEachPUST = 2 * 10**12 wei;
     uint public eachPUSTprice = initEachPUST;
