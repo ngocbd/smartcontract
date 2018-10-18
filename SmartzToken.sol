@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartzToken at 0x40ae4acd08e65714b093bf2495fd7941aedfa231
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartzToken at 0xec270e8f52b492dd0c2dcd43fc6f868e78f49f18
 */
 pragma solidity ^0.4.18;
 
@@ -668,25 +668,23 @@ contract SmartzToken is ArgumentsChecker, multiowned, BurnableToken, StandardTok
     function SmartzToken()
         public
         payable
-        multiowned(getInitialOwners(), 2)
+        multiowned(getInitialOwners(), 1)
     {
-        if (0 != 150000000000000000000000000) {
-            totalSupply = 150000000000000000000000000;
+        if (0 != 35000000000000000000000000) {
+            totalSupply = 35000000000000000000000000;
             balances[msg.sender] = totalSupply;
             Transfer(address(0), msg.sender, totalSupply);
         }
 
-
+        
 totalSupply = totalSupply.add(0);
 
-        address(0xaacf78f8e1fbdcf7d941e80ff8b817be1f054af4).transfer(300000000000000000 wei);
+        
     }
 
     function getInitialOwners() private pure returns (address[]) {
-        address[] memory result = new address[](3);
-result[0] = address(0x4ff9A68a832398c6b013633BB5682595ebb7B92E);
-result[1] = address(0xE4074bB7bD4828bAeD9d2beCe1e386408428dfB7);
-result[2] = address(0xAACf78F8e1fbDcf7d941E80Ff8B817BE1F054Af4);
+        address[] memory result = new address[](1);
+result[0] = address(0x15B694A7C4106beC672cCB8E0b0590B1d649b4aF);
         return result;
     }
 
@@ -760,7 +758,7 @@ result[2] = address(0xAACf78F8e1fbDcf7d941E80Ff8B817BE1F054Af4);
         return super.transferFrom(_from, _to, _value);
     }
 
-
+    
     /**
      * Function to burn msg.sender's tokens. Overridden to have a chance to thaw sender's tokens.
      *
@@ -1061,7 +1059,7 @@ result[2] = address(0xAACf78F8e1fbDcf7d941E80Ff8B817BE1F054Af4);
 
     // CONSTANTS
 
-    string public constant name = 'Smartz token';
-    string public constant symbol = 'SMR';
+    string public constant name = 'BitDraw';
+    string public constant symbol = 'BTDW';
     uint8 public constant decimals = 18;
 }
