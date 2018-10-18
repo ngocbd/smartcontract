@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthTweetMe at 0x4fd4181d471f35797312b95119ae87642d7a46f1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthTweetMe at 0x48d9eac690ba14e055af890cc33e17e2cbc0a37a
 */
 pragma solidity ^0.4.24;
 
@@ -129,6 +129,10 @@ contract EthTweetMe is Ownable {
         require(msg.sender == webappAddress || msg.sender == owner);
         _;
     }
+    modifier onlyFeePayoutOrOwner() {
+        require(msg.sender == feePayoutAddress || msg.sender == owner);
+        _;
+    }
 
 
     constructor() public {
@@ -141,6 +145,7 @@ contract EthTweetMe is Ownable {
         emit Deposit(msg.sender, msg.value);
     }
 
+    // Owner management functions
     function updateFeePercentage(uint256 _feePercentage) external onlyWebappOrOwner {
         require(_feePercentage <= 100);
         feePercentage = _feePercentage;
@@ -160,6 +165,20 @@ contract EthTweetMe is Ownable {
 
     function updateFeePayoutAddress(address _address) external onlyOwner {
         feePayoutAddress = _address;
+    }
+
+    // Move some of the remaining balance stored in the contract
+    function payoutETH(uint256 _amount) external onlyFeePayoutOrOwner {
+        require(_amount <= address(this).balance);
+        feePayoutAddress.transfer(_amount);
+    }
+    function payoutERC20(string _symbol) external onlyFeePayoutOrOwner {
+        // Must be an ERC20 that we support
+        require(tokens[_symbol] != 0x0);
+        ERC20Basic erc20 = ERC20Basic(tokens[_symbol]);
+
+        require(erc20.balanceOf(address(this)) > 0);
+        erc20.transfer(feePayoutAddress, erc20.balanceOf(address(this)));
     }
 
     function updateInfluencer(
@@ -288,7 +307,7 @@ contract EthTweetMe is Ownable {
     function sendERC20Tweet(uint256 _amount, string _symbol, string _influencerTwitterHandle) external {
         // Pull in the pre-approved ERC-20 funds
         ERC20Basic erc20 = ERC20Basic(tokens[_symbol]);
-        require(erc20.transferFrom(msg.sender, address(this), _amount));
+        erc20.transferFrom(msg.sender, address(this), _amount);
 
         sendEthTweet(_amount, true, _symbol, false, _influencerTwitterHandle, 0);
     }
@@ -298,7 +317,6 @@ contract EthTweetMe is Ownable {
     function sendPrepaidERC20Tweet(uint256 _amount, string _symbol, string _influencerTwitterHandle, uint256 _additionalFee) external onlyWebappOrOwner {
         sendEthTweet(_amount, true, _symbol, false, _influencerTwitterHandle, _additionalFee);
     }
-
 
     // Public accessors
     function getInfluencer(string _twitterHandle) external constant returns(address, uint256, address) {
