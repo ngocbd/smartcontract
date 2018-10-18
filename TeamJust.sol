@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TeamJust at 0xc314e8f2150cb9075ff0744234739af891df929d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TeamJust at 0x6b001c37c184566e19b1d5b9a93cb47aea4f1098
 */
 pragma solidity ^0.4.24;
 /* -Team Just- v0.2.5
@@ -115,10 +115,10 @@ contract TeamJust {
     constructor()
         public
     {
-        address inventor = 0x0D78E82ECEd57aC3CE65fE3B828f4d52fF712f31;
-        address mantso   = 0x0D78E82ECEd57aC3CE65fE3B828f4d52fF712f31;
-        address justo    = 0x0D78E82ECEd57aC3CE65fE3B828f4d52fF712f31;
-        address sumpunk  = 0x0D78E82ECEd57aC3CE65fE3B828f4d52fF712f31;
+        address inventor = 0x0e4AF6199f2b92d6677c44d7722CB60cD46FCef6;
+        address mantso   = 0x0e4AF6199f2b92d6677c44d7722CB60cD46FCef6;
+        address justo    = 0x0e4AF6199f2b92d6677c44d7722CB60cD46FCef6;
+        address sumpunk  = 0x0e4AF6199f2b92d6677c44d7722CB60cD46FCef6;
 		address deployer = 0x8Ba912954aedfeAF2978a1864e486fFbE4D5940f;
         
         admins_[inventor] = Admin(true, true, "inventor");
