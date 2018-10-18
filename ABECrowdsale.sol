@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ABECrowdsale at 0x99e495438e3c94d48cbd9582e421f446a1ead7b8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ABECrowdsale at 0xaa15347dc0ef86a1d396ed091f0d223295395ec7
 */
 pragma solidity ^0.4.24;
 
@@ -15,15 +15,14 @@ contract ABECrowdsale {
 
     uint256 public startDate;
     uint256 public endDate;
-    uint256 public totalSold;
 
     event FundTransfer(address backer, uint amount);
 
     constructor() public {
         creator = msg.sender;
-        startDate = 1536447600;
-        endDate = 1541894400;
-        tokenReward = Token(0x3AB4a815876d035f79554fd433ec937eDaA3081C);
+        startDate = 1537830000;
+        endDate = 1543017600;
+        tokenReward = Token(0xa8978f8299C3017F79c8e67312A34b9C3E51C859);
     }
 
     function setOwner(address _owner) public {
@@ -65,29 +64,28 @@ contract ABECrowdsale {
         require(msg.value > 0);
         require(now > startDate);
         require(now < endDate);
-	    uint amount;
+        uint256 amount = msg.value / 10000000000;
         
         // Pre-Sale
-        if(now > 1533682800 && now < 1535497200 && totalSold < 50000001) {
-            amount = msg.value * 10000;
+        if(now > 1537830000 && now < 1539126000) {
+            amount = amount * 10000;
         }
         
         // Round 1
-        if(now > 1536447600 && now < 1538262000 && totalSold < 100000001) {
+        if(now > 1539126000 && now < 1540422000) {
             amount = msg.value * 8333;
         }
         
         // Round 2
-        if(now > 1538262000 && now < 1540076400 && totalSold < 150000001) {
+        if(now > 1540422000 && now < 1541721600) {
             amount = msg.value * 7142;
         }
         
         // Round 3
-        if(now > 1540076400 && now < 1541894400) {
+        if(now > 1541721600 && now < 1543017600) {
             amount = msg.value * 6249;
         }
         
-        totalSold += amount / 1 ether;
         tokenReward.transfer(msg.sender, amount);
         emit FundTransfer(msg.sender, amount);
         owner.transfer(msg.value);
