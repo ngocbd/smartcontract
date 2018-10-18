@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StoreChipBag at 0x8C6CD15e7581Ddf94b2A4E96cEAC81a86Df0bF3d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StoreChipBag at 0x41dbcB6eC61AAd7Eb324f1518fa36eB2A86C25a9
 */
 pragma solidity ^0.4.24;
 
@@ -21,7 +21,7 @@ contract Base
         creator = msg.sender;
     }
 
-    modifier MasterAble()
+    modifier CreatorAble()
     {
         require(msg.sender == creator);
         _;
@@ -47,42 +47,23 @@ contract Base
         return 5;
     }
 
-}
-
-contract BasicTime
-{
-    uint constant DAY_SECONDS = 60 * 60 * 24;
-
-    function GetDayCount(uint timestamp) pure internal returns(uint)
+    function GetPartLimit(uint8 level, uint part) internal pure returns(uint8)
     {
-        return timestamp/DAY_SECONDS;
-    }
-
-    function GetExpireTime(uint timestamp, uint dayCnt) pure internal returns(uint)
-    {
-        uint dayEnd = GetDayCount(timestamp) + dayCnt;
-        return dayEnd * DAY_SECONDS;
+        if (!IsLimitPart(level, part)) return 0;
+        if (level == 5) return 1;
+        if (level == 4) return 8;
+        return 15;
     }
 
 }
+
+
+
 
 contract BasicAuth is Base
 {
 
-    address master;
     mapping(address => bool) auth_list;
-
-    function InitMaster(address acc) internal
-    {
-        require(address(0) != acc);
-        master = acc;
-    }
-
-    modifier MasterAble()
-    {
-        require(msg.sender == creator || msg.sender == master);
-        _;
-    }
 
     modifier OwnerAble(address acc)
     {
@@ -96,20 +77,19 @@ contract BasicAuth is Base
         _;
     }
 
-    function CanHandleAuth(address from) internal view returns(bool)
+    modifier ValidHandleAuth()
     {
-        return from == creator || from == master;
+        require(tx.origin==creator || msg.sender==creator);
+        _;
     }
-    
-    function SetAuth(address target) external
+   
+    function SetAuth(address target) external ValidHandleAuth
     {
-        require(CanHandleAuth(tx.origin) || CanHandleAuth(msg.sender));
         auth_list[target] = true;
     }
 
-    function ClearAuth(address target) external
+    function ClearAuth(address target) external ValidHandleAuth
     {
-        require(CanHandleAuth(tx.origin) || CanHandleAuth(msg.sender));
         delete auth_list[target];
     }
 
@@ -123,17 +103,12 @@ contract StoreChipBag is BasicAuth
 
     mapping(address => uint32[]) g_ChipBag;
 
-    constructor(address Master) public
-    {
-        InitMaster(Master);
-    }
-
     function AddChip(address acc, uint32 iChip) external OwnerAble(acc) AuthAble
     {
         g_ChipBag[acc].push(iChip);
     }
 
-    function CollectChips(address acc) external returns(uint32[] chips)
+    function CollectChips(address acc) external OwnerAble(acc) AuthAble returns(uint32[] chips)
     {
         chips = g_ChipBag[acc];
         delete g_ChipBag[acc];
