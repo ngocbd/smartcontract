@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RenExBalances at 0x9636f9ac371ca0965b7c2b4ad13c4cc64d0ff2dc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RenExBalances at 0x5ec18b477b20af940807b5478db5a64cd4a77efd
 */
 pragma solidity 0.4.24;
 
@@ -1719,7 +1719,6 @@ contract Orderbook is Ownable {
         bytes32 matchedOrder; // Order confirmed in a match with this order
     }
 
-    RepublicToken public ren;
     DarknodeRegistry public darknodeRegistry;
     SettlementRegistry public settlementRegistry;
 
@@ -1741,18 +1740,15 @@ contract Orderbook is Ownable {
     /// @notice The contract constructor.
     ///
     /// @param _VERSION A string defining the contract version.
-    /// @param _renAddress The address of the RepublicToken contract.
     /// @param _darknodeRegistry The address of the DarknodeRegistry contract.
     /// @param _settlementRegistry The address of the SettlementRegistry
     ///        contract.
     constructor(
         string _VERSION,
-        RepublicToken _renAddress,
         DarknodeRegistry _darknodeRegistry,
         SettlementRegistry _settlementRegistry
     ) public {
         VERSION = _VERSION;
-        ren = _renAddress;
         darknodeRegistry = _darknodeRegistry;
         settlementRegistry = _settlementRegistry;
     }
@@ -2776,16 +2772,18 @@ contract RenExBalances is Ownable {
     /// this will reset the time to zero, writing to storage.
     modifier withBrokerSignatureOrSignal(address _token, bytes _signature) {
         address trader = msg.sender;
-        if (brokerVerifierContract.verifyWithdrawSignature(trader, _signature)) {
-            _;
-        } else {
-            bool hasSignalled = traderWithdrawalSignals[trader][_token] != 0;
+
+        // If a signature has been provided, verify it - otherwise, verify that
+        // the user has signalled the withdraw
+        if (_signature.length > 0) {
+            require (brokerVerifierContract.verifyWithdrawSignature(trader, _signature), "invalid signature");
+        } else  {
+            require(traderWithdrawalSignals[trader][_token] != 0, "not signalled");
             /* solium-disable-next-line security/no-block-members */
-            bool hasWaitedDelay = (now - traderWithdrawalSignals[trader][_token]) > SIGNAL_DELAY;
-            require(hasSignalled && hasWaitedDelay, "not signalled");
+            require((now - traderWithdrawalSignals[trader][_token]) > SIGNAL_DELAY, "signal time remaining");
             traderWithdrawalSignals[trader][_token] = 0;
-            _;
         }
+        _;
     }
 
     /// @notice Allows the owner of the contract to update the address of the
@@ -2849,13 +2847,14 @@ contract RenExBalances is Ownable {
     function deposit(ERC20 _token, uint256 _value) external payable {
         address trader = msg.sender;
 
+        uint256 receivedValue = _value;
         if (address(_token) == ETHEREUM) {
             require(msg.value == _value, "mismatched value parameter and tx value");
         } else {
             require(msg.value == 0, "unexpected ether transfer");
-            CompatibleERC20(_token).safeTransferFromWithFees(trader, this, _value);
+            receivedValue = CompatibleERC20(_token).safeTransferFromWithFees(trader, this, _value);
         }
-        privateIncrementBalance(trader, _token, _value);
+        privateIncrementBalance(trader, _token, receivedValue);
     }
 
     /// @notice Withdraws ETH or an ERC20 token from the contract. A broker
