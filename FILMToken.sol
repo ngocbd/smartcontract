@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FILMToken at 0xaa5e663372ee66f2a51b245c0a31f4459107392d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FILMToken at 0x0a4fa9eb44e296485a51d468fd98f6b01c735f4c
 */
 pragma solidity 0.4.12;
 
