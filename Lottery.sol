@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lottery at 0xf37aa5f945688488056f32112267570517bbc303
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lottery at 0xad0528aa8ffefb94a22c24720a431822591c1d38
 */
 pragma solidity 0.4.24;
 
@@ -114,7 +114,7 @@ contract Lottery is Owned, SafeMath, LottoEvents {
 
     uint public goldKeyCounter = 0;               // count for gold keys
     uint public unIssuedGoldKeys = 0;             // un issued gold keys
-    uint public price = 0.01 ether;               // the price for each bet
+    uint public price = 0.03 ether;               // the price for each bet
     bool public activated = false;                // contract live?
     uint public rId;                              // current round id
 
