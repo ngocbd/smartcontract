@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LKToken at 0x1d0858b5e04a8510defa0d14b85fa2c2131ada4a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LKToken at 0x487064d8aafc655e6bab0563c8d035a45a94b708
 */
 pragma solidity ^0.4.11;
 
@@ -244,8 +244,8 @@ contract StandardToken is ERC20, BasicToken {
  */
 contract LKToken is StandardToken, Pausable {
 
-  string public constant name = "LKChain";
-  string public constant symbol = "LKC";
+  string public constant name = "???";
+  string public constant symbol = "LK";
   uint256 public constant decimals = 18;
   
   // lock
