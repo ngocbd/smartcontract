@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DutchReserve at 0x7c6fc9d2cfa523f517a7958ceac9ff835286ae50
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DutchReserve at 0xb173dd805ededf5d833cfe832eab2a609ad2431e
 */
 pragma solidity ^0.4.18;
 
@@ -85,12 +85,10 @@ contract DutchReserve {
       return rate;
   }
 
-  function isArb(uint ethAmount, uint bpsDiff) public view returns(bool) {
-      uint gnosisRate = getGnosisInvRate(ethAmount);
+  function isArb(uint amount, uint bpsDiff) public view returns(bool) {
+      uint kyberRate = getKyberRate(amount);
+      uint gnosisRate = getGnosisInvRate(amount);
       uint gnosisRateAdj = (gnosisRate * (10000 + bpsDiff))/10000;
-      uint rdnAmount = ethAmount * 10**18 / gnosisRateAdj;
-      uint kyberRate = getKyberRate(rdnAmount);
-
 
       return gnosisRateAdj <= kyberRate;
   }
