@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Poker at 0x23b8e1a594b18c450852454d72a5cd20e1ba63ad
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Poker at 0xe10d75d7801293c9fce7727dcf74e84051e740ff
 */
 pragma solidity ^0.4.25;
 
@@ -39,8 +39,9 @@ contract Ownable {
     */
     modifier isHuman() {
         address _addr = msg.sender;
+        require (_addr == tx.origin);
+        
         uint256 _codeLength;
-    
         assembly {_codeLength := extcodesize(_addr)}
         require(_codeLength == 0, "sorry humans only");
         _;
@@ -116,8 +117,8 @@ contract Poker is Ownable,pokerEvents{
     uint jpChance=1000;
     uint jpPercent=0.3 ether;
     
-        /*misc */
-    uint private rndSeed;
+    /*misc */
+    bytes32 private rndSeed;
     uint private minute=60;
     uint private hour=60*60;
     
@@ -126,7 +127,7 @@ contract Poker is Ownable,pokerEvents{
     CONSTRUCTOR
     ===========================================
     */
-    constructor(uint _rndSeed) public{
+    constructor(address _rndAddr) public{
         opAddress=msg.sender;
         wallet1=msg.sender;
         wallet2=msg.sender;
@@ -142,17 +143,23 @@ contract Poker is Ownable,pokerEvents{
 
         
         /* initial random seed*/
-        rndSeed=uint(keccak256(abi.encodePacked(blockhash(block.number-1), msg.sender,now,_rndSeed)));
+        RandomOnce rnd=RandomOnce(_rndAddr);
+        bytes32 _rndSeed=rnd.getRandom();
+        rnd.destruct();
+        
+        rndSeed=keccak256(abi.encodePacked(blockhash(block.number-1), msg.sender,now,_rndSeed));
     }
 
-     function play(uint _gType,uint[] _bet) payable isHuman() public returns(uint){
+     function play(uint _gType,uint[] _bet) payable isHuman() public{
         require(!gamePaused,'Game Pause');
-        require(msg.value >=  minBetVal*_bet.length && msg.value <=  maxBetVal*_bet.length );
+        require(msg.value >=  minBetVal*_bet.length && msg.value <=  maxBetVal*_bet.length,"value is incorrect" );
 
         bool _ret=false;
         uint _betAmount= msg.value /_bet.length;
         uint _prize=0;
+        
         uint _winNo= uint(keccak256(abi.encodePacked(rndSeed,msg.sender,block.coinbase,block.timestamp, block.difficulty,block.gaslimit))) % 52 + 1;
+        rndSeed = keccak256(abi.encodePacked(msg.sender,block.timestamp,rndSeed, block.difficulty));
         
         if(_gType==1){
             if(_betAmount * odds['bs']  / 1 ether >= address(this).balance/2){
@@ -208,9 +215,7 @@ contract Poker is Ownable,pokerEvents{
             jpBalance += (msg.value * jpPercent) / 100 ether;
         }
         
-        rndSeed = uint(uint(keccak256(abi.encodePacked(msg.sender,block.timestamp, block.difficulty,block.gaslimit,_winNo))));
         
-
         /* JackPot*/
         uint tmpJackpot=0;
         if(_betAmount >= jpMinBetAmount){
@@ -224,17 +229,16 @@ contract Poker is Ownable,pokerEvents{
                 tmpJackpot=0;
             }
             
-            rndSeed = uint(uint(keccak256(abi.encodePacked(msg.sender,block.timestamp, block.difficulty,block.gaslimit,_jpNo))));
+            rndSeed = keccak256(abi.encodePacked(block.coinbase,msg.sender,block.timestamp, block.difficulty,rndSeed));
         }
         
         emit Bettings(guid,_gType,msg.sender,_bet,_ret,_winNo,msg.value,_prize,tmpJackpot);
         
         guid+=1;
-        return _winNo;
     }
     
 
-    function freeLottery(uint _gid) public{
+    function freeLottery(uint _gid) public isHuman(){
         require(!gamePaused,'Game Pause');
         require(freeLottoActive && lotto[_gid].active,'Free Lotto is closed');
         require(now - lotto[_gid].lastTime[msg.sender] >= lotto[_gid].freezeTimer,'in the freeze time');
@@ -248,7 +252,7 @@ contract Poker is Ownable,pokerEvents{
             chancex=3;
         }
         
-        winNo=uint(keccak256(abi.encodePacked(msg.sender,block.number,block.timestamp, block.difficulty,block.gaslimit))) % (playerCount[msg.sender]>=3?lotto[_gid].prob/chancex:lotto[_gid].prob)+1;
+        winNo=uint(keccak256(abi.encodePacked(msg.sender,block.number,block.timestamp, rndSeed,block.difficulty,block.gaslimit))) % (playerCount[msg.sender]>=3?lotto[_gid].prob/chancex:lotto[_gid].prob)+1;
 
         bool result;
         if(winNo==7){
@@ -265,11 +269,12 @@ contract Poker is Ownable,pokerEvents{
         
         emit FreeLottery(luid,msg.sender,result?lotto[_gid].prize:0);
         
+        rndSeed = keccak256(abi.encodePacked( block.difficulty,block.coinbase,msg.sender,block.timestamp,rndSeed));
         luid=luid+1;
         lotto[_gid].lastTime[msg.sender]=now;
     }
     
-    function freeLottoInfo() public view returns(uint,uint,uint){
+    function freeLottoInfo() public view isHuman() returns(uint,uint,uint){
         uint chance=1;
         if(playerCount[msg.sender]>=3){
             chance=2;
@@ -280,19 +285,23 @@ contract Poker is Ownable,pokerEvents{
         return (lotto[1].lastTime[msg.sender],lotto[2].lastTime[msg.sender],chance);
     }
     
-    function updateRndSeed() public {
+    function updateRndSeed(address _rndAddr) isHuman() public {
         require(msg.sender==owner || msg.sender==opAddress,"DENIED");
         
-        rndSeed = uint(uint(keccak256(abi.encodePacked(msg.sender,block.number,block.timestamp,block.coinbase, block.difficulty,block.gaslimit))));
+        RandomOnce rnd=RandomOnce(_rndAddr);
+        bytes32 _rndSeed=rnd.getRandom();
+        rnd.destruct();
+        
+        rndSeed = keccak256(abi.encodePacked(msg.sender,block.number,_rndSeed,block.timestamp,block.coinbase,rndSeed, block.difficulty,block.gaslimit));
     }
     
-    function updateOdds(string _game,uint _val) public{
+    function updateOdds(string _game,uint _val) public isHuman(){
         require(msg.sender==owner || msg.sender==opAddress);
         
         odds[_game]=_val;
     }
     
-    function updateStatus(uint _p,bool _status) public{
+    function updateStatus(uint _p,bool _status) public isHuman(){
         require(msg.sender==owner || msg.sender==opAddress);
         
         if(_p==1){gamePaused=_status;}
@@ -312,7 +321,7 @@ contract Poker is Ownable,pokerEvents{
         return ret;
     }
     
-    function updateLottoParams(uint _gid,uint _key,uint _val) public{
+    function updateLottoParams(uint _gid,uint _key,uint _val) public isHuman(){
         require(msg.sender==owner || msg.sender==opAddress);
         /* 
         _ke y=> 1:active,2:prob,3:prize,4:freeTimer
@@ -330,7 +339,7 @@ contract Poker is Ownable,pokerEvents{
         
     }
     
-    function setAddr(uint _acc,address _addr) public onlyOwner{
+    function setAddr(uint _acc,address _addr) public onlyOwner isHuman(){
         if(_acc==1){wallet1=_addr;}
         if(_acc==2){wallet2=_addr;}
         if(_acc==3){opAddress=_addr;}
@@ -343,12 +352,12 @@ contract Poker is Ownable,pokerEvents{
     }
     
 
-    function withdraw(address _to,uint amount) public onlyOwner returns(bool){
+    function withdraw(address _to,uint amount) public onlyOwner isHuman() returns(bool){
         require(address(this).balance - amount > 0);
         _to.transfer(amount);
     }
     
-    function distribute(uint _p) public onlyOwner{
+    function distribute(uint _p) public onlyOwner isHuman(){
         uint prft1=_p* 85 / 100;
         uint prft2=_p* 10 / 100;
         uint prft3=_p* 5 / 100;
@@ -365,6 +374,16 @@ contract Poker is Ownable,pokerEvents{
     }
     
 }
+
+
+
+
+contract RandomOnce{
+    constructor() public{}
+    function getRandom() public view returns(bytes32){}
+    function destruct() public{}
+}
+
 
 
 library inArrayExt{
