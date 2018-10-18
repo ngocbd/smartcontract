@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SZ at 0x6eebbdf8be95948cde5fe7480c65ec8ba3cc8757
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SZ at 0xF37c9C01000f69976Eaa489C450912aD8f18A40C
 */
 pragma solidity ^0.4.9;
  
@@ -29,21 +29,23 @@ contract ContractReceiver {
     function tokenFallback(address _from, uint _value, bytes _data) public;
 }
  
-contract SZ is SafeMath {
+contract SZ is SafeMath { 
     
-    event Transfer(address indexed _from, address indexed _to, uint256 _value, bytes _data);
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Burn(address indexed burner, uint256 value);
 
     mapping(address => uint) balances;
   
-    string public name    = "SZ Token";
+    string public name    = "SZ";
     string public symbol  = "SZ";
-    uint8 public decimals = 10;
+    uint8 public decimals = 8;
     uint256 public totalSupply;
+    uint256 public burn;
 	address owner;
   
-    function SZ(uint256 _supply, string _name, string _symbol, uint8 _decimals) public
+    constructor(uint256 _supply, string _name, string _symbol, uint8 _decimals) public
     {
-        if (_supply == 0) _supply = 10000000000;
+        if (_supply == 0) _supply = 500000000000000000;
 
         owner = msg.sender;
         balances[owner] = _supply;
@@ -53,6 +55,8 @@ contract SZ is SafeMath {
         decimals = _decimals;
         symbol = _symbol;
     }
+    
+
   
   
   // Function to access name of token .
@@ -80,8 +84,8 @@ contract SZ is SafeMath {
         if (balanceOf(msg.sender) < _value) assert(false);
         balances[msg.sender] = safeSub(balanceOf(msg.sender), _value);
         balances[_to] = safeAdd(balanceOf(_to), _value);
-        assert(_to.call.value(0)(bytes4(keccak256(_custom_fallback)), msg.sender, _value, _data));
-        emit Transfer(msg.sender, _to, _value, _data);
+        assert(_to.call.value(0)(bytes4(keccak256(abi.encodePacked(_custom_fallback))), msg.sender, _value, _data));
+        emit Transfer(msg.sender, _to, _value);
         return true;
     }
     else {
@@ -128,10 +132,11 @@ contract SZ is SafeMath {
 
 	//function that is called when transaction target is an address
     function transferToAddress(address _to, uint _value, bytes _data) private returns (bool success) {
+        _data = '';
         if (balanceOf(msg.sender) < _value) assert(false);
         balances[msg.sender] = safeSub(balanceOf(msg.sender), _value);
         balances[_to] = safeAdd(balanceOf(_to), _value);
-        emit Transfer(msg.sender, _to, _value, _data);
+        emit Transfer(msg.sender, _to, _value);
         return true;
     }
   
@@ -142,7 +147,7 @@ contract SZ is SafeMath {
         balances[_to] = safeAdd(balanceOf(_to), _value);
         ContractReceiver receiver = ContractReceiver(_to);
         receiver.tokenFallback(msg.sender, _value, _data);
-        emit Transfer(msg.sender, _to, _value, _data);
+        emit Transfer(msg.sender, _to, _value);
         return true;
     }
 
@@ -155,8 +160,15 @@ contract SZ is SafeMath {
         balances[_from] = safeSub(balances[_from],_value);
         balances[_to] = safeAdd(balances[_to],_value);
         /* Notifiy anyone listening that this transfer took place */
-        bytes memory empty;
-        emit Transfer(_from, _to, _value,empty);
+        
+        emit Transfer(_from, _to, _value);
+    }
+
+    function burn(uint256 _value) public {
+        if (balances[msg.sender] < _value) return;    
+        balances[msg.sender] = safeSub(balances[msg.sender],_value);
+        burn = safeAdd(burn,_value);
+        emit Burn(msg.sender, _value);
     }
 
 	function isOwner() public view  
