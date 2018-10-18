@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SunPowerToken at 0xd26b63194f70e0939393d23d3a5b1ed6bde5f835
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SunPowerToken at 0x1510a53b26da3c3c9f070b8d60176866c9bf9edf
 */
 pragma solidity ^0.4.18;
 
@@ -228,7 +228,7 @@ contract Pausable is Ownable {
   event PausePublic(bool newState);
   event PauseOwnerAdmin(bool newState);
 
-  bool public pausedPublic = true;
+  bool public pausedPublic = false;
   bool public pausedOwnerAdmin = false;
 
   address public admin;
@@ -289,7 +289,7 @@ contract PausableToken is StandardToken, Pausable {
 contract SunPowerToken is PausableToken {
     string  public  constant name = "SunPower";
     string  public  constant symbol = "SP";
-    uint8   public  constant decimals = 18;
+    uint8   public  constant decimals = 8;
 
     modifier validDestination( address to )
     {
