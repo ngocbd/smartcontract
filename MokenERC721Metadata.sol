@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MokenERC721Metadata at 0x7ebe49f22ddc61cfd3ccc5a999f76a62bc5255c6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MokenERC721Metadata at 0x2e7f8f0b5603d5a54360b87aa2d64062b13aa8ad
 */
 pragma solidity 0.4.24;
 pragma experimental "v0.5.0";
@@ -69,8 +69,7 @@ contract MokenERC721Metadata is Storage3 {
     function tokenURI(uint256 _tokenId) external view returns (string tokenURIString) {
         require(_tokenId < mokensLength, "_tokenId does not exist.");
         uint256 v = _tokenId;
-        uint256 maxlength;
-        bytes memory reversed = new bytes(maxlength);
+        bytes memory reversed = new bytes(10);
         uint256 numDigits;
         if (v == 0) {
             numDigits = 1;
