@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheremonRankBattle at 0xbb991caafa1cbbe9502fcd9ced6557c5b3784d42
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheremonRankBattle at 0x022c635044ba01ced1e098bc32e62a954147f2de
 */
 pragma solidity ^0.4.16;
 
@@ -70,6 +70,8 @@ interface EtheremonTradeInterface {
 }
 
 contract EtheremonDataBase is EtheremonEnum {
+    uint64 public totalMonster;
+
     function getMonsterObj(uint64 _objId) constant public returns(uint64 objId, uint32 classId, address trainer, uint32 exp, uint32 createIndex, uint32 lastClaimIndex, uint createTime);
     function getMonsterDexSize(address _trainer) constant public returns(uint);
     function getElementInArrayType(ArrayType _type, uint64 _id, uint _index) constant public returns(uint8);
@@ -80,6 +82,7 @@ contract EtheremonDataBase is EtheremonEnum {
 
 interface EtheremonRankData {
     function setPlayer(address _trainer, uint64 _a0, uint64 _a1, uint64 _a2, uint64 _s0, uint64 _s1, uint64 _s2) external returns(uint32 playerId);
+    function isOnBattle(address _trainer, uint64 _objId) constant external returns(bool);
 }
 
 contract EtheremonRankBattle is BasicAccessControl, EtheremonEnum {
@@ -100,9 +103,6 @@ contract EtheremonRankBattle is BasicAccessControl, EtheremonEnum {
     address public tradeContract;
     address public rankDataContract;
     
-    uint32[3] public starterClasses;
-    uint public maxDexSize = 200;
-    
     // modifier
     modifier requireDataContract {
         require(dataContract != address(0));
@@ -121,7 +121,6 @@ contract EtheremonRankBattle is BasicAccessControl, EtheremonEnum {
 
     // event
     event EventUpdateCastle(address indexed trainer, uint32 playerId);
-    event Transfer(address indexed _from, address indexed _to, uint256 _tokenId);
     
     function EtheremonRankBattle(address _dataContract, address _tradeContract, address _rankDataContract) public {
         dataContract = _dataContract;
@@ -135,26 +134,7 @@ contract EtheremonRankBattle is BasicAccessControl, EtheremonEnum {
         rankDataContract = _rankDataContract;
     }
 
-    function setStarterClass(uint _index, uint32 _classId) onlyModerators external {
-        starterClasses[_index] = _classId;
-    }
-    
-    function quickSetStarterClasses() onlyModerators external {
-        starterClasses[0] = 25;
-        starterClasses[1] = 26;
-        starterClasses[2] = 27;
-    }
-    
-    function setMaxDexSize(uint _value) onlyModerators external {
-        maxDexSize = _value;
-    }
-
     // public
-    
-    // public functions
-    function getRandom(uint _seed) constant public returns(uint) {
-        return uint(keccak256(block.timestamp, block.difficulty)) ^ _seed;
-    }
     
     function getValidClassId(uint64 _objId, address _owner) constant public returns(uint32) {
         EtheremonDataBase data = EtheremonDataBase(dataContract);
@@ -211,30 +191,13 @@ contract EtheremonRankBattle is BasicAccessControl, EtheremonEnum {
         EventUpdateCastle(msg.sender, playerId);
     }
     
-    function catchStarters() isActive requireDataContract external {
+    function isOnBattle(uint64 _objId) constant external requireDataContract requireRankDataContract returns(bool) {
         EtheremonDataBase data = EtheremonDataBase(dataContract);
-
-        // can not keep too many etheremon 
-        if (data.getMonsterDexSize(msg.sender) > maxDexSize)
-            revert();
-        
-        uint i = 0;
-        uint j = 0;
-        uint seed = 0;
-        uint64 objId = 0;
-        uint32 classId = 0;
-        uint8 value = 0;
-        for (i = 0; i < starterClasses.length; i+=1) {
-            classId = starterClasses[i];
-            seed = getRandom(uint(block.blockhash(block.number - i)));
-            objId = data.addMonsterObj(classId, msg.sender, "..name me...");
-            for (j = 0; j < 6; j += 1) {
-                seed = seed ^ (i + j);
-                value = uint8(seed % 32) + data.getElementInArrayType(ArrayType.STAT_START, uint64(classId), j);
-                data.addElementToArrayType(ArrayType.STAT_BASE, objId, value);
-            }
-            
-            Transfer(address(0), msg.sender, objId);
-        } 
+        MonsterObjAcc memory obj;
+        (obj.monsterId, obj.classId, obj.trainer, obj.exp, obj.createIndex, obj.lastClaimIndex, obj.createTime) = data.getMonsterObj(_objId);
+        if (obj.monsterId == 0)
+            return false;
+        EtheremonRankData rank = EtheremonRankData(rankDataContract);
+        return rank.isOnBattle(obj.trainer, _objId);
     }
 }
