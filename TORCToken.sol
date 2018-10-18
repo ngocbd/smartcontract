@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TORCToken at 0x829e3ddd1b32d645d329b3c989497465792c1d04
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TORCToken at 0xbd64a0d7330bc16c30aa1ae34ed2c329f6db49c9
 */
 pragma solidity ^0.4.24;
 
@@ -152,9 +152,9 @@ contract TokenERC20 {
 contract TORCToken is owned, TokenERC20  {
 
 	//Modify these variables
-	uint256 _initialSupply=5000000000; 
-	string _tokenName="TORC";
-	string _tokenSymbol="Torchain";
+	uint256 _initialSupply=10000000000; 
+	string _tokenName="Torchain";
+	string _tokenSymbol="TORC";
 	address public lockedWallet = 0x731b7Ee0f5122535f7dA63887d78E0C202f6a082;
 	uint256 public startTime;
 
