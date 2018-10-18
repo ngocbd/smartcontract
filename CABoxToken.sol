@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CABoxToken at 0xd806a880aa56d25a7a03c621e05f5d31519a0d2b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CABoxToken at 0xe0af4beca83e64b24b8b637a3f859b624f87d8f4
 */
 pragma solidity ^0.4.18;
 
