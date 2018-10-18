@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Gorgona at 0x4a5fc826441a16b86aa850b3ddc4b1bc02f21b6c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Gorgona at 0x20b3d3f8a3e4f7b23382d844f2ca1d7026d69479
 */
 pragma solidity ^0.4.24;
 
@@ -14,7 +14,6 @@ contract Gorgona {
     uint depositAmount;
     uint investorCount;
     uint public payoutDate;
-    uint public lastPaymentDate;
 
     struct investor
     {
@@ -55,6 +54,7 @@ contract Gorgona {
         if (user.id == 0) {
             user.id = addresses.length;
             addresses.push(msg.sender);
+            addresses.length++;
             investorCount ++;
 
             // referrer
@@ -71,7 +71,6 @@ contract Gorgona {
 
         emit Invest(msg.sender, msg.value);
         depositAmount += msg.value;
-        lastPaymentDate = now;
 
         // project fee
         owner.transfer(msg.value / 5);
@@ -98,7 +97,7 @@ contract Gorgona {
         uint txs;
         uint amount;
 
-        for (uint idx = addresses.length; --idx >= 1;)
+        for (uint idx = addresses.length - 1; --idx >= 1;)
         {
             address addr = addresses[idx];
             if (investors[addr].date + 24 hours > now) {
