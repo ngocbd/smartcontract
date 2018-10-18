@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ENBToken at 0x0a25c807291e58716ab78752f8bb15eae8370e7d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ENBToken at 0x11cb9c6658e777e2f74d13a9976e6b1da739e48b
 */
 pragma solidity ^0.4.24;
 
-/**xxp ????????
+/**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
  */
@@ -457,12 +457,12 @@ contract ENBToken is BurnableToken, MintableToken, PausableToken {
     uint8 public decimals;
 
     constructor() public {
-        name = "Energy Block";
-        symbol = "ENBi";
+        name = "Energy Token";
+        symbol = "ENBt";
         decimals = 18;
-        totalSupply_ = 1000000000 * 10 ** uint256(decimals);
+        totalSupply_ = 400000000 * 10 ** uint256(decimals);
 
-        // Allocate initial balance to the owner
+        // Allocate initial balance to theowner
         balances[msg.sender] = totalSupply_;
     }
 
