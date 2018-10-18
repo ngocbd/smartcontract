@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MonkeyScam at 0x09Ab651217B86D1ee7236e0faD1eBB19185Fe769
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MonkeyScam at 0xa2bde6ad396c679b50639e8ba9c28e5110ee858d
 */
 pragma solidity ^0.4.24;
 
@@ -113,7 +113,7 @@ contract MonkeyScam is modularMonkeyScam {
     using LDKeysCalc for uint256;
 
     // TODO: check address
-    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x38A3E0423708f5797284aEDDbac1a69FC0aa3883);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xce7149603aeD4d9468f4025c93cE487c79fC0557);
 
     address private monkeyKing = 0xb75603Fd0B0E55b283DAC9A9ED516A8a9515e3dB;
     address private monkeyQueue = 0x2B215DE0Ec7C1A9b72F48aB357f2E1739487c050;
