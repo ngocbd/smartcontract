@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bet0xgame at 0xb18cbdd2feb82472fb1de4f2932cc82ad63fca58
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bet0xgame at 0x1cb99678eb927a19a9bf7d76cd6e7479cc8ee8b0
 */
 pragma solidity ^0.4.18;
 // <ORACLIZE_API>
