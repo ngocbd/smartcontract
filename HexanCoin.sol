@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HexanCoin at 0x344e7649effce5a5f70a713b0bd3102d8eed8433
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HexanCoin at 0x2e111fcf841922e2844e0381341ba2961b9e9980
 */
 pragma solidity ^0.4.17;
 
-contract Token {
+contract HexanCoin {
 
     function totalSupply() constant returns (uint256 supply) {}
     function balanceOf(address _owner) constant returns (uint256 balance) {}
@@ -18,7 +18,7 @@ contract Token {
 
 
 
-contract StandardToken is Token {
+contract HxcMainTxn is HexanCoin {
 
     function transfer(address _to, uint256 _value) returns (bool success) {
         if (balances[msg.sender] >= _value && _value > 0) {
@@ -59,7 +59,7 @@ contract StandardToken is Token {
 }
 
 
-contract HexanCoin is StandardToken {
+contract HxcDetails is HxcMainTxn {
 
     function () {
         throw;
@@ -68,12 +68,12 @@ contract HexanCoin is StandardToken {
     string public name;                   
     uint8 public decimals;                
     string public symbol;                 
-    string public version = 'Hxc-1.2';       
+    string public version = 'V1.2';       
 
-    function HexanCoin(
+    function HxcDetails(
         ) {
-        balances[msg.sender] = 220000000e18;               // 220 Million Total Supply
-        totalSupply = 220000000e18;                     
+        balances[msg.sender] = 220000000*1000000000000000000;               // 220 Million Total Supply
+        totalSupply = 220000000*1000000000000000000;                     
         name = "HexanCoin";                                   
         decimals = 18;                            
         symbol = "HXC";                              
