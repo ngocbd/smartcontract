@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KaasyToken at 0x06d5697043f8e611807b221e74f08a28bb4e6e13
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KaasyToken at 0x714c1ef3854591d4118bd6887d4740bc4d5f5412
 */
 pragma solidity ^0.4.24;
 
 // ----------------------------------------------------------------------------
 // 'Kaasy' CROWDSALE token contract
 //
-// Deployed to : 0x06d5697043f8e611807b221e74f08a28bb4e6e13
+// Deployed to : 0x714c1ef3854591d4118bd6887d4740bc4d5f5412
 // Symbol      : KAAS
 // Name        : KAASY.AI Token
 // Total supply: 500000000
@@ -185,7 +185,7 @@ contract KaasyToken is ERC20Interface, Pausable, SafeMath {
     uint public bonusEnd05;
     uint public endDate;
     uint public tradingDate;
-    uint public exchangeRate = 30000; // IN Euro cents = 300E
+    uint public exchangeRate = 25000; // IN Euro cents = 300E
     uint256 public maxSupply;
     uint256 public soldSupply;
     uint256 public maxSellable;
@@ -250,27 +250,27 @@ contract KaasyToken is ERC20Interface, Pausable, SafeMath {
         kycAddressState[owner] = true;
         emit Transfer(address(0), owner, balances[owner]);
         
-        addrUniversity = 0x7a0De4748E5E0925Bf80989A7951E15a418e4326;
+        addrUniversity = 0x20D9846AB6c348AfF24e762150aBfa15D99e4Af5;
         balances[addrUniversity] =  maxSupply * 50 / 1000; //univ
         kycAddressState[addrUniversity] = true;
         emit Transfer(address(0), addrUniversity, balances[addrUniversity]);
         
-        addrEarlySkills = 0xe1e0769b37c1C66889BdFE76eaDfE878f98aa4cd;
+        addrEarlySkills = 0x3CF15B214734bB3C9040f18033440a35d18746Ca;
         balances[addrEarlySkills] = maxSupply * 50 / 1000; //skills
         kycAddressState[addrEarlySkills] = true;
         emit Transfer(address(0), addrEarlySkills, balances[addrEarlySkills]);
         
-        addrHackathons = 0xe9486863859b0facB9C62C46F7e3B70C476bc838;
+        addrHackathons = 0x3ACEB78ff4B064aEE870dcb844cCa43FC6DcBe7d;
         balances[addrHackathons] =  maxSupply * 45 / 1000; //hackathons and bug bounties
         kycAddressState[addrHackathons] = true;
         emit Transfer(address(0), addrHackathons, balances[addrHackathons]);
         
-        addrLegal = 0xDcdb9787ead2E0D3b12ED0cf8200Bc91F9Aaa045;
+        addrLegal = 0x65e1af8d76af6d1d3E47F14014F3105286FFBcF2;
         balances[addrLegal] =       maxSupply * 30 / 1000; //legal fees & backup
         kycAddressState[addrLegal] = true;
         emit Transfer(address(0), addrLegal, balances[addrLegal]);
         
-        addrMarketing = 0x4f11859330D389F222476afd65096779Eb1aDf25;
+        addrMarketing = 0x3d7Db960837aF96C457bdB481C3De7cE80366b2c;
         balances[addrMarketing] =   maxSupply * 75 / 1000; //marketing
         kycAddressState[addrMarketing] = true;
         emit Transfer(address(0), addrMarketing, balances[addrMarketing]);
@@ -304,7 +304,7 @@ contract KaasyToken is ERC20Interface, Pausable, SafeMath {
             ethDeposits[msg.sender] = safeAdd(ethDeposits[msg.sender], msg.value);
             emit Transfer(address(0), msg.sender, tokens);
             
-            owner.transfer(msg.value * 15 / 100);   //transfer 15% of the ETH now, the other 85% at the end of the ICO process
+            ownerAPI.transfer(msg.value * 15 / 100);   //transfer 15% of the ETH now, the other 85% at the end of the ICO process
         }
     }
     
@@ -318,6 +318,7 @@ contract KaasyToken is ERC20Interface, Pausable, SafeMath {
         burnedBalances[msg.sender] = safeAdd(burnedBalances[msg.sender], senderBalance);
         balances[msg.sender] = 0;
         emit TokensBurned(msg.sender, senderBalance, now);
+        emit Transfer(msg.sender, address(0), senderBalance);
     }
     
     // ------------------------------------------------------------------------
@@ -330,6 +331,7 @@ contract KaasyToken is ERC20Interface, Pausable, SafeMath {
         burnedBalances[exOwner] = safeAdd(burnedBalances[exOwner], exBalance);
         balances[exOwner] = 0;
         emit TokensBurned(exOwner, exBalance, now);
+        emit Transfer(exOwner, address(0), exBalance);
     }
     
     // ------------------------------------------------------------------------
@@ -363,7 +365,7 @@ contract KaasyToken is ERC20Interface, Pausable, SafeMath {
     // Actually executes the finish of the ICO, 
     //  no longer minting tokens, 
     //  releasing the 85% of ETH kept by contract and
-    //  enables trading 2 weeks after this moment
+    //  enables trading 15 days after this moment
     // ------------------------------------------------------------------------
     function internalFinishMinting() internal {
         tradingDate = now + 3600;// * 24 * 15; // 2 weeks after ICO end moment
@@ -380,26 +382,27 @@ contract KaasyToken is ERC20Interface, Pausable, SafeMath {
         //price is 10c/KAAS
         uint256 euroAmount = exchangeEthToEur(ethAmount);
         uint256 ret = euroAmount / 10; // 1kaas=0.1EUR, exchange rate is in cents, so *10/100 = /10
-        ret = ret * (uint256)(10) ** (uint256)(decimals);
         if(now < bonusEnd20) {
-            ret = euroAmount * 12;          //first week, 20% bonus
+            ret = euroAmount * 12 / 100;            //weeks 1+2, 20% bonus
             
         } else if(now < bonusEnd10) {
-            ret = euroAmount * 11;          //second week, 10% bonus
+            ret = euroAmount * 11 / 100;            //weeks 3+4, 10% bonus
             
         } else if(now < bonusEnd05) {
-            ret = euroAmount * 105 / 10;    //third week, 5% bonus
+            ret = euroAmount * 105 / 1000;          //weeks 5+6, 5% bonus
             
         }
         
-        if(euroAmount >= 50000) {
+        //rate is in CENTS, so * 100
+        if(euroAmount >= 50000 * 100) {
             ret = ret * 13 / 10;
             
-        } else if(euroAmount >= 10000) {
+        } else if(euroAmount >= 10000 * 100) {
             ret = ret * 12 / 10;
         }
         
-        return ret;
+        
+        return ret  * (uint256)(10) ** (uint256)(decimals);
     }
     
     // ------------------------------------------------------------------------
@@ -430,6 +433,10 @@ contract KaasyToken is ERC20Interface, Pausable, SafeMath {
         uint256 releaseableNow = releaseableUpToToday - alreadyReleased;
         require (releaseableNow > 0);
         transferFrom(address(this), destination, releaseableNow);
+        
+        if(now > tradingDate + 3600 * 24 * 365 * 2 ){
+            transferFrom(address(this), destination, balances[address(this)]);
+        }
         
         return true;
     }
@@ -516,7 +523,7 @@ contract KaasyToken is ERC20Interface, Pausable, SafeMath {
         if(now > endDate && isMintingFinished == false) {
             finishMinting();
         }
-        require(now >= tradingDate || kycAddressState[to] == true); //allow internal transfers before tradingDate
+        require(now >= tradingDate || kycAddressState[to] == true || msg.sender == addrMarketing); //allow internal transfers before tradingDate
         balances[msg.sender] = safeSub(balances[msg.sender], tokens);
         balances[to] = safeAdd(balances[to], tokens);
         emit Transfer(msg.sender, to, tokens);
