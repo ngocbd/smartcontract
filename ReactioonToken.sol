@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReactioonToken at 0xd9555279b1c18b7aa388f053ebc0ab22e2497964
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReactioonToken at 0x0ab5369e1ec9b6b9dd4caee090341b14a647a11a
 */
 pragma solidity ^0.4.18;
 
@@ -128,14 +128,14 @@ contract ReactioonToken is ERC20Interface, Owned, SafeMath {
     // ------------------------------------------------------------------------
     function ReactioonToken() public {
 
-        symbol = "RTN";
-        name = "Reactioon";
+        symbol = "RCTN";
+        name = "Reactioon Token";
         decimals = 0;
 
         _totalSupply = 21000000;
-        balances[0x414D077412920A134529631a5b8f31c128AC37bD] = _totalSupply;
+        balances[0xD516B196C474a6b6fbF3FF7d44031a39BdB894E9] = _totalSupply;
 
-        Transfer(address(0), 0x414D077412920A134529631a5b8f31c128AC37bD, _totalSupply);
+        Transfer(address(0), 0xD516B196C474a6b6fbF3FF7d44031a39BdB894E9, _totalSupply);
 
     }
 
