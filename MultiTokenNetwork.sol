@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiTokenNetwork at 0x3478c2e4ed6f64db0be9c483b87f70ff6ab0d65a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiTokenNetwork at 0x7c10de4576beb3ddf6b666092927b409c5c52e16
 */
 pragma solidity ^0.4.24;
 
@@ -8,12 +8,12 @@ pragma solidity ^0.4.24;
 /**
  * @title ERC20Basic
  * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
+ * See https://github.com/ethereum/EIPs/issues/179
  */
 contract ERC20Basic {
   function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
+  function balanceOf(address _who) public view returns (uint256);
+  function transfer(address _to, uint256 _value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
@@ -24,56 +24,18 @@ contract ERC20Basic {
  * @dev see https://github.com/ethereum/EIPs/issues/20
  */
 contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender)
+  function allowance(address _owner, address _spender)
     public view returns (uint256);
 
-  function transferFrom(address from, address to, uint256 value)
+  function transferFrom(address _from, address _to, uint256 _value)
     public returns (bool);
 
-  function approve(address spender, uint256 value) public returns (bool);
+  function approve(address _spender, uint256 _value) public returns (bool);
   event Approval(
     address indexed owner,
     address indexed spender,
     uint256 value
   );
-}
-
-// File: contracts/interface/IBasicMultiToken.sol
-
-contract IBasicMultiToken is ERC20 {
-    event Bundle(address indexed who, address indexed beneficiary, uint256 value);
-    event Unbundle(address indexed who, address indexed beneficiary, uint256 value);
-
-    function tokensCount() public view returns(uint256);
-    function tokens(uint256 _index) public view returns(ERC20);
-    function allTokens() public view returns(ERC20[]);
-    function allDecimals() public view returns(uint8[]);
-    function allBalances() public view returns(uint256[]);
-    function allTokensDecimalsBalances() public view returns(ERC20[], uint8[], uint256[]);
-
-    function bundleFirstTokens(address _beneficiary, uint256 _amount, uint256[] _tokenAmounts) public;
-    function bundle(address _beneficiary, uint256 _amount) public;
-
-    function unbundle(address _beneficiary, uint256 _value) public;
-    function unbundleSome(address _beneficiary, uint256 _value, ERC20[] _tokens) public;
-
-    function denyBundling() public;
-    function allowBundling() public;
-}
-
-// File: contracts/interface/IMultiToken.sol
-
-contract IMultiToken is IBasicMultiToken {
-    event Update();
-    event Change(address indexed _fromToken, address indexed _toToken, address indexed _changer, uint256 _amount, uint256 _return);
-
-    function getReturn(address _fromToken, address _toToken, uint256 _amount) public view returns (uint256 returnAmount);
-    function change(address _fromToken, address _toToken, uint256 _amount, uint256 _minReturn) public returns (uint256 returnAmount);
-
-    function allWeights() public view returns(uint256[] _weights);
-    function allTokensDecimalsBalancesWeights() public view returns(ERC20[] _tokens, uint8[] _decimals, uint256[] _balances, uint256[] _weights);
-
-    function denyChanges() public;
 }
 
 // File: openzeppelin-solidity/contracts/ownership/Ownable.sol
@@ -112,6 +74,9 @@ contract Ownable {
 
   /**
    * @dev Allows the current owner to relinquish control of the contract.
+   * @notice Renouncing to ownership will leave the contract without an owner.
+   * It will not be possible to call the functions with the `onlyOwner`
+   * modifier anymore.
    */
   function renounceOwnership() public onlyOwner {
     emit OwnershipRenounced(owner);
@@ -135,12 +100,6 @@ contract Ownable {
     emit OwnershipTransferred(owner, _newOwner);
     owner = _newOwner;
   }
-}
-
-// File: contracts/registry/IDeployer.sol
-
-contract IDeployer is Ownable {
-    function deploy(bytes data) external returns(address mtkn);
 }
 
 // File: openzeppelin-solidity/contracts/lifecycle/Pausable.sol
@@ -175,7 +134,7 @@ contract Pausable is Ownable {
   /**
    * @dev called by the owner to pause, triggers stopped state
    */
-  function pause() onlyOwner whenNotPaused public {
+  function pause() public onlyOwner whenNotPaused {
     paused = true;
     emit Pause();
   }
@@ -183,10 +142,50 @@ contract Pausable is Ownable {
   /**
    * @dev called by the owner to unpause, returns to normal state
    */
-  function unpause() onlyOwner whenPaused public {
+  function unpause() public onlyOwner whenPaused {
     paused = false;
     emit Unpause();
   }
+}
+
+// File: contracts/registry/IDeployer.sol
+
+contract IDeployer is Ownable {
+    function deploy(bytes data) external returns(address mtkn);
+}
+
+// File: contracts/interface/IBasicMultiToken.sol
+
+contract IBasicMultiToken is ERC20 {
+    event Bundle(address indexed who, address indexed beneficiary, uint256 value);
+    event Unbundle(address indexed who, address indexed beneficiary, uint256 value);
+
+    ERC20[] public tokens;
+
+    function tokensCount() public view returns(uint256);
+
+    function bundleFirstTokens(address _beneficiary, uint256 _amount, uint256[] _tokenAmounts) public;
+    function bundle(address _beneficiary, uint256 _amount) public;
+
+    function unbundle(address _beneficiary, uint256 _value) public;
+    function unbundleSome(address _beneficiary, uint256 _value, ERC20[] _tokens) public;
+
+    function disableBundling() public;
+    function enableBundling() public;
+}
+
+// File: contracts/interface/IMultiToken.sol
+
+contract IMultiToken is IBasicMultiToken {
+    event Update();
+    event Change(address indexed _fromToken, address indexed _toToken, address indexed _changer, uint256 _amount, uint256 _return);
+
+    mapping(address => uint256) public weights;
+
+    function getReturn(address _fromToken, address _toToken, uint256 _amount) public view returns (uint256 returnAmount);
+    function change(address _fromToken, address _toToken, uint256 _amount, uint256 _minReturn) public returns (uint256 returnAmount);
+
+    function disableChanges() public;
 }
 
 // File: contracts/registry/MultiTokenNetwork.sol
@@ -223,16 +222,16 @@ contract MultiTokenNetwork is Pausable {
         multitokens.length -= 1;
     }
 
-    function denyBundlingMultitoken(uint index) public onlyOwner {
-        IBasicMultiToken(multitokens[index]).denyBundling();
+    function disableBundlingMultitoken(uint index) public onlyOwner {
+        IBasicMultiToken(multitokens[index]).disableBundling();
     }
 
-    function allowBundlingMultitoken(uint index) public onlyOwner {
-        IBasicMultiToken(multitokens[index]).allowBundling();
+    function enableBundlingMultitoken(uint index) public onlyOwner {
+        IBasicMultiToken(multitokens[index]).enableBundling();
     }
 
-    function denyChangesMultitoken(uint index) public onlyOwner {
-        IMultiToken(multitokens[index]).denyChanges();
+    function disableChangesMultitoken(uint index) public onlyOwner {
+        IMultiToken(multitokens[index]).disableChanges();
     }
 
     function setDeployer(uint256 index, IDeployer deployer) public onlyOwner whenNotPaused {
@@ -245,5 +244,10 @@ contract MultiTokenNetwork is Pausable {
         address mtkn = deployers[index].deploy(data);
         multitokens.push(mtkn);
         emit NewMultitoken(mtkn);
+    }
+
+    function makeCall(address _target, uint256 _value, bytes _data) public onlyOwner {
+        // solium-disable-next-line security/no-call-value
+        _target.call.value(_value)(_data);
     }
 }
