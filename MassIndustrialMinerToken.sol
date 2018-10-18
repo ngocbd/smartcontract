@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MassIndustrialMinerToken at 0xe958b99481b261d13101c849792338c1e7e3946f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MassIndustrialMinerToken at 0xd38ede2202a4b2fa9cfc308dda29f387ab25789e
 */
 pragma solidity ^0.4.18;
 
@@ -9,7 +9,7 @@ pragma solidity ^0.4.18;
 // Deployed to : 0xbd06428d5501cB677cA3691703A93DF32Af37996
 // Symbol      : MASS
 // Name        : Mass Industrial Miner 
-// Total supply: 6250000000000000
+// Total supply: 62500000
 // Decimals    : 8
 //
 // Enjoy.
@@ -119,7 +119,7 @@ contract MassIndustrialMinerToken is ERC20Interface, Owned, SafeMath {
         symbol = "MASS";
         name = "Mass Industrial Miner";
         decimals = 8;
-        _totalSupply = 6250000000000000;
+        _totalSupply = 62500000;
         balances[0xbd06428d5501cB677cA3691703A93DF32Af37996] = _totalSupply;
         Transfer(address(0), 0xbd06428d5501cB677cA3691703A93DF32Af37996, _totalSupply);
     }
