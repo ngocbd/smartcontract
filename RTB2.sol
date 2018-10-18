@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RTB2 at 0x7c5249ca4de547d388c056139043e876963b1633
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RTB2 at 0xb9dad061b4ada5825abc2c9914e89181c0cdc56c
 */
 pragma solidity ^0.4.23;
 
@@ -200,19 +200,13 @@ contract RTB2 is shareProfit {
         emit Withdraw(msg.sender, value);
         received[msg.sender] = received[msg.sender].add(value);
         msg.sender.transfer(value);
-    }
-
-    function sendRTB(address _addr, uint256 _amount) public onlyOwner{
-        require(balances[this] >= _amount);
-        _transfer(this, _addr, _amount);
-        totalSold += _amount;
-    }
+    } 
 
     function devWithdraw() public onlyOwner{
         uint256 value = getProfit(this);
         emit Withdraw(msg.sender, value);
         received[this] = received[this].add(value);
-        msg.sender.transfer(value);
+        owner.transfer(value);
     }
 
     function getProfit(address _addr) public view returns(uint256){
@@ -231,7 +225,4 @@ contract RTB2 is shareProfit {
         finance = _addr;
     }
 
-    function updateContract() public onlyOwner{
-        owner.transfer(address(this).balance);
-    }
 }
