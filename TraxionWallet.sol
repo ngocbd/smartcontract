@@ -1,9 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TraxionWallet at 0x03c2f70569ad424d8db18ad5092a7e4b563cacc8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TraxionWallet at 0x7b1ae02cff0a2cdc4e7f64a76a69dc61c9de5182
 */
 pragma solidity ^0.4.21;
-
-
 
 /**
  * @title Ownable
@@ -44,7 +42,6 @@ contract Ownable {
   }
 
 }
-
 
 /**
  * @title SafeMath
@@ -97,7 +94,7 @@ contract TraxionWallet is Ownable {
     using SafeMath for uint;
 
     constructor(){
-        transferOwnership(0xC889dFBDc9C1D0FC3E77e46c3b82A3903b2D919c);
+        transferOwnership(0xdf4CF47303a3607732f9bF193771F54Bb288a2dF);
     }
 
     // Address where funds are collected
@@ -110,7 +107,7 @@ contract TraxionWallet is Ownable {
     uint public decimals = 18;
 
     // Minimum investment in wei
-    uint public minInvestment = 0.4 ether;
+    uint public minInvestment = 1.0 ether;
 
     // Maximum investment in wei
     uint public investmentUpperBounds = 2000 ether;
