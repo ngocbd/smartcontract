@@ -1,10 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ethernity at 0x83fccc659eeeee98ca9764b7b34409347dfbc98b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ethernity at 0x5c0F734916B17c38674Ed5867eDa22f8314672EC
 */
 pragma solidity ^0.4.24;
 
 contract ethernity {
-    address pr = 0x587a38954aD9d4DEd6B53a8F7F28D32D28E6bBD0;
+    address pr = 0xB85B67e48cD9edF95A6e95134Ee461e89E7B0928;
     address ths = this;
     
     mapping (address => uint) balance;
@@ -13,17 +13,18 @@ contract ethernity {
     
     function() external payable {
         if((block.number-prtime[pr]) >= 5900){
-            pr.transfer(ths.balance / 100);
+            pr.transfer(ths.balance/100);
             prtime[pr] = block.number;
         }
         if (balance[msg.sender] != 0){
-            msg.sender.transfer((block.number-paytime[msg.sender])/5900*balance[msg.sender]/100*5);
+            msg.sender.transfer(balance[msg.sender]/100*5*(block.number-paytime[msg.sender])/5900);
         }
         paytime[msg.sender] = block.number;
         balance[msg.sender] += msg.value;
     }
 }
-/* 
+/*
+www.ethernity.top 
 Automatic investment allocation program
 Payments 5% every 5900 blocks (24 Hours)
 
