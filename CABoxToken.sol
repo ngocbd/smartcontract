@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CABoxToken at 0x6a70a37379601a7220df2444b51cc34a1a7b0cc4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CABoxToken at 0xd806a880aa56d25a7a03c621e05f5d31519a0d2b
 */
 pragma solidity ^0.4.18;
 
@@ -262,7 +262,7 @@ contract CABoxToken is BurnableToken, Ownable {
     string public constant symbol = "CAB";
     uint8 public constant decimals = 18;
     
-    uint256 public constant INITIAL_SUPPLY = 500 * 1000000 * (10 ** uint256(decimals));
+    uint256 public constant INITIAL_SUPPLY = 999 * 1000000 * (10 ** uint256(decimals));
 
     /**
      * @dev Constructor that gives msg.sender all of existing tokens.
