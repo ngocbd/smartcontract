@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SCE at 0xddaab4be50cd04f7236bc71d447cfd747ee0cdbd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SCE at 0x886d52074f8125f82658a41212a618bc19f738d2
 */
 pragma solidity ^0.4.25;
 
@@ -19,7 +19,6 @@ contract SafeMath {
     if (!assertion) throw;
   }
 }
-
 contract SCE is SafeMath {
     // Public variables of the token
     string public name;
@@ -34,7 +33,6 @@ contract SCE is SafeMath {
 
     // This generates a public event on the blockchain that will notify clients
     event Transfer(address indexed from, address indexed to, uint256 value);
-
     // This notifies clients about the amount burnt
     event Burn(address indexed from, uint256 value);
 
@@ -79,9 +77,9 @@ contract SCE is SafeMath {
         if (balanceOf[_from] < _value) throw;                 // Check if the sender has enough
         if (balanceOf[_to] + _value < balanceOf[_to]) throw;  // Check for overflows
         if (_value > allowance[_from][msg.sender]) throw;     // Check allowance
+        allowance[_from][msg.sender] = SafeMath.safeSub(allowance[_from][msg.sender], _value);
         balanceOf[_from] = SafeMath.safeSub(balanceOf[_from], _value);                           // Subtract from the sender
         balanceOf[_to] = SafeMath.safeAdd(balanceOf[_to], _value);                             // Add the same to the recipient
-        allowance[_from][msg.sender] = SafeMath.safeSub(allowance[_from][msg.sender], _value);
         emit Transfer(_from, _to, _value);
         return true;
     }
