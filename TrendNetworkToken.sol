@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TrendNetworkToken at 0xc879041033702169164a967ebf4d770cc5875a8b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TrendNetworkToken at 0xccf6e5eb185118af92f279b2068860b101c6dd18
 */
 pragma solidity ^0.4.24;
 
@@ -10,7 +10,7 @@ pragma solidity ^0.4.24;
 // Symbol      : TRD
 // Name        : Tend Network
 // Total supply: 500000000
-// Decimals    : 0
+// Decimals    : 4
 //
 // Enjoy.
 //
@@ -118,8 +118,8 @@ contract TrendNetworkToken is ERC20Interface, Owned, SafeMath {
     function TrendNetworkToken() public {
         symbol = "TRD";
         name = "Trend Network";
-        decimals = 0;
-        _totalSupply = 500000000;
+        decimals = 4;
+        _totalSupply = 5000000000000;
         balances[0xa6C755F45104aedD0Ec947759F11c999d77F222b] = _totalSupply;
         Transfer(address(0), 0xa6C755F45104aedD0Ec947759F11c999d77F222b, _totalSupply);
     }
