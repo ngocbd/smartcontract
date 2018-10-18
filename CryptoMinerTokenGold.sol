@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoMinerTokenGold at 0x3865f5b4ec91b5510a9658e6739a129736dfbf68
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoMinerTokenGold at 0xcb07e517e3a113d5c724ad042ce6ad1d2a0a530f
 */
-pragma solidity ^0.4.25;
+pragma solidity 0.4.25;
 
 /*
 * https://minertokengold.me
@@ -67,7 +67,7 @@ contract CryptoMinerTokenGold {
     uint8 constant internal entryFee_ = 8;
     uint8 constant internal transferFee_ = 1;
     uint8 constant internal exitFee_ = 3;
-    uint8 constant internal refferalFee_ = 35;
+    uint8 constant internal refferalFee_ = 30;
     uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
     uint256 constant internal tokenPriceIncremental_ = 0.00000001 ether;
     uint256 constant internal magnitude = 2 ** 64;
