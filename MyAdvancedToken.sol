@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0xea92e35076000576aefe01b4a6d1ca55b8ade121
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x5e47adb525a24b86b31141ac05ce6a61d946a6ed
 */
 pragma solidity 0.4.23;
 contract owned {
@@ -86,8 +86,60 @@ contract token {
     }
 }
 
+contract Whitelist is owned {
+  mapping(address => bool) public whitelist;
+  
+  event WhitelistedAddressAdded(address addr);
+  event WhitelistedAddressRemoved(address addr);
 
-contract MyAdvancedToken is owned, token {
+
+  modifier onlyWhitelisted() {
+    require(whitelist[msg.sender]);
+    _;
+  }
+
+
+  function addAddressToWhitelist(address addr) onlyOwner public returns(bool success) {
+    if (!whitelist[addr]) {
+      whitelist[addr] = true;
+      WhitelistedAddressAdded(addr);
+      success = true; 
+    }
+  }
+
+
+  function addAddressesToWhitelist(address[] addrs) onlyOwner public returns(bool success) {
+    for (uint256 i = 0; i < addrs.length; i++) {
+      if (addAddressToWhitelist(addrs[i])) {
+        success = true;
+      }
+    }
+  }
+
+
+  function removeAddressFromWhitelist(address addr) onlyOwner public returns(bool success) {
+    if (whitelist[addr]) {
+      whitelist[addr] = false;
+      WhitelistedAddressRemoved(addr);
+      success = true;
+    }
+  }
+
+  function removeAddressesFromWhitelist(address[] addrs) onlyOwner public returns(bool success) {
+    for (uint256 i = 0; i < addrs.length; i++) {
+      if (removeAddressFromWhitelist(addrs[i])) {
+        success = true;
+      }
+    }
+  }
+
+}
+
+
+
+
+
+contract MyAdvancedToken is owned, token, Whitelist {
 
     mapping (address => bool) public frozenAccount;
     bool frozen = false; 
@@ -101,6 +153,8 @@ contract MyAdvancedToken is owned, token {
     ) token (initialSupply, tokenName, decimalUnits, tokenSymbol) {}
 
     function transfer(address _to, uint256 _value) {
+        require(whitelist[msg.sender]);
+        require(whitelist[_to]);
         if (balanceOf[msg.sender] < _value) throw;
         if (balanceOf[_to] + _value < balanceOf[_to]) throw;
         if (frozenAccount[msg.sender]) throw;
@@ -110,6 +164,8 @@ contract MyAdvancedToken is owned, token {
     }
 
     function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+        require(whitelist[msg.sender]);
+        require(whitelist[_to]);
         if (frozenAccount[_from]) throw;
         if (balanceOf[_from] < _value) throw;
         if (balanceOf[_to] + _value < balanceOf[_to]) throw;
