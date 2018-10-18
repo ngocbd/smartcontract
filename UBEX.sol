@@ -1,15 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UBEX at 0xe7a232cd72ec8cb1ce74a24cf1b2c3fb4b614072
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UBEX at 0x613afe1d8bace413731a3223331769429be55bc2
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
 // 'UBEX' CROWDSALE token contract
 //
-// Deployed to : 0xe7a232cd72ec8cb1ce74a24cf1b2c3fb4b614072
+// Deployed to : 0x613afe1d8bace413731a3223331769429be55bc2
 // Symbol      : UBEX
 // Name        : UBEX Tokens
-// Total supply: 9,000,000,000.000000000000000000
+// Total supply: 9,000,000,000,000,000,000
 // Decimals    : 18
 //
 // Enjoy.
