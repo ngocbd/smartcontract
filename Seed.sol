@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Seed at 0x63304b853869ded7fbcd74957e2b00fcc1ac830c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Seed at 0x428f047f7d91f1ef22c91e7ba29031b4ee11198a
 */
 pragma solidity ^0.4.24;
 
@@ -114,7 +114,7 @@ contract Seed is ERC20Token {
         name = "Seed";
         symbol = "SEED";
         decimals = 18;
-        totalSupply = 30* 1000 * 1000 *1000 * 10**uint256(decimals);
+        totalSupply = 10* 1000 * 1000 *1000 * 10**uint256(decimals);
         
         mintTotal = 0;
         owner = _owner;
