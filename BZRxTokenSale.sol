@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BZRxTokenSale at 0xd3d445f6e281d3f8e84658a11b4e8e1cabee71f1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BZRxTokenSale at 0xbbf3b5218c74deb0f31883bb2287014472efda21
 */
 /**
  * Copyright 2017–2018, bZeroX, LLC. All Rights Reserved.
@@ -411,7 +411,7 @@ contract BZRxToken is UnlimitedAllowanceToken, DetailedERC20, Ownable {
     constructor()
         public
         DetailedERC20(
-            "BZRX Protocol Token",
+            "bZx Protocol Token",
             "BZRX", 
             18
         )
@@ -526,11 +526,9 @@ contract BZRxToken is UnlimitedAllowanceToken, DetailedERC20, Ownable {
         public 
         onlyOwner 
         canMint 
-        returns (bool)
     {
         mintingFinished = true;
         emit MintFinished();
-        return true;
     }
 
     /**
@@ -541,11 +539,9 @@ contract BZRxToken is UnlimitedAllowanceToken, DetailedERC20, Ownable {
         public 
         onlyOwner 
         isLocked 
-        returns (bool)
     {
         lockingFinished = true;
         emit LockingFinished();
-        return true;
     }
 
     /**
@@ -557,10 +553,8 @@ contract BZRxToken is UnlimitedAllowanceToken, DetailedERC20, Ownable {
         public 
         onlyOwner 
         canMint 
-        returns (bool)
     {
         minters[_minter] = true;
-        return true;
     }
 
     /**
@@ -572,10 +566,8 @@ contract BZRxToken is UnlimitedAllowanceToken, DetailedERC20, Ownable {
         public 
         onlyOwner 
         canMint 
-        returns (bool)
     {
         minters[_minter] = false;
-        return true;
     }
 
     /**
@@ -670,7 +662,8 @@ contract BZRxTokenSale is Ownable {
         public
         payable 
     {
-        buyToken();
+        if (msg.sender != wethContractAddress)
+            buyToken();
     }
 
     function buyToken()
@@ -735,9 +728,6 @@ contract BZRxTokenSale is Ownable {
             uint wethValue = _value                             // amount of BZRX
                                 .mul(73).div(1000)              // fixed price per token $0.073
                                 .mul(10**18).div(ethRate);      // curent ETH/USD rate
-
-            // discount on purchase
-            wethValue -= wethValue.mul(bonusMultiplier).div(100).sub(wethValue);
 
             require(canPurchaseAmount(_from, wethValue), "not whitelisted");
 
@@ -859,6 +849,28 @@ contract BZRxTokenSale is Ownable {
         }
 
         return (_to.send(amount));
+    }
+
+    function transferToken(
+        address _tokenAddress,
+        address _to,
+        uint _value)
+        public
+        onlyOwner
+        returns (bool)
+    {
+        uint balance = StandardToken(_tokenAddress).balanceOf.gas(4999)(this);
+        if (_value > balance) {
+            return StandardToken(_tokenAddress).transfer(
+                _to,
+                balance
+            );
+        } else {
+            return StandardToken(_tokenAddress).transfer(
+                _to,
+                _value
+            );
+        }
     }
 
     function enforceWhitelist(
