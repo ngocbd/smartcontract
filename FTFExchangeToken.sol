@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FTFExchangeToken at 0x01e799ebd5d11ddeea11e30466ce117b86726458
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FTFExchangeToken at 0xe5607d2053226b423f19b3ae01f9b8ec660314cb
 */
 pragma solidity ^0.4.23;
 
@@ -112,8 +112,8 @@ contract FTFExchangeToken is StandardToken { // CHANGE THIS. Update the contract
         totalSupply = 601000000000000000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
         name = "FTFExchangeToken";                                   // Set the name for display purposes (CHANGE THIS)
         decimals = 18;                                               // Amount of decimals for display purposes (CHANGE THIS)
-        symbol = "FTF";                                             // Set the symbol for display purposes (CHANGE THIS)
-        unitsOneEthCanBuy = 15000000;                                      // Set the price of your token for the ICO (CHANGE THIS)
+        symbol = "FTFE";                                             // Set the symbol for display purposes (CHANGE THIS)
+        unitsOneEthCanBuy = 50000000;                                      // Set the price of your token for the ICO (CHANGE THIS)
         fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
     }
 
