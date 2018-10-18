@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IRideToken at 0x69d94dc74dcdccbadec877454a40341ecac34a7c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IRideToken at 0xbb97a47f7e5476ba4a0dfb57867eab5d30e67b9d
 */
 pragma solidity ^0.4.16;
 
@@ -18,8 +18,8 @@ contract IRideToken {
     function IRideToken() public {
         totalSupply = 10000000000 * 10 ** uint256(decimals);
         balanceOf[msg.sender] = totalSupply;
-        name = "iRide";
-        symbol = "iRide";
+        name = "iRideToken";
+        symbol = "iRideT";
     }
 
     function _transfer(address _from, address _to, uint _value) internal {
@@ -29,7 +29,7 @@ contract IRideToken {
         uint previousBalances = balanceOf[_from] + balanceOf[_to];
         balanceOf[_from] -= _value;
         balanceOf[_to] += _value;
-        Transfer(_from, _to, _value);
+        emit Transfer(_from, _to, _value);
         assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
     }
 
@@ -53,7 +53,7 @@ contract IRideToken {
         require(balanceOf[msg.sender] >= _value);   
         balanceOf[msg.sender] -= _value;            
         totalSupply -= _value;                      
-        Burn(msg.sender, _value);
+        emit Burn(msg.sender, _value);
         return true;
     }
 
@@ -63,7 +63,7 @@ contract IRideToken {
         balanceOf[_from] -= _value;                         
         allowance[_from][msg.sender] -= _value;             
         totalSupply -= _value;                              
-        Burn(_from, _value);
+        emit Burn(_from, _value);
         return true;
     }
 }
