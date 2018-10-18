@@ -1,16 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VoipToken at 0x3da034753B42Bda1BcFA682f29685E2fd6729016
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VoipToken at 0x958Ce508544A407aC4aa46d431C03eDeD845Fe1d
 */
 pragma solidity ^0.4.18;
 
 /**
  * @title SafeMath
- * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
 
     /**
-    * @dev Multiplies two numbers, throws on overflow.
+    * Multiplies two numbers, throws on overflow.
     */
     function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
         if (a == 0) {
@@ -22,7 +21,7 @@ library SafeMath {
     }
 
     /**
-    * @dev Integer division of two numbers, truncating the quotient.
+    * Integer division of two numbers, truncating the quotient.
     */
     function div(uint256 a, uint256 b) internal pure returns (uint256) {
         // assert(b > 0); // Solidity automatically throws when dividing by 0
@@ -32,7 +31,7 @@ library SafeMath {
     }
 
     /**
-    * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+    * Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
     */
     function sub(uint256 a, uint256 b) internal pure returns (uint256) {
         assert(b <= a);
@@ -40,7 +39,7 @@ library SafeMath {
     }
 
     /**
-    * @dev Adds two numbers, throws on overflow.
+    * Adds two numbers, throws on overflow.
     */
     function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
         c = a + b;
@@ -49,7 +48,7 @@ library SafeMath {
     }
 }
 
-contract ForeignToken {
+contract AltcoinToken {
     function balanceOf(address _owner) constant public returns (uint256);
     function transfer(address _to, uint256 _value) public returns (bool);
 }
@@ -76,14 +75,14 @@ contract VoipToken is ERC20 {
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;    
 
-    string public constant name = "VoipToken";
+    string public constant name = "Voip Token";
     string public constant symbol = "VOIP";
     uint public constant decimals = 8;
     
     uint256 public totalSupply = 20000000000e8;
-    uint256 public totalDistributed = 0;    
-    uint256 public constant MIN_CONTRIBUTION = 1 ether / 100; // 0.01 Ether
-    uint256 public tokensPerEth = 15000000e8;
+    uint256 public totalDistributed = 0;        
+    uint256 public tokensPerEth = 30000000e8;
+    uint256 public constant minContribution = 1 ether / 100; // 0.01 Ether
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
@@ -110,9 +109,10 @@ contract VoipToken is ERC20 {
     }
     
     
-    function VoipTken () public {
-        owner = msg.sender;    
-        distr(owner, totalDistributed);
+    function VoipToken () public {
+        owner = msg.sender;
+        uint256 devTokens = 2000000000e8;
+        distr(owner, devTokens);
     }
     
     function transferOwnership(address newOwner) onlyOwner public {
@@ -123,7 +123,7 @@ contract VoipToken is ERC20 {
     
 
     function finishDistribution() onlyOwner canDistr public returns (bool) {
-        distributionFinished = true;
+        distributionFinished = false;
         emit DistrFinished();
         return true;
     }
@@ -175,12 +175,10 @@ contract VoipToken is ERC20 {
     function getTokens() payable canDistr  public {
         uint256 tokens = 0;
 
-        // minimum contribution
-        require( msg.value >= MIN_CONTRIBUTION );
+        require( msg.value >= minContribution );
 
         require( msg.value > 0 );
-
-        // get baseline number of tokens
+        
         tokens = tokensPerEth.mul(msg.value) / 1 ether;        
         address investor = msg.sender;
         
@@ -240,7 +238,7 @@ contract VoipToken is ERC20 {
     }
     
     function getTokenBalance(address tokenAddress, address who) constant public returns (uint){
-        ForeignToken t = ForeignToken(tokenAddress);
+        AltcoinToken t = AltcoinToken(tokenAddress);
         uint bal = t.balanceOf(who);
         return bal;
     }
@@ -253,9 +251,7 @@ contract VoipToken is ERC20 {
     
     function burn(uint256 _value) onlyOwner public {
         require(_value <= balances[msg.sender]);
-        // no need to require value <= totalSupply, since that would imply the
-        // sender's balance is greater than the totalSupply, which *should* be an assertion failure
-
+        
         address burner = msg.sender;
         balances[burner] = balances[burner].sub(_value);
         totalSupply = totalSupply.sub(_value);
@@ -263,8 +259,8 @@ contract VoipToken is ERC20 {
         emit Burn(burner, _value);
     }
     
-    function withdrawForeignTokens(address _tokenContract) onlyOwner public returns (bool) {
-        ForeignToken token = ForeignToken(_tokenContract);
+    function withdrawAltcoinTokens(address _tokenContract) onlyOwner public returns (bool) {
+        AltcoinToken token = AltcoinToken(_tokenContract);
         uint256 amount = token.balanceOf(address(this));
         return token.transfer(owner, amount);
     }
