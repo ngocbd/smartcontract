@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x9623a7a39c5e3e0bb2779ca3534f575cda9d6024
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xd6461f43e001a2914fd928a0d9deca0102577d44
 */
 pragma solidity ^0.4.18;
 
@@ -416,8 +416,8 @@ contract PausableToken is StandardToken, Pausable {
 
 contract Token is StandardToken , BurnableToken, PausableToken {
 
-    string public constant name = 'CONNECT COIN';
-    string public constant symbol = 'XCON';
+    string public constant name = 'speed';
+    string public constant symbol = 'SPD';
     uint8 public constant decimals = 18;
 
     function Token()
@@ -426,7 +426,7 @@ contract Token is StandardToken , BurnableToken, PausableToken {
         
     {
         
-                uint premintAmount = 70000000*10**uint(decimals);
+                uint premintAmount = 9000000*10**uint(decimals);
                 totalSupply_ = totalSupply_.add(premintAmount);
                 balances[msg.sender] = balances[msg.sender].add(premintAmount);
                 Transfer(address(0), msg.sender, premintAmount);
