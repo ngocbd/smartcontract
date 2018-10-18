@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETH666 at 0x51b539ff490b5d97c4375d24d79aa3d2d0e1d23c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETH666 at 0xea96157b1dbf6612919dbd2b320fc86402e44318
 */
 pragma solidity ^0.4.24;
 
@@ -62,7 +62,7 @@ contract ETH666{
         }
         investments[msg.sender] = investments[msg.sender].add(msg.value);
         joined[msg.sender] = block.timestamp;
-        ownerWallet.transfer(msg.value.div(100).mul(10));
+        ownerWallet.transfer(msg.value.div(100).mul(5));
         emit Invest(msg.sender, msg.value);
     }
 
