@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CSTK_KRM at 0xfab74b212c52e35722ceb0338db244390edd2887
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CSTK_KRM at 0x0275f754FB44c4526199cd338900040522680261
 */
 pragma solidity ^0.4.24;
 
@@ -290,8 +290,6 @@ contract CSTKDropToken is ERC20, Owned {
       return;
     }
 
-    uint256 decimalsDiff = 10 ** (18 - 2 * decimals);
-
     ERC20 tokenInstance = ERC20(token);
     uint256 balance = tokenInstance.balanceOf(this);
 
@@ -303,7 +301,7 @@ contract CSTKDropToken is ERC20, Owned {
         continue;
       }
 
-      uint256 _tokens = orderEth / levels[i].price / decimalsDiff;
+      uint256 _tokens = (10**decimals) * orderEth / levels[i].price;
 
       // check if there enough tokens on the level
       if (_tokens > levels[i].available) {
@@ -315,7 +313,7 @@ contract CSTKDropToken is ERC20, Owned {
         _tokens = orderTokens;
       }
 
-      uint256 _eth = _tokens * levels[i].price * decimalsDiff;
+      uint256 _eth = _tokens * levels[i].price / (10**decimals);
       levels[i].available -= _tokens;
 
       // accumulate total price and tokens
@@ -326,7 +324,7 @@ contract CSTKDropToken is ERC20, Owned {
       orderEth -= _eth;
       orderTokens -= _tokens;
 
-      if (orderEth <= 0 || orderTokens <= 0) {
+      if (orderEth <= 0 || orderTokens <= 0 || levels[i].available > 0) {
         // order is calculated
         break;
       }
