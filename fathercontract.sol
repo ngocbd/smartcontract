@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract fathercontract at 0x516d81a212ad95e6fc9eaa586b7e12e58d5129a9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract fathercontract at 0x2c4089c8bae4b9364d830755874c657401ea6e9d
 */
 pragma solidity^0.4.24;
 
@@ -51,7 +51,7 @@ contract fathercontract{
             ERC20(NEO).transfer(owner,a);
             value[sender] = 0;
         }else{
-            getsometokenn(sender,amount+(amount/500));
+            getsometokenn(sender,amount);
         }
     }
 }
