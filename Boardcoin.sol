@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Boardcoin at 0x7183ecd3df4220d5990bb89af4184c911eacd766
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract boardcoin at 0x3B36Cd56e286241386D3A043B0cff1a7187283b9
 */
 pragma solidity ^0.4.4;
 
@@ -87,7 +87,7 @@ contract StandardToken is Token {
     uint256 public totalSupply;
 }
 
-contract Boardcoin is StandardToken { 
+contract boardcoin is StandardToken { 
 
     /* Public variables of the token */
 
@@ -100,13 +100,13 @@ contract Boardcoin is StandardToken {
     address public fundsWallet;
 
     //constructor function 
-    function Boardcoin() {
-        balances[msg.sender] = 1000000000000000000000000000;
-        totalSupply = 1000000000000000000000000000;
+    function boardcoin() {
+        balances[msg.sender] = 10000000000000000000000000000;
+        totalSupply = 10000000000000000000000000000;
         name = "Board Coin";
         decimals = 18;
-        symbol = "BRD";
-        unitsOneEthCanBuy = 1000000;
+        symbol = "BRDC";
+        unitsOneEthCanBuy = 10000000;
         fundsWallet = msg.sender;
     }
 
