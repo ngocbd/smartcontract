@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vertex_Token at 0x6f655b9e1e79a8979ad5bf8f141f2fc4dc71540c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vertex_Token at 0x0e4a7da180f823b155f54c72b192565e04f60b7e
 */
 pragma solidity ^0.4.24;
 
@@ -1752,7 +1752,7 @@ contract Vertex_Token is Ownable,  Whitelisted, MintableToken, usingOraclize {
         // update state
         weiRaised = SafeMath.add(weiRaised, msg.value);
 
-        // token.mint(beneficiary, tokens);
+        token.mint(beneficiary, tokens);
         emit TokenPurchase(msg.sender, beneficiary, msg.value, tokens);
         updatePrice();
         // forwardFunds();
