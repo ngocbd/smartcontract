@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CentralBankofSeychelles at 0x03107da4908f4f8e4b60cf8def7c59ddf601adf1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CentralBankofSeychelles at 0x30f886284e51f8148ca799650f9ec6b41e504d63
 */
 pragma solidity 0.4.24;
 
@@ -50,7 +50,7 @@ library SafeMath {
 
 contract CentralBankofSeychelles is ERC20
 {using SafeMath for uint256;
-   string public constant symbol = ",000.SCR.SeychelloisRupee";
+   string public constant symbol = ",000.PEN.PeruvianSol";
      string public constant name = "Central Bank of Seychelles";
      uint public constant decimals = 18;
      uint256 _totalSupply = 999000000000000000000 * 10 ** 18; // 999 Trillion Total Supply including 18 decimal
