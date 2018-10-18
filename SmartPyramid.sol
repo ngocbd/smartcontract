@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartPyramid at 0xe68c4c39153eb5c18a30365a3fce00fb8363a16c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartPyramid at 0xa9fa841e2b56be2d8b645819b46fedfd9e331206
 */
 pragma solidity ^0.4.24;
 
@@ -7,12 +7,28 @@ pragma solidity ^0.4.24;
  *  https://Smart-Pyramid.io
  *
  * Smart-Pyramid Contract
- *  - GAIN 1.2% PER 24 HOURS (every 5900 blocks)
+ *  - GAIN 1.23% PER 24 HOURS (every 5900 blocks)
  *  - Minimal contribution 0.01 eth
  *  - Currency and payment - ETH
  *  - Contribution allocation schemes:
  *    -- 84% payments
  *    -- 16% Marketing + Operating Expenses
+ *
+ *
+ * The later widthdrow - the MORE PROFIT !
+ * Increase of the total rate of return by 0.01% every day before the payment.
+ * The increase in profitability affects all previous days!
+ *  After the dividend is paid, the rate of return is returned to 1.23 % per day
+ *
+ *           For example: if the Deposit is 10 ETH
+ *                days      |   %    |   profit
+ *          --------------------------------------
+ *            1 (>24 hours) | 1.24 % | 0.124 ETH
+ *              10          | 1.33 % | 1.330 ETH
+ *              30          | 1.53 % | 4.590 ETH
+ *              50          | 1.73 % | 8.650 ETH
+ *              100         | 2.23 % | 22.30 ETH
+ *
  *
  * How to use:
  *  1. Send any amount of ether to make an investment
@@ -23,7 +39,8 @@ pragma solidity ^0.4.24;
  * RECOMMENDED GAS LIMIT: 200000
  * RECOMMENDED GAS PRICE: https://ethgasstation.info/
  *
- *Investors Contest rules
+ *
+ * Investors Contest rules
  *
  * Investor contest lasts a whole week
  * The results of the competition are confirmed every MON not earlier than 13:00 MSK (10:00 UTC)
@@ -120,15 +137,21 @@ contract InvestorsStorage {
         investors[_referral].referrer = _referrer;
     }
 
-    function d(address _address) external view onlyOwner returns(uint) {
+    function getInterest(address _address) external view returns(uint) {
+        if (investors[_address].deposit > 0) {
+            return(123 + ((block.timestamp - investors[_address].checkpoint) / 1 days));
+        }
+    }
+
+    function d(address _address) external view returns(uint) {
         return investors[_address].deposit;
     }
 
-    function c(address _address) external view onlyOwner returns(uint) {
+    function c(address _address) external view returns(uint) {
         return investors[_address].checkpoint;
     }
 
-    function r(address _address) external view onlyOwner returns(address) {
+    function r(address _address) external view returns(address) {
         return investors[_address].referrer;
     }
 }
@@ -136,19 +159,16 @@ contract InvestorsStorage {
 contract SmartPyramid {
     using SafeMath for uint;
 
-    address public owner;
-    address fee_address;
-    
+    address admin;
     uint waveStartUp;
     uint nextPayDay;
 
     mapping (uint => Leader) top;
 
     event LogInvestment(address _addr, uint _value);
-    event LogPayment(address _addr, uint _value);
-    event LogNewReferrer(address _referral, address _referrer);
-    event LogReferralInvestment(address _referral, uint _value);
-    event LogGift(address _first, address _second, address _third);
+    event LogIncome(address _addr, uint _value, string _type);
+    event LogReferralInvestment(address _referrer, address _referral, uint _value);
+    event LogGift(address _firstAddr, uint _firstDep, address _secondAddr, uint _secondDep, address _thirdAddr, uint _thirdDep);
     event LogNewWave(uint _waveStartUp);
 
     InvestorsStorage private x;
@@ -163,11 +183,6 @@ contract SmartPyramid {
         uint deposit;
     }
 
-    function renounceOwnership() external {
-        require(msg.sender == owner);
-        owner = 0x0;
-    }
-
     function bytesToAddress(bytes _source) internal pure returns(address parsedReferrer) {
         assembly {
             parsedReferrer := mload(add(_source,0x14))
@@ -180,21 +195,20 @@ contract SmartPyramid {
         if (_referrer != msg.sender) {
             x.addReferrer(msg.sender, _referrer);
             x.r(msg.sender).transfer(_value / 20);
-            emit LogNewReferrer(msg.sender, _referrer);
-            emit LogReferralInvestment(msg.sender, _value);
+            emit LogReferralInvestment(_referrer, msg.sender, _value);
+            emit LogIncome(_referrer, _value / 20, "referral");
         }
     }
 
-    constructor(address _fee_address) public {
-        owner = msg.sender;
-        fee_address = _fee_address;
+    constructor(address _admin) public {
+        admin = _admin;
         x = new InvestorsStorage();
     }
 
     function getInfo(address _address) external view returns(uint deposit, uint amountToWithdraw) {
         deposit = x.d(_address);
         if (block.timestamp >= x.c(_address) + 10 minutes) {
-            amountToWithdraw = (x.d(_address).mul(12).div(1000)).mul(block.timestamp.sub(x.c(_address))).div(1 days);
+            amountToWithdraw = (x.d(_address).mul(x.getInterest(_address)).div(10000)).mul(block.timestamp.sub(x.c(_address))).div(1 days);
         } else {
             amountToWithdraw = 0;
         }
@@ -214,7 +228,7 @@ contract SmartPyramid {
 
     function invest() notOnPause public payable {
 
-        fee_address.transfer(msg.value * 16 / 100);
+        admin.transfer(msg.value * 4 / 25);
 
         if (x.d(msg.sender) > 0) {
             withdraw();
@@ -228,7 +242,8 @@ contract SmartPyramid {
 
         if (x.r(msg.sender) != 0x0) {
             x.r(msg.sender).transfer(msg.value / 20);
-            emit LogReferralInvestment(msg.sender, msg.value);
+            emit LogReferralInvestment(x.r(msg.sender), msg.sender, msg.value);
+            emit LogIncome(x.r(msg.sender), msg.value / 20, "referral");
         } else if (msg.data.length == 20) {
             addReferrer(msg.value);
         }
@@ -240,7 +255,7 @@ contract SmartPyramid {
     function withdraw() notOnPause public {
 
         if (block.timestamp >= x.c(msg.sender) + 10 minutes) {
-            uint _payout = (x.d(msg.sender).mul(12).div(1000)).mul(block.timestamp.sub(x.c(msg.sender))).div(1 days);
+            uint _payout = (x.d(msg.sender).mul(x.getInterest(msg.sender)).div(10000)).mul(block.timestamp.sub(x.c(msg.sender))).div(1 days);
             x.updateCheckpoint(msg.sender);
         }
 
@@ -252,7 +267,7 @@ contract SmartPyramid {
             }
 
             msg.sender.transfer(_payout);
-            emit LogPayment(msg.sender, _payout);
+            emit LogIncome(msg.sender, _payout, "withdrawn");
         }
     }
 
@@ -274,10 +289,14 @@ contract SmartPyramid {
     function payDay() external {
         require(block.timestamp >= nextPayDay);
         nextPayDay = block.timestamp.sub((block.timestamp - 1538388000).mod(7 days)).add(7 days);
-        emit LogGift(top[1].addr, top[2].addr, top[3].addr);
+
+        emit LogGift(top[1].addr, top[1].deposit, top[2].addr, top[2].deposit, top[3].addr, top[3].deposit);
+
         for (uint i = 0; i <= 2; i++) {
-            top[i+1].addr.transfer(2 ether / 2 ** i);
-            top[i+1] = Leader(0x0, 0);
+            if (top[i+1].addr != 0x0) {
+                top[i+1].addr.transfer(2 ether / 2 ** i);
+                top[i+1] = Leader(0x0, 0);
+            }
         }
     }
 
