@@ -1,11 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EdgelessCasino at 0x91f273b7a28f5169fd7b7995a54b767ca797bc63
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EdgelessCasino at 0x764280456ae178591e037e36b01f69a52d9327a7
 */
 /**
- * The edgeless casino contract v2 holds the players's funds and provides state channel functionality.
+ * The test edgeless casino contract v2 holds the players's funds and provides state channel functionality.
  * The casino has at no time control over the players's funds.
  * State channels can be updated and closed from both parties: the player and the casino.
- * author: Julia Altenried
+ * author: Rytis Grincevicius
  **/
 
 pragma solidity ^0.4.21;
