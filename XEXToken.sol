@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XEXToken at 0x9d509d2d22c0aee17c34e7c3b0592d974c49164b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XEXToken at 0xbf68b3756f82b522588511da682dfd7e3bf34dee
 */
 pragma solidity ^0.4.25;
 
@@ -250,8 +250,14 @@ contract ERC20Pausable is ERC20, Pausable {
   }
 }
 
-contract XEXToken is ERC20Pausable {
-  string public constant name = "Cross exchange token";
+contract ERC20Burnable is ERC20 {
+  function burn(uint256 value) public {
+    _burn(msg.sender, value);
+  }
+}
+
+contract XEXToken is ERC20Pausable, ERC20Burnable {
+  string public constant name = "CROSS exchange token";
   string public constant symbol = "XEX";
   uint8 public constant decimals = 18;
   uint256 public constant INITIAL_SUPPLY = 10000000000 * (10 ** uint256(decimals));
