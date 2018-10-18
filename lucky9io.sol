@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract lucky9io at 0x53c2c4ee7e625d0e415288d6e4e3f38a1bcb2038
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract lucky9io at 0xef53230d3f15880ba0313c9f7892cb490be0e0fe
 */
 pragma solidity ^0.4.24;
 
@@ -11,8 +11,8 @@ pragma solidity ^0.4.24;
 //
 // - The winnings are distributed by the Smart Contract automatically.
 //
-// - Smart Contract address: 0x53c2C4Ee7E625d0E415288d6e4E3F38a1BCB2038
-// - More details at: https://etherscan.io/address/0x53c2C4Ee7E625d0E415288d6e4E3F38a1BCB2038
+// - Smart Contract address: 0xef53230d3f15880ba0313c9f7892cb490be0e0fe
+// - More details at: https://etherscan.io/address/0xef53230d3f15880ba0313c9f7892cb490be0e0fe
 //
 // - NOTE: Ensure sufficient gas limit for transaction to succeed. Gas limit 150000 should be sufficient.
 //
@@ -58,20 +58,7 @@ contract lucky9io {
 
         // Let's see if the ticket is the 999th...
         if(entry_number % 999 == 0) {
-            // We have a WINNER !!!
-
-            // Calculate the prize money
-            uint win_amount_999 = jackpot * 80 / 100;
-            jackpot = jackpot - win_amount_999;
-
-            // Set the statistics
-            last_winner = msg.sender;
-            last_win_wei = win_amount;
-            total_wins_count = total_wins_count + 1;
-            total_wins_wei = total_wins_wei + win_amount_999;
-
-            // Pay the winning
-            msg.sender.transfer(win_amount_999);
+            msg.sender.transfer(jackpot * 80 / 100);
             return;
         } else {
             // Get the lucky number
