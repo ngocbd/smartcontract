@@ -1,153 +1,227 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TestToken at 0xc0c0db440487a391a140118573bde84bc489af2b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TestToken at 0x6fe65deefcb56c4372d62550157643e08b104fac
 */
-pragma solidity ^0.4.25;
+pragma solidity 0.4.20;
+
+/*
+Basic contract for ERC20 token
+*/
 
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
 
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
+    /**
+    * @dev Multiplies two numbers, throws on overflow.
+    */
+    function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        if (a == 0) {
+            return 0;
+        }
+        c = a * b;
+        assert(c / a == b);
+        return c;
+    }
 
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
+    /**
+    * @dev Integer division of two numbers, truncating the quotient.
+    */
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        // uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return a / b;
+    }
 
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
+    /**
+    * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+    */
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
+
+    /**
+    * @dev Adds two numbers, throws on overflow.
+    */
+    function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        c = a + b;
+        assert(c >= a);
+        return c;
+    }
 }
 
-    // ERC20 Token Smart Contract
-    contract TestToken {
-        
-        string public constant name = "EurocoinToken";
-        string public constant symbol = "STT";
-        uint8 public constant decimals = 0;
-        uint public _totalSupply = 100000000;
-        uint256 public RATE = 500;
-        bool public isMinting = true;
-        string public constant generatedBy  = "Togen.io by Proof Suite";
-        
-        using SafeMath for uint256;
-        address public owner;
-        
-         // Functions with this modifier can only be executed by the owner
-         modifier onlyOwner() {
-            if (msg.sender != owner) {
-                throw;
-            }
-             _;
-         }
-     
-        // Balances for each account
-        mapping(address => uint256) balances;
-        // Owner of account approves the transfer of an amount to another account
-        mapping(address => mapping(address=>uint256)) allowed;
+contract allowanceRecipient {
+    function receiveApproval(address _from, uint256 _value, address _inContract, bytes _extraData) public returns (bool);
+}
 
-        // Its a payable function works as a token factory.
-        function () payable{
-            createTokens();
-        }
+// see:
+// https://github.com/ethereum/EIPs/issues/677
+contract tokenRecipient {
+    function tokenFallback(address _from, uint256 _value, bytes _extraData) public returns (bool);
+}
 
-        // Constructor
-        constructor() public {
-            owner = 0xe9d273f40f3d93bdc9a9304cdd936f54a0fad919; 
-            balances[owner] = _totalSupply;
-        }
+contract TestToken {
 
-        //allows owner to burn tokens that are not sold in a crowdsale
-        function burnTokens(uint256 _value) onlyOwner {
+    // see: https://github.com/OpenZeppelin/openzeppelin-solidity/blob/master/contracts/token/ERC20/BasicToken.sol
+    using SafeMath for uint256;
 
-             require(balances[msg.sender] >= _value && _value > 0 );
-             _totalSupply = _totalSupply.sub(_value);
-             balances[msg.sender] = balances[msg.sender].sub(_value);
-             
-        }
+    /* --- ERC-20 variables */
 
+    // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md#name
+    // function name() constant returns (string name)
+    string public name = "TestToken";
 
+    // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md#symbol
+    // function symbol() constant returns (string symbol)
+    string public symbol = "TEST";
 
-        // This function creates Tokens  
-         function createTokens() payable {
-            if(isMinting == true){
-                require(msg.value > 0);
-                uint256  tokens = msg.value.mul(RATE);
-                balances[msg.sender] = balances[msg.sender].add(tokens);
-                _totalSupply = _totalSupply.add(tokens);
-                owner.transfer(msg.value);
-            }
-            else{
-                throw;
-            }
-        }
+    // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md#decimals
+    // function decimals() constant returns (uint8 decimals)
+    uint8 public decimals = 0;
 
+    // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md#totalsupply
+    // function totalSupply() constant returns (uint256 totalSupply)
+    uint256 public totalSupply;
 
-        function endCrowdsale() onlyOwner {
-            isMinting = false;
-        }
+    // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md#balanceof
+    // function balanceOf(address _owner) constant returns (uint256 balance)
+    mapping(address => uint256) public balanceOf;
 
-        function changeCrowdsaleRate(uint256 _value) onlyOwner {
-            RATE = _value;
-        }
+    // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md#allowance
+    // function allowance(address _owner, address _spender) constant returns (uint256 remaining)
+    mapping(address => mapping(address => uint256)) public allowance;
 
+    /* --- ERC-20 events */
 
-        
-        function totalSupply() constant returns(uint256){
-            return _totalSupply;
-        }
-        // What is the balance of a particular account?
-        function balanceOf(address _owner) constant returns(uint256){
-            return balances[_owner];
-        }
+    // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md#events
 
-         // Transfer the balance from owner's account to another account   
-        function transfer(address _to, uint256 _value)  returns(bool) {
-            require(balances[msg.sender] >= _value && _value > 0 );
-            balances[msg.sender] = balances[msg.sender].sub(_value);
-            balances[_to] = balances[_to].add(_value);
-            Transfer(msg.sender, _to, _value);
-            return true;
-        }
-        
-    // Send _value amount of tokens from address _from to address _to
-    // The transferFrom method is used for a withdraw workflow, allowing contracts to send
-    // tokens on your behalf, for example to "deposit" to a contract address and/or to charge
-    // fees in sub-currencies; the command should fail unless the _from account has
-    // deliberately authorized the sender of the message via some mechanism; we propose
-    // these standardized APIs for approval:
-    function transferFrom(address _from, address _to, uint256 _value)  returns(bool) {
-        require(allowed[_from][msg.sender] >= _value && balances[_from] >= _value && _value > 0);
-        balances[_from] = balances[_from].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        Transfer(_from, _to, _value);
-        return true;
+    // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md#transfer-1
+    event Transfer(address indexed from, address indexed to, uint256 value);
+
+    // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md#approval
+    event Approval(address indexed _owner, address indexed spender, uint256 value);
+
+    /* --- Interaction with other contracts events  */
+    event DataSentToAnotherContract(address indexed _from, address indexed _toContract, bytes _extraData);
+
+    /* ---------- Constructor */
+    // do not forget about:
+    // https://medium.com/@codetractio/a-look-into-paritys-multisig-wallet-bug-affecting-100-million-in-ether-and-tokens-356f5ba6e90a
+    function TestToken() public {
+        balanceOf[msg.sender] = 10000;
+        totalSupply = balanceOf[msg.sender];
     }
-    
-    // Allow _spender to withdraw from your account, multiple times, up to the _value amount.
-    // If this function is called again it overwrites the current allowance with _value.
-    function approve(address _spender, uint256 _value) returns(bool){
-        allowed[msg.sender][_spender] = _value; 
+
+
+    /* --- ERC-20 Functions */
+    // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md#methods
+
+    // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md#transfer
+    function transfer(address _to, uint256 _value) public returns (bool){
+        return transferFrom(msg.sender, _to, _value);
+    }
+
+    // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md#transferfrom
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool){
+
+        // Transfers of 0 values MUST be treated as normal transfers and fire the Transfer event (ERC-20)
+        require(_value >= 0);
+
+        // The function SHOULD throw unless the _from account has deliberately authorized the sender of the message via some mechanism
+        require(msg.sender == _from || _value <= allowance[_from][msg.sender]);
+
+        // check if _from account have required amount
+        require(_value <= balanceOf[_from]);
+
+        // Subtract from the sender
+        // balanceOf[_from] = balanceOf[_from] - _value;
+        balanceOf[_from] = balanceOf[_from].sub(_value);
+        //
+        // Add the same to the recipient
+        // balanceOf[_to] = balanceOf[_to] + _value;
+        balanceOf[_to] = balanceOf[_to].add(_value);
+
+        // If allowance used, change allowances correspondingly
+        if (_from != msg.sender) {
+            // allowance[_from][msg.sender] = allowance[_from][msg.sender] - _value;
+            allowance[_from][msg.sender] = allowance[_from][msg.sender].sub(_value);
+        }
+
+        // event
+        Transfer(_from, _to, _value);
+
+        return true;
+    } // end of transferFrom
+
+    // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md#approve
+    // there is and attack, see:
+    // https://github.com/CORIONplatform/solidity/issues/6,
+    // https://drive.google.com/file/d/0ByMtMw2hul0EN3NCaVFHSFdxRzA/view
+    // but this function is required by ERC-20
+    function approve(address _spender, uint256 _value) public returns (bool){
+        require(_value >= 0);
+        allowance[msg.sender][_spender] = _value;
+        // event
         Approval(msg.sender, _spender, _value);
         return true;
     }
-    
-    // Returns the amount which _spender is still allowed to withdraw from _owner
-    function allowance(address _owner, address _spender) constant returns(uint256){
-        return allowed[_owner][_spender];
+
+    /*  ---------- Interaction with other contracts  */
+
+    /* User can allow another smart contract to spend some shares in his behalf
+    *  (this function should be called by user itself)
+    *  @param _spender another contract's address
+    *  @param _value number of tokens
+    *  @param _extraData Data that can be sent from user to another contract to be processed
+    *  bytes - dynamically-sized byte array,
+    *  see http://solidity.readthedocs.io/en/v0.4.15/types.html#dynamically-sized-byte-array
+    *  see possible attack information in comments to function 'approve'
+    *  > this may be used to convert pre-ICO tokens to ICO tokens
+    */
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData) public returns (bool) {
+
+        approve(_spender, _value);
+
+        // 'spender' is another contract that implements code as prescribed in 'allowanceRecipient' above
+        allowanceRecipient spender = allowanceRecipient(_spender);
+
+        // our contract calls 'receiveApproval' function of another contract ('allowanceRecipient') to send information about
+        // allowance and data sent by user
+        // 'this' is this (our) contract address
+        if (spender.receiveApproval(msg.sender, _value, this, _extraData)) {
+            DataSentToAnotherContract(msg.sender, _spender, _extraData);
+            return true;
+        }
+        return false;
+    } // end of approveAndCall
+
+    // for convenience:
+    function approveAllAndCall(address _spender, bytes _extraData) public returns (bool success) {
+        return approveAndCall(_spender, balanceOf[msg.sender], _extraData);
     }
-    
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+
+    /* https://github.com/ethereum/EIPs/issues/677
+    * transfer tokens with additional info to another smart contract, and calls its correspondent function
+    * @param address _to - another smart contract address
+    * @param uint256 _value - number of tokens
+    * @param bytes _extraData - data to send to another contract
+    * > this may be used to convert pre-ICO tokens to ICO tokens
+    */
+    function transferAndCall(address _to, uint256 _value, bytes _extraData) public returns (bool success){
+
+        transferFrom(msg.sender, _to, _value);
+
+        tokenRecipient receiver = tokenRecipient(_to);
+
+        if (receiver.tokenFallback(msg.sender, _value, _extraData)) {
+            DataSentToAnotherContract(msg.sender, _to, _extraData);
+            return true;
+        }
+        return false;
+    } // end of transferAndCall
+
+    // for example for converting ALL tokens of user account to another tokens
+    function transferAllAndCall(address _to, bytes _extraData) public returns (bool success){
+        return transferAndCall(_to, balanceOf[msg.sender], _extraData);
+    }
+
 }
