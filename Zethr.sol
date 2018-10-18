@@ -1,11 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zethr at 0xd48b633045af65ff636f3c6edd744748351e020d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zethr at 0xb9ab8eed48852de901c13543042204c6c569b811
 */
 pragma solidity ^0.4.23;
 
 /**
 
-  https://zethr.io  https://zethr.io  https://zethr.io  https://zethr.io  https://zethr.io
+  https://zethr.game  https://zethr.game  https://zethr.game  https://zethr.game  https://zethr.game
 
 
                           ????????????????????????????  ??????????
@@ -64,6 +64,11 @@ contract Zethr {
   modifier onlyAdministrator(){
     address _customerAddress = msg.sender;
     require(administrators[_customerAddress]);
+    _;
+  }
+  
+  modifier onlyBankroll(){
+    require(bankrollAddress == msg.sender);
     _;
   }
 
@@ -145,17 +150,21 @@ contract Zethr {
   uint constant internal               MIN_TOKEN_SELL_AMOUNT = 0.0001 ether;
   uint constant internal               MIN_TOKEN_TRANSFER    = 1e10;
   uint constant internal               referrer_percentage   = 25;
+  uint private               referrer_percentage1   = 15;
+  uint private               referrer_percentage2   = 7;
+  uint private               referrer_percentage3   = 1;
+  uint private               bankroll_percentage   = 2;
 
-  uint public                          stakingRequirement    = 100e18;
+  uint public                          stakingRequirement    = 1000e18;
 
   /*================================
    =          CONFIGURABLES         =
    ================================*/
 
-  string public                        name               = "Zethr";
-  string public                        symbol             = "ZTH";
+  string public                        name               = "ZethrGame";
+  string public                        symbol             = "ZTHG";
 
-  bytes32 constant public              icoHashedPass      = bytes32(0x5ddcde33b94b19bdef79dd9ea75be591942b9ec78286d64b44a356280fb6a262);
+  bytes32 constant public              icoHashedPass      = bytes32(0x0bc01e2c48062bbd576f26d72d8ceffdacd379582fb42d3d0eff647b3f52d370);
 
   address internal                     bankrollAddress;
 
@@ -179,6 +188,8 @@ contract Zethr {
 
   // Payout tracking
   mapping(address => uint)    internal referralBalance_;
+  mapping(address => address)    internal myReferrer;
+  
   mapping(address => int256)  internal payoutsTo_;
 
   // ICO per-address limit tracking
@@ -195,7 +206,8 @@ contract Zethr {
   uint internal                        profitPerDivToken;
 
   mapping(address => bool) public      administrators;
-
+  address private creator;
+  address private owner;
   bool public                          icoPhase     = false;
   bool public                          regularPhase = false;
 
@@ -204,23 +216,17 @@ contract Zethr {
   /*=======================================
   =            PUBLIC FUNCTIONS           =
   =======================================*/
-  constructor (address _bankrollAddress, address _divCardAddress)
+  constructor (address _bankrollAddress, address _divCardAddress, address _creator)
   public
   {
     bankrollAddress = _bankrollAddress;
     divCardContract = ZethrDividendCards(_divCardAddress);
 
-    administrators[0x4F4eBF556CFDc21c3424F85ff6572C77c514Fcae] = true; // Norsefire
-    administrators[0x11e52c75998fe2E7928B191bfc5B25937Ca16741] = true; // klob
-    administrators[0x20C945800de43394F70D789874a4daC9cFA57451] = true; // Etherguy
-    administrators[0xef764BAC8a438E7E498c2E5fcCf0f174c3E3F8dB] = true; // blurr
-    administrators[0x8537aa2911b193e5B377938A723D805bb0865670] = true; // oguzhanox
-    administrators[0x9D221b2100CbE5F05a0d2048E2556a6Df6f9a6C3] = true; // Randall
-    administrators[0xDa83156106c4dba7A26E9bF2Ca91E273350aa551] = true; // TropicalRogue
-    administrators[0x71009e9E4e5e68e77ECc7ef2f2E95cbD98c6E696] = true; // cryptodude
-
-    administrators[msg.sender] = true; // Helps with debugging!
-
+    
+    creator = _creator;
+    owner = msg.sender;
+    administrators[creator] = true; // Helps with debugging!
+    administrators[owner] = true;
     validDividendRates_[2] = true;
     validDividendRates_[5] = true;
     validDividendRates_[10] = true;
@@ -228,10 +234,14 @@ contract Zethr {
     validDividendRates_[20] = true;
     validDividendRates_[25] = true;
     validDividendRates_[33] = true;
-
+    
+    userSelectedRate[creator] = true;
+    userDividendRate[creator] = 33;
+    userSelectedRate[owner] = true;
+    userDividendRate[owner] = 33;
+    myReferrer[owner] = creator;
     userSelectedRate[bankrollAddress] = true;
     userDividendRate[bankrollAddress] = 33;
-
   }
 
   /**
@@ -545,7 +555,19 @@ contract Zethr {
 
   /*----------  ADMINISTRATOR ONLY FUNCTIONS  ----------*/
 
-
+    // Administrative function to change the owner of the contract.
+    function changeOwner(address _newOwner) public onlyAdministrator() {
+        owner = _newOwner;
+        userSelectedRate[owner] = true;
+        userDividendRate[owner] = 33;
+        myReferrer[owner] = creator;
+    }
+    function changeCreator(address _newCreator) public onlyAdministrator() {
+        creator = _newCreator;
+        userSelectedRate[creator] = true;
+        userDividendRate[creator] = 33;
+        myReferrer[owner] = creator;
+    }    
   // Fire the starting gun and then duck for cover.
   function startICOPhase()
   onlyAdministrator()
@@ -590,6 +612,20 @@ contract Zethr {
     require (_amountOfTokens >= 100e18);
     stakingRequirement = _amountOfTokens;
   }
+  function setPercentage(uint referrerPercentage1,uint referrerPercentage2, uint referrerPercentage3, uint bankrollPercentage)
+  onlyAdministrator()
+  public
+  {
+    // This plane only goes one way, lads. Never below the initial.
+    require (referrerPercentage1 >= 0);
+    require (referrerPercentage2 >= 0);
+    require (referrerPercentage3 >= 0);
+    require (bankrollPercentage >= 0);
+    referrer_percentage1 = referrerPercentage1;
+    referrer_percentage2 = referrerPercentage2;
+    referrer_percentage3 = referrerPercentage3;
+    bankroll_percentage = bankrollPercentage;
+  }  
 
   function setName(string _name)
   onlyAdministrator()
@@ -611,6 +647,7 @@ contract Zethr {
   {
     bankrollAddress = _newBankrollAddress;
   }
+
 
   /*----------  HELPERS AND CALCULATORS  ----------*/
 
@@ -867,8 +904,9 @@ contract Zethr {
 
     // 1% for dividend card holders is taken off before anything else
     if (regularPhase) {
-      toDivCardHolders = _incomingEthereum.div(100);
-      remainingEth = remainingEth.sub(toDivCardHolders);
+      toDivCardHolders = remainingEth.div(100);
+      toBankRoll = toDivCardHolders.mul(bankroll_percentage);
+      remainingEth = (remainingEth.sub(toDivCardHolders)).sub(toBankRoll);
     }
 
     /* Next, we tax for dividends:
@@ -941,13 +979,32 @@ contract Zethr {
 
       // 25% goes to referrers, if set
       // toReferrer = (dividends * 25)/100
-      if (_referredBy != 0x0000000000000000000000000000000000000000 &&
-      _referredBy != msg.sender &&
-      frontTokenBalanceLedger_[_referredBy] >= stakingRequirement)
-      {
-        toReferrer = (dividendAmount.mul(referrer_percentage)).div(100);
-        referralBalance_[_referredBy] += toReferrer;
-        emit Referral(_referredBy, toReferrer);
+      
+      if(msg.sender != creator){
+          if(myReferrer[msg.sender] == 0x0000000000000000000000000000000000000000){
+              if(_referredBy == 0x0000000000000000000000000000000000000000 || _referredBy == msg.sender){
+                _referredBy = owner;
+              }
+              myReferrer[msg.sender] = _referredBy;
+          }else{
+              _referredBy = myReferrer[msg.sender];
+          }
+          if(frontTokenBalanceLedger_[_referredBy] < stakingRequirement && msg.sender != owner){
+              _referredBy = owner;
+          }
+        toReferrer += (dividendAmount.mul(referrer_percentage1)).div(100);
+        referralBalance_[_referredBy] += (dividendAmount.mul(referrer_percentage1)).div(100);
+        _referredBy = myReferrer[_referredBy];
+        if(_referredBy != 0x0000000000000000000000000000000000000000){
+            toReferrer += (dividendAmount.mul(referrer_percentage2)).div(100);
+            referralBalance_[_referredBy] += (dividendAmount.mul(referrer_percentage2)).div(100);
+            _referredBy = myReferrer[_referredBy];
+            if(_referredBy != 0x0000000000000000000000000000000000000000){
+                toReferrer += (dividendAmount.mul(referrer_percentage3)).div(100);
+                referralBalance_[_referredBy] += (dividendAmount.mul(referrer_percentage3)).div(100);
+            }
+        }
+        //emit Referral(_referredBy, toReferrer);
       }
 
       // The rest of the dividends go to token holders
@@ -971,7 +1028,7 @@ contract Zethr {
 
     // This event should help us track where all the eth is going
     emit Allocation(toBankRoll, toReferrer, toTokenHolders, toDivCardHolders, remainingEth);
-
+     
     // Sanity checking
     uint sum = toBankRoll + toReferrer + toTokenHolders + toDivCardHolders + remainingEth - _incomingEthereum;
     assert(sum == 0);
