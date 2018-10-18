@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ForestingToken at 0xb3b3e5c4db8b95fb92deda798924c7c852540d8c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ForestingToken at 0x4946583c5b86e01ccd30c71a05617d06e3e73060
 */
 pragma solidity ^0.4.18;
 
@@ -313,7 +313,7 @@ contract ForestingToken is StandardToken, BurnableToken, Ownable {
 	// Address of token offering
 	address public tokenOfferingAddr;
 	// Enable transfers after conclusion of token offering
-	bool public transferEnabled = false;
+	bool public transferEnabled = true;
 
 	/**
 	 * Check if transfer is allowed
