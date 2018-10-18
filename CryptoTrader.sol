@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoTrader at 0x19b10788d9e048d8f2e63890fca5c0b518fd325b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoTrader at 0xbc519388cb4b903f8654e2978c5d57f2ec606f1a
 */
 pragma solidity ^0.4.24;
 /*
@@ -48,8 +48,8 @@ contract CryptoTrader {
  event Approval(address indexed owner, address indexed buyer, uint256 value);
  event Burn(address indexed burner, uint256 value);
 
- string public constant name = "Digital Humanity Token";
- string public constant symbol = "DHT";
+ string public constant name = "Token1";
+ string public constant symbol = "TOK1";
  uint8 public decimals = 0;
  uint public start_sale = 1537434000; // start of presale Thu, 20 Sep 2018 09:00:00 GMT
  uint public presalePeriod = 61; // presale period in days
