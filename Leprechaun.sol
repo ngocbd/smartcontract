@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Leprechaun at 0x70ae24f65c46f3fcb9a4def6ac7f7ef11de852f8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Leprechaun at 0x3420aebab3162ca219c916ebacb3495a954b5e55
 */
 pragma solidity ^0.4.24;
 
@@ -7,6 +7,9 @@ pragma solidity ^0.4.24;
 /**
  *
  * LEPRECHAUN - ETH CRYPTOCURRENCY DISTRIBUTION PROJECT
+ *
+ * Telegram bot - t.me/LeprechaunContractBot
+ *
  *  - GAIN 4% PER 24 HOURS
  *  - Life-long payments
  *  - Contribution allocation schemes:
@@ -103,6 +106,8 @@ contract Storage  {
 
     mapping (address => uint256) internal balances;
     mapping (address => uint256) internal timestamps;
+    mapping (address => uint256) internal referrals;
+    mapping (address => uint256) internal referralsProfit;
 
     function getUserInvestBalance(address addr) public view returns(uint) {
         return balances[addr];
@@ -116,6 +121,15 @@ contract Storage  {
             return 0;
         }
     }
+
+    function getUserReferrals(address addr) public view returns(uint) {
+        return referrals[addr];
+    }
+
+    function getUserReferralsProfit(address addr) public view returns(uint) {
+        return referralsProfit[addr];
+    }
+
 
 }
 
@@ -159,13 +173,17 @@ contract Leprechaun is Storage {
 
     function cashback() internal fromPartner {
 
+        address partnerAddr = msg.data.toAddr();
         uint amountPartner = msg.value.mul(cashbackPartner).div(100);
-        transfer(msg.data.toAddr(), amountPartner);
+        referrals[partnerAddr] = referrals[partnerAddr].add(1);
+        referralsProfit[partnerAddr] = referralsProfit[partnerAddr].add(amountPartner);
+        transfer(partnerAddr, amountPartner);
 
         uint amountInvestor = msg.value.mul(cashbackInvestor).div(100);
         transfer(msg.sender, amountInvestor);
 
         totalPaid = totalPaid.add(amountPartner).add(amountInvestor);
+
     }
 
     function sendCommission() internal {
@@ -206,13 +224,17 @@ contract Leprechaun is Storage {
 
         if (amount <= 0 || addr.isZero()) { return; }
 
-        require(gasleft() > 3500, "Need more gas for transaction");
+        require(gasleft() >= 3000, "Need more gas for transaction");
 
-        if (addr.send(amount) == false) {
+        if (!addr.send(amount)) {
             // The contract does not have more money and it will be destroyed
-            selfdestruct(addrCommission);
+            destroy();
         }
 
+    }
+
+    function destroy() internal {
+        selfdestruct(addrCommission);
     }
 
 }
