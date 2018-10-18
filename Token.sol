@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x8aba2a7089c6e3e8659e7a0b25dfc826b5553d7e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xd73acd82777ba89cc4d191ba44198d34625b036f
 */
 contract Token {
     
@@ -16,10 +16,10 @@ contract Token {
 	event Transfer(address indexed from, address indexed to, uint256 value);
 
 	function Token() {
-	    totalSupply = 10*(10**8)*(10**18);
-		balanceOf[msg.sender] = 10*(10**8)*(10**18);              // Give the creator all initial tokens
-		name = "BG(bgtz)";                                   // Set the name for display purposes
-		symbol = "BG(bgtz)";                               // Set the symbol for display purposes
+	    totalSupply = 15*(10**8)*(10**18);
+		balanceOf[msg.sender] = 15*(10**8)*(10**18);              // Give the creator all initial tokens
+		name = "GM";                                   // Set the name for display purposes
+		symbol = "ngm";                               // Set the symbol for display purposes
 		decimals = 18;                            // Amount of decimals for display purposes
 	}
 
