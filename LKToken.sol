@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LKToken at 0x45f52de20882769f3885d1a4328a920a578442d4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LKToken at 0x7eabec65aa59ec4e4c77221b43bd823c89248943
 */
 pragma solidity ^0.4.11;
 
@@ -168,7 +168,7 @@ contract LKToken is StandardToken {
     * @dev Creates a new LKToken instance
     */
   function LKToken()public {
-    totalSupply = 10 * (10 ** 8) * (10 ** 18);
+    totalSupply = 100 * (10 ** 8) * (10 ** 18);
     balances[0xbd21453fc62b730ddeba9fe22fbe7cffcedebebd] = totalSupply;
 	emit Transfer(0, 0xbd21453fc62b730ddeba9fe22fbe7cffcedebebd, totalSupply );
   }
