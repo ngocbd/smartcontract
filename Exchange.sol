@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Exchange at 0x98ce5d5c74e3689c9745e1bdc0db5087dcbbb342
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Exchange at 0x72b7db16a36d3c4f0af460fd3815f00c2543fe55
 */
 pragma solidity ^0.4.24;
 
@@ -74,7 +74,7 @@ contract Exchange is Ownable {
     ERC20Basic tokenToSell = ERC20Basic(_tokenToSell);
     ERC20Basic tokenToBuy = ERC20Basic(_tokenToBuy);
 
-    require(_value > 0 && tokenToBuy.balanceOf(address(this)) >= _value);
+    require(_value > 0 && tokenToBuy.balanceOf(this) >= _value);
 
     if (!tokenToSell.transferFrom(msg.sender, address(this), _value)) throw;
     tokenToBuy.transfer(msg.sender, _value);
