@@ -1,110 +1,66 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ownable at 0xB41a0dBCBD7726E21994F956F3103B2cF7bBB3D1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ownable at 0x521f29da4ecaef4fcec8cd0b6bae80d7046ed992
 */
-pragma solidity ^0.4.24;
+pragma solidity 0.4.24;
+
+// File: contracts/lib/Ownable.sol
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
 contract Ownable {
   address public owner;
-  function Ownable() {
+
+  event OwnershipRenounced(address indexed previousOwner);
+  event OwnershipTransferred(
+    address indexed previousOwner,
+    address indexed newOwner
+  );
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  constructor() public {
     owner = msg.sender;
   }
 
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
   modifier onlyOwner() {
-    require(msg.sender == owner);
+    require(msg.sender == owner, "only owner is able to call this function");
     _;
   }
 
-  function transferOwnership(address newOwner) onlyOwner {
-    require(newOwner != address(0));      
-    owner = newOwner;
+  /**
+   * @dev Allows the current owner to relinquish control of the contract.
+   * @notice Renouncing to ownership will leave the contract without an owner.
+   * It will not be possible to call the functions with the `onlyOwner`
+   * modifier anymore.
+   */
+  function renounceOwnership() public onlyOwner {
+    emit OwnershipRenounced(owner);
+    owner = address(0);
   }
-}
 
-contract Token is Ownable{
-    uint256 public totalSupply;
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address _newOwner) public onlyOwner {
+    _transferOwnership(_newOwner);
+  }
 
-    function balanceOf(address _owner) constant returns (uint256 balance);
-
-    function transfer(address _to, uint256 _value) returns (bool success);
-
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
-
-    function approve(address _spender, uint256 _value) returns (bool success);
-
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
-
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-}
-
-contract StandardToken is Token {
-    function transfer(address _to, uint256 _value) returns (bool success) {
-        require(balances[msg.sender] >= _value);
-        balances[msg.sender] -= _value;
-        balances[_to] += _value;
-        Transfer(msg.sender, _to, _value);
-        return true;
-    }
-
-
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value);
-        balances[_to] += _value;
-        balances[_from] -= _value; 
-        allowed[_from][msg.sender] -= _value;
-        Transfer(_from, _to, _value); 
-        return true;
-    }
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-        return balances[_owner];
-    }
-
-
-    function approve(address _spender, uint256 _value) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-        return allowed[_owner][_spender];
-    }
-    
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
-}
-
-contract WanChainToken is StandardToken { 
-
-    string public name;                   
-    uint8 public decimals;               
-    string public symbol; 
-    uint256 public createTime;
-    uint public releaseAmount = 350000000;
-    mapping(uint => bool) public releaseMapping; 
-     
-
-    function WanChainToken() {
-        balances[msg.sender] = 3000000000; 
-        totalSupply = 10000000000;         
-        name = "Wan Chain Token";                   
-        decimals = 1;           
-        symbol = "WL";  
-        createTime = now;
-    }
-
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        require(_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData));
-        return true;
-    }
-    function release(uint month) onlyOwner{
-        require(month >=1 && month <= 20 );
-        require(now >= (month * 30 days) + createTime);
-        require(!releaseMapping[month]);
-        balances[owner] = balances[owner] + releaseAmount;
-        releaseMapping[month] = true;
-    }
-
+  /**
+   * @dev Transfers control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function _transferOwnership(address _newOwner) internal {
+    require(_newOwner != address(0));
+    emit OwnershipTransferred(owner, _newOwner);
+    owner = _newOwner;
+  }
 }
