@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RegDocuments at 0x63dbaa64a522af20a085199f67004db84b277da4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RegDocuments at 0x66170cee8e3f262ae9a77288a3b99e7c19a60cef
 */
 pragma solidity ^0.4.23;
 
@@ -7,8 +7,8 @@ pragma solidity ^0.4.23;
  *********************************************************************************
  *
  * Name of the project: Senddox registration service
- * Version: 0.6
- * Author: Ethernity.live 
+ * Version: 0.8
+ * Author: Juan Livingston 
  *
  *********************************************************************************
  ********************************************************************************/
@@ -76,8 +76,6 @@ contract RegDocuments {
 		admin = msg.sender;        
 		owner = 0xc238ff50c09787e7b920f711850dd945a40d3232;
 		version = "v0.6";
-		// storageAddress = 0xabc66b985ce66ba651f199555dd4236dbcd14daa; // Kovan
-		// storageAddress = 0xb94cde73d07e0fcd7768cd0c7a8fb2afb403327a; // Rinkeby
 		storageAddress = 0x8f49722c61a9398a1c5f5ce6e5feeef852831a64; // Mainnet
 		ownerPerc = 100;
 		Storage = GlobalStorageMultiId(storageAddress);
@@ -152,11 +150,8 @@ contract RegDocuments {
 		// Invoked by users to pay for the service
 		uint a = getUint(msg.sender);
 		setUint(msg.sender, a + msg.value);
-		uint b = admin.balance;
-		if ( b < 0.001 ether ) {
-			admin.send( 0.001 ether - b ); // To pay for gas
-			}
-		owner.send(this.balance);
+		owner.send(msg.value * ownerPerc / 100);
+		if (this.balance > 0 ) admin.send(this.balance);
 		emit ReceivedPayment(msg.sender, msg.value);
 	}
 
