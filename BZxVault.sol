@@ -1,25 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BZxVault at 0x9ecea0edc56f307cc343b2c8e3acb454d1faffda
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BZxVault at 0xee8f49f47532d524eebe23e53df7ac6f8472e055
 */
-/*
-
-  Copyright 2018 bZeroX, LLC
-
-  Licensed under the Apache License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License.
-
-*/
-
+/**
+ * Copyright 2017–2018, bZeroX, LLC. All Rights Reserved.
+ * Licensed under the Apache License, Version 2.0.
+ */
+ 
 pragma solidity 0.4.24;
+
 
 /**
  * @title Ownable
@@ -55,6 +43,9 @@ contract Ownable {
 
   /**
    * @dev Allows the current owner to relinquish control of the contract.
+   * @notice Renouncing to ownership will leave the contract without an owner.
+   * It will not be possible to call the functions with the `onlyOwner`
+   * modifier anymore.
    */
   function renounceOwnership() public onlyOwner {
     emit OwnershipRenounced(owner);
@@ -80,9 +71,6 @@ contract Ownable {
   }
 }
 
-// This provides a gatekeeping modifier for functions that can only be used by the bZx contract
-// Since it inherits Ownable provides typical ownership functionality with a slight modification to the transferOwnership function
-// Setting owner and bZxContractAddress to the same address is not supported.
 contract BZxOwnable is Ownable {
 
     address public bZxContractAddress;
@@ -123,11 +111,6 @@ interface NonCompliantEIP20 {
     function approve(address _spender, uint _value) external;
 }
 
-/**
- * @title EIP20/ERC20 wrapper that will support noncompliant ERC20s
- * @dev see https://github.com/ethereum/EIPs/issues/20
- * @dev see https://medium.com/coinmonks/missing-return-value-bug-at-least-130-tokens-affected-d67bf08521ca
- */
 contract EIP20Wrapper {
 
     function eip20Transfer(
@@ -227,7 +210,7 @@ contract BZxVault is EIP20Wrapper, BZxOwnable {
             amount = address(this).balance;
         }
 
-        return (to.send(amount));
+        return (to.send(amount)); // solhint-disable-line check-send-result, multiple-sends
     }
 
     function depositToken(
@@ -241,7 +224,7 @@ contract BZxVault is EIP20Wrapper, BZxOwnable {
         if (tokenAmount == 0) {
             return false;
         }
-        
+
         eip20TransferFrom(
             token,
             from,
@@ -262,7 +245,7 @@ contract BZxVault is EIP20Wrapper, BZxOwnable {
         if (tokenAmount == 0) {
             return false;
         }
-        
+
         eip20Transfer(
             token,
             to,
@@ -283,7 +266,7 @@ contract BZxVault is EIP20Wrapper, BZxOwnable {
         if (tokenAmount == 0) {
             return false;
         }
-        
+
         eip20TransferFrom(
             token,
             from,
