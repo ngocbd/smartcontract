@@ -1,7 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenWithoutStart at 0xd1E7edA2251FE98168E86a579c49ec88Dd3D6Fd3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenWithoutStart at 0xa6451cb38Af106eD08d883EF6F82310a00A64B39
 */
 pragma solidity ^0.4.20;
+
+// File: contracts/ERC20Token.sol
 
 library SafeMath {
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
