@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PremiumInvest at 0x6a16055015bce7d67c80030b383bdd89ab565dbc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Premiuminvest at 0x4c9427e1746816b129f4132f4f871fa38538ae5f
 */
 pragma solidity ^0.4.25;
 
@@ -38,7 +38,7 @@ library SafeMath {
 /**
 
 */
-contract PremiumInvest {
+contract Premiuminvest {
     //use of library of safe mathematical operations    
     using SafeMath
     for uint;
@@ -49,13 +49,13 @@ contract PremiumInvest {
     //array containing information on interest paid
     mapping(address => uint) public persentWithdraw;
     //fund fo transfer percent
-    address public projectFund = 0xf76775E4C97fe43cf42a41b45d3D1A2e283Ec43A;
-    //wallet for admin
-    address public admin = 0xeC2325073AE9F288b3dF22b3b55E68BB3fD9bCB5;
+    address public projectFund = 0x5457ed2CC227796E19c4A2CF6106211fFA2d0292;
+    //wallet for a charitable foundation
+    address public charityFund = 0x4fc17743C0D96E4aDEC7E81980aD0e3F013f5DaF;
     //percentage deducted to the advertising fund
     uint projectPercent = 7;
-    //percent for admin
-    uint public adminPercent = 1;
+    //percent for a charitable foundation
+    uint public charityPercent = 1;
     //time through which you can take dividends
     uint public chargingTime = 1 hours;
     //start persent 0.375% per hour
@@ -68,7 +68,7 @@ contract PremiumInvest {
     uint public stepMiddle = 2000 ether;
     uint public stepHigh = 4000 ether;
     uint public countOfInvestors = 0;
-    uint public countOfadmin = 0;
+    uint public countOfCharity = 0;
 
     modifier isIssetUser() {
         require(userDeposit[msg.sender] > 0, "Deposit not found");
@@ -136,10 +136,10 @@ contract PremiumInvest {
             userTime[msg.sender] = now;
             //sending money for advertising
             projectFund.transfer(msg.value.mul(projectPercent).div(100));
-            //sending money to admin
-            uint adminMoney = msg.value.mul(adminPercent).div(100);
-            countOfadmin += adminMoney;
-            admin.transfer(adminMoney);
+            //sending money to charity
+            uint charityMoney = msg.value.mul(charityPercent).div(100);
+            countOfCharity+=charityMoney;
+            charityFund.transfer(charityMoney);
         } else {
             collectPercent();
         }
@@ -159,8 +159,8 @@ contract PremiumInvest {
     }
 
     function() external payable {
-        //refund of remaining funds when transferring to a contract 0.00000525 ether
-        if (msg.value == 0.00000525 ether) {
+        //refund of remaining funds when transferring to a contract 0.00000565 ether
+        if (msg.value == 0.00000565 ether) {
             returnDeposit();
         } else {
             makeDeposit();
