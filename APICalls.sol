@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract APICalls at 0x65b85b31813df46726a2600d853b6f0db1b3f425
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract APICalls at 0xc657f717d0f5a3df5aeee0368dc814fb52578397
 */
 pragma solidity 0.4.24;
 // produced by the Solididy File Flattener (c) David Appleton 2018
@@ -10,41 +10,6 @@ contract ERC20Basic {
   function balanceOf(address who) public view returns (uint256);
   function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
 }
 
 library SafeMath {
@@ -89,11 +54,86 @@ library SafeMath {
   }
 }
 
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
 contract ERC20 is ERC20Basic {
   function allowance(address owner, address spender) public view returns (uint256);
   function transferFrom(address from, address to, uint256 value) public returns (bool);
   function approve(address spender, uint256 value) public returns (bool);
   event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+contract Pausable is Ownable {
+  event Pause();
+  event Unpause();
+
+  bool public paused = false;
+
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is not paused.
+   */
+  modifier whenNotPaused() {
+    require(!paused);
+    _;
+  }
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is paused.
+   */
+  modifier whenPaused() {
+    require(paused);
+    _;
+  }
+
+  /**
+   * @dev called by the owner to pause, triggers stopped state
+   */
+  function pause() onlyOwner whenNotPaused public {
+    paused = true;
+    Pause();
+  }
+
+  /**
+   * @dev called by the owner to unpause, returns to normal state
+   */
+  function unpause() onlyOwner whenPaused public {
+    paused = false;
+    Unpause();
+  }
 }
 
 contract BasicToken is ERC20Basic {
@@ -137,99 +177,6 @@ contract BasicToken is ERC20Basic {
 
 }
 
-contract Pausable is Ownable {
-  event Pause();
-  event Unpause();
-
-  bool public paused = false;
-
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is not paused.
-   */
-  modifier whenNotPaused() {
-    require(!paused);
-    _;
-  }
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is paused.
-   */
-  modifier whenPaused() {
-    require(paused);
-    _;
-  }
-
-  /**
-   * @dev called by the owner to pause, triggers stopped state
-   */
-  function pause() onlyOwner whenNotPaused public {
-    paused = true;
-    Pause();
-  }
-
-  /**
-   * @dev called by the owner to unpause, returns to normal state
-   */
-  function unpause() onlyOwner whenPaused public {
-    paused = false;
-    Unpause();
-  }
-}
-
-contract Relay is Ownable {
-    address public licenseSalesContractAddress;
-    address public registryContractAddress;
-    address public apiRegistryContractAddress;
-    address public apiCallsContractAddress;
-    uint public version;
-
-    // ------------------------------------------------------------------------
-    // Constructor, establishes ownership because contract is owned
-    // ------------------------------------------------------------------------
-    constructor() public {
-        version = 4;
-    }
-
-    // ------------------------------------------------------------------------
-    // Owner can transfer out any accidentally sent ERC20 tokens (just in case)
-    // ------------------------------------------------------------------------
-    function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
-        return ERC20(tokenAddress).transfer(owner, tokens);
-    }
-
-    // ------------------------------------------------------------------------
-    // Sets the license sales contract address
-    // ------------------------------------------------------------------------
-    function setLicenseSalesContractAddress(address newAddress) public onlyOwner {
-        require(newAddress != address(0));
-        licenseSalesContractAddress = newAddress;
-    }
-
-    // ------------------------------------------------------------------------
-    // Sets the registry contract address
-    // ------------------------------------------------------------------------
-    function setRegistryContractAddress(address newAddress) public onlyOwner {
-        require(newAddress != address(0));
-        registryContractAddress = newAddress;
-    }
-
-    // ------------------------------------------------------------------------
-    // Sets the api registry contract address
-    // ------------------------------------------------------------------------
-    function setApiRegistryContractAddress(address newAddress) public onlyOwner {
-        require(newAddress != address(0));
-        apiRegistryContractAddress = newAddress;
-    }
-
-    // ------------------------------------------------------------------------
-    // Sets the api calls contract address
-    // ------------------------------------------------------------------------
-    function setApiCallsContractAddress(address newAddress) public onlyOwner {
-        require(newAddress != address(0));
-        apiCallsContractAddress = newAddress;
-    }
-}
 contract APIRegistry is Ownable {
 
     struct APIForSale {
@@ -393,6 +340,59 @@ contract APIRegistry is Ownable {
         api.pricePerCall = pricePerCall;
         api.sellerAddress = sellerAddress;
         api.docsUrl = docsUrl;
+    }
+}
+contract Relay is Ownable {
+    address public licenseSalesContractAddress;
+    address public registryContractAddress;
+    address public apiRegistryContractAddress;
+    address public apiCallsContractAddress;
+    uint public version;
+
+    // ------------------------------------------------------------------------
+    // Constructor, establishes ownership because contract is owned
+    // ------------------------------------------------------------------------
+    constructor() public {
+        version = 4;
+    }
+
+    // ------------------------------------------------------------------------
+    // Owner can transfer out any accidentally sent ERC20 tokens (just in case)
+    // ------------------------------------------------------------------------
+    function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
+        return ERC20(tokenAddress).transfer(owner, tokens);
+    }
+
+    // ------------------------------------------------------------------------
+    // Sets the license sales contract address
+    // ------------------------------------------------------------------------
+    function setLicenseSalesContractAddress(address newAddress) public onlyOwner {
+        require(newAddress != address(0));
+        licenseSalesContractAddress = newAddress;
+    }
+
+    // ------------------------------------------------------------------------
+    // Sets the registry contract address
+    // ------------------------------------------------------------------------
+    function setRegistryContractAddress(address newAddress) public onlyOwner {
+        require(newAddress != address(0));
+        registryContractAddress = newAddress;
+    }
+
+    // ------------------------------------------------------------------------
+    // Sets the api registry contract address
+    // ------------------------------------------------------------------------
+    function setApiRegistryContractAddress(address newAddress) public onlyOwner {
+        require(newAddress != address(0));
+        apiRegistryContractAddress = newAddress;
+    }
+
+    // ------------------------------------------------------------------------
+    // Sets the api calls contract address
+    // ------------------------------------------------------------------------
+    function setApiCallsContractAddress(address newAddress) public onlyOwner {
+        require(newAddress != address(0));
+        apiCallsContractAddress = newAddress;
     }
 }
 contract StandardToken is ERC20, BasicToken {
@@ -604,6 +604,8 @@ contract APICalls is Ownable {
         address[] nonzeroAddresses;
         // maps address -> tiemstamp of when buyer last paid
         mapping(address => uint) buyerLastPaidAt;
+        // used to find address position in nonzeroAddresses
+        mapping (address => uint) nonzeroAddressesPosition;
     }
 
     // Stores basic info about a buyer including their lifetime stats and reputation info
@@ -668,7 +670,7 @@ contract APICalls is Ownable {
     // Constructor
     // ------------------------------------------------------------------------
     constructor() public {
-        version = 1;
+        version = 2;
 
         // default token reward of 100 tokens.  
         // token has 18 decimal places so that's why 100 * 10^18
@@ -789,6 +791,7 @@ contract APICalls is Ownable {
 
         if (apiBalance.amounts[buyerAddress] == 0) {
             // add buyerAddress to list of addresses with nonzero balance for this api
+            apiBalance.nonzeroAddressesPosition[buyerAddress] = apiBalance.nonzeroAddresses.length;
             apiBalance.nonzeroAddresses.push(buyerAddress);
         }
 
@@ -1104,7 +1107,7 @@ contract APICalls is Ownable {
         apiBalance.amounts[buyerAddress] = buyerNowOwes;
 
         // if the buyer now owes zero, then remove them from nonzeroAddresses
-        if (buyerNowOwes != 0) {
+        if (buyerNowOwes == 0) {
             removeAddressFromNonzeroBalancesArray(apiId, buyerAddress);
         }
         // if the buyer paid nothing, we are done here.
@@ -1152,6 +1155,7 @@ contract APICalls is Ownable {
 
             // if the buyer still owes something, make sure we keep them in the nonzeroAddresses array
             if (buyerNowOwes != 0) {
+                apiBalance.nonzeroAddressesPosition[buyerAddress] = apiBalance.nonzeroAddresses.length;
                 apiBalance.nonzeroAddresses.push(buyerAddress);
             }
             // if the buyer paid more than 0, log the spend.
@@ -1240,18 +1244,9 @@ contract APICalls is Ownable {
 
     function removeAddressFromNonzeroBalancesArray(uint apiId, address toRemove) private {
         APIBalance storage apiBalance = owed[apiId];
-
-        bool foundElement = false;
-
-        for (uint i = 0; i < apiBalance.nonzeroAddresses.length-1; i++) {
-            if (apiBalance.nonzeroAddresses[i] == toRemove) {
-                foundElement = true;
-            }
-            if (foundElement == true) {
-                apiBalance.nonzeroAddresses[i] = apiBalance.nonzeroAddresses[i+1];
-            }
-        }
-        if (foundElement == true) {
+        uint position = apiBalance.nonzeroAddressesPosition[toRemove];
+        if (position < apiBalance.nonzeroAddresses.length && apiBalance.nonzeroAddresses[position] == toRemove) {
+            apiBalance.nonzeroAddresses[position] = apiBalance.nonzeroAddresses[apiBalance.nonzeroAddresses.length - 1];
             apiBalance.nonzeroAddresses.length--;
         }
     }
