@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DaicoPool at 0x136e99a415957fc3f23e0a6885b22bcd0c475ab4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DaicoPool at 0xaeb3d7d5a6b52619b36d3bd0b6794e75e65a92bd
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.24;
 
 contract ERC20Interface {
   function totalSupply() external view returns (uint256);
@@ -270,7 +270,7 @@ contract Voting{
 
     uint256 proposalCostWei = 1 * 10**18;
 
-    uint256 public constant VOTING_PERIOD = 15 minutes;
+    uint256 public constant VOTING_PERIOD = 14 days;
 
     struct Proposal {
         uint256 start_time;
@@ -466,7 +466,7 @@ contract Voting{
     /// @param pid Index of a proposal.
     /// @return True if the voting already started. False otherwise. 
     function isStarted (uint256 pid) public view returns(bool) {
-        if (pid > getCurrentVoting()) {
+        if (pid > proposals.length) {
             return false;
         } else if (block.timestamp >= proposals[pid].start_time) {
             return true;
@@ -478,7 +478,7 @@ contract Voting{
     /// @param pid Index of a proposal.
     /// @return True if the voting already ended. False otherwise. 
     function isEnded (uint256 pid) public view returns(bool) {
-        if (pid > getCurrentVoting()) {
+        if (pid > proposals.length) {
             return false;
         } else if (block.timestamp >= proposals[pid].end_time) {
             return true;
