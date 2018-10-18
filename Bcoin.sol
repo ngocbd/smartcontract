@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BCoin at 0xd6cb1b157b9a1d801c40cef78393e41b3e06492a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BCoin at 0xe977477a71fcf54af6d2e2ccc647ee4106cb8609
 */
-pragma solidity ^0.4.24;
+pragma solidity 0.4.25;
 
 // ERC20 interface
 interface IERC20 {
@@ -50,8 +50,8 @@ contract BCoin is IERC20 {
   string public name = "BCoin Coin";
   string public symbol = "BCN";
   uint8 public constant decimals = 18;
-  uint256 public constant decimalFactor = 10 ** uint256(decimals);
-  uint256 public constant totalSupply = 300000 * decimalFactor;
+  uint256 public constant decimalFactor = 1000000000000000000;
+  uint256 public constant totalSupply = 300000000 * decimalFactor;
   mapping (address => uint256) balances;
   mapping (address => mapping (address => uint256)) internal allowed;
 
@@ -127,6 +127,12 @@ contract BCoin is IERC20 {
   function modName(string _name) public returns (bool) {
     require(msg.sender == mod);
     name = _name;
+    return true;
+  }
+
+  function modSymbol(string _symbol) public returns (bool) {
+    require(msg.sender == mod);
+    symbol = _symbol;
     return true;
   }
 
