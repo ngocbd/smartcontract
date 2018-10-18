@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DutchReserve at 0xb173dd805ededf5d833cfe832eab2a609ad2431e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DutchReserve at 0xa45f9b0f82e4e08506eafa8081515b67f546ca1d
 */
 pragma solidity ^0.4.18;
 
@@ -75,7 +75,7 @@ contract DutchReserve {
       uint num; uint den;
       (num,den) = DUTCH_EXCHANGE.getCurrentAuctionPrice(RDN,WETH,auctionIndex);
 
-      return (num * 10**18 * 1000) / (den * 995);
+      return (num * 10**15) / (den * 995);
   }
 
   function getKyberRate(uint rdnAmount) public view returns(uint) {
