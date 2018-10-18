@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract R1Exchange at 0x353D92db08564500d812DDFD23a668D2F405ED85
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract R1Exchange at 0x42a3095222e13e0891b89381e1b8cc84709b35bc
 */
 ///auto-generated single file for verifying contract on etherscan
 pragma solidity ^0.4.20;
@@ -77,18 +77,21 @@ contract Token {
 contract R1Exchange is SafeMath, Ownable {
     mapping(address => bool) public admins;
     mapping(address => bool) public feeAccounts;
-    bool public withdrawEnabled = false;
     mapping(address => mapping(address => uint256)) public tokenList;
     mapping(address => mapping(bytes32 => uint256)) public orderFilled;//tokens filled
     mapping(bytes32 => bool) public withdrawn;
     mapping(address => mapping(address => uint256)) public withdrawAllowance;
     mapping(address => mapping(address => uint256)) public applyList;//withdraw apply list
     mapping(address => mapping(address => uint)) public latestApply;//save the latest apply timestamp
-    uint public applyWait = 7 days;
-    uint public feeRate = 1;
+    mapping(address => uint256) public canceled;
+    uint public applyWait = 1 days;
+    uint public feeRate = 10;
+    bool public withdrawEnabled = false;
+    bool public stop = false;
     event Deposit(address indexed token, address indexed user, uint256 amount, uint256 balance);
     event Withdraw(address indexed token, address indexed user, uint256 amount, uint256 balance);
     event ApplyWithdraw(address indexed token, address indexed user, uint256 amount, uint256 time);
+    event Trade(address indexed maker, address indexed taker, uint256 amount, uint256 makerFee, uint256 takerFee, uint256 makerNonce, uint256 takerNonce);
     modifier onlyAdmin {
         require(admins[msg.sender]);
         _;
@@ -99,6 +102,10 @@ contract R1Exchange is SafeMath, Ownable {
     }
     modifier isFeeAccount(address fa) {
         require(feeAccounts[fa]);
+        _;
+    }
+    modifier notStop() {
+        require(!stop);
         _;
     }
     function() public {
@@ -120,8 +127,22 @@ contract R1Exchange is SafeMath, Ownable {
         applyWait = lock;
     }
     function changeFeeRate(uint fr) public onlyOwner {
-        require(fr > 0);
+        //max fee rate MUST <=10%
+        require(fr >= 10);
         feeRate = fr;
+    }
+    function stopTrade() public onlyOwner {
+        stop = true;
+    }
+    /**
+    * cancel the order that before nonce.
+    **/
+    function batchCancel(address[] users, uint256[] nonces) public onlyAdmin {
+        require(users.length == nonces.length);
+        for (uint i = 0; i < users.length; i++) {
+            require(nonces[i] >= canceled[users[i]]);
+            canceled[users[i]] = nonces[i];
+        }
     }
     function deposit() public payable {
         tokenList[0][msg.sender] = safeAdd(tokenList[0][msg.sender], msg.value);
@@ -209,8 +230,8 @@ contract R1Exchange is SafeMath, Ownable {
         uint256 nonce = values[1];
         uint256 fee = values[2];
         require(amount <= tokenList[token][user]);
-        require(safeMul(fee, feeRate) < amount);
-        bytes32 hash = keccak256(user, token, amount, nonce);
+        fee = checkFee(amount, fee);
+        bytes32 hash = keccak256(this,user, token, amount, nonce);
         require(!withdrawn[hash]);
         withdrawn[hash] = true;
         require(ecrecover(keccak256("\x19Ethereum Signed Message:\n32", hash), v, r, s) == user);
@@ -224,8 +245,15 @@ contract R1Exchange is SafeMath, Ownable {
         }
         Withdraw(token, user, amount, tokenList[token][user]);
     }
-    function getOrderHash(address tokenBuy, uint256 amountBuy, address tokenSell, uint256 amountSell, address base, uint256 expires, uint256 nonce, address feeToken) public pure returns (bytes32) {
-        return keccak256(tokenBuy, amountBuy, tokenSell, amountSell, base, expires, nonce, feeToken);
+    function checkFee(uint256 amount, uint256 fee) private returns (uint256){
+        uint256 maxFee = fee;
+        if (safeMul(fee, feeRate) > amount) {
+            maxFee = amount / feeRate;
+        }
+        return maxFee;
+    }
+    function getOrderHash(address tokenBuy, uint256 amountBuy, address tokenSell, uint256 amountSell, address base, uint256 expires, uint256 nonce, address feeToken) public view returns (bytes32) {
+        return keccak256(this,tokenBuy, amountBuy, tokenSell, amountSell, base, expires, nonce, feeToken);
     }
     function balanceOf(address token, address user) public constant returns (uint256) {
         return tokenList[token][user];
@@ -282,6 +310,7 @@ contract R1Exchange is SafeMath, Ownable {
     ) public
     onlyAdmin
     isFeeAccount(addresses[10])
+    notStop
     {
         Order memory makerOrder = Order({
             tokenBuy : addresses[0],
@@ -312,6 +341,8 @@ contract R1Exchange is SafeMath, Ownable {
         uint256 tradeAmount = values[10];
         //check expires
         require(makerOrder.expires >= block.number && takerOrder.expires >= block.number);
+        //check order nonce canceled
+        require(makerOrder.nonce >= canceled[makerOrder.user] && takerOrder.nonce >= canceled[takerOrder.user]);
         //make sure both is the same trade pair
         require(makerOrder.baseToken == takerOrder.baseToken && makerOrder.tokenBuy == takerOrder.tokenSell && makerOrder.tokenSell == takerOrder.tokenBuy);
         require(takerOrder.baseToken == takerOrder.tokenBuy || takerOrder.baseToken == takerOrder.tokenSell);
@@ -320,6 +351,8 @@ contract R1Exchange is SafeMath, Ownable {
         require(ecrecover(keccak256("\x19Ethereum Signed Message:\n32", makerOrder.orderHash), v[0], r[0], s[0]) == makerOrder.user);
         require(ecrecover(keccak256("\x19Ethereum Signed Message:\n32", takerOrder.orderHash), v[1], r[1], s[1]) == takerOrder.user);
         balance(makerOrder, takerOrder, addresses[10], tradeAmount);
+        //emit event
+        Trade(makerOrder.user, takerOrder.user, tradeAmount, makerOrder.fee, takerOrder.fee, makerOrder.nonce, takerOrder.nonce);
     }
     function balance(Order makerOrder, Order takerOrder, address feeAccount, uint256 tradeAmount) internal {
         ///check the price meets the condition.
@@ -369,8 +402,8 @@ contract R1Exchange is SafeMath, Ownable {
             tokenList[order.feeToken][feeAccount] = safeAdd(tokenList[order.feeToken][feeAccount], order.fee);
             tokenList[order.feeToken][order.user] = safeSub(tokenList[order.feeToken][order.user], order.fee);
         } else {
+            order.fee = checkFee(amountBuy, order.fee);
             classicFee = order.fee;
-            require(safeMul(order.fee, feeRate) <= amountBuy);
             tokenList[order.tokenBuy][feeAccount] = safeAdd(tokenList[order.tokenBuy][feeAccount], order.fee);
         }
         return classicFee;
