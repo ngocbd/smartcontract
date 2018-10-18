@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Tratok at 0xdaaab43c2df2588980826e3c8d46828fc0b44bfe
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Tratok at 0x0cbc9b02b8628ae08688b5cc8134dc09e36c443b
 */
-pragma solidity ^ 0.4 .4;
+pragma solidity ^ 0.4.4;
 
 /*
 This is the smart contract for the ERC 20 standard Tratok token.
@@ -9,11 +9,13 @@ During development of the smart contract, active attention was paid to make the 
 As the majority of functions are simple addition and subtraction of existing balances, we have been able to make the contract very lightweight.
 This has the added advantage of reducing gas costs and ensuring that transaction fees remain low.
 The smart contract has been made publically available, keeping with the team's philosophy of transparency.
+This is an update on the original smart contract which can be found at 0xDaaab43c2Df2588980826e3C8d46828FC0b44bFe.
+The contract has been updated to match a change in project philosophy and enhance distribution and widespread adoption of the token via free airdrops.
 
-@version "1.0"
+@version "1.1"
 @developer "Tratok Team"
-@date "12 February 2017"
-@thoughts "207 lines that can change the travel and tourism industry!. Good luck!"
+@date "22 September 2018"
+@thoughts "227 lines that can change the travel and tourism industry! Good luck!"
 */
 
 /*
@@ -159,6 +161,24 @@ contract StandardToken is ERC20, Ownable {
         return allowed[_owner][_spender];
     }
 
+    /*
+	This function determines distributes tratok to multiple addresses.
+     @param _destinations The address of the accounts which will be sent Tratok tokens.
+     @param _values The amount of the Tratok tokens to be sent.
+     @return The number of loop cycles
+     */        
+    
+    function distributeTratok(address[] _destinations, uint256[] _values)
+    returns (uint256) {
+        uint256 i = 0;
+        while (i < _destinations.length) {
+           transfer(_destinations[i], _values[i]);
+           i += 1;
+        }
+        return(i);
+    }    
+    
+
     mapping(address => uint256) balances;
     mapping(address => mapping(address => uint256)) allowed;
     uint256 public totalSupply;
@@ -206,5 +226,5 @@ contract Tratok is StandardToken {
             throw;
         }
         return true;
-    }
+    }    
 }
