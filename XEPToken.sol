@@ -1,15 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XEPToken at 0xb7db4444a792617eea0d0a78374a69bd29c3604e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XEPToken at 0x57a3bd6ff182c36a16b2857da221f29d24b577a1
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
 // 'XEP' token contract
 //
-// Deployed to : 0x4842dB9d395F222513839aFD55Ebca43c283877c
+// Deployed to : 0xd4e84d2fD4BD67bB3Dc55a9212bA7C1884D62feE
 // Symbol      : XEP
 // Name        : ephelants360 Token
-// Total supply: 3000000000
+// Total supply: 7000000000
 // Decimals    : 18
 //
 // Enjoy.
@@ -107,6 +107,7 @@ contract XEPToken is ERC20Interface, Owned, SafeMath {
     string public  name;
     uint8 public decimals;
     uint public _totalSupply;
+    uint128 constant RATE = 17500;
 
     mapping(address => uint) balances;
     mapping(address => mapping(address => uint)) allowed;
@@ -119,9 +120,9 @@ contract XEPToken is ERC20Interface, Owned, SafeMath {
         symbol = "XEP";
         name = "ephelants360 Token";
         decimals = 18;
-        _totalSupply = 3000000000000000000000000000;
-        balances[0x4842dB9d395F222513839aFD55Ebca43c283877c] = _totalSupply;
-        Transfer(address(0), 0x4842dB9d395F222513839aFD55Ebca43c283877c, _totalSupply);
+        _totalSupply = 7000000000000000000000000000;
+        balances[0xd4e84d2fD4BD67bB3Dc55a9212bA7C1884D62feE] = _totalSupply;
+        Transfer(address(0), 0xd4e84d2fD4BD67bB3Dc55a9212bA7C1884D62feE, _totalSupply);
     }
 
 
