@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CandyContract at 0x135067593a5d8971b96b921ca705df6edf46f8d4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CandyContract at 0xe9c73984666181ced86619008825e146e8f0305e
 */
 pragma solidity ^0.4.18;
 
@@ -42,7 +42,7 @@ contract CandyContract is owned{
         address addressOfTokenUsedAsReward,
         address collector
     ) public {
-        totalCandyNo = 1e9;
+        totalCandyNo = 1e6;
         tokenReward = token(addressOfTokenUsedAsReward);
         collectorAddress = collector;
     }
@@ -61,7 +61,7 @@ contract CandyContract is owned{
         totalCandyNo -= amount;
         balanceOf[msg.sender] = amount;
 
-        tokenReward.transfer(msg.sender, amount * 1e18);
+        tokenReward.transfer(msg.sender, amount * 1e8);
         emit FundTransfer(msg.sender, amount, true);
     }
 
@@ -86,7 +86,7 @@ contract CandyContract is owned{
 
         require(collectorAddress != 0x0);
 
-        tokenReward.transfer(collectorAddress, totalCandyNo * 1e18);
+        tokenReward.transfer(collectorAddress, totalCandyNo * 1e8);
         totalCandyNo = 0;
 
     }
