@@ -1,54 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BctToken at 0xd040901d6e93bbde2cd4991bb3cc66f1016ffeaa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BCTToken at 0x3a5f32732d6be576d5dec48354b2377e14675eca
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.24;
 
-contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
 
-contract BasicToken is ERC20Basic {
-  using SafeMath for uint256;
-
-  mapping(address => uint256) balances;
-
-  uint256 totalSupply_;
-
-  /**
-  * @dev total number of tokens in existence
-  */
-  function totalSupply() public view returns (uint256) {
-    return totalSupply_;
-  }
-
-  /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
-  function transfer(address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[msg.sender]);
-
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    emit Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-  /**
-  * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of.
-  * @return An uint256 representing the amount owned by the passed address.
-  */
-  function balanceOf(address _owner) public view returns (uint256) {
-    return balances[_owner];
-  }
-}
-
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
 
   /**
@@ -97,6 +56,64 @@ library SafeMath {
 
 
 /**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * See https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+
+
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
+ */
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint256;
+
+  mapping(address => uint256) balances;
+
+  uint256 totalSupply_;
+
+  /**
+  * @dev Total number of tokens in existence
+  */
+  function totalSupply() public view returns (uint256) {
+    return totalSupply_;
+  }
+
+  /**
+  * @dev Transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[msg.sender]);
+
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    emit Transfer(msg.sender, _to, _value);
+    return true;
+  }
+
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) public view returns (uint256) {
+    return balances[_owner];
+  }
+
+}
+
+/**
  * @title ERC20 interface
  * @dev see https://github.com/ethereum/EIPs/issues/20
  */
@@ -115,6 +132,14 @@ contract ERC20 is ERC20Basic {
   );
 }
 
+
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * https://github.com/ethereum/EIPs/issues/20
+ * Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
 contract StandardToken is ERC20, BasicToken {
 
   mapping (address => mapping (address => uint256)) internal allowed;
@@ -147,7 +172,6 @@ contract StandardToken is ERC20, BasicToken {
 
   /**
    * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   *
    * Beware that changing an allowance with this method brings the risk that someone may use both the old
    * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
    * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
@@ -180,7 +204,6 @@ contract StandardToken is ERC20, BasicToken {
 
   /**
    * @dev Increase the amount of tokens that an owner allowed to a spender.
-   *
    * approve should be called when allowed[_spender] == 0. To increment
    * allowed value is better to use this function to avoid 2 calls (and wait until
    * the first transaction is mined)
@@ -190,7 +213,7 @@ contract StandardToken is ERC20, BasicToken {
    */
   function increaseApproval(
     address _spender,
-    uint _addedValue
+    uint256 _addedValue
   )
     public
     returns (bool)
@@ -203,7 +226,6 @@ contract StandardToken is ERC20, BasicToken {
 
   /**
    * @dev Decrease the amount of tokens that an owner allowed to a spender.
-   *
    * approve should be called when allowed[_spender] == 0. To decrement
    * allowed value is better to use this function to avoid 2 calls (and wait until
    * the first transaction is mined)
@@ -213,12 +235,12 @@ contract StandardToken is ERC20, BasicToken {
    */
   function decreaseApproval(
     address _spender,
-    uint _subtractedValue
+    uint256 _subtractedValue
   )
     public
     returns (bool)
   {
-    uint oldValue = allowed[msg.sender][_spender];
+    uint256 oldValue = allowed[msg.sender][_spender];
     if (_subtractedValue > oldValue) {
       allowed[msg.sender][_spender] = 0;
     } else {
@@ -239,8 +261,6 @@ contract StandardToken is ERC20, BasicToken {
 contract Ownable {
   address public owner;
 
-
-  event OwnershipRenounced(address indexed previousOwner);
   event OwnershipTransferred(
     address indexed previousOwner,
     address indexed newOwner
@@ -264,14 +284,6 @@ contract Ownable {
   }
 
   /**
-   * @dev Allows the current owner to relinquish control of the contract.
-   */
-  function renounceOwnership() public onlyOwner {
-    emit OwnershipRenounced(owner);
-    owner = address(0);
-  }
-
-  /**
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
    * @param _newOwner The address to transfer ownership to.
    */
@@ -291,6 +303,10 @@ contract Ownable {
 }
 
 
+/**
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
+ */
 contract Pausable is Ownable {
   event Pause();
   event Unpause();
@@ -331,7 +347,10 @@ contract Pausable is Ownable {
   }
 }
 
-
+/**
+ * @title Pausable token
+ * @dev StandardToken modified with pausable transfers.
+ **/
 contract PausableToken is StandardToken, Pausable {
 
   function transfer(
@@ -389,16 +408,28 @@ contract PausableToken is StandardToken, Pausable {
   {
     return super.decreaseApproval(_spender, _subtractedValue);
   }
+  
 }
 
-contract BctToken is PausableToken {
-  string public constant name = "BctToken";
-  string public constant symbol = "BCT";
-  uint8 public constant decimals = 18;
-  uint256 public constant initialSupply = 2000000000000000000000000000;
-  
-  constructor() public {
-    totalSupply_ = initialSupply;
-    balances[msg.sender] = totalSupply_;
-  }
+
+contract BCTToken is PausableToken {
+
+    string public name = "Blockchain Community Token";
+    string public symbol = "BCT";
+    uint8 public decimals = 18;
+
+    constructor() public {
+        totalSupply_ = 21000000000 * (10 ** uint256(decimals));
+        balances[msg.sender] = totalSupply_;
+        emit Transfer(address(0), msg.sender, totalSupply_);
+    }
+
+    function batchTransfer(address[] _to, uint256[] value) public whenNotPaused returns(bool success){
+        require(_to.length == value.length);
+        for( uint256 i = 0; i < _to.length; i++ ){
+            transfer(_to[i],value[i]);
+        }
+        return true;
+    }
+
 }
