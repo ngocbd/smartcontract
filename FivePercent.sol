@@ -1,85 +1,103 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FivePercent at 0x49f053B866c33185FA1151E71fc80d5Fe6b08a92
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FivePercent at 0xae84c1759c90a06853e4fd0a9220c9ec1df953db
 */
-contract FivePercent 
-{
-  	struct Participant 
+pragma solidity ^0.4.25;
+
+library SafeMath {
+  function mul(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
+    if (_a == 0) {
+      return 0;
+    }
+    c = _a * _b;
+    assert(c / _a == _b);
+    return c;
+  }
+
+  function div(uint256 _a, uint256 _b) internal pure returns (uint256) {
+    return _a / _b;
+  }
+
+  function sub(uint256 _a, uint256 _b) internal pure returns (uint256) {
+    assert(_b <= _a);
+    return _a - _b;
+  }
+
+  function add(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
+    c = _a + _b;
+    assert(c >= _a);
+    return c;
+  }
+}
+
+contract FivePercent {
+	using SafeMath for uint256;
+
+	address public constant marketingAddress = 0xbacd82fd2a77128274f68983f82c8372e06a1472;
+
+	mapping (address => uint256) deposited;
+	mapping (address => uint256) withdrew;
+	mapping (address => uint256) refearned;
+	mapping (address => uint256) blocklock;
+
+	uint256 public totalDepositedWei = 0;
+	uint256 public totalWithdrewWei = 0;
+
+	function() payable external
 	{
-      		address etherAddress;
-      		uint amount;
-	}
- 	Participant[] private participants;
-  	
-	uint private payoutIdx = 0;
-  	uint private balance = 0;
-	uint private factor =105; //105% payout
-    	//Fallback function
-        function() 
-	{
-	        init();
-    	}
-  
-        //init function run on fallback
-   	function init() private
-	{
-	        //Ensures only tx with value between min. 10 finney (0.01 ether) and max. 10 ether are processed 
-    		if (msg.value < 10 finney) 
+		uint256 marketingPerc = msg.value.mul(5).div(100);
+
+		marketingAddress.transfer(marketingPerc);
+		
+		if (deposited[msg.sender] != 0)
 		{
-        		msg.sender.send(msg.value);
-        		return;
-    		}
-		uint amount;
-		if (msg.value > 10 ether) 
-		{
-			msg.sender.send(msg.value - 10 ether);	
-			amount = 10 ether;
-                }
-		else 
-		{
-			amount = msg.value;
+			address investor = msg.sender;
+			uint256 depositsPercents = deposited[msg.sender].mul(5).div(100).mul(block.number-blocklock[msg.sender]).div(5900);
+			investor.transfer(depositsPercents);
+
+			withdrew[msg.sender] += depositsPercents;
+			totalWithdrewWei = totalWithdrewWei.add(depositsPercents);
 		}
-	  	// add a new participant to array
-    		uint idx = participants.length;
-    		participants.length += 1;
-    		participants[idx].etherAddress = msg.sender;
-    		participants[idx].amount = amount ;
-		// update contract balance
-       		balance += amount ;
- 		// while there are enough ether on the balance we can pay out to an earlier participant
-    		while (balance > factor*participants[payoutIdx].amount / 100 ) 
+
+		address referrer = bytesToAddress(msg.data);
+		uint256 refPerc = msg.value.mul(5).div(100);
+		
+		if (referrer > 0x0 && referrer != msg.sender)
 		{
-			uint transactionAmount = factor* participants[payoutIdx].amount / 100;
-      			participants[payoutIdx].etherAddress.send(transactionAmount);
-			balance -= transactionAmount;
-      			payoutIdx += 1;
-    		}
-  	}
- 
-	function Infos() constant returns (uint BalanceInFinney, uint Participants, uint PayOutIndex,uint NextPayout, string info) 
+			referrer.transfer(refPerc);
+
+			refearned[referrer] += refPerc;
+		}
+
+		blocklock[msg.sender] = block.number;
+		deposited[msg.sender] += msg.value;
+
+		totalDepositedWei = totalDepositedWei.add(msg.value);
+	}
+
+	function userDepositedWei(address _address) public view returns (uint256)
 	{
-        	BalanceInFinney = balance / 1 finney;
-        	PayOutIndex=payoutIdx;
-		Participants=participants.length;
-		NextPayout =factor*participants[payoutIdx].amount / 1 finney;
-		NextPayout=NextPayout /100;
-		info = 'All amounts in Finney (1 Ether = 1000 Finney)';
-    	}
-
-	function participantDetails(uint nr) constant returns (address Address, uint PayinInFinney, uint PayoutInFinney, string PaidOut)
-    	{
-		PaidOut='N.A.';
-		Address=0;
-		PayinInFinney=0;
-		PayoutInFinney=0;
-        	if (nr < participants.length) {
-            	Address = participants[nr].etherAddress;
-
-            	PayinInFinney = participants[nr].amount / 1 finney;
-		PayoutInFinney= factor*PayinInFinney/100;
-		PaidOut='no';
-		if (nr<payoutIdx){PaidOut='yes';}		
-
-        }
+		return deposited[_address];
     }
 
+	function userWithdrewWei(address _address) public view returns (uint256)
+	{
+		return withdrew[_address];
+    }
+
+	function userDividendsWei(address _address) public view returns (uint256)
+	{
+		return deposited[_address].mul(5).div(100).mul(block.number-blocklock[_address]).div(5900);
+    }
+
+	function userReferralsWei(address _address) public view returns (uint256)
+	{
+		return refearned[_address];
+    }
+
+	function bytesToAddress(bytes bys) private pure returns (address addr)
+	{
+		assembly {
+			addr := mload(add(bys, 20))
+		}
+	}
 }
