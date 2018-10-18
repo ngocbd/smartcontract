@@ -1,20 +1,22 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract lucky9io at 0x2d7765c44e44b9ec01d30ea367e8403aa4415cb3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract lucky9io at 0x06779e2a75cc5b7ad2c14cf98d88cf2cfcfcc6f1
 */
 pragma solidity ^0.4.24;
 
 // --> http://lucky9.io <-- Ethereum Lottery.
 //
-// - 1 of 3 chance to win half of the JACKPOT! And every 999th ticket grabs 80% of the JACKPOT!
+// - 1 of 3 chance to win a portion of the JACKPOT! Winners are selected and payouts made every day @ 18:00 GMT.
 //
-// - The house edge is 1% of the ticket price, 1% reserved for transactions.
+// - The winnings are calculated on FIFO basis - first purchased winning tickets receive the biggest stake, while
+//   the last - smallest. Therefore, be quick to buy the tickets for the day.
 //
-// - The winnings are distributed by the Smart Contract automatically.
+// - 85% of the ticket price goes to current JACKPOT of the day.
+// - The house edge is 15% of the ticket price. This includes the transactions and pay-out costs.
 //
-// - Smart Contract address: 0x2d7765c44e44b9ec01d30ea367e8403aa4415cb3
-// - More details at: https://etherscan.io/address/0x2d7765c44e44b9ec01d30ea367e8403aa4415cb3
+// - Smart Contract address: 0x06779e2a75cc5b7ad2c14cf98d88cf2cfcfcc6f1
+// - More details at: https://etherscan.io/address/0x06779e2a75cc5b7ad2c14cf98d88cf2cfcfcc6f1
 //
-// - NOTE: Ensure sufficient gas limit for transaction to succeed. Gas limit 150000 should be sufficient.
+// - NOTE: Ensure sufficient gas limit for transaction to succeed. Gas limit 200,000 should be sufficient.
 //
 // --- GOOD LUCK! ---
 //
@@ -23,16 +25,16 @@ contract lucky9io {
     // Public variables
     uint public house_edge = 0;
     uint public jackpot = 0;
-    address public last_winner;
-    uint public last_win_wei = 0;
     uint public total_wins_wei = 0;
     uint public total_wins_count = 0;
+    uint public total_tickets = 0;
 
     // Internal variables
     bool private game_alive = true;
     address private owner = 0x5Bf066c70C2B5e02F1C6723E72e82478Fec41201;
-    uint private entry_number = 0;
-    uint private value = 0;
+    address[] private entries_addresses;
+    bytes32[] private entries_blockhash;
+    uint private entries_count = 0;
 
     modifier onlyOwner() {
      require(msg.sender == owner, "Sender not authorized.");
@@ -43,102 +45,69 @@ contract lucky9io {
         // Only accept ticket purchases if the game is ON
         require(game_alive == true);
 
-        // No contract calls
-        require(isContract(msg.sender) != true);
-
         // Price of the ticket is 0.009 ETH
         require(msg.value / 1000000000000000 == 9);
 
-        // House edge + Jackpot (1% is reserved for transactions)
-        jackpot = jackpot + (msg.value * 98 / 100);
-        house_edge = house_edge + (msg.value / 100);
+        // House edge (15%) + Jackpot (85%)
+        jackpot = jackpot + (msg.value * 85 / 100);
+        house_edge = house_edge + (msg.value * 15 / 100);
 
         // Owner does not participate in the play, only adds up to the JACKPOT
         if(msg.sender == owner) return;
 
-        // Increasing the ticket number
-        entry_number = entry_number + 1;
-
-        // Let's see if the ticket is the 999th...
-        if(entry_number % 999 == 0) {
-            // We have a WINNER !!!
-
-            // Calculate the prize money
-            uint win_amount_999 = jackpot * 80 / 100;
-            jackpot = jackpot - win_amount_999;
-
-            // Set the statistics
-            last_winner = msg.sender;
-            last_win_wei = win_amount;
-            total_wins_count = total_wins_count + 1;
-            total_wins_wei = total_wins_wei + win_amount_999;
-
-            // Pay the winning
-            msg.sender.transfer(win_amount_999);
-            return;
+        // Add the ticket entry to the daily game
+        if(entries_count >= entries_addresses.length) {
+            entries_addresses.push(msg.sender);
+            entries_blockhash.push(blockhash(block.number));
         } else {
-            // Get the lucky number
-            uint lucky_number = uint(keccak256(abi.encodePacked((entry_number+block.number), blockhash(block.number))));
+            entries_addresses[entries_count] = msg.sender;
+            entries_blockhash[entries_count] = blockhash(block.number);
+        }
+        entries_count++;
+        total_tickets++;
 
-            if(lucky_number % 3 == 0) {
+        return;
+    }
+
+    function pickWinners(uint random_seed) payable public onlyOwner {
+        require(entries_count > 0);
+
+        for (uint i=0; i<entries_count; i++) {
+            uint lucky_number = uint(keccak256(abi.encodePacked(abi.encodePacked(i+random_seed+uint(entries_addresses[i]), blockhash(block.number)), entries_blockhash[i])));
+
+            if(((lucky_number % 99) % 9) % 3 == 1) {
                 // We have a WINNER !!!
 
                 // Calculate the prize money
-                uint win_amount = jackpot * 50 / 100;
+                uint win_amount = jackpot * 30 / 100;
                 if(address(this).balance - house_edge < win_amount) {
-                    win_amount = (address(this).balance-house_edge) * 50 / 100;
+                    win_amount = (address(this).balance-house_edge) * 30 / 100;
                 }
 
                 jackpot = jackpot - win_amount;
 
                 // Set the statistics
-                last_winner = msg.sender;
-                last_win_wei = win_amount;
                 total_wins_count = total_wins_count + 1;
                 total_wins_wei = total_wins_wei + win_amount;
 
                 // Pay the winning
-                msg.sender.transfer(win_amount);
+                entries_addresses[i].transfer(win_amount);
             }
-
-            return;
         }
-    }
 
-    function isContract(address addr) private view returns (bool) {
-          uint size;
-          assembly {
-              size := extcodesize(addr)
-
-          }
-          return size > 0;
+        entries_count = 0;
+        return;
     }
 
     function getBalance() constant public returns (uint256) {
         return address(this).balance;
     }
 
-    function getTotalTickets() constant public returns (uint256) {
-        return entry_number;
-    }
-
-    function getLastWin() constant public returns (uint256) {
-        return last_win_wei;
-    }
-
-    function getLastWinner() constant public returns (address) {
-        return last_winner;
-    }
-
-    function getTotalWins() constant public returns (uint256) {
-        return total_wins_wei;
-    }
-
-    function getTotalWinsCount() constant public returns (uint256) {
-        return total_wins_count;
-    }
-
     // Owner functions
+    function getEntriesCount() view public onlyOwner returns (uint) {
+        return entries_count;
+    }
+
     function stopGame() public onlyOwner {
         game_alive = false;
         return;
