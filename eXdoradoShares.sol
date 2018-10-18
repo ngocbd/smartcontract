@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract eXdoradoShares at 0x01fcfc886b2f9b882bd360e11302b6ea6bd9290e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract eXdoradoShares at 0x8ea96833243e795e4cacd9a365a4c162e4b2143e
 */
 pragma solidity ^0.4.24;
 
@@ -45,7 +45,7 @@ contract Ownable {
   event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
   constructor() public {
-    owner = 0x36cA6bD16db5faC0dC5bAbaDaA7f30CbFb29b6B9;
+    owner = 0xCE2b9a22D766Ddfb306D2f4A3FD509134b752169;
   }
 
   modifier onlyOwner() {
