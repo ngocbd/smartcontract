@@ -1,173 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Parameterizer at 0xbaba8fbe1169fba058ca253236522a0d1f1737e9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Parameterizer at 0xF1353811B7691F1aC3ef47Ff5b6b629C5f01D35b
 */
 pragma solidity ^0.4.24;
 
-
-contract EIP20Interface {
-    /* This is a slight change to the ERC20 base standard.
-    function totalSupply() constant returns (uint256 supply);
-    is replaced with:
-    uint256 public totalSupply;
-    This automatically creates a getter function for the totalSupply.
-    This is moved to the base contract since public getter functions are not
-    currently recognised as an implementation of the matching abstract
-    function by the compiler.
-    */
-    /// total amount of tokens
-    uint256 public totalSupply;
-
-    /// @param _owner The address from which the balance will be retrieved
-    /// @return The balance
-    function balanceOf(address _owner) public view returns (uint256 balance);
-
-    /// @notice send `_value` token to `_to` from `msg.sender`
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transfer(address _to, uint256 _value) public returns (bool success);
-
-    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
-    /// @param _from The address of the sender
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
-
-    /// @notice `msg.sender` approves `_spender` to spend `_value` tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @param _value The amount of tokens to be approved for transfer
-    /// @return Whether the approval was successful or not
-    function approve(address _spender, uint256 _value) public returns (bool success);
-
-    /// @param _owner The address of the account owning tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @return Amount of remaining tokens allowed to spent
-    function allowance(address _owner, address _spender) public view returns (uint256 remaining);
-
-    // solhint-disable-next-line no-simple-event-func-name
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-}
-
-/*
-Implements EIP20 token standard: https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md
-.*/
-
-
-contract EIP20 is EIP20Interface {
-
-    uint256 constant private MAX_UINT256 = 2**256 - 1;
-    mapping (address => uint256) public balances;
-    mapping (address => mapping (address => uint256)) public allowed;
-    /*
-    NOTE:
-    The following variables are OPTIONAL vanities. One does not have to include them.
-    They allow one to customise the token contract & in no way influences the core functionality.
-    Some wallets/interfaces might not even bother to look at this information.
-    */
-    string public name;                   //fancy name: eg Simon Bucks
-    uint8 public decimals;                //How many decimals to show.
-    string public symbol;                 //An identifier: eg SBX
-
-    function EIP20(
-        uint256 _initialAmount,
-        string _tokenName,
-        uint8 _decimalUnits,
-        string _tokenSymbol
-    ) public {
-        balances[msg.sender] = _initialAmount;               // Give the creator all initial tokens
-        totalSupply = _initialAmount;                        // Update total supply
-        name = _tokenName;                                   // Set the name for display purposes
-        decimals = _decimalUnits;                            // Amount of decimals for display purposes
-        symbol = _tokenSymbol;                               // Set the symbol for display purposes
-    }
-
-    function transfer(address _to, uint256 _value) public returns (bool success) {
-        require(balances[msg.sender] >= _value);
-        balances[msg.sender] -= _value;
-        balances[_to] += _value;
-        emit Transfer(msg.sender, _to, _value); //solhint-disable-line indent, no-unused-vars
-        return true;
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        uint256 allowance = allowed[_from][msg.sender];
-        require(balances[_from] >= _value && allowance >= _value);
-        balances[_to] += _value;
-        balances[_from] -= _value;
-        if (allowance < MAX_UINT256) {
-            allowed[_from][msg.sender] -= _value;
-        }
-        emit Transfer(_from, _to, _value); //solhint-disable-line indent, no-unused-vars
-        return true;
-    }
-
-    function balanceOf(address _owner) public view returns (uint256 balance) {
-        return balances[_owner];
-    }
-
-    function approve(address _spender, uint256 _value) public returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        emit Approval(msg.sender, _spender, _value); //solhint-disable-line indent, no-unused-vars
-        return true;
-    }
-
-    function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
-        return allowed[_owner][_spender];
-    }
-}
-
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
-    // benefit is lost if 'b' is also tested.
-    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
-    if (a == 0) {
-      return 0;
-    }
-
-    c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    // uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return a / b;
-  }
-
-  /**
-  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
+// File: openzeppelin-solidity/contracts/ownership/Ownable.sol
 
 /**
  * @title Ownable
@@ -203,6 +39,9 @@ contract Ownable {
 
   /**
    * @dev Allows the current owner to relinquish control of the contract.
+   * @notice Renouncing to ownership will leave the contract without an owner.
+   * It will not be possible to call the functions with the `onlyOwner`
+   * modifier anymore.
    */
   function renounceOwnership() public onlyOwner {
     emit OwnershipRenounced(owner);
@@ -228,153 +67,235 @@ contract Ownable {
   }
 }
 
-
+// File: openzeppelin-solidity/contracts/math/SafeMath.sol
 
 /**
- * @title ERC165
- * @dev https://github.com/ethereum/EIPs/blob/master/EIPS/eip-165.md
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
  */
-interface ERC165 {
+library SafeMath {
 
   /**
-   * @notice Query if a contract implements an interface
-   * @param _interfaceId The interface identifier, as specified in ERC-165
-   * @dev Interface identification is specified in ERC-165. This function
-   * uses less than 30,000 gas.
-   */
-  function supportsInterface(bytes4 _interfaceId)
-    external
-    view
-    returns (bool);
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
+    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+    if (_a == 0) {
+      return 0;
+    }
+
+    c = _a * _b;
+    assert(c / _a == _b);
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 _a, uint256 _b) internal pure returns (uint256) {
+    // assert(_b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = _a / _b;
+    // assert(_a == _b * c + _a % _b); // There is no case in which this doesn't hold
+    return _a / _b;
+  }
+
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 _a, uint256 _b) internal pure returns (uint256) {
+    assert(_b <= _a);
+    return _a - _b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
+    c = _a + _b;
+    assert(c >= _a);
+    return c;
+  }
 }
+
+// File: contracts/Interface/EIP20Interface.sol
+
+contract EIP20Interface {
+    /* This is a slight change to the ERC20 base standard.
+    function totalSupply() constant returns (uint256 supply);
+    is replaced with:
+    uint256 public totalSupply;
+    This automatically creates a getter function for the totalSupply.
+    This is moved to the base contract since public getter functions are not
+    currently recognised as an implementation of the matching abstract
+    function by the compiler.
+    */
+    /// total amount of tokens
+    function totalSupply() public view returns (uint256 supply);
+
+    /// @param _owner The address from which the balance will be retrieved
+    /// @return The balance?
+    function balanceOf(address _owner) public view returns (uint256 balance);
+
+    /// @notice send `_value` token to `_to` from `msg.sender`
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transfer(address _to, uint256 _value) public returns (bool success);
+
+    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
+    /// @param _from The address of the sender
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+
+    /// @notice `msg.sender` approves `_spender` to spend `_value` tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @param _value The amount of tokens to be approved for transfer
+    /// @return Whether the approval was successful or not
+    function approve(address _spender, uint256 _value) public returns (bool success);
+
+    /// @param _owner The address of the account owning tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @return Amount of remaining tokens allowed to spent
+    function allowance(address _owner, address _spender) public view returns (uint256 remaining);
+
+    // solhint-disable-next-line no-simple-event-func-name
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+}
+
+// File: contracts/CanCheckERC165.sol
 
 contract CanCheckERC165 {
-  bytes4 constant InvalidID = 0xffffffff;
-  bytes4 constant ERC165ID = 0x01ffc9a7;
-  function doesContractImplementInterface(address _contract, bytes4 _interfaceId) external view returns (bool) {
-      uint256 success;
-      uint256 result;
+    bytes4 constant InvalidID = 0xffffffff;
+    bytes4 constant ERC165ID = 0x01ffc9a7;
+    function doesContractImplementInterface(address _contract, bytes4 _interfaceId) external view returns (bool) {
+        uint256 success;
+        uint256 result;
 
-      (success, result) = noThrowCall(_contract, ERC165ID);
-      if ((success==0)||(result==0)) {
-          return false;
-      }
+        (success, result) = noThrowCall(_contract, ERC165ID);
+        if ((success==0)||(result==0)) {
+            return false;
+        }
 
-      (success, result) = noThrowCall(_contract, InvalidID);
-      if ((success==0)||(result!=0)) {
-          return false;
-      }
+        (success, result) = noThrowCall(_contract, InvalidID);
+        if ((success==0)||(result!=0)) {
+            return false;
+        }
 
-      (success, result) = noThrowCall(_contract, _interfaceId);
-      if ((success==1)&&(result==1)) {
-          return true;
-      }
-      return false;
-  }
-
-  function noThrowCall(address _contract, bytes4 _interfaceId) internal view returns (uint256 success, uint256 result) {
-    bytes4 erc165ID = ERC165ID;
-
-    assembly {
-            let x := mload(0x40)               // Find empty storage location using "free memory pointer"
-            mstore(x, erc165ID)                // Place signature at begining of empty storage
-            mstore(add(x, 0x04), _interfaceId) // Place first argument directly next to signature
-
-            success := staticcall(
-                                30000,         // 30k gas
-                                _contract,     // To addr
-                                x,             // Inputs are stored at location x
-                                0x20,          // Inputs are 32 bytes long
-                                x,             // Store output over input (saves space)
-                                0x20)          // Outputs are 32 bytes long
-
-            result := mload(x)                 // Load the result
+        (success, result) = noThrowCall(_contract, _interfaceId);
+        if ((success==1)&&(result==1)) {
+            return true;
+        }
+        return false;
     }
-  }
+
+    function noThrowCall(address _contract, bytes4 _interfaceId) internal view returns (uint256 success, uint256 result) {
+        bytes4 erc165ID = ERC165ID;
+
+        assembly {
+                let x := mload(0x40)               // Find empty storage location using "free memory pointer"
+                mstore(x, erc165ID)                // Place signature at begining of empty storage
+                mstore(add(x, 0x04), _interfaceId) // Place first argument directly next to signature
+
+                success := staticcall(
+                                    30000,         // 30k gas
+                                    _contract,     // To addr
+                                    x,             // Inputs are stored at location x
+                                    0x20,          // Inputs are 32 bytes long
+                                    x,             // Store output over input (saves space)
+                                    0x20)          // Outputs are 32 bytes long
+
+                result := mload(x)                 // Load the result
+        }
+    }
 }
 
+// File: contracts/PLCRVoting.sol
 
 library DLL {
+    uint constant NULL_NODE_ID = 0;
 
-  uint constant NULL_NODE_ID = 0;
-
-  struct Node {
-    uint next;
-    uint prev;
-  }
-
-  struct Data {
-    mapping(uint => Node) dll;
-  }
-
-  function isEmpty(Data storage self) public view returns (bool) {
-    return getStart(self) == NULL_NODE_ID;
-  }
-
-  function contains(Data storage self, uint _curr) public view returns (bool) {
-    if (isEmpty(self) || _curr == NULL_NODE_ID) {
-      return false;
-    } 
-
-    bool isSingleNode = (getStart(self) == _curr) && (getEnd(self) == _curr);
-    bool isNullNode = (getNext(self, _curr) == NULL_NODE_ID) && (getPrev(self, _curr) == NULL_NODE_ID);
-    return isSingleNode || !isNullNode;
-  }
-
-  function getNext(Data storage self, uint _curr) public view returns (uint) {
-    return self.dll[_curr].next;
-  }
-
-  function getPrev(Data storage self, uint _curr) public view returns (uint) {
-    return self.dll[_curr].prev;
-  }
-
-  function getStart(Data storage self) public view returns (uint) {
-    return getNext(self, NULL_NODE_ID);
-  }
-
-  function getEnd(Data storage self) public view returns (uint) {
-    return getPrev(self, NULL_NODE_ID);
-  }
-
-  /**
-  @dev Inserts a new node between _prev and _next. When inserting a node already existing in 
-  the list it will be automatically removed from the old position.
-  @param _prev the node which _new will be inserted after
-  @param _curr the id of the new node being inserted
-  @param _next the node which _new will be inserted before
-  */
-  function insert(Data storage self, uint _prev, uint _curr, uint _next) public {
-    require(_curr != NULL_NODE_ID);
-
-    remove(self, _curr);
-
-    require(_prev == NULL_NODE_ID || contains(self, _prev));
-    require(_next == NULL_NODE_ID || contains(self, _next));
-
-    require(getNext(self, _prev) == _next);
-    require(getPrev(self, _next) == _prev);
-
-    self.dll[_curr].prev = _prev;
-    self.dll[_curr].next = _next;
-
-    self.dll[_prev].next = _curr;
-    self.dll[_next].prev = _curr;
-  }
-
-  function remove(Data storage self, uint _curr) public {
-    if (!contains(self, _curr)) {
-      return;
+    struct Node {
+        uint next;
+        uint prev;
     }
 
-    uint next = getNext(self, _curr);
-    uint prev = getPrev(self, _curr);
+    struct Data {
+        mapping(uint => Node) dll;
+    }
 
-    self.dll[next].prev = prev;
-    self.dll[prev].next = next;
+    function isEmpty(Data storage self) public view returns (bool) {
+        return getStart(self) == NULL_NODE_ID;
+    }
 
-    delete self.dll[_curr];
-  }
+    function contains(Data storage self, uint _curr) public view returns (bool) {
+        if (isEmpty(self) || _curr == NULL_NODE_ID) {
+            return false;
+        } 
+
+        bool isSingleNode = (getStart(self) == _curr) && (getEnd(self) == _curr);
+        bool isNullNode = (getNext(self, _curr) == NULL_NODE_ID) && (getPrev(self, _curr) == NULL_NODE_ID);
+        return isSingleNode || !isNullNode;
+    }
+
+    function getNext(Data storage self, uint _curr) public view returns (uint) {
+        return self.dll[_curr].next;
+    }
+
+    function getPrev(Data storage self, uint _curr) public view returns (uint) {
+        return self.dll[_curr].prev;
+    }
+
+    function getStart(Data storage self) public view returns (uint) {
+        return getNext(self, NULL_NODE_ID);
+    }
+
+    function getEnd(Data storage self) public view returns (uint) {
+        return getPrev(self, NULL_NODE_ID);
+    }
+
+    /**
+    @dev Inserts a new node between _prev and _next. When inserting a node already existing in 
+    the list it will be automatically removed from the old position.
+    @param _prev the node which _new will be inserted after
+    @param _curr the id of the new node being inserted
+    @param _next the node which _new will be inserted before
+    */
+    function insert(Data storage self, uint _prev, uint _curr, uint _next) public {
+        require(_curr != NULL_NODE_ID);
+
+        remove(self, _curr);
+
+        require(_prev == NULL_NODE_ID || contains(self, _prev));
+        require(_next == NULL_NODE_ID || contains(self, _next));
+
+        require(getNext(self, _prev) == _next);
+        require(getPrev(self, _next) == _prev);
+
+        self.dll[_curr].prev = _prev;
+        self.dll[_curr].next = _next;
+
+        self.dll[_prev].next = _curr;
+        self.dll[_next].prev = _curr;
+    }
+
+    function remove(Data storage self, uint _curr) public {
+        if (!contains(self, _curr)) {
+            return;
+        }
+
+        uint next = getNext(self, _curr);
+        uint prev = getPrev(self, _curr);
+
+        self.dll[next].prev = prev;
+        self.dll[prev].next = next;
+
+        delete self.dll[_curr];
+    }
 }
 
 library AttributeStore {
@@ -451,7 +372,7 @@ contract PLCRVoting {
     @param _token The address where the ERC20 token contract is deployed
     */
     constructor(address _token) public {
-        require(_token != 0 && address(token) == 0);
+        require(_token != 0);
 
         token = EIP20Interface(_token);
         pollNonce = INITIAL_POLL_NONCE;
@@ -834,27 +755,27 @@ contract PLCRVoting {
     function getInsertPointForNumTokens(address _voter, uint _numTokens, uint _pollID)
     constant public returns (uint prevNode) {
       // Get the last node in the list and the number of tokens in that node
-      uint nodeID = getLastNode(_voter);
-      uint tokensInNode = getNumTokens(_voter, nodeID);
+        uint nodeID = getLastNode(_voter);
+        uint tokensInNode = getNumTokens(_voter, nodeID);
 
       // Iterate backwards through the list until reaching the root node
-      while(nodeID != 0) {
-        // Get the number of tokens in the current node
-        tokensInNode = getNumTokens(_voter, nodeID);
-        if(tokensInNode <= _numTokens) { // We found the insert point!
-          if(nodeID == _pollID) {
-            // This is an in-place update. Return the prev node of the node being updated
+        while(nodeID != 0) {
+            // Get the number of tokens in the current node
+            tokensInNode = getNumTokens(_voter, nodeID);
+            if (tokensInNode <= _numTokens) { // We found the insert point!
+                if (nodeID == _pollID) {
+                    // This is an in-place update. Return the prev node of the node being updated
+                    nodeID = dllMap[_voter].getPrev(nodeID);
+                }
+            // Return the insert point
+                return nodeID;
+            }
+            // We did not find the insert point. Continue iterating backwards through the list
             nodeID = dllMap[_voter].getPrev(nodeID);
-          }
-          // Return the insert point
-          return nodeID;
         }
-        // We did not find the insert point. Continue iterating backwards through the list
-        nodeID = dllMap[_voter].getPrev(nodeID);
-      }
 
-      // The list is empty, or a smaller value than anything else in the list is being inserted
-      return nodeID;
+        // The list is empty, or a smaller value than anything else in the list is being inserted
+        return nodeID;
     }
 
     // ----------------
@@ -880,6 +801,7 @@ contract PLCRVoting {
     }
 }
 
+// File: contracts/Parameterizer.sol
 
 contract Parameterizer is Ownable, CanCheckERC165 {
 
@@ -957,7 +879,7 @@ contract Parameterizer is Ownable, CanCheckERC165 {
   @param _minDeposit       minimum deposit for listing to be whitelisted
   @param _pMinDeposit      minimum deposit to propose a reparameterization
   @param _applyStageLen    period over which applicants wait to be whitelisted
-  @param _pApplyStageLen   period over which reparmeterization proposals wait to be processed
+  @param _pApplyStageLen   period over which reparameterization proposals wait to be processed
   @param _dispensationPct  percentage of losing party's deposit distributed to winning party
   @param _pDispensationPct percentage of losing party's deposit distributed to winning party in parameterizer
   @param _commitStageLen  length of commit period for voting
@@ -1286,529 +1208,4 @@ contract Parameterizer is Ownable, CanCheckERC165 {
   function set(string _name, uint _value) private {
     params[keccak256(abi.encodePacked(_name))] = _value;
   }
-}
-
-
-contract SupercedesRegistry is ERC165 {
-  function canReceiveListing(bytes32 listingHash, uint applicationExpiry, bool whitelisted, address owner, uint unstakedDeposit, uint challengeID) external view returns (bool);
-  function receiveListing(bytes32 listingHash, uint applicationExpiry, bool whitelisted, address owner, uint unstakedDeposit, uint challengeID) external;
-  function getSupercedesRegistryInterfaceID() public pure returns (bytes4) {
-    SupercedesRegistry i;
-    return i.canReceiveListing.selector ^ i.receiveListing.selector;
-  }
-}
-
-
-
-contract Registry {
-
-    // ------
-    // EVENTS
-    // ------
-
-    event _Application(bytes32 indexed listingHash, uint deposit, uint appEndDate, string data);
-    event _Challenge(bytes32 indexed listingHash, uint challengeID, uint deposit, string data);
-    event _Deposit(bytes32 indexed listingHash, uint added, uint newTotal);
-    event _Withdrawal(bytes32 indexed listingHash, uint withdrew, uint newTotal);
-    event _ApplicationWhitelisted(bytes32 indexed listingHash);
-    event _ApplicationRemoved(bytes32 indexed listingHash);
-    event _ListingRemoved(bytes32 indexed listingHash);
-    event _ListingWithdrawn(bytes32 indexed listingHash);
-    event _TouchAndRemoved(bytes32 indexed listingHash);
-    event _ChallengeFailed(bytes32 indexed listingHash, uint indexed challengeID, uint rewardPool, uint totalTokens);
-    event _ChallengeSucceeded(bytes32 indexed listingHash, uint indexed challengeID, uint rewardPool, uint totalTokens);
-    event _RewardClaimed(uint indexed challengeID, uint reward, address voter);
-    event _ListingMigrated(bytes32 indexed listingHash, address newRegistry);
-
-    using SafeMath for uint;
-
-    struct Listing {
-        uint applicationExpiry; // Expiration date of apply stage
-        bool whitelisted;       // Indicates registry status
-        address owner;          // Owner of Listing
-        uint unstakedDeposit;   // Number of tokens in the listing not locked in a challenge
-        uint challengeID;       // Corresponds to a PollID in PLCRVoting
-    }
-
-    struct Challenge {
-        uint rewardPool;        // (remaining) Pool of tokens to be distributed to winning voters
-        address challenger;     // Owner of Challenge
-        bool resolved;          // Indication of if challenge is resolved
-        uint stake;             // Number of tokens at stake for either party during challenge
-        uint totalTokens;       // (remaining) Number of tokens used in voting by the winning side
-        mapping(address => bool) tokenClaims; // Indicates whether a voter has claimed a reward yet
-    }
-
-    // Maps challengeIDs to associated challenge data
-    mapping(uint => Challenge) public challenges;
-
-    // Maps listingHashes to associated listingHash data
-    mapping(bytes32 => Listing) public listings;
-
-    // Maps number of applications per address
-    mapping(address => uint) public numApplications;
-
-    // Maps total amount staked per address
-    mapping(address => uint) public totalStaked;
-
-    // Global Variables
-    EIP20Interface public token;
-    PLCRVoting public voting;
-    Parameterizer public parameterizer;
-    string public constant version = "1";
-
-    // ------------
-    // CONSTRUCTOR:
-    // ------------
-
-    /**
-    @dev Contructor         Sets the addresses for token, voting, and parameterizer
-    @param _tokenAddr       Address of the TCR's intrinsic ERC20 token
-    @param _plcrAddr        Address of a PLCR voting contract for the provided token
-    @param _paramsAddr      Address of a Parameterizer contract
-    */
-    constructor(
-        address _tokenAddr,
-        address _plcrAddr,
-        address _paramsAddr
-    ) public {
-        token = EIP20Interface(_tokenAddr);
-        voting = PLCRVoting(_plcrAddr);
-        parameterizer = Parameterizer(_paramsAddr);
-    }
-
-    // --------------------
-    // PUBLISHER INTERFACE:
-    // --------------------
-
-    /**
-    @dev                Allows a user to start an application. Takes tokens from user and sets
-                        apply stage end time.
-    @param _listingHash The hash of a potential listing a user is applying to add to the registry
-    @param _amount      The number of ERC20 tokens a user is willing to potentially stake
-    @param _data        Extra data relevant to the application. Think IPFS hashes.
-    */
-    function apply(bytes32 _listingHash, uint _amount, string _data) onlyIfCurrentRegistry external {
-        require(!isWhitelisted(_listingHash));
-        require(!appWasMade(_listingHash));
-        require(_amount >= parameterizer.get("minDeposit"));
-
-        // Sets owner
-        Listing storage listing = listings[_listingHash];
-        listing.owner = msg.sender;
-
-        // Sets apply stage end time
-        listing.applicationExpiry = block.timestamp.add(parameterizer.get("applyStageLen"));
-        listing.unstakedDeposit = _amount;
-
-        // Tally application count per address
-        numApplications[listing.owner] = numApplications[listing.owner].add(1);
-
-        // Tally total staked amount
-        totalStaked[listing.owner] = totalStaked[listing.owner].add(_amount);
-
-        // Transfers tokens from user to Registry contract
-        require(token.transferFrom(listing.owner, this, _amount));
-        emit _Application(_listingHash, _amount, listing.applicationExpiry, _data);
-    }
-
-    /**
-    @dev                Allows the owner of a listingHash to increase their unstaked deposit.
-    @param _listingHash A listingHash msg.sender is the owner of
-    @param _amount      The number of ERC20 tokens to increase a user's unstaked deposit
-    */
-    function deposit(bytes32 _listingHash, uint _amount) external {
-        Listing storage listing = listings[_listingHash];
-
-        require(listing.owner == msg.sender);
-
-        listing.unstakedDeposit = listing.unstakedDeposit.add(_amount);
-
-        // Update total stake
-        totalStaked[listing.owner] = totalStaked[listing.owner].add(_amount);
-
-        require(token.transferFrom(msg.sender, this, _amount));
-
-        emit _Deposit(_listingHash, _amount, listing.unstakedDeposit);
-    }
-
-    /**
-    @dev                Allows the owner of a listingHash to decrease their unstaked deposit.
-    @param _listingHash A listingHash msg.sender is the owner of.
-    @param _amount      The number of ERC20 tokens to withdraw from the unstaked deposit.
-    */
-    function withdraw(bytes32 _listingHash, uint _amount) external {
-        Listing storage listing = listings[_listingHash];
-
-        require(listing.owner == msg.sender);
-        require(_amount <= listing.unstakedDeposit);
-        require(listing.unstakedDeposit.sub(_amount) >= parameterizer.get("minDeposit"));
-
-        listing.unstakedDeposit = listing.unstakedDeposit.sub(_amount);
-
-        require(token.transfer(msg.sender, _amount));
-
-        emit _Withdrawal(_listingHash, _amount, listing.unstakedDeposit);
-    }
-
-    /**
-    @dev                Allows the owner of a listingHash to remove the listingHash from the whitelist
-                        Returns all tokens to the owner of the listingHash
-    @param _listingHash A listingHash msg.sender is the owner of.
-    */
-    function exit(bytes32 _listingHash) external {
-        Listing storage listing = listings[_listingHash];
-
-        require(msg.sender == listing.owner);
-        require(isWhitelisted(_listingHash));
-
-        // Cannot exit during ongoing challenge
-        require(listing.challengeID == 0 || challenges[listing.challengeID].resolved);
-
-        // Remove listingHash & return tokens
-        resetListing(_listingHash);
-        emit _ListingWithdrawn(_listingHash);
-    }
-
-    // -----------------------
-    // TOKEN HOLDER INTERFACE:
-    // -----------------------
-
-    /**
-    @dev                Starts a poll for a listingHash which is either in the apply stage or
-                        already in the whitelist. Tokens are taken from the challenger and the
-                        applicant's deposits are locked.
-    @param _listingHash The listingHash being challenged, whether listed or in application
-    @param _deposit     The deposit with which the listing is challenge (used to be `minDeposit`)
-    @param _data        Extra data relevant to the challenge. Think IPFS hashes.
-    */
-    function challenge(bytes32 _listingHash, uint _deposit, string _data) onlyIfCurrentRegistry external returns (uint challengeID) {
-        Listing storage listing = listings[_listingHash];
-        uint minDeposit = parameterizer.get("minDeposit");
-
-        // Listing must be in apply stage or already on the whitelist
-        require(appWasMade(_listingHash) || listing.whitelisted);
-        // Prevent multiple challenges
-        require(listing.challengeID == 0 || challenges[listing.challengeID].resolved);
-
-        if (listing.unstakedDeposit < minDeposit) {
-            // Not enough tokens, listingHash auto-delisted
-            resetListing(_listingHash);
-            emit _TouchAndRemoved(_listingHash);
-            return 0;
-        }
-
-        // Starts poll
-        uint pollID = voting.startPoll(
-            parameterizer.get("voteQuorum"),
-            parameterizer.get("commitStageLen"),
-            parameterizer.get("revealStageLen")
-        );
-
-        challenges[pollID] = Challenge({
-            challenger: msg.sender,
-            rewardPool: ((100 - parameterizer.get("dispensationPct")) * _deposit) / 100,
-            stake: _deposit,
-            resolved: false,
-            totalTokens: 0
-        });
-
-        // Updates listingHash to store most recent challenge
-        listing.challengeID = pollID;
-
-        // make sure _deposit is more than minDeposit and smaller than unstaked deposit
-        require(_deposit >= minDeposit && _deposit <= listing.unstakedDeposit);
-
-        // Locks tokens for listingHash during challenge
-        listing.unstakedDeposit = listing.unstakedDeposit.sub(_deposit);
-
-        // Takes tokens from challenger
-        require(token.transferFrom(msg.sender, this, _deposit));
-
-        emit _Challenge(_listingHash, pollID, _deposit, _data);
-        return pollID;
-    }
-
-    /**
-    @dev                Updates a listingHash's status from 'application' to 'listing' or resolves
-                        a challenge if one exists.
-    @param _listingHash The listingHash whose status is being updated
-    */
-    function updateStatus(bytes32 _listingHash) public {
-        if (canBeWhitelisted(_listingHash)) {
-          whitelistApplication(_listingHash);
-        } else if (challengeCanBeResolved(_listingHash)) {
-          resolveChallenge(_listingHash);
-        } else {
-          revert();
-        }
-    }
-
-    // ----------------
-    // TOKEN FUNCTIONS:
-    // ----------------
-
-    /**
-    @dev                Called by a voter to claim their reward for each completed vote. Someone
-                        must call updateStatus() before this can be called.
-    @param _challengeID The PLCR pollID of the challenge a reward is being claimed for
-    @param _salt        The salt of a voter's commit hash in the given poll
-    */
-    function claimReward(uint _challengeID, uint _salt) public {
-        // Ensures the voter has not already claimed tokens and challenge results have been processed
-        require(challenges[_challengeID].tokenClaims[msg.sender] == false);
-        require(challenges[_challengeID].resolved == true);
-
-        uint voterTokens = voting.getNumPassingTokens(msg.sender, _challengeID, _salt);
-        uint reward = voterReward(msg.sender, _challengeID, _salt);
-
-        // Subtracts the voter's information to preserve the participation ratios
-        // of other voters compared to the remaining pool of rewards
-        challenges[_challengeID].totalTokens = challenges[_challengeID].totalTokens.sub(voterTokens);
-        challenges[_challengeID].rewardPool = challenges[_challengeID].rewardPool.sub(reward);
-
-        // Ensures a voter cannot claim tokens again
-        challenges[_challengeID].tokenClaims[msg.sender] = true;
-
-        require(token.transfer(msg.sender, reward));
-
-        emit _RewardClaimed(_challengeID, reward, msg.sender);
-    }
-
-    // --------
-    // GETTERS:
-    // --------
-
-    /**
-    @dev                Calculates the provided voter's token reward for the given poll.
-    @param _voter       The address of the voter whose reward balance is to be returned
-    @param _challengeID The pollID of the challenge a reward balance is being queried for
-    @param _salt        The salt of the voter's commit hash in the given poll
-    @return             The uint indicating the voter's reward
-    */
-    function voterReward(address _voter, uint _challengeID, uint _salt)
-    public view returns (uint) {
-        uint totalTokens = challenges[_challengeID].totalTokens;
-        uint rewardPool = challenges[_challengeID].rewardPool;
-        uint voterTokens = voting.getNumPassingTokens(_voter, _challengeID, _salt);
-        return (voterTokens * rewardPool) / totalTokens;
-    }
-
-    /**
-    @dev                Determines whether the given listingHash can be whitelisted.
-    @param _listingHash The listingHash whose status is to be examined
-    */
-    function canBeWhitelisted(bytes32 _listingHash) view public returns (bool) {
-        uint challengeID = listings[_listingHash].challengeID;
-
-        // Ensures that the application was made,
-        // the application period has ended,
-        // the listingHash can be whitelisted,
-        // and either: the challengeID == 0, or the challenge has been resolved.
-        if (
-            appWasMade(_listingHash) &&
-            listings[_listingHash].applicationExpiry < now &&
-            !isWhitelisted(_listingHash) &&
-            (challengeID == 0 || challenges[challengeID].resolved == true)
-        ) {
-          return true;
-        }
-
-        return false;
-    }
-
-    /**
-    @dev                Returns true if the provided listingHash is whitelisted
-    @param _listingHash The listingHash whose status is to be examined
-    */
-    function isWhitelisted(bytes32 _listingHash) view public returns (bool whitelisted) {
-        return listings[_listingHash].whitelisted;
-    }
-
-    /**
-    @dev                Returns true if apply was called for this listingHash
-    @param _listingHash The listingHash whose status is to be examined
-    */
-    function appWasMade(bytes32 _listingHash) view public returns (bool exists) {
-        return listings[_listingHash].applicationExpiry > 0;
-    }
-
-    /**
-    @dev                Returns true if the application/listingHash has an unresolved challenge
-    @param _listingHash The listingHash whose status is to be examined
-    */
-    function challengeExists(bytes32 _listingHash) view public returns (bool) {
-        uint challengeID = listings[_listingHash].challengeID;
-
-        return (challengeID > 0 && !challenges[challengeID].resolved);
-    }
-
-    /**
-    @dev                Determines whether voting has concluded in a challenge for a given
-                        listingHash. Throws if no challenge exists.
-    @param _listingHash A listingHash with an unresolved challenge
-    */
-    function challengeCanBeResolved(bytes32 _listingHash) view public returns (bool) {
-        uint challengeID = listings[_listingHash].challengeID;
-
-        require(challengeExists(_listingHash));
-
-        return voting.pollEnded(challengeID);
-    }
-
-    /**
-    @dev                Determines the number of tokens awarded to the winning party in a challenge.
-    @param _challengeID The challengeID to determine a reward for
-    */
-    function determineReward(uint _challengeID) public view returns (uint) {
-        require(!challenges[_challengeID].resolved && voting.pollEnded(_challengeID));
-
-        // Edge case, nobody voted, give all tokens to the challenger.
-        if (voting.getTotalNumberOfTokensForWinningOption(_challengeID) == 0) {
-            return challenges[_challengeID].stake.mul(2);
-        }
-
-        return (challenges[_challengeID].stake).mul(2).sub(challenges[_challengeID].rewardPool);
-    }
-
-    /**
-    @dev                Getter for Challenge tokenClaims mappings
-    @param _challengeID The challengeID to query
-    @param _voter       The voter whose claim status to query for the provided challengeID
-    */
-    function tokenClaims(uint _challengeID, address _voter) public view returns (bool) {
-      return challenges[_challengeID].tokenClaims[_voter];
-    }
-
-    // ----------------
-    // PRIVATE FUNCTIONS:
-    // ----------------
-
-    /**
-    @dev                Determines the winner in a challenge. Rewards the winner tokens and
-                        either whitelists or de-whitelists the listingHash.
-    @param _listingHash A listingHash with a challenge that is to be resolved
-    */
-    function resolveChallenge(bytes32 _listingHash) private {
-        uint challengeID = listings[_listingHash].challengeID;
-
-        // Calculates the winner's reward,
-        // which is: (winner's full stake) + (dispensationPct * loser's stake)
-        uint reward = determineReward(challengeID);
-
-        // Sets flag on challenge being processed
-        challenges[challengeID].resolved = true;
-
-        // Stores the total tokens used for voting by the winning side for reward purposes
-        challenges[challengeID].totalTokens =
-            voting.getTotalNumberOfTokensForWinningOption(challengeID);
-
-        // Case: challenge failed
-        if (voting.isPassed(challengeID)) {
-            whitelistApplication(_listingHash);
-            // Unlock stake so that it can be retrieved by the applicant
-            listings[_listingHash].unstakedDeposit = listings[_listingHash].unstakedDeposit.add(reward);
-
-            totalStaked[listings[_listingHash].owner] = totalStaked[listings[_listingHash].owner].add(reward);
-
-            emit _ChallengeFailed(_listingHash, challengeID, challenges[challengeID].rewardPool, challenges[challengeID].totalTokens);
-        }
-        // Case: challenge succeeded or nobody voted
-        else {
-            resetListing(_listingHash);
-            // Transfer the reward to the challenger
-            require(token.transfer(challenges[challengeID].challenger, reward));
-
-            emit _ChallengeSucceeded(_listingHash, challengeID, challenges[challengeID].rewardPool, challenges[challengeID].totalTokens);
-        }
-    }
-
-    /**
-    @dev                Called by updateStatus() if the applicationExpiry date passed without a
-                        challenge being made. Called by resolveChallenge() if an
-                        application/listing beat a challenge.
-    @param _listingHash The listingHash of an application/listingHash to be whitelisted
-    */
-    function whitelistApplication(bytes32 _listingHash) private {
-        if (!listings[_listingHash].whitelisted) {
-          emit _ApplicationWhitelisted(_listingHash);
-        }
-        listings[_listingHash].whitelisted = true;
-    }
-
-    /**
-    @dev                Deletes a listingHash from the whitelist and transfers tokens back to owner
-    @param _listingHash The listing hash to delete
-    */
-    function resetListing(bytes32 _listingHash) private {
-        Listing storage listing = listings[_listingHash];
-
-        // Emit events before deleting listing to check whether is whitelisted
-        if (listing.whitelisted) {
-            emit _ListingRemoved(_listingHash);
-        } else {
-            emit _ApplicationRemoved(_listingHash);
-        }
-
-        // Deleting listing to prevent reentry
-        address owner = listing.owner;
-        uint unstakedDeposit = listing.unstakedDeposit;
-        delete listings[_listingHash];
-
-        // Transfers any remaining balance back to the owner
-        if (unstakedDeposit > 0){
-            require(token.transfer(owner, unstakedDeposit));
-        }
-    }
-
-    /**
-    @dev Modifier to specify that a function can only be called if this is the current registry.
-    */
-    modifier onlyIfCurrentRegistry() {
-      require(parameterizer.getNewRegistry() == address(0));
-      _;
-    }
-
-    /**
-    @dev Modifier to specify that a function cannot be called if this is the current registry.
-    */
-    modifier onlyIfOutdatedRegistry() {
-      require(parameterizer.getNewRegistry() != address(0));
-      _;
-    }
-
-    /**
-     @dev Check if a listing exists in the registry by checking that its owner is not zero
-          Since all solidity mappings have every key set to zero, we check that the address of the creator isn't zero.
-    */
-    function listingExists(bytes32 listingHash) public view returns (bool) {
-      return listings[listingHash].owner != address(0);
-    }
-
-    /**
-    @dev migrates a listing
-    */
-    function migrateListing(bytes32 listingHash) onlyIfOutdatedRegistry public {
-      require(listingExists(listingHash)); // duh
-      require(!challengeExists(listingHash)); // can't migrate a listing that's challenged
-
-      address newRegistryAddress = parameterizer.getNewRegistry();
-      SupercedesRegistry newRegistry = SupercedesRegistry(newRegistryAddress);
-      Listing storage listing = listings[listingHash];
-
-      require(newRegistry.canReceiveListing(
-        listingHash, listing.applicationExpiry,
-        listing.whitelisted, listing.owner,
-        listing.unstakedDeposit, listing.challengeID
-      ));
-
-      token.approve(newRegistry, listing.unstakedDeposit);
-      newRegistry.receiveListing(
-        listingHash, listing.applicationExpiry,
-        listing.whitelisted, listing.owner,
-        listing.unstakedDeposit, listing.challengeID
-      );
-      delete listings[listingHash];
-      emit _ListingMigrated(listingHash, newRegistryAddress);
-    }
 }
