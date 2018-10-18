@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PLANETAGROToken at 0x2775f2a3c83bee1541d1d1bc308b3bb432b45151
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PLANETAGROToken at 0x7c0244525807cfe21a76c76c3c9e347ed533d24e
 */
 pragma solidity ^0.4.24;
 
@@ -190,7 +190,7 @@ contract PLANETAGROToken is AbstractToken {
    */
    
    
-  uint256 constant MAX_TOKEN_COUNT = 20000000 * (10**18);
+  uint256 constant MAX_TOKEN_COUNT = 20000000 * (10**20);
    
   /**
    * Address of the owner of this smart contract.
@@ -233,7 +233,7 @@ contract PLANETAGROToken is AbstractToken {
 
   string constant public name = "MEMBERSHIP";
   string constant public symbol = "PLANETAGRO.ORG";
-  uint8 constant public decimals = 18;
+  uint8 constant public decimals = 20;
   
   /**
    * Transfer given number of tokens from message sender to given recipient.
