@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AENCrowdsale at 0x655b81355d0a300f06f9a6f8ad6a3d8a64255cd6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AENCrowdsale at 0x5cec6f6218f6bd359ad60ad735162f09854da16f
 */
 pragma solidity ^0.4.24;
 
@@ -52,33 +52,33 @@ contract AENCrowdsale {
 	    uint amount = msg.value * 5000;
 	    amount = amount / 20;
         
-        // 28 september 2018 - 4 October 2018: 30% bonus
-        if(now > 1538089200 && now < 1538694000) {
+        // 13 October 2018 - 19 October 2018: 30% bonus 
+        if(now > 1539385200 && now < 1539990000) {
             amount = amount * 26;
         }
         
-        // 5 October 2018 - 11 October 2018: 25% bonus
-        if(now > 1538694000 && now < 1539298800) {
+        // 20 October 2018 - 26 October 2018: 25% bonus
+        if(now > 1539990000 && now < 1540594800) {
             amount = amount * 25;
         }
         
-        // 12 October 2018 - 18 October 2018: 20% bonus
-        if(now > 1539298800 && now < 1539903600) {
+        // 27 October 2018 - 02 November 2018: 20% bonus 
+        if(now > 1540594800 && now < 1541203200) {
             amount = amount * 24;
         }
         
-        // 19 October 2018 - 25 October 2018: 15% bonus
-        if(now > 1539903600 && now < 1540508400) {
+        // 03 October 2018 - 09 October 2018: 15% bonus 
+        if(now > 1541203200 && now < 1541808000) {
             amount = amount * 23;
         }
 
-        // 26 October 2018 - 09 November 2018: 10% bonus
-        if(now > 1540508400 && now < 1541808000) {
+        // 10 November 2018 - 31 November 2018: 10% bonus
+        if(now > 1541808000 && now < 1543622400) {
             amount = amount * 22;
         }
 
-        // 09 November 2018
-        if(now > 1541808000) {
+        // 31 November 2018
+        if(now > 1543622400) {
             amount = amount * 20;
         }
         
