@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract COOPET at 0x48279ebac9914555b7702004827c4ebc5b5f2abe
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract COOPET at 0x2b1352c7f9b9642007d5ef1ad28aca06c3013a3c
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.2;
 contract owned {
     address public owner;
 
@@ -13,8 +13,8 @@ contract owned {
         if (msg.sender != owner) revert();
         _;
     }
+
     function transferOwnership(address newOwner) onlyOwner public {
-        if (newOwner == address(0)) revert();
         owner = newOwner;
     }
 }
@@ -50,13 +50,12 @@ contract token {
     }
 
     /* Send coins */
-    function transfer(address _to, uint256 _value) public returns (bool success) {
+    function transfer(address _to, uint256 _value) public {
         if (balanceOf[msg.sender] < _value) revert();           // Check if the sender has enough
         if (balanceOf[_to] + _value < balanceOf[_to]) revert(); // Check for overflows
         balanceOf[msg.sender] -= _value;                     // Subtract from the sender
         balanceOf[_to] += _value;                            // Add the same to the recipient
         emit Transfer(msg.sender, _to, _value);                   // Notify anyone listening that this transfer took place
-        return true;
     }
 
     /* Allow another contract to spend some tokens in your behalf */
@@ -110,14 +109,13 @@ contract COOPET is owned, token {
     ) public token (initialSupply, tokenName, decimalUnits, tokenSymbol) {}
 
     /* Send coins */
-    function transfer(address _to, uint256 _value) public returns (bool success) {
+    function transfer(address _to, uint256 _value) public {
         if (balanceOf[msg.sender] < _value) revert();           // Check if the sender has enough
         if (balanceOf[_to] + _value < balanceOf[_to]) revert(); // Check for overflows
         if (frozenAccount[msg.sender]) revert();                // Check if frozen
         balanceOf[msg.sender] -= _value;                     // Subtract from the sender
         balanceOf[_to] += _value;                            // Add the same to the recipient
         emit Transfer(msg.sender, _to, _value);                   // Notify anyone listening that this transfer took place
-        return true;
     }
 
     /* A contract attempts to get the coins */
@@ -131,6 +129,10 @@ contract COOPET is owned, token {
         allowance[_from][msg.sender] -= _value;
         emit Transfer(_from, _to, _value);
         return true;
+    }
+
+    function destroyToken(uint256 amount) public onlyOwner {
+        totalSupply -= amount;
     }
 
     function freezeAccount(address target, bool freeze) public onlyOwner {
