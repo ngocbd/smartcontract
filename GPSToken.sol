@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GPSToken at 0xa790834a21c0ec155088ad111692e78257d7c05d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GPSToken at 0xded9ec4caf7b1d0da85c50e7921a6fae29214755
 */
 pragma solidity ^0.4.24;
 
@@ -114,11 +114,11 @@ contract GPSToken is StandardToken {
 
     function GPSToken(
         ) {
-        balances[msg.sender] = 2100000000000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 2100000000000000000;                        // Update total supply (100000 for example)
+        balances[msg.sender] = 2100000000000000000000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 2100000000000000000000000000;                        // Update total supply (100000 for example)
         name = "GreenPlanet.Solar Token";                                   // Set the name for display purposes
-        decimals = 9;                            // Amount of decimals for display purposes
-        symbol = "GPSX";                               // Set the symbol for display purposes
+        decimals = 18;                            // Amount of decimals for display purposes
+        symbol = "GPSC";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
