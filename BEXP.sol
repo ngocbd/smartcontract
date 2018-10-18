@@ -1,25 +1,24 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BEXP at 0x292ee3b58ce3f007b9ee88605b76033eaa60cbde
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BEXP at 0xeb47edc0587ed7cae9ca3593244bc42be1dedcab
 */
 contract BEXP {  
     /* This creates an array with all balances */  
-    mapping (address => uint256) public balanceOf;
+    mapping (address => uint256) public balanceOf;  
       
     string public name = "BitExpress";  
     string public symbol = "BEXP";  
     uint8 public decimals = 8;  
-    uint256 public totalSupply = 1000000000 * 10**8;
-    address founder = address(0xe2ce6a2539efbdf0a211300aadb70a416d5d2bec);
+    uint256 public totalSupply = 1000000000 * 10**decimals;
       
     event Transfer(address indexed from, address indexed to, uint256 value);  
           
     /* Initializes contract with initial supply tokens to the creator of the contract */  
     function BEXP () public {  
-        balanceOf[founder] = totalSupply ;             // Give the creator all initial tokens  
-        Transfer(0, founder, totalSupply);
+        balanceOf[msg.sender] = totalSupply ;             // Give the creator all initial tokens  
+        Transfer(0, msg.sender, balanceOf[msg.sender]);
     }  
           
-    function transfer(address _to, uint256 _value) public returns (bool success){  
+    function transfer(address _to, uint256 _value) public {  
         /* Check if sender has balance and for overflows */  
         require(balanceOf[msg.sender] >= _value && balanceOf[_to] + _value >= balanceOf[_to]);  
   
@@ -28,8 +27,6 @@ contract BEXP {
         balanceOf[_to] += _value;  
           
         /* Notify anyone listening that this transfer took place */  
-        Transfer(msg.sender, _to, _value);
-        
-        return true;
-    }
+        Transfer(msg.sender, _to, _value);          
+    }  
 }
