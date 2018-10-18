@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DSSpell at 0x8314d1aaee9c0804a00af704a7f713003aef6f0c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DSSpell at 0x6091295974c12c4305b8bf6d2062bf48f37a3b36
 */
 // hevm: flattened sources of src/spell.sol
 pragma solidity ^0.4.23;
@@ -146,11 +146,5 @@ contract DSSpell is DSExec, DSNote {
         require( !done );
         exec(whom, data, mana);
         done = true;
-    }
-}
-
-contract DSSpellBook {
-    function make(address whom, uint256 mana, bytes data) public returns (DSSpell) {
-        return new DSSpell(whom, mana, data);
     }
 }
