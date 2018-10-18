@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BerryLakeCoin at 0xf2249b2f36a21185ab97f83214cd8fc5802bb8a0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BerryLakeCoin at 0x996c8a44ae7cfa22ebe233b1aa2f4b33539b7145
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.4;
 
 contract Token {
 
@@ -17,7 +17,7 @@ contract Token {
 
 }
 
-contract BLCToken is Token {
+contract BerryLake is Token {
 
     function transfer(address _to, uint256 _value) returns (bool success) {
         if (balances[msg.sender] >= _value && _value > 0) {
@@ -57,25 +57,37 @@ contract BLCToken is Token {
     uint256 public totalSupply;
 }
 
-contract BerryLakeCoin is BLCToken {
+contract BerryLakeCoin is BerryLake { 
 
-    function () {
-        //if ether is sent to this address, send it back.
-        throw;
-    }
-
-    string public name;                   
+    string public name;                  
     uint8 public decimals;                
     string public symbol;                 
-    string public version = 'H1.0';       
+    string public version = 'H1.0'; 
+    uint256 public unitsOneEthCanBuy;     
+    uint256 public totalEthInWei;           
+    address public fundsWallet;           
 
-    function BerryLakeCoin(
-        ) {
-        balances[msg.sender] = 65536000000000000000000;               
+    function BerryLakeCoin() {
+        balances[0x523c70af49b93c2bf6f16b3f4b8330a9bd54bf7f] = 65536000000000000000000;               
         totalSupply = 65536000000000000000000;                       
-        name = "Berry Lake Coin";                                  
-        decimals = 18;                            
-        symbol = "BLC";                               
+        name = "Berry Lake Club";                                   
+        decimals = 18;                                               
+        symbol = "BLC";                                             
+        unitsOneEthCanBuy = 100;                                      
+        fundsWallet = 0x523c70af49b93c2bf6f16b3f4b8330a9bd54bf7f;                                   
+    }
+
+    function() payable{
+        totalEthInWei = totalEthInWei + msg.value;
+        uint256 amount = msg.value * unitsOneEthCanBuy;
+        require(balances[fundsWallet] >= amount);
+
+        balances[fundsWallet] = balances[fundsWallet] - amount;
+        balances[msg.sender] = balances[msg.sender] + amount;
+
+        Transfer(fundsWallet, msg.sender, amount); 
+
+        fundsWallet.transfer(msg.value);                               
     }
 
     function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
