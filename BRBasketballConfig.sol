@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BRBasketballConfig at 0xe2f0518c1ff8c0878a97160f8b96035e3f91c7b4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BRBasketballConfig at 0x2eea5d700c49e89cbfcb4ac6982a342b6c00b061
 */
 pragma solidity ^0.4.7;
 contract MobaBase {
@@ -58,6 +58,16 @@ contract IRandomUtil{
     function getRandom(bytes32 param) public returns (bytes32);
 }
 
+contract RandomUtil{
+    
+    function getRandom(bytes32 param) public returns (bytes32){
+           bytes32 value = keccak256(abi.encodePacked((block.timestamp) + (block.difficulty) 
+           +((uint256(keccak256(abi.encodePacked(block.coinbase)))) / (now)) 
+           +(block.gaslimit) +((uint256(keccak256(abi.encodePacked(msg.sender)))) / (now)) + (block.number)));
+           return value;
+    }
+}
+
 contract IInviteData{
     function GetAddressByName(bytes32 name) public view returns (address);
 }
@@ -74,7 +84,7 @@ contract IConfigData {
 
 contract BRBasketballConfig is MobaBase {
     
-   uint256 mPrice    = 10 finney;
+   uint256 mPrice    = 10;
    uint8 mPumpRate   = 10;
    uint8 mInviteRate = 10;
    uint8 mWinRate    = 50;
