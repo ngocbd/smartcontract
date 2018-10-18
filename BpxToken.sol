@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BpxToken at 0xb72169a4b7c2bacb76b6a2aa96cce62e751d2af4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BpxToken at 0x492c33111c5d0f4d169f8089fb23b8ce27d68daf
 */
 pragma solidity 0.4.18;
 
@@ -77,16 +77,16 @@ contract BpxToken {
 
     ERC20Lib.TokenStorage token;
 
-    string public name = "BPX";
-    string public symbol = "BPX";
-    uint8 public decimals = 18;
-    uint public INITIAL_SUPPLY = 1000000000;
+    string public name = "AsobimoX";
+    string public symbol = "ABX";
+    uint8 public decimals = 8;
+    uint public INITIAL_SUPPLY = 20000000;
 
     function BpxToken() public {
         // adding decimals to initial supply
         var totalSupply = INITIAL_SUPPLY * 10 ** uint256(decimals);
         // adding total supply to owner which could be msg.sender or specific address
-        token.init(totalSupply, 0xC117Cbb17593aa21f3043FEca20F5CCEA2262d28);
+        token.init(totalSupply, 0x7fEDD97be49ba9EfC21acc025Dd29aa7addc82F1);
     }
 
     function totalSupply() public view returns (uint) {
