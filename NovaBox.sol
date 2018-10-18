@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NovaBox at 0xb1ed51c3c52e59af2bbcd9b084437b7b1c96f888
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NovaBox at 0xbc4191167d4b0251cab5201a527daa8a7d3846b0
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.25;
 
 /**
  * @title SafeMath
@@ -143,6 +143,8 @@ contract NovaBox is Ownable {
   }
 
   event AirDrop(address to, uint amount, uint randomTicket);
+  event DividendsTransferred(address to, uint ethAmount, uint novaAmount);
+
 
   // ether contributions
   mapping (address => uint) public contributionsEth;
@@ -154,9 +156,99 @@ contract NovaBox is Ownable {
   mapping (uint => address) public addresses;
   uint256 public lastIndex = 0;
 
+  mapping (address => bool) public addedToList;
+  uint _totalTokens = 0;
+  uint _totalWei = 0;
+
+  uint pointMultiplier = 1e18;
+
+  mapping (address => uint) public last6EthDivPoints;
+  uint public total6EthDivPoints = 0;
+  // uint public unclaimed6EthDivPoints = 0;
+
+  mapping (address => uint) public last4EthDivPoints;
+  uint public total4EthDivPoints = 0;
+  // uint public unclaimed4EthDivPoints = 0;
+
+  mapping (address => uint) public last6TokenDivPoints;
+  uint public total6TokenDivPoints = 0;
+  // uint public unclaimed6TokenDivPoints = 0;
+
+  mapping (address => uint) public last4TokenDivPoints;
+  uint public total4TokenDivPoints = 0;
+  // uint public unclaimed4TokenDivPoints = 0;
+
+  function ethDivsOwing(address _addr) public view returns (uint) {
+    return eth4DivsOwing(_addr).add(eth6DivsOwing(_addr));
+  }
+
+  function eth6DivsOwing(address _addr) public view returns (uint) {
+    if (!addedToList[_addr]) return 0;
+    uint newEth6DivPoints = total6EthDivPoints.sub(last6EthDivPoints[_addr]);
+
+    return contributionsToken[_addr].mul(newEth6DivPoints).div(pointMultiplier);
+  }
+
+  function eth4DivsOwing(address _addr) public view returns (uint) {
+    if (!addedToList[_addr]) return 0;
+    uint newEth4DivPoints = total4EthDivPoints.sub(last4EthDivPoints[_addr]);
+    return contributionsEth[_addr].mul(newEth4DivPoints).div(pointMultiplier);
+  }
+
+  function tokenDivsOwing(address _addr) public view returns (uint) {
+    return token4DivsOwing(_addr).add(token6DivsOwing(_addr));    
+  }
+
+  function token6DivsOwing(address _addr) public view returns (uint) {
+    if (!addedToList[_addr]) return 0;
+    uint newToken6DivPoints = total6TokenDivPoints.sub(last6TokenDivPoints[_addr]);
+    return contributionsToken[_addr].mul(newToken6DivPoints).div(pointMultiplier);
+  }
+
+  function token4DivsOwing(address _addr) public view returns (uint) {
+    if (!addedToList[_addr]) return 0;
+
+    uint newToken4DivPoints = total4TokenDivPoints.sub(last4TokenDivPoints[_addr]);
+    return contributionsEth[_addr].mul(newToken4DivPoints).div(pointMultiplier);
+  }
+
+  function updateAccount(address account) private {
+    uint owingEth6 = eth6DivsOwing(account);
+    uint owingEth4 = eth4DivsOwing(account);
+    uint owingEth = owingEth4.add(owingEth6);
+
+    uint owingToken6 = token6DivsOwing(account);
+    uint owingToken4 = token4DivsOwing(account);
+    uint owingToken = owingToken4.add(owingToken6);
+
+    if (owingEth > 0) {
+      // send ether dividends to account
+      account.transfer(owingEth);
+    }
+
+    if (owingToken > 0) {
+      // send token dividends to account
+      tokenReward.transfer(account, owingToken);
+    }
+
+    last6EthDivPoints[account] = total6EthDivPoints;
+    last4EthDivPoints[account] = total4EthDivPoints;
+    last6TokenDivPoints[account] = total6TokenDivPoints;
+    last4TokenDivPoints[account] = total4TokenDivPoints;
+
+    emit DividendsTransferred(account, owingEth, owingToken);
+
+  }
+
+
+
   function addToList(address sender) private {
+    addedToList[sender] = true;
     // if the sender is not in the list
     if (indexes[sender] == 0) {
+      _totalTokens = _totalTokens.add(contributionsToken[sender]);
+      _totalWei = _totalWei.add(contributionsEth[sender]);
+
       // add the sender to the list
       lastIndex++;
       addresses[lastIndex] = sender;
@@ -164,8 +256,12 @@ contract NovaBox is Ownable {
     }
   }
   function removeFromList(address sender) private {
+    addedToList[sender] = false;
     // if the sender is in temp eth list 
     if (indexes[sender] > 0) {
+      _totalTokens = _totalTokens.sub(contributionsToken[sender]);
+      _totalWei = _totalWei.sub(contributionsEth[sender]);
+
       // remove the sender from temp eth list
       addresses[indexes[sender]] = addresses[lastIndex];
       indexes[addresses[lastIndex]] = indexes[sender];
@@ -177,9 +273,22 @@ contract NovaBox is Ownable {
 
   // desposit ether
   function () payable public {
+    address sender = msg.sender;
+    // size of code at target address
+    uint codeLength;
+
+    // get the length of code at the sender address
+    assembly {
+      codeLength := extcodesize(sender)
+    }
+
+    // don't allow contracts to deposit ether
+    require(codeLength == 0);
     
     uint weiAmount = msg.value;
-    address sender = msg.sender;
+    
+
+    updateAccount(sender);
 
     // number of ether sent must be greater than 0
     require(weiAmount > 0);
@@ -201,6 +310,11 @@ contract NovaBox is Ownable {
     owner.transfer(_1percent);
 
     contributionsEth[sender] = contributionsEth[sender].add(_89percent);
+    // if the sender is in list
+    if (indexes[sender]>0) {
+      // increase _totalWei
+      _totalWei = _totalWei.add(_89percent);
+    }
 
     // if the sender has also deposited tokens, add sender to list
     if (contributionsToken[sender]>0) addToList(sender);
@@ -211,12 +325,19 @@ contract NovaBox is Ownable {
     address sender = msg.sender;
     require(amount>0 && contributionsEth[sender] >= amount);
 
+    updateAccount(sender);
+
     uint _89percent = amount.mul(89).div(100);
     uint _6percent = amount.mul(6).div(100);
     uint _4percent = amount.mul(4).div(100);
     uint _1percent = amount.mul(1).div(100);
 
     contributionsEth[sender] = contributionsEth[sender].sub(amount);
+    // if sender is in list
+    if (indexes[sender]>0) {
+      // decrease total wei
+      _totalWei = _totalWei.sub(amount);
+    }
 
     // if the sender has withdrawn all their eth
       // remove the sender from list
@@ -227,12 +348,13 @@ contract NovaBox is Ownable {
       _6percent, // to nova investors
       _4percent  // to eth investors
     );
-    owner.transfer(_1percent);
+    owner.transfer(_1percent);  //1% goes to REX Investors
   }
 
   // deposit tokens
   function depositTokens(address randomAddr, uint randomTicket) public {
-   
+    updateAccount(msg.sender);
+    
 
     address sender = msg.sender;
     uint amount = tokenReward.allowance(sender, address(this));
@@ -259,6 +381,13 @@ contract NovaBox is Ownable {
     emit AirDrop(randomAddr, _1percent, randomTicket);
 
     contributionsToken[sender] = contributionsToken[sender].add(_89percent);
+
+    // if sender is in list
+    if (indexes[sender]>0) {
+      // increase totaltokens
+      _totalTokens = _totalTokens.add(_89percent);
+    }
+
     // if the sender has also contributed ether add sender to list
     if (contributionsEth[sender]>0) addToList(sender);
   }
@@ -266,6 +395,7 @@ contract NovaBox is Ownable {
   // withdraw tokens
   function withdrawTokens(uint amount, address randomAddr, uint randomTicket) public {
     address sender = msg.sender;
+    updateAccount(sender);
     // requested amount must be greater than 0 and 
     // the sender must have contributed tokens no less than `amount`
     require(amount>0 && contributionsToken[sender]>=amount);
@@ -276,6 +406,11 @@ contract NovaBox is Ownable {
     uint _1percent = amount.mul(1).div(100);
 
     contributionsToken[sender] = contributionsToken[sender].sub(amount);
+    // if sender is in list
+    if (indexes[sender]>0) {
+      // decrease total tokens
+      _totalTokens = _totalTokens.sub(amount);
+    }
 
     // if sender withdrawn all their tokens, remove them from list
     if (contributionsToken[sender] == 0) removeFromList(sender);
@@ -294,52 +429,43 @@ contract NovaBox is Ownable {
     uint totalTokens = getTotalTokens();
     uint totalWei = getTotalWei();
 
-    // loop over investors (`holders`) list
-    for (uint i = 1; i <= lastIndex; i++) {
+    if (totalWei == 0 || totalTokens == 0) return; 
 
-      address holder = addresses[i];
-      // `holder` will get part of 6% fee based on their token shares
-      uint _rewardTokens = contributionsToken[holder].mul(_6percent).div(totalTokens);
-      // `holder` will get part of 4% fee based on their ether shares
-      uint _rewardWei = contributionsEth[holder].mul(_4percent).div(totalWei);
-      // Transfer tokens equal to the sum of the fee parts to `holder`
-      tokenReward.transfer(holder,_rewardTokens.add(_rewardWei));
-    }
+    total4TokenDivPoints = total4TokenDivPoints.add(_4percent.mul(pointMultiplier).div(totalWei));
+    // unclaimed4TokenDivPoints = unclaimed4TokenDivPoints.add(_4percent);
+
+    total6TokenDivPoints = total6TokenDivPoints.add(_6percent.mul(pointMultiplier).div(totalTokens));
+    // unclaimed6TokenDivPoints = unclaimed6TokenDivPoints.add(_6percent);
+    
   }
 
   function distributeEth(uint _6percent, uint _4percent) private {
     uint totalTokens = getTotalTokens();
     uint totalWei = getTotalWei();
 
-    // loop over investors (`holders`) list
-    for (uint i = 1; i <= lastIndex; i++) {
-      address holder = addresses[i];
-      // `holder` will get part of 6% fee based on their token shares
-      uint _rewardTokens = contributionsToken[holder].mul(_6percent).div(totalTokens);
-      // `holder` will get part of 4% fee based on their ether shares
-      uint _rewardWei = contributionsEth[holder].mul(_4percent).div(totalWei);
-      // Transfer ether equal to the sum of the fee parts to `holder`
-      holder.transfer(_rewardTokens.add(_rewardWei));
-    }
+    if (totalWei ==0 || totalTokens == 0) return;
+
+    total4EthDivPoints = total4EthDivPoints.add(_4percent.mul(pointMultiplier).div(totalWei));
+    // unclaimed4EthDivPoints += _4percent;
+
+    total6EthDivPoints = total6EthDivPoints.add(_6percent.mul(pointMultiplier).div(totalTokens));
+    // unclaimed6EthDivPoints += _6percent;
+
   }
 
 
   // get sum of tokens contributed by the ether investors
   function getTotalTokens() public view returns (uint) {
-    uint result;
-    for (uint i = 1; i <= lastIndex; i++) {
-      result = result.add(contributionsToken[addresses[i]]);
-    }
-    return result;
+    return _totalTokens;
   }
 
   // get the sum of wei contributed by the token investors
   function getTotalWei() public view returns (uint) {
-    uint result;
-    for (uint i = 1; i <= lastIndex; i++) {
-      result = result.add(contributionsEth[addresses[i]]);
-    }
-    return result;
+    return _totalWei;
+  }
+
+  function withdrawDivs() public {
+    updateAccount(msg.sender);
   }
 
 
@@ -354,7 +480,5 @@ contract NovaBox is Ownable {
     }
     return (_addrs, _contributions);
   }
-
-
 
 }
