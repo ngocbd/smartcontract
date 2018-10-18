@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UserDataManager at 0xd9e982e827d19a9dca6fe607be4c52d0ff14a697
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UserDataManager at 0x2e1c02a6bc5fc77bfc740a505000846545193beb
 */
 pragma solidity ^0.4.24;
 /*
@@ -42,15 +42,14 @@ pragma solidity ^0.4.24;
 
 interface UserDataManagerReceiverInterface {
     function receivePlayerInfo(uint256 _pID, address _addr, bytes32 _name, uint256 _laff) external;
-    function receivePlayerNameList(uint256 _pID, bytes32 _name) external;
 }
 
 contract UserDataManager {
     using NameFilter for string;
-    using SafeMath for uint256;
 
     address private admin = msg.sender;
-    uint256 public registrationFee_ = 0;                   
+    uint256 public registrationFee_ = 0;         
+
     mapping(uint256 => UserDataManagerReceiverInterface) public games_;  
     mapping(address => bytes32) public gameNames_;         
     mapping(address => uint256) public gameIDs_;           
@@ -59,26 +58,20 @@ contract UserDataManager {
     mapping (address => uint256) public pIDxAddr_;          
     mapping (bytes32 => uint256) public pIDxName_;          
     mapping (uint256 => Player) public plyr_;              
-    mapping (uint256 => mapping (bytes32 => bool)) public plyrNames_; 
-    mapping (uint256 => mapping (uint256 => bytes32)) public plyrNameList_; 
+
     struct Player {
         address addr;
         bytes32 name;
         uint256 laff;
-        uint256 names;
     }
 
     constructor()
         public
     {
-        // premine the dev names 
         plyr_[1].addr = 0xe27c188521248a49adfc61090d3c8ab7c3754e0a;
         plyr_[1].name = "matt";
-        plyr_[1].names = 1;
         pIDxAddr_[0xe27c188521248a49adfc61090d3c8ab7c3754e0a] = 1;
         pIDxName_["matt"] = 1;
-        plyrNames_[1]["matt"] = true;
-        plyrNameList_[1][1] = "matt";
 
         pID_ = 1;
     }
@@ -104,7 +97,7 @@ contract UserDataManager {
         _;
     }
 
-    event onNewName
+    event onNewPlayer
     (
         uint256 indexed playerID,
         address indexed playerAddress,
@@ -134,7 +127,7 @@ contract UserDataManager {
         public
         payable
     {
-        require (msg.value >= registrationFee_, "umm.....  you have to pay the name fee");
+        require (msg.value >= registrationFee_, "you have to pay the name fee");
 
         bytes32 _name = NameFilter.nameFilter(_nameString);
 
@@ -159,7 +152,7 @@ contract UserDataManager {
         public
         payable
     {
-        require (msg.value >= registrationFee_, "umm.....  you have to pay the name fee");
+        require (msg.value >= registrationFee_, "you have to pay the name fee");
 
         bytes32 _name = NameFilter.nameFilter(_nameString);
 
@@ -188,7 +181,7 @@ contract UserDataManager {
         public
         payable
     {
-        require (msg.value >= registrationFee_, "umm.....  you have to pay the name fee");
+        require (msg.value >= registrationFee_, "you have to pay the name fee");
 
         bytes32 _name = NameFilter.nameFilter(_nameString);
 
@@ -220,14 +213,8 @@ contract UserDataManager {
         address _addr = msg.sender;
         uint256 _pID = pIDxAddr_[_addr];
         require(_pID != 0, "player dont even have an account");
-        uint256 _totalNames = plyr_[_pID].names;
 
         games_[_gameID].receivePlayerInfo(_pID, _addr, plyr_[_pID].name, plyr_[_pID].laff);
-
-        // add list of all names
-        if (_totalNames > 1)
-            for (uint256 ii = 1; ii <= _totalNames; ii++)
-                games_[_gameID].receivePlayerNameList(_pID, plyrNameList_[_pID][ii]);
     }
 
     function addMeToAllGames()
@@ -238,27 +225,21 @@ contract UserDataManager {
         uint256 _pID = pIDxAddr_[_addr];
         require(_pID != 0, "player dont even have an account");
         uint256 _laff = plyr_[_pID].laff;
-        uint256 _totalNames = plyr_[_pID].names;
         bytes32 _name = plyr_[_pID].name;
 
         for (uint256 i = 1; i <= gID_; i++)
         {
             games_[i].receivePlayerInfo(_pID, _addr, _name, _laff);
-            if (_totalNames > 1)
-                for (uint256 ii = 1; ii <= _totalNames; ii++)
-                    games_[i].receivePlayerNameList(_pID, plyrNameList_[_pID][ii]);
         }
 
     }
 
-    function useMyOldName(string _nameString)
+    function changeMyName(string _nameString)
         isHuman()
         public
     {
         bytes32 _name = _nameString.nameFilter();
         uint256 _pID = pIDxAddr_[msg.sender];
-
-        require(plyrNames_[_pID][_name] == true, "thats not a name you own");
 
         plyr_[_pID].name = _name;
     }
@@ -266,30 +247,19 @@ contract UserDataManager {
     function registerNameCore(uint256 _pID, address _addr, uint256 _affID, bytes32 _name, bool _isNewPlayer, bool _all)
         private
     {
-        // if names already has been used, require that current msg sender owns the name
         if (pIDxName_[_name] != 0)
-            require(plyrNames_[_pID][_name] == true, "sorry that names already taken");
+            require(pIDxName_[_name] == _pID, "sorry that names already taken");
 
-        // add name to player profile, registry, and name book
         plyr_[_pID].name = _name;
         pIDxName_[_name] = _pID;
-        if (plyrNames_[_pID][_name] == false)
-        {
-            plyrNames_[_pID][_name] = true;
-            plyr_[_pID].names++;
-            plyrNameList_[_pID][plyr_[_pID].names] = _name;
-        }
 
-        // registration fee goes directly to community rewards
         admin.transfer(address(this).balance);
 
-        // push player info to games
         if (_all == true)
             for (uint256 i = 1; i <= gID_; i++)
                 games_[i].receivePlayerInfo(_pID, _addr, _name, _affID);
 
-        // fire event
-        emit onNewName(_pID, _addr, _name, _isNewPlayer, _affID, plyr_[_affID].addr, plyr_[_affID].name, msg.value, now);
+        emit onNewPlayer(_pID, _addr, _name, _isNewPlayer, _affID, plyr_[_affID].addr, plyr_[_affID].name, msg.value, now);
     }
 
     function determinePID(address _addr)
@@ -302,7 +272,6 @@ contract UserDataManager {
             pIDxAddr_[_addr] = pID_;
             plyr_[pID_].addr = _addr;
 
-            // set the new player bool to true
             return (true);
         } else {
             return (false);
@@ -324,7 +293,7 @@ contract UserDataManager {
     {
         return (plyr_[_pID].name);
     }
-    function getPlayerLAff(uint256 _pID)
+    function getPlayerLaff(uint256 _pID)
         external
         view
         returns (uint256)
@@ -351,25 +320,20 @@ contract UserDataManager {
         payable
         returns(bool, uint256)
     {
-        // make sure name fees paid
-        require (msg.value >= registrationFee_, "umm.....  you have to pay the name fee");
+        require (msg.value >= registrationFee_, "you have to pay the name fee");
 
-        // set up our tx event data and determine if player is new or not
         bool _isNewPlayer = determinePID(_addr);
 
-        // fetch player id
         uint256 _pID = pIDxAddr_[_addr];
 
         uint256 _affID = _affCode;
         if (_affID != 0 && _affID != plyr_[_pID].laff && _affID != _pID)
         {
-            // update last affiliate
             plyr_[_pID].laff = _affID;
         } else if (_affID == _pID) {
             _affID = 0;
         }
 
-        // register name
         registerNameCore(_pID, _addr, _affID, _name, _isNewPlayer, _all);
 
         return(_isNewPlayer, _affID);
@@ -380,32 +344,23 @@ contract UserDataManager {
         payable
         returns(bool, uint256)
     {
-        // make sure name fees paid
-        require (msg.value >= registrationFee_, "umm.....  you have to pay the name fee");
+        require (msg.value >= registrationFee_, "you have to pay the name fee");
 
-        // set up our tx event data and determine if player is new or not
         bool _isNewPlayer = determinePID(_addr);
 
-        // fetch player id
         uint256 _pID = pIDxAddr_[_addr];
 
-        // manage affiliate residuals
-        // if no affiliate code was given or player tried to use their own, lolz
         uint256 _affID;
         if (_affCode != address(0) && _affCode != _addr)
         {
-            // get affiliate ID from aff Code
             _affID = pIDxAddr_[_affCode];
 
-            // if affID is not the same as previously stored
             if (_affID != plyr_[_pID].laff)
             {
-                // update last affiliate
                 plyr_[_pID].laff = _affID;
             }
         }
 
-        // register name
         registerNameCore(_pID, _addr, _affID, _name, _isNewPlayer, _all);
 
         return(_isNewPlayer, _affID);
@@ -416,32 +371,23 @@ contract UserDataManager {
         payable
         returns(bool, uint256)
     {
-        // make sure name fees paid
-        require (msg.value >= registrationFee_, "umm.....  you have to pay the name fee");
+        require (msg.value >= registrationFee_, "you have to pay the name fee");
 
-        // set up our tx event data and determine if player is new or not
         bool _isNewPlayer = determinePID(_addr);
 
-        // fetch player id
         uint256 _pID = pIDxAddr_[_addr];
 
-        // manage affiliate residuals
-        // if no affiliate code was given or player tried to use their own, lolz
         uint256 _affID;
         if (_affCode != "" && _affCode != _name)
         {
-            // get affiliate ID from aff Code
             _affID = pIDxName_[_affCode];
 
-            // if affID is not the same as previously stored
             if (_affID != plyr_[_pID].laff)
             {
-                // update last affiliate
                 plyr_[_pID].laff = _affID;
             }
         }
 
-        // register name
         registerNameCore(_pID, _addr, _affID, _name, _isNewPlayer, _all);
 
         return(_isNewPlayer, _affID);
@@ -459,9 +405,6 @@ contract UserDataManager {
         games_[gID_] = UserDataManagerReceiverInterface(_gameAddress);
 
         games_[gID_].receivePlayerInfo(1, plyr_[1].addr, plyr_[1].name, 0);
-        games_[gID_].receivePlayerInfo(2, plyr_[2].addr, plyr_[2].name, 0);
-        games_[gID_].receivePlayerInfo(3, plyr_[3].addr, plyr_[3].name, 0);
-        games_[gID_].receivePlayerInfo(4, plyr_[4].addr, plyr_[4].name, 0);
     }
 
     function setRegistrationFee(uint256 _fee)
@@ -483,48 +426,36 @@ library NameFilter {
         bytes memory _temp = bytes(_input);
         uint256 _length = _temp.length;
 
-        //sorry limited to 32 characters
         require (_length <= 32 && _length > 0, "string must be between 1 and 32 characters");
-        // make sure it doesnt start with or end with space
         require(_temp[0] != 0x20 && _temp[_length-1] != 0x20, "string cannot start or end with space");
-        // make sure first two characters are not 0x
+
         if (_temp[0] == 0x30)
         {
             require(_temp[1] != 0x78, "string cannot start with 0x");
             require(_temp[1] != 0x58, "string cannot start with 0X");
         }
 
-        // create a bool to track if we have a non number character
         bool _hasNonNumber;
 
-        // convert & check
         for (uint256 i = 0; i < _length; i++)
         {
-            // if its uppercase A-Z
             if (_temp[i] > 0x40 && _temp[i] < 0x5b)
             {
-                // convert to lower case a-z
                 _temp[i] = byte(uint(_temp[i]) + 32);
 
-                // we have a non number
                 if (_hasNonNumber == false)
                     _hasNonNumber = true;
             } else {
                 require
                 (
-                    // require character is a space
                     _temp[i] == 0x20 ||
-                    // OR lowercase a-z
                     (_temp[i] > 0x60 && _temp[i] < 0x7b) ||
-                    // or 0-9
                     (_temp[i] > 0x2f && _temp[i] < 0x3a),
                     "string contains invalid characters"
                 );
-                // make sure theres not 2x spaces in a row
                 if (_temp[i] == 0x20)
                     require( _temp[i+1] != 0x20, "string cannot contain consecutive spaces");
 
-                // see if we have a character other than a number
                 if (_hasNonNumber == false && (_temp[i] < 0x30 || _temp[i] > 0x39))
                     _hasNonNumber = true;
             }
@@ -537,98 +468,5 @@ library NameFilter {
             _ret := mload(add(_temp, 32))
         }
         return (_ret);
-    }
-}
-
-library SafeMath {
-
-    /**
-    * @dev Multiplies two numbers, throws on overflow.
-    */
-    function mul(uint256 a, uint256 b)
-        internal
-        pure
-        returns (uint256 c)
-    {
-        if (a == 0) {
-            return 0;
-        }
-        c = a * b;
-        require(c / a == b, "SafeMath mul failed");
-        return c;
-    }
-
-    /**
-    * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-    */
-    function sub(uint256 a, uint256 b)
-        internal
-        pure
-        returns (uint256)
-    {
-        require(b <= a, "SafeMath sub failed");
-        return a - b;
-    }
-
-    /**
-    * @dev Adds two numbers, throws on overflow.
-    */
-    function add(uint256 a, uint256 b)
-        internal
-        pure
-        returns (uint256 c)
-    {
-        c = a + b;
-        require(c >= a, "SafeMath add failed");
-        return c;
-    }
-
-    /**
-     * @dev gives square root of given x.
-     */
-    function sqrt(uint256 x)
-        internal
-        pure
-        returns (uint256 y)
-    {
-        uint256 z = ((add(x,1)) / 2);
-        y = x;
-        while (z < y)
-        {
-            y = z;
-            z = ((add((x / z),z)) / 2);
-        }
-    }
-
-    /**
-     * @dev gives square. multiplies x by x
-     */
-    function sq(uint256 x)
-        internal
-        pure
-        returns (uint256)
-    {
-        return (mul(x,x));
-    }
-
-    /**
-     * @dev x to the power of y
-     */
-    function pwr(uint256 x, uint256 y)
-        internal
-        pure
-        returns (uint256)
-    {
-        if (x==0)
-            return (0);
-        else if (y==0)
-            return (1);
-        else
-        {
-            uint256 z = x;
-            for (uint256 i=1; i < y; i++)
-                z = mul(z,x);
-            return (z);
-        }
     }
 }
