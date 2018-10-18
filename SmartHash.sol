@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartHash at 0xb10ea0d397db942a1083a4af9c6074ab63bc8c8b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartHash at 0x1b084c5f157f6a9bf5ae67d86d962a4b152d356e
 */
-pragma solidity ^0.4.25;
+pragma solidity ^0.4.24;
 
 library SafeMath {
   function mul(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
