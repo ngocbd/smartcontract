@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MokenContractTransitionMinting at 0x741abdccf94d33a6eacc0ab1cc8b676b6feb9946
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MokenContractTransitionMinting at 0xd42ebd5a7dc1a2b1d74bbcbbbe57efe2d7ff7ac3
 */
 pragma solidity 0.4.24;
 pragma experimental "v0.5.0";
@@ -145,14 +145,15 @@ contract MokenContractTransitionMinting is Storage8 {
 
     function recreateMokens(address[] _tokenOwners, string _mokenNames, uint256 delimiter) public {
         require(msg.sender == contractOwner, "Must own Mokens contract.");
+        string memory mokenNames = string(_mokenNames);
         uint256 mokenNamesNum;
         uint256 namesEnd;
         uint256 pos;
         uint256 start;
         assembly {
-            pos := add(_mokenNames,32)
+            pos := add(mokenNames,32)
             start := pos
-            namesEnd := add(pos,mload(_mokenNames))
+            namesEnd := add(pos,mload(mokenNames))
         }
         uint256 num;
         uint256 char;
@@ -163,12 +164,12 @@ contract MokenContractTransitionMinting is Storage8 {
                 pos++;
                 start = pos;
                 assembly {
-                    mstore(_mokenNames,num)
+                    mstore(mokenNames,num)
                 }
-                mint(_tokenOwners[mokenNamesNum], _mokenNames);
+                mint(_tokenOwners[mokenNamesNum], mokenNames);
                 mokenNamesNum++;
                 assembly {
-                    _mokenNames := add(_mokenNames,add(num, 1))
+                    mokenNames := add(mokenNames,add(num, 1))
                 }
             }
         }
@@ -181,9 +182,6 @@ contract MokenContractTransitionMinting is Storage8 {
 
         uint256 tokenId = mokensLength++;
 
-        string memory lowerMokenName = validateAndLower(_mokenName);
-        require(tokenByName_[lowerMokenName] == 0, "Moken name already exists.");
-
         uint256 eraIndex_ = 0;
         uint256 ownedTokensIndex = ownedTokens[_tokenOwner].length;
 
@@ -194,7 +192,6 @@ contract MokenContractTransitionMinting is Storage8 {
         // create moken
         mokens[tokenId].name = _mokenName;
         mokens[tokenId].data = data;
-        tokenByName_[lowerMokenName] = tokenId + 1;
 
         //add moken to the specific owner
         ownedTokens[_tokenOwner].push(uint32(tokenId));
@@ -202,6 +199,9 @@ contract MokenContractTransitionMinting is Storage8 {
         //emit events
         emit Transfer(address(0), _tokenOwner, tokenId);
         emit Mint(this, _tokenOwner, eras[eraIndex_], _mokenName, bytes32(data), tokenId, "Ether", 0);
+        validateAndLower(_mokenName);
+        require(tokenByName_[_mokenName] == 0, "Moken name already exists.");
+        tokenByName_[_mokenName] = tokenId + 1;
     }
 
     function validateAndLower(string _s) internal pure returns (string mokenName) {
