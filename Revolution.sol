@@ -1,11 +1,20 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Revolution at 0x2e60cddf69ff99bee7e01e51b8b529dcd15c219a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Revolution at 0x5c5ddfe49572287c6Cb44b99C5daec0DBD7B84F5
 */
-pragma solidity ^0.4.25;
+pragma solidity ^0.4.23;
 
 /**
-
-*  - GAIN 3,33% PER 24 HOURS (every 5900 blocks)
+*
+* ETH CRYPTOCURRENCY DISTRIBUTION PROJECT
+* Web              - https://222eth.io
+* Twitter          - https://twitter.com/222eth_io
+* Telegram_channel - https://t.me/Ethereum222
+* EN  Telegram_chat: https://t.me/Ethereum222_chat_en
+* RU  Telegram_chat: https://t.me/Ethereum222_chat_ru
+* KOR Telegram_chat: https://t.me/Ethereum222_chat_kor
+* Email:             mailto:support(at sign)222eth.io
+* 
+*  - GAIN 2,22% PER 24 HOURS (every 5900 blocks)
 *  - Life-long payments
 *  - The revolutionary reliability
 *  - Minimal contribution 0.01 eth
@@ -23,7 +32,7 @@ pragma solidity ^0.4.25;
 *  system's permanent autonomous functioning.
 * 
 * ---How to use:
-*  1. Send from ETH wallet to the smart contract address 
+*  1. Send from ETH wallet to the smart contract address 0x5c5ddfe49572287c6Cb44b99C5daec0DBD7B84F5
 *     any amount from 0.01 ETH.
 *  2. Verify your transaction in the history of your application or etherscan.io, specifying the address 
 *     of your wallet.
@@ -335,10 +344,10 @@ contract Revolution is Accessibility, PaymentSystem {
   uint public constant pauseOnNextWave = 168 hours; 
 
   // percents 
-  Percent.percent private m_dividendsPercent = Percent.percent(333, 10000); // 333/10000*100% = 3.33%
+  Percent.percent private m_dividendsPercent = Percent.percent(222, 10000); // 222/10000*100% = 2.22%
   Percent.percent private m_adminPercent = Percent.percent(1, 10); // 1/10*100% = 10%
   Percent.percent private m_payerPercent = Percent.percent(7, 100); // 7/100*100% = 7%
-  Percent.percent private m_refPercent = Percent.percent(3, 100); // 3/100*100% = 3%
+  Percent.percent private m_refPercent = Percent.percent(2, 100); // 2/100*100% = 2%
 
   // more events for easy read from blockchain
   event LogNewInvestor(address indexed addr, uint when, uint value);
@@ -454,7 +463,7 @@ contract Revolution is Accessibility, PaymentSystem {
     }
   }
 
-  function doInvest(address[3] refs) public payable notOnPause balanceChanged {
+  function doInvest(address[3] refs) private notOnPause balanceChanged {
     require(msg.value >= minInvesment, "msg.value must be >= minInvesment");
     require(address(this).balance <= maxBalance, "the contract eth balance limit");
 
