@@ -1,7 +1,38 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BTCUToken at 0xd1ffffc5726b1d68fcded06d2c2077630fcff2fa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BTCUToken at 0x9809aa71a0876fd0b17792580a027849fe25c6b6
 */
-pragma solidity ^0.4.8;
+pragma solidity ^0.4.11;
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+ 
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+ 
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+ 
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
 contract Token{
     uint256 public totalSupply;
     function balanceOf(address _owner) constant returns (uint256 balance);
@@ -19,11 +50,14 @@ contract Token{
 }
 
 contract StandardToken is Token {
+    
+    using SafeMath for uint256;
+
     function transfer(address _to, uint256 _value) returns (bool success) {
        
         require(balances[msg.sender] >= _value);
-        balances[msg.sender] -= _value;
-        balances[_to] += _value;
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
         Transfer(msg.sender, _to, _value);
         return true;
     }
@@ -34,9 +68,9 @@ contract StandardToken is Token {
         //require(balances[_from] >= _value && allowed[_from][msg.sender] >= 
         // _value && balances[_to] + _value > balances[_to]);
         require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value);
-        balances[_to] += _value;
-        balances[_from] -= _value; 
-        allowed[_from][msg.sender] -= _value;
+        balances[_to] = balances[_to].add(_value);
+        balances[_from] = balances[_from].sub(_value); 
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
         Transfer(_from, _to, _value);
         return true;
     }
@@ -61,7 +95,8 @@ contract StandardToken is Token {
 }
 
 contract BTCUToken is StandardToken { 
-
+     
+    using SafeMath for uint256;
     /* Public variables of the token */
     string public name;                   
     uint8 public decimals;              
