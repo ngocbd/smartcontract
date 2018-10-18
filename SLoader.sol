@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SLoader at 0x51d0cfa6fc1be1df18cd4ea38c6e45751908c356
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SLoader at 0x6b600bc4cedf9e9845b85d9195e7470e88999b18
 */
 pragma solidity 0.4.25;
 
@@ -14,13 +14,4 @@ contract SLoader {
   function registerPackage(bytes32 checksum, string uri) public {
     packages[msg.sender] = Package(checksum, uri);
   }
-
-  function checksum(address sl_dapp) constant public returns (bytes32) {
-    return packages[sl_dapp].checksum;
-  }
-
-  function uri(address sl_dapp) constant public returns (string) {
-    return packages[sl_dapp].uri;
-  }
-
 }
