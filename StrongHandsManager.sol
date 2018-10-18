@@ -1,78 +1,52 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StrongHandsManager at 0x69c127731fcaeb5c2f9c0841f64714ad15799298
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StrongHandsManager at 0x30f62e973aabb614fb3a6c042b531fd0d569a810
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.25;
 
 interface HourglassInterface {
     function buy(address _playerAddress) payable external returns(uint256);
+    function sell(uint256 _amountOfTokens) external;
+    function reinvest() external;
     function withdraw() external;
-}
-
-interface StrongHandsManagerInterface {
-    function mint(address _owner, uint256 _amount) external;
+    function transfer(address _toAddress, uint256 _amountOfTokens) external returns(bool);
+    function balanceOf(address _customerAddress) view external returns(uint256);
+    function myDividends(bool _includeReferralBonus) external view returns(uint256);
 }
 
 contract StrongHandsManager {
     
     event CreateStrongHand(address indexed owner, address indexed strongHand);
-    event MintToken(address indexed owner, uint256 indexed amount);
     
     mapping (address => address) public strongHands;
-    mapping (address => uint256) public ownerToBalance;
-    
-    //ERC20
-    string public constant name = "Stronghands3D";
-    string public constant symbol = "S3D";
-    uint8 public constant decimals = 18;
-    
-    uint256 internal tokenSupply = 0;
 
-    function getStrong(address _referrer)
+    function create(uint256 _unlockAfterNDays)
         public
-        payable
     {
-        require(strongHands[msg.sender] == address(0), "you already became a Stronghand");
+        address owner = msg.sender;
         
-        strongHands[msg.sender] = (new StrongHand).value(msg.value)(msg.sender, _referrer);
+        require(strongHands[owner] == address(0), "you already became a Stronghand");
         
-        emit CreateStrongHand(msg.sender, strongHands[msg.sender]);
-    }
-    
-    function mint(address _owner, uint256 _amount)
-        external
-    {
-        require(strongHands[_owner] == msg.sender);
+        strongHands[owner] = new StrongHand(msg.sender, _unlockAfterNDays);
         
-        tokenSupply+= _amount;
-        ownerToBalance[_owner]+= _amount;
-        
-        emit MintToken(_owner, _amount);
-    }
-    
-    //ERC20
-    function totalSupply()
-        public
-        view
-        returns (uint256)
-    {
-       return tokenSupply;
-    }
-    
-    function balanceOf(address _owner)
-        public
-        view
-        returns (uint256)
-    {
-        return ownerToBalance[_owner];
+        emit CreateStrongHand(owner, strongHands[owner]);
     }
 }
 
 contract StrongHand {
 
     HourglassInterface constant p3dContract = HourglassInterface(0xB3775fB83F7D12A36E0475aBdD1FCA35c091efBe);
-    StrongHandsManagerInterface strongHandManager;
     
     address public owner;
+    
+    uint256 public creationDate;
+    
+    uint256 public unlockAfterNDays;
+    
+    modifier timeLocked()
+    {
+        require(now >= creationDate + unlockAfterNDays * 1 days);
+        _;
+    }
     
     modifier onlyOwner()
     {
@@ -80,31 +54,46 @@ contract StrongHand {
         _;
     }
     
-    constructor(address _owner, address _referrer)
+    constructor(address _owner, uint256 _unlockAfterNDays)
         public
-        payable
     {
         owner = _owner;
-        strongHandManager = StrongHandsManagerInterface(msg.sender);
+        unlockAfterNDays =_unlockAfterNDays;
         
-        purchase(msg.value, _referrer);
+        creationDate = now;
     }
     
     function() public payable {}
-   
-    function buy(address _referrer)
+    
+    function balanceOf()
+        external
+        view
+        returns(uint256)
+    {
+        return p3dContract.balanceOf(address(this));
+    }
+    
+    function dividendsOf()
+        external
+        view
+        returns(uint256)
+    {
+        return p3dContract.myDividends(true);
+    }
+    
+    function buy()
         external
         payable
         onlyOwner
     {
-        purchase(msg.value, _referrer);
+        p3dContract.buy.value(msg.value)(0x1EB2acB92624DA2e601EEb77e2508b32E49012ef);
     }
     
-    function purchase(uint256 _amount, address _referrer)
-        private
+    function reinvest()
+        external
+        onlyOwner
     {
-        uint256 amountPurchased = p3dContract.buy.value(_amount)(_referrer);
-        strongHandManager.mint(owner, amountPurchased);
+        p3dContract.reinvest();
     }
 
     function withdraw()
@@ -112,6 +101,26 @@ contract StrongHand {
         onlyOwner
     {
         p3dContract.withdraw();
+        
         owner.transfer(address(this).balance);
+    }
+    
+    function sell(uint256 _amount)
+        external
+        timeLocked
+        onlyOwner
+    {
+        p3dContract.sell(_amount);
+        
+        owner.transfer(address(this).balance);
+    }
+    
+    function transfer(address _toAddress, uint256 _amountOfTokens)
+        external
+        timeLocked
+        onlyOwner
+        returns(bool)
+    {
+        return p3dContract.transfer(_toAddress, _amountOfTokens);
     }
 }
