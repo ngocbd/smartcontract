@@ -1,12 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MokenUpdates at 0xb0a8c83f3df65c755561bdea50674dc5cf9db32a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MokenUpdates at 0x9ff18ed77eab4117b2a25ac21c375d9e88cf9a2f
 */
 pragma solidity 0.4.24;
 pragma experimental "v0.5.0";
-
 /******************************************************************************\
-* Author: Nick Mudge, <nick@mokens.io>
-*
+* Author: Nick Mudge, nick@mokens.io
+* Copyright (c) 2018
+* Mokens
+* 
 * The MokenUpdates contract adds/updates/removes functions.
 *
 * Function changes emit the ContractUpdated event.
@@ -16,7 +17,6 @@ pragma experimental "v0.5.0";
 * Functions and delegate contracts can be queried by using functions from the
 * QueryMokenDelegates contract.
 /******************************************************************************/
-
 ///////////////////////////////////////////////////////////////////////////////////
 //Storage contracts
 ////////////
@@ -37,110 +37,137 @@ contract Storage0 {
 ///////////////////////////////////////////////////////////////////////////////////
 contract Storage1 is Storage0 {
     address internal contractOwner;
-    string[] internal functionSignatures;
+    bytes[] internal functionSignatures;
     // signature => index+1
-    mapping(string => uint256) internal functionSignatureToIndex;
+    mapping(bytes => uint256) internal functionSignatureToIndex;
 }
 
 contract MokenUpdates is Storage1 {
 
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-    event ContractUpdated(bytes32 indexed indexedFunctionSignature, address indexed delegate, bytes32 indexed updateType, string functionSignature);
+    event ContractUpdated(bytes4 indexed functionId, address indexed delegate, bytes32 indexed updateType, string functionSignature);
 
-    function initializeMokensContract(address contractManagement) external {
+    function initializeMokensContract(address _mokenUpdates) external {
         require(contractOwner == address(0), "Contract owner has been set.");
         contractOwner = msg.sender;
         emit OwnershipTransferred(address(0), msg.sender);
-        updateContract(1 /* addFunctions */, contractManagement, "executeDelegate(address,bytes)addFunctions(address,string)updateFunctions(address,string)removeFunctions(string)");
+        /////////////////////////////////////////
+        //adding functions to Mokens contract
+        /////////////////////////////////////////
+        bytes memory signature;
+        bytes4 funcId;
+        bytes[] memory signatures = new bytes[](3);
+        signatures[0] = "addFunctions(address,string)";
+        signatures[1] = "updateFunctions(address,string)";
+        signatures[2] = "removeFunctions(string)";
+        for(uint256 i = 0; i < signatures.length; i++) {
+            signature = signatures[i];
+            funcId = bytes4(keccak256(signature));
+            delegates[funcId] = _mokenUpdates;
+            functionSignatures.push(signature);
+            functionSignatureToIndex[signature] = functionSignatures.length;
+            emit ContractUpdated(funcId, _mokenUpdates, "new", string(signature));
+        }
     }
 
-    function updateContract(uint256 _updateType, address _delegate, string signatures) internal {
+    function addFunctions(address _delegate, string _functionSignatures) external {
         require(msg.sender == contractOwner, "Must own Mokens contract.");
         require(_delegate != address(0), "delegate can't be zero address.");
-        bytes memory signaturesBytes = bytes(signatures);
-        bytes memory signatureBytes;
-        string memory signature;
+        bytes memory signatures = bytes(_functionSignatures);
+        bytes memory signature;
         bytes4 funcId;
-        uint256 length = signaturesBytes.length;
         uint256 pos = 2;
-        uint256 start = 0;
+        uint256 start;
         uint256 num;
-        uint256 index;
-        uint256 lastIndex;
-        bytes32 signatureHash;
-        for (; pos < length; pos++) {
+        for (; pos < signatures.length; pos++) {
             // 0x29 == )
-            if (signaturesBytes[pos] == 0x29) {
+            if (signatures[pos] == 0x29) {
                 num = (pos - start) + 1;
-                signatureBytes = new bytes(num);
-                for (uint i = 0; i < num; i++) {
-                    signatureBytes[i] = signaturesBytes[start + i];
+                signature = new bytes(num);
+                for (uint256 i = 0; i < num; i++) {
+                    signature[i] = signatures[start + i];
                 }
                 start = pos + 1;
-                signature = string(signatureBytes);
-                signatureHash = keccak256(signatureBytes);
-                funcId = bytes4(signatureHash);
-                if (_updateType == 1) {
-                    require(functionSignatureToIndex[signature] == 0, "Function already exists.");
+                funcId = bytes4(keccak256(signature));
+                require(functionSignatureToIndex[signature] == 0, "Function already exists.");
+                require(delegates[funcId] == address(0), "FuncId clash.");
+                delegates[funcId] = _delegate;
+                functionSignatures.push(signature);
+                functionSignatureToIndex[signature] = functionSignatures.length;
+                emit ContractUpdated(funcId, _delegate, "new", string(signature));
+            }
+        }
+    }
+
+    function updateFunctions(address _delegate, string _functionSignatures) external {
+        require(msg.sender == contractOwner, "Must own Mokens contract.");
+        require(_delegate != address(0), "delegate can't be zero address.");
+        bytes memory signatures = bytes(_functionSignatures);
+        bytes memory signature;
+        bytes4 funcId;
+        uint256 pos = 2;
+        uint256 start;
+        uint256 num;
+        for (; pos < signatures.length; pos++) {
+            // 0x29 == )
+            if (signatures[pos] == 0x29) {
+                num = (pos - start) + 1;
+                signature = new bytes(num);
+                for (uint256 i = 0; i < num; i++) {
+                    signature[i] = signatures[start + i];
+                }
+                start = pos + 1;
+                funcId = bytes4(keccak256(signature));
+                if (functionSignatureToIndex[signature] == 0) {
                     require(delegates[funcId] == address(0), "FuncId clash.");
                     delegates[funcId] = _delegate;
                     functionSignatures.push(signature);
                     functionSignatureToIndex[signature] = functionSignatures.length;
-                    emit ContractUpdated(signatureHash, _delegate, "new", signature);
+                    emit ContractUpdated(funcId, _delegate, "new", string(signature));
                 }
-                else if (_updateType == 2) {
-                    index = functionSignatureToIndex[signature];
-                    if (index == 0) {
-                        require(delegates[funcId] == address(0), "FuncId clash.");
-                        delegates[funcId] = _delegate;
-                        emit ContractUpdated(signatureHash, _delegate, "new", signature);
-                    }
-                    else if (delegates[funcId] != _delegate) {
-                        delegates[funcId] = _delegate;
-                        emit ContractUpdated(signatureHash, _delegate, "updated", signature);
-                    }
-                }
-                else if (_updateType == 3) {
-                    index = functionSignatureToIndex[signature];
-                    require(index != 0, "Function does not exist.");
-                    index--;
-                    lastIndex = functionSignatures.length - 1;
-                    if (index != lastIndex) {
-                        functionSignatures[index] = functionSignatures[lastIndex];
-                        functionSignatureToIndex[functionSignatures[lastIndex]] = index + 1;
-                    }
-                    functionSignatures.length--;
-                    delete functionSignatureToIndex[signature];
-                    _delegate = delegates[funcId];
-                    delete delegates[funcId];
-                    emit ContractUpdated(signatureHash, _delegate, "removed", signature);
+                else if (delegates[funcId] != _delegate) {
+                    delegates[funcId] = _delegate;
+                    emit ContractUpdated(funcId, _delegate, "updated", string(signature));
                 }
             }
         }
     }
 
-    function addFunctions(address _delegate, string signatures) external {
-        updateContract(1, _delegate, signatures);
-    }
-
-    function updateFunctions(address _delegate, string signatures) external {
-        updateContract(2, _delegate, signatures);
-    }
-
-    function removeFunctions(string signatures) external {
-        updateContract(3, address(1), signatures);
-    }
-
-    function executeDelegate(address _delegate, bytes _functionCall) external {
+    function removeFunctions(string _functionSignatures) external {
         require(msg.sender == contractOwner, "Must own Mokens contract.");
-        bytes memory functionCall = _functionCall;
-        assembly {
-            let callSuccess := delegatecall(gas, _delegate, add(functionCall, 0x20), mload(functionCall), 0, 0)
-            let size := returndatasize
-            returndatacopy(functionCall, 0, size)
-            switch callSuccess
-            case 0 {revert(functionCall, size)}
-            default {return (functionCall, size)}
+        address delegate;
+        bytes memory signatures = bytes(_functionSignatures);
+        bytes memory signature;
+        bytes4 funcId;
+        uint256 pos = 2;
+        uint256 start;
+        uint256 num;
+        uint256 index;
+        uint256 lastIndex;
+        for (; pos < signatures.length; pos++) {
+            // 0x29 == )
+            if (signatures[pos] == 0x29) {
+                num = (pos - start) + 1;
+                signature = new bytes(num);
+                for (uint256 i = 0; i < num; i++) {
+                    signature[i] = signatures[start + i];
+                }
+                start = pos + 1;
+                funcId = bytes4(keccak256(signature));
+                index = functionSignatureToIndex[signature];
+                require(index != 0, "Function does not exist.");
+                index--;
+                lastIndex = functionSignatures.length - 1;
+                if (index != lastIndex) {
+                    functionSignatures[index] = functionSignatures[lastIndex];
+                    functionSignatureToIndex[functionSignatures[lastIndex]] = index + 1;
+                }
+                functionSignatures.length--;
+                delete functionSignatureToIndex[signature];
+                delegate = delegates[funcId];
+                delete delegates[funcId];
+                emit ContractUpdated(funcId, delegate, "removed", string(signature));
+            }
         }
     }
 }
