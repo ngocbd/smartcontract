@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Status at 0x06A146aaB1b0E2750AFc1Bc70AB3076abbF16c11
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Status at 0x72524ad9066817e021a3f36cb53090a521d403b4
 */
 pragma solidity ^0.4.24;
 
@@ -73,10 +73,10 @@ contract SnowflakeResolver is Ownable {
 }
 
 
-contract Snowflake {
+interface Snowflake {
     function whitelistResolver(address resolver) external;
-    function withdrawFrom(string hydroIdFrom, address to, uint amount) public returns (bool);
-    function getHydroId(address _address) public view returns (string hydroId);
+    function withdrawSnowflakeBalanceFrom(string hydroIdFrom, address to, uint amount) external;
+    function getHydroId(address _address) external returns (string hydroId);
 }
 
 
@@ -99,9 +99,9 @@ contract Status is SnowflakeResolver {
 
     // implement signup function
     function onSignUp(string hydroId, uint allowance) public senderIsSnowflake() returns (bool) {
-        require(allowance >= signUpFee, "Must set an allowance of at least 1.");
+        require(allowance >= signUpFee, "Must set an allowance of at least 1 HYDRO.");
         Snowflake snowflake = Snowflake(snowflakeAddress);
-        snowflake.withdrawFrom(hydroId, owner, signUpFee);
+        snowflake.withdrawSnowflakeBalanceFrom(hydroId, owner, signUpFee);
         statuses[hydroId] = firstStatus;
         emit StatusUpdated(hydroId, firstStatus);
         return true;
