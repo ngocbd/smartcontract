@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AdvanceToken at 0x59335080522fa941bcbdb6e15a6f2ee5a455dc5a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AdvanceToken at 0x4c0c2052dfdb2d0932644f7b2d4bea509678b9d9
 */
 pragma solidity ^0.4.21;
 
@@ -192,8 +192,8 @@ contract BaseToken is Pausable{
 /*       ADVANCED TOKEN STARTS HERE       */
 /******************************************/
 contract AdvanceToken is BaseToken {
-    string tokenName        = "8ENCORE";       // Set the name for display purposes
-    string tokenSymbol      = "8EN";           // Set the symbol for display purposes
+    string tokenName        = "9ENCORE";       // Set the name for display purposes
+    string tokenSymbol      = "9EN";           // Set the symbol for display purposes
 
     struct frozenStruct {        
         uint startTime;
