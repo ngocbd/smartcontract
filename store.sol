@@ -1,38 +1,158 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Store at 0xd6ec04c0f9587cb822c315f662954af8c2174d66
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Store at 0x9fa3e4ccc3b452617d8ddb79c20f837f399ed129
 */
-pragma solidity ^0.4.2;
+pragma solidity ^0.4.23;
 
-contract Store {
-    address[] owners;
-    mapping(address => uint) ownerBalances;
+// Ownable contract with CFO
+contract Ownable {
+    address public owner;
+    address public cfoAddress;
 
-    function Store(address[] _owners) {
-        owners = _owners;
+    constructor() public{
+        owner = msg.sender;
+        cfoAddress = msg.sender;
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
     }
     
-    function deposit() payable {
-        uint ownerShare = msg.value / owners.length;
-        ownerBalances[owners[0]] += msg.value % owners.length;
+    modifier onlyCFO() {
+        require(msg.sender == cfoAddress);
+        _;
+    }
+
+    function transferOwnership(address newOwner) external onlyOwner {
+        if (newOwner != address(0)) {
+            owner = newOwner;
+        }
+    }
+    
+    function setCFO(address newCFO) external onlyOwner {
+        require(newCFO != address(0));
+
+        cfoAddress = newCFO;
+    }
+}
+
+// Pausable contract which allows children to implement an emergency stop mechanism.
+contract Pausable is Ownable {
+    event Pause();
+    event Unpause();
+
+    bool public paused = false;
+
+    // Modifier to make a function callable only when the contract is not paused.
+    modifier whenNotPaused() {
+        require(!paused);
+        _;
+    }
+
+    // Modifier to make a function callable only when the contract is paused.
+    modifier whenPaused() {
+        require(paused);
+        _;
+    }
+
+
+    // called by the owner to pause, triggers stopped state
+    function pause() onlyOwner whenNotPaused public {
+        paused = true;
+        emit Pause();
+    }
+
+    // called by the owner to unpause, returns to normal state
+    function unpause() onlyOwner whenPaused public {
+        paused = false;
+        emit Unpause();
+    }
+}
+
+// interface for presale contract
+contract ParentInterface {
+    function transfer(address _to, uint256 _tokenId) external;
+    function recommendedPrice(uint16 quality) public pure returns(uint256 price);
+    function getPet(uint256 _id) external view returns (uint64 birthTime, uint256 genes,uint64 breedTimeout,uint16 quality,address owner);
+}
+contract JackpotInterface {
+    function addPlayer(address player) external;
+    function finished() public returns (bool);
+}
+
+contract AccessControl is Pausable {
+    ParentInterface public parent;
+    JackpotInterface public jackpot;
+    
+    function setParentAddress(address _address) public whenPaused onlyOwner
+    {
+        parent = ParentInterface(_address);
+    }
+    
+    function setJackpotAddress(address _address) public whenPaused onlyOwner
+    {
+        jackpot = JackpotInterface(_address);
+    }
+}
+
+// setting a special price
+contract Discount is AccessControl {
+    uint128[101] public discount;
+    
+    function setPrice(uint8 _tokenId, uint128 _price) external onlyOwner {
+        discount[_tokenId] = _price;
+    }
+}
+
+contract StoreLimit is AccessControl {
+	uint8 public saleLimit = 10;
+	
+	function setSaleLimit(uint8 _limit) external onlyOwner {
+		saleLimit = _limit;
+	}
+}
+
+contract Store is Discount, StoreLimit {
+
+    constructor(address _presaleAddr) public {
+        parent = ParentInterface(_presaleAddr);
+        paused = true;
+    }
+    
+	// purchasing a parrot
+    function purchaseParrot(uint256 _tokenId) external payable whenNotPaused
+    {
+		require(_tokenId <= saleLimit);
+		
+        uint64 birthTime; uint256 genes; uint64 breedTimeout; uint16 quality; address parrot_owner;
+        (birthTime,  genes, breedTimeout, quality, parrot_owner) = parent.getPet(_tokenId);
         
-        for (uint i = 0; i < owners.length; i++) {
-            ownerBalances[owners[i]] += ownerShare;
+        require(parrot_owner == address(this));
+        
+        if(discount[_tokenId] == 0)
+            require(parent.recommendedPrice(quality) <= msg.value);
+        else
+            require(discount[_tokenId] <= msg.value);
+        
+        parent.transfer(msg.sender, _tokenId);
+        
+        if(!jackpot.finished()) {
+            jackpot.addPlayer(msg.sender);
+            address(jackpot).transfer(msg.value / 2);
         }
     }
     
-    function payout() returns (uint) {
-        uint amount = ownerBalances[msg.sender];
-        ownerBalances[msg.sender] = 0;
+    function unpause() public onlyOwner whenPaused {
+		require(address(jackpot) != address(0));
 
-        if (msg.sender.send(amount)) {
-            return amount;
-        } else {
-            ownerBalances[msg.sender] = amount;
-            return 0;
-        }
+        super.unpause();
+    }
+    
+    function gift(uint256 _tokenId, address to) external onlyOwner{
+        parent.transfer(to, _tokenId);
     }
 
-    
-    
-    
+    function withdrawBalance(uint256 summ) external onlyCFO {
+        cfoAddress.transfer(summ);
+    }
 }
