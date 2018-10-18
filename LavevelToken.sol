@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LavevelToken at 0x9aed67c464d5843a2fde16249132ec8f0972f800
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LavevelToken at 0x5De4Cb6642F2727A09734769A954c2ec740fA414
 */
 pragma solidity ^0.4.23;
 
@@ -58,7 +58,7 @@ contract Ownable {
     address public owner;
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-    /**
+/**
      * @dev The Ownable constructor sets the original `owner` of the contract to the sender account.
      **/
    constructor() public {
@@ -232,7 +232,6 @@ contract StandardToken is ERC20, BasicToken {
     }
 }
 
-
 /**
  * @title Configurable
  * @dev Configurable varriables of the contract
@@ -306,18 +305,16 @@ contract CrowdsaleToken is StandardToken, Configurable, Ownable {
         totalSupply_ = totalSupply_.add(tokens);
         owner.transfer(weiAmount);// Send money to owner
     }
-    
 
-    /**
+/**
      * @dev startIco starts the public ICO
      **/
     function startIco() public onlyOwner {
         require(currentStage != Stages.icoEnd);
         currentStage = Stages.icoStart;
     }
-    
 
-    /**
+/**
      * @dev endIco closes down the ICO 
      **/
     function endIco() internal {
@@ -329,7 +326,7 @@ contract CrowdsaleToken is StandardToken, Configurable, Ownable {
         owner.transfer(address(this).balance); 
     }
 
-    /**
+/**
      * @dev finalizeIco closes down the ICO and sets needed varriables
      **/
     function finalizeIco() public onlyOwner {
@@ -341,10 +338,10 @@ contract CrowdsaleToken is StandardToken, Configurable, Ownable {
 
 /**
  * @title LavevelToken 
- * @dev Contract to create the Lavevel Token
+ * @dev Contract to create the Kimera Token
  **/
 contract LavevelToken is CrowdsaleToken {
-    string public constant name = "Lavavel";
-    string public constant symbol = "LVL";
+    string public constant name = "Navdeep";
+    string public constant symbol = "NAV";
     uint32 public constant decimals = 18;
 }
