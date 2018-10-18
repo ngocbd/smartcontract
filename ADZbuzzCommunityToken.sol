@@ -1,14 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ADZbuzzCommunityToken at 0xf85aed453e42cadf40e224551b6d3bfdf0b4e16e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ADZbuzzCommunityToken at 0xc1e5a797b0b9edc5a8cdfb00d39729e227e3c319
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
-// 'ACT112598' token contract
+// 'ACT300693' token contract
 //
 // Deployed to : 0x3f70c0B02879c36162C2C902ECfe9Ac0a8a8a187
-// Symbol      : ACT112598
-// Name        : ADZbuzz Cinemablend.com Community Token
+// Symbol      : ACT300693
+// Name        : ADZbuzz Chinadigitaltimes.net Community Token
 // Total supply: 2000000
 // Decimals    : 8
 //
@@ -117,8 +117,8 @@ contract ADZbuzzCommunityToken is ERC20Interface, Owned, SafeMath {
     // Constructor
     // ------------------------------------------------------------------------
     function ADZbuzzCommunityToken() public {
-        symbol = "ACT112598";
-        name = "ADZbuzz Cinemablend.com Community Token";
+        symbol = "ACT300693";
+        name = "ADZbuzz Chinadigitaltimes.net Community Token";
         decimals = 8;
         _totalSupply = 200000000000000;
         balances[0x3f70c0B02879c36162C2C902ECfe9Ac0a8a8a187] = _totalSupply;
