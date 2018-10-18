@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Whitelist at 0x07f09926167cb5f42ec8fbe49f2bf80fadb34c5a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Whitelist at 0xc0b11003708f9d8896c7676fd129188041b7f60b
 */
-pragma solidity 0.4.21;
+pragma solidity ^0.4.25;
 
 /**
  * @title Ownable
@@ -11,18 +11,15 @@ pragma solidity 0.4.21;
 contract Ownable {
     address public owner;
 
-
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
 
     /**
      * @dev The Ownable constructor sets the original `owner` of the contract to the sender
      * account.
      */
-    function Ownable() public {
+    constructor() public {
         owner = msg.sender;
     }
-
 
     /**
      * @dev Throws if called by any account other than the owner.
@@ -32,39 +29,108 @@ contract Ownable {
         _;
     }
 
-
     /**
      * @dev Allows the current owner to transfer control of the contract to a newOwner.
-     * @param newOwner The address to transfer ownership to.
+     * @param _newOwner The address to transfer ownership to.
      */
-    function transferOwnership(address newOwner) public onlyOwner {
-        require(newOwner != address(0));
-        emit OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
+    function transferOwnership(address _newOwner) public onlyOwner {
+        require(_newOwner != address(0));
+        emit OwnershipTransferred(owner, _newOwner);
+        owner = _newOwner;
     }
-
 }
 
 contract Whitelist is Ownable {
-    mapping(address => bool) public allowedAddresses;
 
-    event WhitelistUpdated(uint256 timestamp, string operation, address indexed member);
+  address public opsAddress;
+  mapping(address => uint8) public whitelist;
 
-    function addToWhitelist(address[] _addresses) public onlyOwner {
-        for (uint256 i = 0; i < _addresses.length; i++) {
-            allowedAddresses[_addresses[i]] = true;
-            emit WhitelistUpdated(now, "Added", _addresses[i]);
-        }
-    }
+  event WhitelistUpdated(address indexed _account, uint8 _phase);
 
-    function removeFromWhitelist(address[] _addresses) public onlyOwner {
-        for (uint256 i = 0; i < _addresses.length; i++) {
-            allowedAddresses[_addresses[i]] = false;
-            emit WhitelistUpdated(now, "Removed", _addresses[i]);
-        }
-    }
+  function isWhitelisted(address _account) public constant returns (bool) {
+      return whitelist[_account] == 1;
+  }
 
-    function isWhitelisted(address _address) public view returns (bool) {
-        return allowedAddresses[_address];
-    }
+  /**
+ *  @notice function to whitelist an address which can be called only by the ops address.
+ *
+ *  @param _account account address to be whitelisted
+ *  @param _phase 0: unwhitelisted, 1: whitelisted
+
+ *
+ *  @return bool address is successfully whitelisted/unwhitelisted.
+ */
+function updateWhitelist(
+    address _account,
+    uint8 _phase) public
+    returns (bool)
+{
+    require(_account != address(0));
+    require(_phase <= 1);
+    require(isOps(msg.sender));
+
+    whitelist[_account] = _phase;
+
+    emit WhitelistUpdated(_account, _phase);
+
+    return true;
+}
+
+
+  /** Internal Functions */
+  /**
+   *  @notice checks If the sender is the owner of the contract.
+   *
+   *  @param _address address to be checked if valid owner or not.
+   *
+   *  @return bool valid owner or not.
+   */
+  function isOwner(
+      address _address)
+      internal
+      view
+      returns (bool)
+  {
+      return (_address == owner);
+  }
+  /**
+   *  @notice check If the sender is the ops address.
+   *
+   *  @param _address address to be checked for ops.
+   *
+   *  @return bool valid ops or not.
+   */
+  function isOps(
+      address _address)
+      internal
+      view
+      returns (bool)
+  {
+      return (opsAddress != address(0) && _address == opsAddress) || isOwner(_address);
+  }
+
+  /** External Functions */
+
+  /**
+   *  @notice Owner can change the verified operator address.
+   *
+   *  @param _opsAddress address to be set as ops.
+   *
+   *  @return bool address is successfully set as ops or not.
+   */
+  function setOpsAddress(
+      address _opsAddress)
+      external
+      onlyOwner
+      returns (bool)
+  {
+      require(_opsAddress != owner);
+      require(_opsAddress != address(this));
+      require(_opsAddress != address(0));
+
+      opsAddress = _opsAddress;
+
+      return true;
+  }
+
 }
