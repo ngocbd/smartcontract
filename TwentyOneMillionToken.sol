@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TwentyOneMillionToken at 0x1e05efba2fd19cc48a123a9e38afa6a9ffc18f41
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TwentyOneMillionToken at 0xda73ccb79cc17f59656167ab8867b144dd98ec74
 */
 pragma solidity ^0.4.18;
 
@@ -288,7 +288,7 @@ contract PausableToken is StandardToken, Pausable {
 
 
 contract TwentyOneMillionToken is PausableToken {
-    string  public  constant name = "TwentyOneMillion";
+    string  public  constant name = "Twenty One Million";
     string  public  constant symbol = "TOM";
     uint8   public  constant decimals = 8;
 
