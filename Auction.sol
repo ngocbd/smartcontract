@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Auction at 0x3395465cb04b8ebd2ae2647cf37bcb2384d71d49
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Auction at 0x5b566b473bb0ea8dc0fc6047dd623e5fa3b42307
 */
 pragma solidity ^0.4.18;
 
@@ -105,8 +105,8 @@ contract Base {
 
 contract Beneficial is Base {            
 
-    function Beneficial() public {
-    }
+    //function Beneficial() public {
+    //}
 
     address public shareholder;                
     bool public shareholderIsToken = false;     
@@ -115,13 +115,15 @@ contract Beneficial is Base {
     function setOfficialUrl(string _newOfficialUrl) public onlyOwner{
         officialUrl = _newOfficialUrl;
     }       
-     
+
+/*     
     function setShareholder(address _newShareholder, bool _isToken) public onlyOwner {
         require(_newShareholder != 0x0);
         shareholderIsToken = _isToken;
         shareholder = _newShareholder;
     }
-    
+*/
+
     function _userRefund(address _to) internal  returns(bool _result){ 
         require (_to != 0x0);  
         lock();
@@ -145,9 +147,11 @@ contract Beneficial is Base {
 }
 
 contract Auction is Beneficial {
-    function Auction()  Beneficial() public {
+    //function Auction(address _gameToken)  Beneficial() public {
+    function Auction(address _gameToken) public {
         owner = msg.sender;
-        shareholder = msg.sender;
+		shareholder = _gameToken;
+		shareholderIsToken = true;
     }
    
     int public gameIndex = 1;                      
@@ -159,7 +163,6 @@ contract Auction is Beneficial {
     }
    
     mapping(address => bool) public whiteListOf;    
-    mapping (uint64 => address) public indexAddress;    
 
     event OnWhiteListChange(address indexed _Addr, address _operator, bool _result,  uint _eventTime, uint _eventId);
 
