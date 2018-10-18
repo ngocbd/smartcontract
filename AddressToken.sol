@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AddressToken at 0xcc4defd34fc7c72afe3750bb01f80600cf4facb7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AddressToken at 0xb6949e1bcb814cb8ac795e57518b9b89e106c86f
 */
 pragma solidity ^0.4.24;
 
@@ -875,9 +875,7 @@ contract AddressDeployer {
         }
         require(addr != 0);
         emit Deployed(addr);
-
-        // For some reason selfdestruct fails! Will fix in next update!
-        owner = 0; // selfdestruct(msg.sender);
+        //selfdestruct(msg.sender); // For some reason not works properly! Will fix in update!
     }
 }
 
