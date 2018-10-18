@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract lepaitoken at 0x7af68a25a2c2ee6e1518fcc16876388e1796eed9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract lepaitoken at 0x628e43e26f2685e1162c904b1e8ca031dc6c8cdb
 */
 pragma solidity ^ 0.4.25;
 /* ??????? ????? */
@@ -46,7 +46,7 @@ contract lepaitoken is owned{
     }
     auctionlist[] public auctionlisting; //????
     auctionlist[] public auctionlistend; //?????
-    auctionlist[] public auctionlistts; //???? 
+    auctionlist[] public auctionlistts; //?????
     mapping(address => uint[]) userlist;//?????????
     mapping(address => uint[]) mypostauct;//??????????
     //0x56F527C3F4a24bB2BeBA449FFd766331DA840FFA
@@ -60,10 +60,9 @@ contract lepaitoken is owned{
 	/*???? */
 	function addauction(address addusers,uint opentimes, uint endtimes, uint onceprices, uint openprices, uint endprices, string goodsnames, string goodspics) public returns(uint){
 	    uint _now = now;
-	    require(opentimes >= _now - 1 hours);
 	    require(opentimes < _now + 2 days);
 	    require(endtimes > opentimes);
-	    //require(endtimes > _now + 2 days);
+	    require(endtimes > _now + 2 days);
 	    require(endtimes < opentimes + 2 days);
 	    require(btyc.balanceOf(addusers) >= systemprice);
 	    auctionlisting.push(auctionlist(addusers, opentimes, endtimes, openprices, endprices, onceprices, openprices, goodsnames, goodspics, false, 0, 0));
