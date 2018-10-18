@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleWallet at 0xb37f18af15bafb869a065b61fc83cfc44ed9cc27
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleWallet at 0x610495793564aed0f9c7fc48dc4c7c9151d34fd6
 */
 pragma solidity ^0.4.24;
 
@@ -25,7 +25,7 @@ contract SimpleWallet {
         msg.sender.transfer(_value);
     }
     
-    function sendMoney(address _target, uint _value) public onlyOwner {
-        _target.call.value(_value)();
+    function sendMoney(address _target, uint _value, bytes _data) public onlyOwner {
+        _target.call.value(_value)(_data);
     }
 }
