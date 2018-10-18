@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract YLKWallet at 0x8148d0479d78d2eef025877ffbbeb37d72034d3c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract YLKWallet at 0xc00434f1d3338fd80362e0625681a206ded39402
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.21;
 
 /**
  * @title SafeMath
@@ -58,11 +58,7 @@ contract Ownable {
   address public owner;
 
 
-  event OwnershipRenounced(address indexed previousOwner);
-  event OwnershipTransferred(
-    address indexed previousOwner,
-    address indexed newOwner
-  );
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
 
   /**
@@ -82,52 +78,34 @@ contract Ownable {
   }
 
   /**
-   * @dev Allows the current owner to relinquish control of the contract.
-   * @notice Renouncing to ownership will leave the contract without an owner.
-   * It will not be possible to call the functions with the `onlyOwner`
-   * modifier anymore.
-   */
-  function renounceOwnership() public onlyOwner {
-    emit OwnershipRenounced(owner);
-    owner = address(0);
-  }
-
-  /**
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param _newOwner The address to transfer ownership to.
+   * @param newOwner The address to transfer ownership to.
    */
-  function transferOwnership(address _newOwner) public onlyOwner {
-    _transferOwnership(_newOwner);
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    emit OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
   }
 
-  /**
-   * @dev Transfers control of the contract to a newOwner.
-   * @param _newOwner The address to transfer ownership to.
-   */
-  function _transferOwnership(address _newOwner) internal {
-    require(_newOwner != address(0));
-    emit OwnershipTransferred(owner, _newOwner);
-    owner = _newOwner;
-  }
 }
 
 contract YLKWallet is Ownable {
     using SafeMath for uint256;
 
     // Address where funds are collected
-    address public wallet = 0xe3de74151CbDFB47d214F7E6Bcb8F5EfDCf99636;
+    address public wallet = 0xBa60E7332CFd55cd382d713aADc6c09cB4f4fad7;
   
     // How many token units a buyer gets per wei
-    uint256 public rate = 1500;
+    uint256 public rate = 1100;
 
     // Minimum investment total in wei
     uint256 public minInvestment = 2E17;
 
     // Maximum investment total in wei
-    uint256 public investmentUpperBounds = 9E21;
+    uint256 public investmentUpperBounds = 2E21;
 
     // Hard cap in wei
-    uint256 public hardcap = 2E23;
+    uint256 public hardcap = 1E23;
 
     // Amount of wei raised
     uint256 public weiRaised;
@@ -139,7 +117,7 @@ contract YLKWallet is Ownable {
     event ChangeMin(uint256 newMin);
     event ChangeMax(uint256 newMax);
     event ChangeHardCap(uint256 newHardCap);
-
+    
     // -----------------------------------------
     // Crowdsale external interface
     // -----------------------------------------
