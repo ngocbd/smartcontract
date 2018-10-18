@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiBuyer at 0x5f22fcb251ec7497201cc1f91ed82cbec1a67eab
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiBuyer at 0xbe4eee50c1fa98b8f2f0edcc4cccae6646b4ce2c
 */
 pragma solidity ^0.4.24;
 
@@ -606,9 +606,7 @@ contract MultiBuyer is MultiChanger {
         }
         for (i = _mtkn.tokensCount(); i > 0; i--) {
             token = _mtkn.tokens(i - 1);
-            if (token.balanceOf(this) > 0) {
-                token.asmTransfer(msg.sender, token.balanceOf(this));
-            }
+            token.asmTransfer(msg.sender, token.balanceOf(this));
         }
     }
 
@@ -638,9 +636,7 @@ contract MultiBuyer is MultiChanger {
         }
         for (i = _mtkn.tokensCount(); i > 0; i--) {
             token = _mtkn.tokens(i - 1);
-            if (token.balanceOf(this) > 0) {
-                token.asmTransfer(msg.sender, token.balanceOf(this));
-            }
+            token.asmTransfer(msg.sender, token.balanceOf(this));
         }
     }
 }
