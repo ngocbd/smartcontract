@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumanStandardToken at 0xf1379777de65845ed323a08be31c086d0131ce23
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumanStandardToken at 0xf1f1B6A498417B7e8Da6e1A0fe561B037a95461F
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.8;
 contract Token{
     // token???????public??????getter????????totalSupply().
     uint256 public totalSupply;
@@ -102,5 +102,4 @@ contract HumanStandardToken is StandardToken {
         require(_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData));
         return true;
     }
-
 }
