@@ -1,274 +1,375 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenToken at 0x4230e2c8c2f8ca7e96f76609071349430065d049
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenToken at 0x2a2a21b9ab81dc5b29b4e1256fa2c00105bc073d
 */
-pragma solidity ^0.4.16;
+pragma solidity 0.4.21;
 
-contract owned {
+// File: zeppelin-solidity/contracts/ownership/Ownable.sol
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
     address public owner;
 
-    function owned() public {
+
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+    /**
+     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+     * account.
+     */
+    function Ownable() public {
         owner = msg.sender;
     }
 
-    modifier onlyOwner {
+
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
         require(msg.sender == owner);
         _;
     }
 
-    function transferOwnership(address newOwner) onlyOwner public {
+
+    /**
+     * @dev Allows the current owner to transfer control of the contract to a newOwner.
+     * @param newOwner The address to transfer ownership to.
+     */
+    function transferOwnership(address newOwner) public onlyOwner {
+        require(newOwner != address(0));
+        OwnershipTransferred(owner, newOwner);
         owner = newOwner;
     }
+
 }
 
-interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
+// File: zeppelin-solidity/contracts/math/SafeMath.sol
 
-contract TokenERC20 is owned {
-    // Public variables of the token
-    string public name;
-    string public symbol;
-    uint8 public decimals = 18;
-    // 18 decimals is the strongly suggested default, avoid changing it
-    uint256 public totalSupply;
-
-    bool public send_allowed = false;
-
-    // This creates an array with all balances
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
-
-    // This generates a public event on the blockchain that will notify clients
-    event Transfer(address indexed from, address indexed to, uint256 value);
-
-    // This notifies clients about the amount burnt
-    event Burn(address indexed from, uint256 value);
-
-    /**
-     * Constrctor function
-     *
-     * Initializes contract with initial supply tokens to the creator of the contract
-     */
-    function TokenERC20(
-        uint256 initialSupply,
-        string tokenName,
-        string tokenSymbol
-    ) public {
-        totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
-        balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
-        name = tokenName;                                   // Set the name for display purposes
-        symbol = tokenSymbol;                               // Set the symbol for display purposes
-    }
-
-    /**
-     * Internal transfer, only can be called by this contract
-     */
-    function _transfer(address _from, address _to, uint _value) internal {
-        // Prevent transfer to 0x0 address. Use burn() instead
-        require(_to != 0x0);
-        // Check if the sender has enough
-        require(balanceOf[_from] >= _value);
-        // Check for overflows
-        require(balanceOf[_to] + _value > balanceOf[_to]);
-        // Save this for an assertion in the future
-        uint previousBalances = balanceOf[_from] + balanceOf[_to];
-        // Subtract from the sender
-        balanceOf[_from] -= _value;
-        // Add the same to the recipient
-        balanceOf[_to] += _value;
-        Transfer(_from, _to, _value);
-        // Asserts are used to use static analysis to find bugs in your code. They should never fail
-        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
-    }
-
-    /**
-     * Transfer tokens
-     *
-     * Send `_value` tokens to `_to` from your account
-     *
-     * @param _to The address of the recipient
-     * @param _value the amount to send
-     */
-    function transfer(address _to, uint256 _value) public {
-        require(msg.sender == owner || send_allowed == true); 
-        _transfer(msg.sender, _to, _value);
-    }
-    
-    function setSendAllow(bool send_allow) onlyOwner public {
-        send_allowed = send_allow;
-    }
-
-    /**
-     * Transfer tokens from other address
-     *
-     * Send `_value` tokens to `_to` in behalf of `_from`
-     *
-     * @param _from The address of the sender
-     * @param _to The address of the recipient
-     * @param _value the amount to send
-     */
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        require(msg.sender == owner || send_allowed == true); 
-        require(_value <= allowance[_from][msg.sender]);     // Check allowance
-        allowance[_from][msg.sender] -= _value;
-        _transfer(_from, _to, _value);
-        return true;
-    }
-
-    /**
-     * Set allowance for other address
-     *
-     * Allows `_spender` to spend no more than `_value` tokens in your behalf
-     *
-     * @param _spender The address authorized to spend
-     * @param _value the max amount they can spend
-     */
-    function approve(address _spender, uint256 _value) public
-        returns (bool success) {
-        allowance[msg.sender][_spender] = _value;
-        return true;
-    }
-
-    /**
-     * Set allowance for other address and notify
-     *
-     * Allows `_spender` to spend no more than `_value` tokens in your behalf, and then ping the contract about it
-     *
-     * @param _spender The address authorized to spend
-     * @param _value the max amount they can spend
-     * @param _extraData some extra information to send to the approved contract
-     */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
-        public
-        returns (bool success) {
-        tokenRecipient spender = tokenRecipient(_spender);
-        if (approve(_spender, _value)) {
-            spender.receiveApproval(msg.sender, _value, this, _extraData);
-            return true;
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (a == 0) {
+            return 0;
         }
+        uint256 c = a * b;
+        assert(c / a == b);
+        return c;
     }
 
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return c;
+    }
+
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
+
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
+}
+
+// File: zeppelin-solidity/contracts/token/ERC20Basic.sol
+
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+    uint256 public totalSupply;
+    function balanceOf(address who) public view returns (uint256);
+    function transfer(address to, uint256 value) public returns (bool);
+    event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+// File: zeppelin-solidity/contracts/token/BasicToken.sol
+
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
+ */
+contract BasicToken is ERC20Basic {
+    using SafeMath for uint256;
+
+    mapping(address => uint256) balances;
+
     /**
-     * Destroy tokens
-     *
-     * Remove `_value` tokens from the system irreversibly
-     *
-     * @param _value the amount of money to burn
-     */
-    function burn(uint256 _value) public returns (bool success) {
-        require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
-        balanceOf[msg.sender] -= _value;            // Subtract from the sender
-        totalSupply -= _value;                      // Updates totalSupply
-        Burn(msg.sender, _value);
+    * @dev transfer token for a specified address
+    * @param _to The address to transfer to.
+    * @param _value The amount to be transferred.
+    */
+    function transfer(address _to, uint256 _value) public returns (bool) {
+        require(_to != address(0));
+        require(_value <= balances[msg.sender]);
+
+        // SafeMath.sub will throw if there is not enough balance.
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        Transfer(msg.sender, _to, _value);
         return true;
     }
 
     /**
-     * Destroy tokens from other account
-     *
-     * Remove `_value` tokens from the system irreversibly on behalf of `_from`.
-     *
-     * @param _from the address of the sender
-     * @param _value the amount of money to burn
+    * @dev Gets the balance of the specified address.
+    * @param _owner The address to query the the balance of.
+    * @return An uint256 representing the amount owned by the passed address.
+    */
+    function balanceOf(address _owner) public view returns (uint256 balance) {
+        return balances[_owner];
+    }
+
+}
+
+// File: zeppelin-solidity/contracts/token/ERC20.sol
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+    function allowance(address owner, address spender) public view returns (uint256);
+    function transferFrom(address from, address to, uint256 value) public returns (bool);
+    function approve(address spender, uint256 value) public returns (bool);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+// File: zeppelin-solidity/contracts/token/StandardToken.sol
+
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
+contract StandardToken is ERC20, BasicToken {
+
+    mapping (address => mapping (address => uint256)) internal allowed;
+
+
+    /**
+     * @dev Transfer tokens from one address to another
+     * @param _from address The address which you want to send tokens from
+     * @param _to address The address which you want to transfer to
+     * @param _value uint256 the amount of tokens to be transferred
      */
-    function burnFrom(address _from, uint256 _value) public returns (bool success) {
-        require(balanceOf[_from] >= _value);                // Check if the targeted balance is enough
-        require(_value <= allowance[_from][msg.sender]);    // Check allowance
-        balanceOf[_from] -= _value;                         // Subtract from the targeted balance
-        allowance[_from][msg.sender] -= _value;             // Subtract from the sender's allowance
-        totalSupply -= _value;                              // Update totalSupply
-        Burn(_from, _value);
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+        require(_to != address(0));
+        require(_value <= balances[_from]);
+        require(_value <= allowed[_from][msg.sender]);
+
+        balances[_from] = balances[_from].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+        Transfer(_from, _to, _value);
+        return true;
+    }
+
+    /**
+     * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+     *
+     * Beware that changing an allowance with this method brings the risk that someone may use both the old
+     * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+     * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+     * @param _spender The address which will spend the funds.
+     * @param _value The amount of tokens to be spent.
+     */
+    function approve(address _spender, uint256 _value) public returns (bool) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    /**
+     * @dev Function to check the amount of tokens that an owner allowed to a spender.
+     * @param _owner address The address which owns the funds.
+     * @param _spender address The address which will spend the funds.
+     * @return A uint256 specifying the amount of tokens still available for the spender.
+     */
+    function allowance(address _owner, address _spender) public view returns (uint256) {
+        return allowed[_owner][_spender];
+    }
+
+    /**
+     * approve should be called when allowed[_spender] == 0. To increment
+     * allowed value is better to use this function to avoid 2 calls (and wait until
+     * the first transaction is mined)
+     * From MonolithDAO Token.sol
+     */
+    function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+        allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        return true;
+    }
+
+    function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+        uint oldValue = allowed[msg.sender][_spender];
+        if (_subtractedValue > oldValue) {
+            allowed[msg.sender][_spender] = 0;
+        } else {
+            allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+        }
+        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        return true;
+    }
+
+}
+
+// File: zeppelin-solidity/contracts/token/MintableToken.sol
+
+/**
+ * @title Mintable token
+ * @dev Simple ERC20 Token example, with mintable token creation
+ * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
+ * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
+ */
+
+contract MintableToken is StandardToken, Ownable {
+    event Mint(address indexed to, uint256 amount);
+    event MintFinished();
+
+    bool public mintingFinished = false;
+
+
+    modifier canMint() {
+        require(!mintingFinished);
+        _;
+    }
+
+    /**
+     * @dev Function to mint tokens
+     * @param _to The address that will receive the minted tokens.
+     * @param _amount The amount of tokens to mint.
+     * @return A boolean that indicates if the operation was successful.
+     */
+    function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
+        totalSupply = totalSupply.add(_amount);
+        balances[_to] = balances[_to].add(_amount);
+        Mint(_to, _amount);
+        Transfer(address(0), _to, _amount);
+        return true;
+    }
+
+    /**
+     * @dev Function to stop minting new tokens.
+     * @return True if the operation was successful.
+     */
+    function finishMinting() onlyOwner canMint public returns (bool) {
+        mintingFinished = true;
+        MintFinished();
         return true;
     }
 }
 
-// SCVToken Start
-contract TokenToken is TokenERC20 {
+// File: zeppelin-solidity/contracts/lifecycle/Pausable.sol
 
-    uint256 public sellPrice;
-    uint256 public buyPrice;
-    uint256 public leastSwap;
-    uint256 public onSaleAmount;
-    
-    bool public funding = true;
-    
-    mapping (address => bool) public frozenAccount;
-    
+/**
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
+ */
+contract Pausable is Ownable {
+    event Pause();
+    event Unpause();
 
-    /* This generates a public event on the blockchain that will notify clients */
-    event FrozenFunds(address target, bool frozen);
+    bool public paused = false;
 
-    /* Initializes contract with initial supply tokens to the creator of the contract */
-    function TokenToken(
-        uint256 initialSupply,
-        string tokenName,
-        string tokenSymbol
-    ) TokenERC20(initialSupply, tokenName, tokenSymbol) public {}
 
-    /* Internal transfer, only can be called by this contract */
-    function _transfer(address _from, address _to, uint _value) internal {
-        require (_to != 0x0);                               // Prevent transfer to 0x0 address. Use burn() instead
-        require (balanceOf[_from] >= _value);               // Check if the sender has enough
-        require (balanceOf[_to] + _value >= balanceOf[_to]); // Check for overflows
-        require(!frozenAccount[_from]);                     // Check if sender is frozen
-        require(!frozenAccount[_to]);                       // Check if recipient is frozen
-        balanceOf[_from] -= _value;                         // Subtract from the sender
-        balanceOf[_to] += _value;                           // Add the same to the recipient
-        Transfer(_from, _to, _value);
+    /**
+     * @dev Modifier to make a function callable only when the contract is not paused.
+     */
+    modifier whenNotPaused() {
+        require(!paused);
+        _;
     }
 
-    /// @notice Create `mintedAmount` tokens and send it to `target`
-    /// @param target Address to receive the tokens
-    /// @param mintedAmount the amount of tokens it will receive
-    function mintToken(address target, uint256 mintedAmount) onlyOwner public {
-        balanceOf[target] += mintedAmount;
-        totalSupply += mintedAmount;
-        Transfer(0, this, mintedAmount);
-        Transfer(this, target, mintedAmount);
+    /**
+     * @dev Modifier to make a function callable only when the contract is paused.
+     */
+    modifier whenPaused() {
+        require(paused);
+        _;
     }
 
-    /// @notice `freeze? Prevent | Allow` `target` from sending & receiving tokens
-    /// @param target Address to be frozen
-    /// @param freeze either to freeze it or not
-    function freezeAccount(address target, bool freeze) onlyOwner public {
-        frozenAccount[target] = freeze;
-        FrozenFunds(target, freeze);
+    /**
+     * @dev called by the owner to pause, triggers stopped state
+     */
+    function pause() onlyOwner whenNotPaused public {
+        paused = true;
+        Pause();
     }
 
-    function setOnSaleAmount(uint256 amount) onlyOwner public {
-        onSaleAmount = amount;
+    /**
+     * @dev called by the owner to unpause, returns to normal state
+     */
+    function unpause() onlyOwner whenPaused public {
+        paused = false;
+        Unpause();
     }
-    
-    function setFunding(bool funding_val) onlyOwner public {
-        funding = funding_val;
+}
+
+// File: zeppelin-solidity/contracts/token/PausableToken.sol
+
+/**
+ * @title Pausable token
+ *
+ * @dev StandardToken modified with pausable transfers.
+ **/
+
+contract PausableToken is StandardToken, Pausable {
+
+    function transfer(address _to, uint256 _value) public whenNotPaused returns (bool) {
+        return super.transfer(_to, _value);
     }
 
-    // Note that not ether...its wei!!
-    function setLeastFund(uint256 least_val) onlyOwner public {
-        leastSwap = least_val;
+    function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool) {
+        return super.transferFrom(_from, _to, _value);
     }
 
-    /// @notice Allow users to buy tokens for `newBuyPrice` eth and sell tokens for `newSellPrice` eth
-    /// @param newSellPrice Price the users can sell to the contract
-    /// @param newBuyPrice Price users can buy from the contract
-    function setPrices(uint256 newSellPrice, uint256 newBuyPrice) onlyOwner public {
-        sellPrice = newSellPrice;
-        buyPrice = newBuyPrice;
-    }
-    
-    
-    /// @notice Buy tokens from contract by sending ether
-    function buy() payable public {
-        require(funding == true);
-        require(onSaleAmount >= (msg.value * 10 ** uint256(decimals)));
-        require(leastSwap <= (msg.value * 10 ** uint256(decimals)));
-        uint amount = msg.value * buyPrice;               // calculates the amount
-        _transfer(this, msg.sender, amount);              // makes the transfers
-        onSaleAmount = onSaleAmount - (msg.value * 10 ** uint256(decimals)); // calculate token amount on sale
+    function approve(address _spender, uint256 _value) public whenNotPaused returns (bool) {
+        return super.approve(_spender, _value);
     }
 
-    /// @notice Harvest `amount` ETH from contract
-    /// @param amount amount of ETH to be harvested
-    function harvest(uint256 amount) onlyOwner public {
-        require(this.balance >= amount);      // checks if the contract has enough ether to buy
-        msg.sender.transfer(amount);          // sends ether to you. It's important to do this last to avoid recursion attacks
+    function increaseApproval(address _spender, uint _addedValue) public whenNotPaused returns (bool success) {
+        return super.increaseApproval(_spender, _addedValue);
+    }
+
+    function decreaseApproval(address _spender, uint _subtractedValue) public whenNotPaused returns (bool success) {
+        return super.decreaseApproval(_spender, _subtractedValue);
+    }
+}
+
+// File: contracts/TokenToken.sol
+
+/**
+ * @title Token Token contract - ERC20 compatible token contract.
+ */
+
+contract TokenToken is PausableToken, MintableToken {
+    string public constant name = "TOKEN";
+    string public constant symbol = "TON";
+    uint8 public constant decimals = 18;
+
+    function TokenToken(address _crowdsaleContract) public {
+        pause();
+        owner = _crowdsaleContract;
+    }
+
+    function getTotalSupply() public view returns(uint) {
+        return totalSupply;
     }
 }
