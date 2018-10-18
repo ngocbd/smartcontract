@@ -1,104 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVesting at 0xe614de5075c47df83242a2c51bcf3f3ae333e45d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVesting at 0x627058c1d8438ae33edb07ef4c7d8c0de95ccba2
 */
-pragma solidity ^0.4.24;
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    if (a == 0) {
-      return 0;
-    }
-    c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    // uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return a / b;
-  }
-
-  /**
-  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipRenounced(address indexed previousOwner);
-  event OwnershipTransferred(
-    address indexed previousOwner,
-    address indexed newOwner
-  );
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  constructor() public {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-  /**
-   * @dev Allows the current owner to relinquish control of the contract.
-   */
-  function renounceOwnership() public onlyOwner {
-    emit OwnershipRenounced(owner);
-    owner = address(0);
-  }
-}
+pragma solidity 0.4.24;
 
 
 /**
@@ -107,55 +10,10 @@ contract Ownable {
  * @dev see https://github.com/ethereum/EIPs/issues/179
  */
 contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-
-/**
- * @title Pausable
- * @dev Base contract which allows children to implement an emergency stop mechanism.
- */
-contract Pausable is Ownable {
-  event Pause();
-  event Unpause();
-
-  bool public paused = false;
-
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is not paused.
-   */
-  modifier whenNotPaused() {
-    require(!paused);
-    _;
-  }
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is paused.
-   */
-  modifier whenPaused() {
-    require(paused);
-    _;
-  }
-
-  /**
-   * @dev called by the owner to pause, triggers stopped state
-   */
-  function pause() onlyOwner whenNotPaused public {
-    paused = true;
-    emit Pause();
-  }
-
-  /**
-   * @dev called by the owner to unpause, returns to normal state
-   */
-  function unpause() onlyOwner whenPaused public {
-    paused = false;
-    emit Unpause();
-  }
+    uint256 public totalSupply;
+    function balanceOf(address who) public view returns (uint256);
+    function transfer(address to, uint256 value) public returns (bool);
+    event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
 /**
@@ -163,159 +21,281 @@ contract Pausable is Ownable {
  * @dev see https://github.com/ethereum/EIPs/issues/20
  */
 contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender)
-    public view returns (uint256);
-
-  function transferFrom(address from, address to, uint256 value)
-    public returns (bool);
-
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(
-    address indexed owner,
-    address indexed spender,
-    uint256 value
-  );
+    function allowance(address owner, address spender) public view returns (uint256);
+    function transferFrom(address from, address to, uint256 value) public returns (bool);
+    function approve(address spender, uint256 value) public returns (bool);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
 /**
- * @title SafeERC20
- * @dev Wrappers around ERC20 operations that throw on failure.
- * To use this library you can add a `using SafeERC20 for ERC20;` statement to your contract,
- * which allows you to call the safe operations as `token.safeTransfer(...)`, etc.
+ * Safe unsigned safe math.
+ *
+ * https://blog.aragon.one/library-driven-development-in-solidity-2bebcaf88736#.750gwtwli
+ *
+ * Originally from https://raw.githubusercontent.com/AragonOne/zeppelin-solidity/master/contracts/SafeMathLib.sol
+ *
+ * Maintained here until merged to mainline zeppelin-solidity.
+ *
  */
-library SafeERC20 {
-  function safeTransfer(ERC20Basic token, address to, uint256 value) internal {
-    require(token.transfer(to, value));
-  }
+library SafeMathLibExt {
 
-  function safeTransferFrom(
-    ERC20 token,
-    address from,
-    address to,
-    uint256 value
-  )
-    internal
-  {
-    require(token.transferFrom(from, to, value));
-  }
-
-  function safeApprove(ERC20 token, address spender, uint256 value) internal {
-    require(token.approve(spender, value));
-  }
-}
-
-/**
- * @title TokenVesting
- * @dev A token holder contract that can release its token balance gradually like a
- * typical vesting scheme, with a cliff and vesting period. Optionally revocable by the
- * owner.
- */
-contract TokenVesting is Ownable {
-  using SafeMath for uint256;
-  using SafeERC20 for ERC20Basic;
-
-  event Released(uint256 amount);
-  event Revoked();
-
-  // beneficiary of tokens after they are released
-  address public beneficiary;
-
-  uint256 public cliff;
-  uint256 public start;
-  uint256 public duration;
-
-  bool public revocable;
-
-  mapping (address => uint256) public released;
-  mapping (address => bool) public revoked;
-
-  /**
-   * @dev Creates a vesting contract that vests its balance of any ERC20 token to the
-   * _beneficiary, gradually in a linear fashion until _start + _duration. By then all
-   * of the balance will have vested.
-   * @param _beneficiary address of the beneficiary to whom vested tokens are transferred
-   * @param _cliff duration in seconds of the cliff in which tokens will begin to vest
-   * @param _duration duration in seconds of the period in which the tokens will vest
-   * @param _revocable whether the vesting is revocable or not
-   */
-  constructor(
-    address _beneficiary,
-    uint256 _start,
-    uint256 _cliff,
-    uint256 _duration,
-    bool _revocable
-  )
-    public
-  {
-    require(_beneficiary != address(0));
-    require(_cliff <= _duration);
-
-    beneficiary = _beneficiary;
-    revocable = _revocable;
-    duration = _duration;
-    cliff = _start.add(_cliff);
-    start = _start;
-  }
-
-  /**
-   * @notice Transfers vested tokens to beneficiary.
-   * @param token ERC20 token which is being vested
-   */
-  function release(ERC20Basic token) public {
-    uint256 unreleased = releasableAmount(token);
-
-    require(unreleased > 0);
-
-    released[token] = released[token].add(unreleased);
-
-    token.safeTransfer(beneficiary, unreleased);
-
-    emit Released(unreleased);
-  }
-
-  /**
-   * @notice Allows the owner to revoke the vesting. Tokens already vested
-   * remain in the contract, the rest are returned to the owner.
-   * @param token ERC20 token which is being vested
-   */
-  function revoke(ERC20Basic token) public onlyOwner {
-    require(revocable);
-    require(!revoked[token]);
-
-    uint256 balance = token.balanceOf(this);
-
-    uint256 unreleased = releasableAmount(token);
-    uint256 refund = balance.sub(unreleased);
-
-    revoked[token] = true;
-
-    token.safeTransfer(owner, refund);
-
-    emit Revoked();
-  }
-
-  /**
-   * @dev Calculates the amount that has already vested but hasn't been released yet.
-   * @param token ERC20 token which is being vested
-   */
-  function releasableAmount(ERC20Basic token) public view returns (uint256) {
-    return vestedAmount(token).sub(released[token]);
-  }
-
-  /**
-   * @dev Calculates the amount that has already vested.
-   * @param token ERC20 token which is being vested
-   */
-  function vestedAmount(ERC20Basic token) public view returns (uint256) {
-    uint256 currentBalance = token.balanceOf(this);
-    uint256 totalBalance = currentBalance.add(released[token]);
-
-    if (block.timestamp < cliff) {
-      return 0;
-    } else if (block.timestamp >= start.add(duration) || revoked[token]) {
-      return totalBalance;
-    } else {
-      return totalBalance.mul(block.timestamp.sub(start)).div(duration);
+    function times(uint a, uint b) public pure returns (uint) {
+        uint c = a * b;
+        assert(a == 0 || c / a == b);
+        return c;
     }
-  }
+
+    function divides(uint a, uint b) public pure returns (uint) {
+        assert(b > 0);
+        uint c = a / b;
+        assert(a == b * c + a % b);
+        return c;
+    }
+
+    function minus(uint a, uint b) public pure returns (uint) {
+        assert(b <= a);
+        return a - b;
+    }
+
+    function plus(uint a, uint b) public pure returns (uint) {
+        uint c = a + b;
+        assert(c >= a);
+        return c;
+    }
+
+}
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+    address public owner;
+
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+    /**
+    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+    * account.
+    */
+    constructor () public {
+        owner = msg.sender;
+    }
+
+    /**
+    * @dev Throws if called by any account other than the owner.
+    */
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+
+    /**
+    * @dev Allows the current owner to transfer control of the contract to a newOwner.
+    * @param newOwner The address to transfer ownership to.
+    */
+    function transferOwnership(address newOwner) public onlyOwner {
+        require(newOwner != address(0));
+        emit OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+    }
+}
+
+contract Allocatable is Ownable {
+
+  /** List of agents that are allowed to allocate new tokens */
+    mapping (address => bool) public allocateAgents;
+
+    event AllocateAgentChanged(address addr, bool state  );
+
+  /**
+   * Owner can allow a crowdsale contract to allocate new tokens.
+   */
+    function setAllocateAgent(address addr, bool state) public onlyOwner  
+    {
+        allocateAgents[addr] = state;
+        emit AllocateAgentChanged(addr, state);
+    }
+
+    modifier onlyAllocateAgent() {
+        //Only crowdsale contracts are allowed to allocate new tokens
+        require(allocateAgents[msg.sender]);
+        _;
+    }
+}
+
+/**
+ * Contract to enforce Token Vesting
+ */
+contract TokenVesting is Allocatable {
+
+    using SafeMathLibExt for uint;
+
+    address public crowdSaleTokenAddress;
+
+    /** keep track of total tokens yet to be released, 
+     * this should be less than or equal to UTIX tokens held by this contract. 
+     */
+    uint256 public totalUnreleasedTokens;
+
+    // default vesting parameters
+    uint256 private startAt = 0;
+    uint256 private cliff = 1;
+    uint256 private duration = 4; 
+    uint256 private step = 300; //15778463;  //2592000;
+    bool private changeFreezed = false;
+
+    struct VestingSchedule {
+        uint256 startAt;
+        uint256 cliff;
+        uint256 duration;
+        uint256 step;
+        uint256 amount;
+        uint256 amountReleased;
+        bool changeFreezed;
+    }
+
+    mapping (address => VestingSchedule) public vestingMap;
+
+    event VestedTokensReleased(address _adr, uint256 _amount);
+    
+    constructor(address _tokenAddress) public {
+        
+        crowdSaleTokenAddress = _tokenAddress;
+    }
+
+    /** Modifier to check if changes to vesting is freezed  */
+    modifier changesToVestingFreezed(address _adr) {
+        require(vestingMap[_adr].changeFreezed);
+        _;
+    }
+
+    /** Modifier to check if changes to vesting is not freezed yet  */
+    modifier changesToVestingNotFreezed(address adr) {
+        require(!vestingMap[adr].changeFreezed); // if vesting not set then also changeFreezed will be false
+        _;
+    }
+
+    /** Function to set default vesting schedule parameters. */
+    function setDefaultVestingParameters(
+        uint256 _startAt, uint256 _cliff, uint256 _duration,
+        uint256 _step, bool _changeFreezed) public onlyAllocateAgent {
+
+        // data validation
+        require(_step != 0);
+        require(_duration != 0);
+        require(_cliff <= _duration);
+
+        startAt = _startAt;
+        cliff = _cliff;
+        duration = _duration; 
+        step = _step;
+        changeFreezed = _changeFreezed;
+
+    }
+
+    /** Function to set vesting with default schedule. */
+    function setVestingWithDefaultSchedule(address _adr, uint256 _amount) 
+    public 
+    changesToVestingNotFreezed(_adr) onlyAllocateAgent {
+       
+        setVesting(_adr, startAt, cliff, duration, step, _amount, changeFreezed);
+    }    
+
+    /** Function to set/update vesting schedule. PS - Amount cannot be changed once set */
+    function setVesting(
+        address _adr,
+        uint256 _startAt,
+        uint256 _cliff,
+        uint256 _duration,
+        uint256 _step,
+        uint256 _amount,
+        bool _changeFreezed) 
+    public changesToVestingNotFreezed(_adr) onlyAllocateAgent {
+
+        VestingSchedule storage vestingSchedule = vestingMap[_adr];
+
+        // data validation
+        require(_step != 0);
+        require(_amount != 0 || vestingSchedule.amount > 0);
+        require(_duration != 0);
+        require(_cliff <= _duration);
+
+        //if startAt is zero, set current time as start time.
+        if (_startAt == 0) 
+            _startAt = block.timestamp;
+
+        vestingSchedule.startAt = _startAt;
+        vestingSchedule.cliff = _cliff;
+        vestingSchedule.duration = _duration;
+        vestingSchedule.step = _step;
+
+        // special processing for first time vesting setting
+        if (vestingSchedule.amount == 0) {
+            // check if enough tokens are held by this contract
+            ERC20 token = ERC20(crowdSaleTokenAddress);
+            require(token.balanceOf(this) >= totalUnreleasedTokens.plus(_amount));
+            totalUnreleasedTokens = totalUnreleasedTokens.plus(_amount);
+            vestingSchedule.amount = _amount; 
+        }
+
+        vestingSchedule.amountReleased = 0;
+        vestingSchedule.changeFreezed = _changeFreezed;
+    }
+
+    function isVestingSet(address adr) public view returns (bool isSet) {
+        return vestingMap[adr].amount != 0;
+    }
+
+    function freezeChangesToVesting(address _adr) public changesToVestingNotFreezed(_adr) onlyAllocateAgent {
+        require(isVestingSet(_adr)); // first check if vesting is set
+        vestingMap[_adr].changeFreezed = true;
+    }
+
+    /** Release tokens as per vesting schedule, called by contributor  */
+    function releaseMyVestedTokens() public changesToVestingFreezed(msg.sender) {
+        releaseVestedTokens(msg.sender);
+    }
+
+    /** Release tokens as per vesting schedule, called by anyone  */
+    function releaseVestedTokens(address _adr) public changesToVestingFreezed(_adr) {
+        VestingSchedule storage vestingSchedule = vestingMap[_adr];
+        
+        // check if all tokens are not vested
+        require(vestingSchedule.amount.minus(vestingSchedule.amountReleased) > 0);
+        
+        // calculate total vested tokens till now
+        uint256 totalTime = block.timestamp - vestingSchedule.startAt;
+        uint256 totalSteps = totalTime / vestingSchedule.step;
+
+        // check if cliff is passed
+        require(vestingSchedule.cliff <= totalSteps);
+
+        uint256 tokensPerStep = vestingSchedule.amount / vestingSchedule.duration;
+        // check if amount is divisble by duration
+        if (tokensPerStep * vestingSchedule.duration != vestingSchedule.amount) tokensPerStep++;
+
+        uint256 totalReleasableAmount = tokensPerStep.times(totalSteps);
+
+        // handle the case if user has not claimed even after vesting period is over or amount was not divisible
+        if (totalReleasableAmount > vestingSchedule.amount) totalReleasableAmount = vestingSchedule.amount;
+
+        uint256 amountToRelease = totalReleasableAmount.minus(vestingSchedule.amountReleased);
+        vestingSchedule.amountReleased = vestingSchedule.amountReleased.plus(amountToRelease);
+
+        // transfer vested tokens
+        ERC20 token = ERC20(crowdSaleTokenAddress);
+        token.transfer(_adr, amountToRelease);
+        // decrement overall unreleased token count
+        totalUnreleasedTokens = totalUnreleasedTokens.minus(amountToRelease);
+        emit VestedTokensReleased(_adr, amountToRelease);
+    }
+
+    /**
+    * Allow to (re)set Token.
+    */
+    function setCrowdsaleTokenExtv1(address _token) public onlyAllocateAgent {       
+        crowdSaleTokenAddress = _token;
+    }
 }
