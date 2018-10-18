@@ -1,66 +1,282 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthFactory at 0xC357a046C5C13bb4e6d918a208b8B4A0aB2F2EFd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthFactory at 0xc63dde0ab1ee4368c86f1066038cd0e5954e5643
 */
-///[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]Welcome to EthFactory!
-//
-// Multiply your Ether by +15% !!
-//
-// NO MINIMUM DEPOSIT !!
-//
-// NO HOUSE FEES !!
-//
-// Everyone gets paid in the line! After somebody has been paid, he is removed and the next person is in line for payment !
-//
-// Invest now, and you will Earn back 115%, which is your [Invested Ether] + [15% Profit] !
-//
-// Multiply your ETH Now !
-//
-///[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]Start
+pragma solidity ^0.4.24;
 
-contract EthFactory{
 
-  struct InvestorArray { address EtherAddress; uint Amount; }
-  InvestorArray[] public depositors;
-
-///[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]Variables
-
-  uint public Total_Investors=0;
-  uint public Balance = 0;
-  uint public Total_Deposited=0;
-  uint public Total_Paid_Out=0;
-  string public Message="Welcome Investor! Multiply your ETH Now!";
-  address public owner;
-  modifier manager { if (msg.sender == owner) _ }
-  function EthFactory() {owner = msg.sender;}
-  function() { enter(); }
-  
-///[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]Enter
-
-  function enter() {
-    if (msg.value > 0) {
-
-    uint Amount=msg.value;								//set amount to how much the investor deposited
-    Total_Investors=depositors.length+1;   					 //count investors
-    depositors.length += 1;                        						//increase array lenght
-    depositors[depositors.length-1].EtherAddress = msg.sender; //add net investor's address
-    depositors[depositors.length-1].Amount = Amount;          //add net investor's amount
-    Balance += Amount;               						// balance update
-    Total_Deposited+=Amount;       						//update deposited Amount
-    uint payment; uint index=0;
-
-    while (Balance > (depositors[index].Amount * 115/100) && index<Total_Investors)
-     {
-	if(depositors[index].Amount!=0 )
-	{
-      payment = depositors[index].Amount *115/100;                           //calculate pay out
-      depositors[index].EtherAddress.send(payment);                        //send pay out to investor
-      Balance -= depositors[index].Amount *115/100;                         //balance update
-      Total_Paid_Out += depositors[index].Amount *115/100;           //update paid out amount   
-       depositors[index].Amount=0;                                    //remove investor from the game after he is paid out! He must invest again if he wants to earn more!
-	}break;
-      }
+library SafeMath {
+    
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
   }
-}
-function DeleteContract() manager { owner.send(Balance); Balance=0; }
 
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a / b;
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+  
+}
+
+
+contract Ownable {
+
+  address public owner;
+
+  constructor() public {
+    owner = msg.sender;
+  }
+
+}
+
+
+contract EthFactory is Ownable {
+        
+    using SafeMath for uint256;
+    
+    event payEventLog(address indexed _address, uint value, uint periodCount, uint percent, uint time);
+    event payRefEventLog(address indexed _addressFrom, address indexed _addressTo, uint value, uint percent, uint time);
+    event payJackpotLog(address indexed _address, uint value, uint totalValue, uint userValue, uint time);    
+    
+    uint public basicDayPercent = 300;
+    uint public bonusDayPercent = 330;
+    
+    uint public referrerLevel1Percent = 250;
+    uint public referrerLevel2Percent = 500;
+    uint public referrerLevel3Percent = 1000;    
+    uint public referrerAndOwnerPercent = 2000;
+    
+    uint public referrerLevel2Ether = 1 ether;
+    uint public referrerLevel3Ether = 10 ether;
+    
+    uint public minBet = 0.01  ether;
+    
+    uint public currBetID = 1;
+    uint public period = 24 hours;
+    uint public startTime = 1536580800;
+    
+    
+    
+    
+    struct BetStruct {
+        uint value;
+        uint refValue;
+        uint firstBetTime;
+        uint lastBetTime;
+        uint lastPaymentTime;
+        uint nextPayAfterTime;
+        bool exists;
+        uint id;
+        uint referrerID;
+    }
+    
+    mapping (uint => address) public addressList;
+    mapping (address => BetStruct) public betsDatabase;
+    
+    // Jackpot
+    uint public jackpotPercent = 1000; //10%
+    uint public jackpotBank = 0;
+    uint public jackpotMaxTime = 24 hours;
+    uint public jackpotTime = startTime + jackpotMaxTime;  
+    uint public increaseJackpotTimeAfterBet = 10 minutes;
+    
+    uint public gameRound = 1;   
+    uint public currJackpotBetID = 0;
+    
+    struct BetStructForJackpot {
+        uint value;
+        address user;
+    }
+    mapping (uint => BetStructForJackpot) public betForJackpot;    
+    
+    
+    
+    
+    constructor() public {
+    
+    }
+
+    
+ function createBet(uint _referrerID) public payable {
+     
+        if( (_referrerID >= currBetID)&&(_referrerID!=0)){
+            revert("Incorrect _referrerID");
+        }
+
+        if( msg.value < minBet){
+            revert("Amount beyond acceptable limits");
+        }
+        
+            BetStruct memory betStruct;
+            
+            if(betsDatabase[msg.sender].exists){
+                betStruct = betsDatabase[msg.sender];
+                
+                if( (betStruct.nextPayAfterTime < now) && (gameRound==1) ){
+                    getRewardForAddress(msg.sender);    
+                }            
+                
+                betStruct.value += msg.value;
+                betStruct.lastBetTime = now;
+                
+                betsDatabase[msg.sender] = betStruct;
+                
+            } else {
+                
+                uint nextPayAfterTime = startTime+((now.sub(startTime)).div(period)).mul(period)+period;
+    
+                betStruct = BetStruct({ 
+                    value : msg.value,
+                    refValue : 0,
+                    firstBetTime : now,
+                    lastBetTime : now,
+                    lastPaymentTime : 0,
+                    nextPayAfterTime: nextPayAfterTime,
+                    exists : true,
+                    id : currBetID,
+                    referrerID : _referrerID
+                });
+            
+                betsDatabase[msg.sender] = betStruct;
+                addressList[currBetID] = msg.sender;
+                
+                currBetID++;
+            }
+            
+            if(now > jackpotTime){
+                getJackpot();
+            }            
+            
+            currJackpotBetID++;
+            
+            BetStructForJackpot memory betStructForJackpot;
+            betStructForJackpot.user = msg.sender;
+            betStructForJackpot.value = msg.value;
+            
+            betForJackpot[currJackpotBetID] = betStructForJackpot;
+            
+            jackpotTime += increaseJackpotTimeAfterBet;
+            if( jackpotTime > now + jackpotMaxTime ) {
+                jackpotTime = now + jackpotMaxTime;
+            }
+            
+            if(gameRound==1){
+                jackpotBank += msg.value.mul(jackpotPercent).div(10000);
+            }
+            else {
+                jackpotBank += msg.value.mul(10000-referrerAndOwnerPercent).div(10000);
+            }
+    
+            if(betStruct.referrerID!=0){
+                betsDatabase[addressList[betStruct.referrerID]].refValue += msg.value;
+                
+                uint currReferrerPercent;
+                uint currReferrerValue = betsDatabase[addressList[betStruct.referrerID]].value.add(betsDatabase[addressList[betStruct.referrerID]].refValue);
+                
+                if (currReferrerValue >= referrerLevel3Ether){
+                    currReferrerPercent = referrerLevel3Percent;
+                } else if (currReferrerValue >= referrerLevel2Ether) {
+                   currReferrerPercent = referrerLevel2Percent; 
+                } else {
+                    currReferrerPercent = referrerLevel1Percent;
+                }
+                
+                uint refToPay = msg.value.mul(currReferrerPercent).div(10000);
+                
+                addressList[betStruct.referrerID].transfer( refToPay );
+                owner.transfer(msg.value.mul(referrerAndOwnerPercent - currReferrerPercent).div(10000));
+                
+                emit payRefEventLog(msg.sender, addressList[betStruct.referrerID], refToPay, currReferrerPercent, now);
+            } else {
+                owner.transfer(msg.value.mul(referrerAndOwnerPercent).div(10000));
+            }
+  }
+    
+  function () public payable {
+        createBet(0);
+  } 
+  
+  
+  function getReward() public {
+        getRewardForAddress(msg.sender);
+  }
+  
+  function getRewardForAddress(address _address) public {
+        if(gameRound!=1){
+             revert("The first round ended");    
+        }        
+      
+        if(!betsDatabase[_address].exists){
+             revert("You are not an investor");    
+        }
+        
+        if(betsDatabase[_address].nextPayAfterTime >= now){
+             revert("The payout time has not yet arrived");    
+        }
+
+        uint periodCount = now.sub(betsDatabase[_address].nextPayAfterTime).div(period).add(1);
+        uint percent = basicDayPercent;
+        
+        if(betsDatabase[_address].referrerID>0){
+            percent = bonusDayPercent;
+        }
+        
+        uint toPay = periodCount.mul(betsDatabase[_address].value).div(10000).mul(percent);
+        
+        betsDatabase[_address].lastPaymentTime = now;
+        betsDatabase[_address].nextPayAfterTime += periodCount.mul(period); 
+        
+        if(toPay.add(jackpotBank) >= address(this).balance ){
+            toPay = address(this).balance.sub(jackpotBank);
+            gameRound = 2;
+        }
+        
+        _address.transfer(toPay);
+        
+        emit payEventLog(_address, toPay, periodCount, percent, now);
+  }
+  
+  function getJackpot() public {
+        if(now <= jackpotTime){
+            revert("Jackpot isn't here yet");  
+        }
+        
+        jackpotTime = now + jackpotMaxTime;
+        
+        if(currJackpotBetID > 5){
+            uint toPay = jackpotBank;
+            jackpotBank = 0;            
+            
+            uint totalValue = betForJackpot[currJackpotBetID].value + betForJackpot[currJackpotBetID - 1].value + betForJackpot[currJackpotBetID - 2].value + betForJackpot[currJackpotBetID - 3].value + betForJackpot[currJackpotBetID - 4].value;
+            
+            betForJackpot[currJackpotBetID].user.transfer(toPay.mul(betForJackpot[currJackpotBetID].value).div(totalValue) );
+            emit payJackpotLog(betForJackpot[currJackpotBetID].user, toPay.mul(betForJackpot[currJackpotBetID].value).div(totalValue), totalValue, betForJackpot[currJackpotBetID].value, now);
+            
+            betForJackpot[currJackpotBetID-1].user.transfer(toPay.mul(betForJackpot[currJackpotBetID-1].value).div(totalValue) );
+            emit payJackpotLog(betForJackpot[currJackpotBetID-1].user, toPay.mul(betForJackpot[currJackpotBetID-1].value).div(totalValue), totalValue, betForJackpot[currJackpotBetID-1].value, now);
+            
+            betForJackpot[currJackpotBetID-2].user.transfer(toPay.mul(betForJackpot[currJackpotBetID-2].value).div(totalValue) );
+            emit payJackpotLog(betForJackpot[currJackpotBetID-2].user, toPay.mul(betForJackpot[currJackpotBetID-2].value).div(totalValue), totalValue, betForJackpot[currJackpotBetID-2].value, now);
+            
+            betForJackpot[currJackpotBetID-3].user.transfer(toPay.mul(betForJackpot[currJackpotBetID-3].value).div(totalValue) );
+            emit payJackpotLog(betForJackpot[currJackpotBetID-3].user, toPay.mul(betForJackpot[currJackpotBetID-3].value).div(totalValue), totalValue, betForJackpot[currJackpotBetID-3].value, now);
+            
+            betForJackpot[currJackpotBetID-4].user.transfer(toPay.mul(betForJackpot[currJackpotBetID-4].value).div(totalValue) );
+            emit payJackpotLog(betForJackpot[currJackpotBetID-4].user, toPay.mul(betForJackpot[currJackpotBetID-4].value).div(totalValue), totalValue, betForJackpot[currJackpotBetID-4].value, now);
+        }
+        
+  }
+    
 }
