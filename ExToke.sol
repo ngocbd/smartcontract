@@ -1,56 +1,98 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ExToke at 0x54a7c606ea45f9b20cff8dbe232cdf6146cb7d26
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ExToke at 0xebf3aacc50ae14965240a3777ece8da1fc490a78
 */
-pragma solidity ^0.4.25;
+pragma solidity ^0.4.18;
 
-contract ERC20 {
-    bytes32 public standard;
-    bytes32 public name;
-    bytes32 public symbol;
-    uint256 public totalSupply;
-    uint8 public decimals;
-    bool public allowTransactions;
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
-    function transfer(address _to, uint256 _value) returns (bool success);
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success);
-    function approve(address _spender, uint256 _value) returns (bool success);
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
+
+contract SafeMath {
+    function safeAdd(uint a, uint b) public pure returns (uint c) {
+        c = a + b;
+        require(c >= a);
+    }
+    function safeSub(uint a, uint b) public pure returns (uint c) {
+        require(b <= a);
+        c = a - b;
+    }
+    function safeMul(uint a, uint b) public pure returns (uint c) {
+        c = a * b;
+        require(a == 0 || c / a == b);
+    }
+    function safeDiv(uint a, uint b) public pure returns (uint c) {
+        require(b > 0);
+        c = a / b;
+    }
 }
 
 
-contract ExToke {
+contract ERC20Interface {
+    function totalSupply() public constant returns (uint);
+    function balanceOf(address tokenOwner) public constant returns (uint balance);
+    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
+    function transfer(address to, uint tokens) public returns (bool success);
+    function approve(address spender, uint tokens) public returns (bool success);
+    function transferFrom(address from, address to, uint tokens) public returns (bool success);
 
-    string public name = "ExToke Token";
-    string public symbol = "XTE";
-    uint8 public decimals = 18;
-    
-    uint256 public crowdSaleSupply = 500000000  * (uint256(10) ** decimals);
-    uint256 public tokenSwapSupply = 3000000000 * (uint256(10) ** decimals);
-    uint256 public dividendSupply = 2400000000 * (uint256(10) ** decimals);
-    uint256 public totalSupply = 7000000000 * (uint256(10) ** decimals);
+    event Transfer(address indexed from, address indexed to, uint tokens);
+    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
+}
 
-    mapping(address => uint256) public balanceOf;
-    
-    
-    address public oldAddress = 0x28925299Ee1EDd8Fd68316eAA64b651456694f0f;
-    address tokenAdmin = 0xEd86f5216BCAFDd85E5875d35463Aca60925bF16;
-    
-    uint256 public finishTime = 1548057600;
-    
-    uint256[] public releaseDates = 
-    [1543665600, 1546344000, 1549022400, 1551441600, 1554120000, 1556712000,
-    1559390400, 1561982400, 1564660800, 1567339200, 1569931200, 1572609600,
-    1575201600, 1577880000, 1580558400, 1583064000, 1585742400, 1588334400,
-    1591012800, 1593604800, 1596283200, 1598961600, 1601553600, 1604232000];
-    
-    uint256 public nextRelease = 0;
+contract ApproveAndCallFallBack {
+    function receiveApproval(address from, uint256 tokens, address token, bytes data) public;
+}
 
-    function ExToke() public {
-        balanceOf[tokenAdmin] = 1100000000 * (uint256(10) ** decimals);
+contract Owned {
+    address public owner;
+    address public newOwner;
+
+    event OwnershipTransferred(address indexed _from, address indexed _to);
+
+    function Owned() public {
+        owner = msg.sender;
     }
 
-    uint256 public scaling = uint256(10) ** 8;
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
+
+    function transferOwnership(address _newOwner) public onlyOwner {
+        newOwner = _newOwner;
+    }
+    function acceptOwnership() public {
+        require(msg.sender == newOwner);
+        OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+        newOwner = address(0);
+    }
+}
+
+contract ExToke is ERC20Interface, Owned, SafeMath {
+    string public symbol;
+    string public  name;
+    uint8 public decimals;
+    address public oldAddress;
+    address public tokenAdmin;
+    uint public _totalSupply;
+    uint256 public totalEthInWei;         // WEI is the smallest unit of ETH (the equivalent of cent in USD or satoshi in BTC). We'll store the total ETH raised via our ICO here.  
+    uint256 public unitsOneEthCanBuy;     // How many units of your coin can be bought by 1 ETH?
+    address public fundsWallet;           
+    uint256 public crowdSaleSupply;
+    uint256 public tokenSwapSupply;
+    uint256 public dividendSupply;
+    
+    uint256 public scaling;
+    uint256 public scaledRemainder;
+    
+    uint256 public finishTime = 1548057600;
+    uint256 public startTime = 1540814400;
+    
+    uint256[] public releaseDates = 
+        [1575201600, 1577880000, 1580558400, 1583064000, 1585742400, 1588334400,
+        1591012800, 1593604800, 1596283200, 1598961600, 1601553600, 1604232000,
+        1606824000, 1609502400, 1612180800, 1614600000, 1617278400, 1619870400,
+        1622548800, 1625140800, 1627819200, 1630497600, 1633089600, 1635768000];
+    
+    uint256 public nextRelease;
 
     mapping(address => uint256) public scaledDividendBalanceOf;
 
@@ -58,104 +100,149 @@ contract ExToke {
 
     mapping(address => uint256) public scaledDividendCreditedTo;
 
+    mapping(address => uint) balances;
+    mapping(address => mapping(address => uint)) allowed;
+
+    function ExToke() public {
+        symbol = "XTE";
+        name = "ExToke";
+        decimals = 18;
+        tokenAdmin = 0xEd86f5216BCAFDd85E5875d35463Aca60925bF16;
+        oldAddress = 0x28925299Ee1EDd8Fd68316eAA64b651456694f0f;
+    	_totalSupply = 7000000000000000000000000000;
+    	crowdSaleSupply = 500000000000000000000000000;
+    	tokenSwapSupply = 2911526439961880000000000000;
+    	dividendSupply = 2400000000000000000000000000;
+    	unitsOneEthCanBuy = 100000;
+        balances[this] = 5811526439961880000000000000;
+        balances[0x6baba6fb9d2cb2f109a41de2c9ab0f7a1b5744ce] = 1188473560038120000000000000;
+        
+        nextRelease = 0;
+        
+        scaledRemainder = 0;
+        scaling = uint256(10) ** 8;
+        
+    	fundsWallet = tokenAdmin;
+        Transfer(this, 0x6baba6fb9d2cb2f109a41de2c9ab0f7a1b5744ce, 1188473560038120000000000000);
+
+    }
+    
+    
+
+    function totalSupply() public constant returns (uint) {
+        return _totalSupply  - balances[address(0)];
+    }
+
+    function balanceOf(address tokenOwner) public constant returns (uint balance) {
+        return balances[tokenOwner];
+    }
+
+    function transfer(address to, uint tokens) public returns (bool success) {
+        update(msg.sender);
+        update(to);
+        balances[msg.sender] = safeSub(balances[msg.sender], tokens);
+        balances[to] = safeAdd(balances[to], tokens);
+        Transfer(msg.sender, to, tokens);
+        return true;
+    }
+
+    function approve(address spender, uint tokens) public returns (bool success) {
+        allowed[msg.sender][spender] = tokens;
+        Approval(msg.sender, spender, tokens);
+        return true;
+    }
+
+    function transferFrom(address from, address to, uint tokens) public returns (bool success) {
+        update(from);
+        update(to);
+        balances[from] = safeSub(balances[from], tokens);
+        allowed[from][msg.sender] = safeSub(allowed[from][msg.sender], tokens);
+        balances[to] = safeAdd(balances[to], tokens);
+        Transfer(from, to, tokens);
+        return true;
+    }
+
+    function allowance(address tokenOwner, address spender) public constant returns (uint remaining) {
+        return allowed[tokenOwner][spender];
+    }
+
+    function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
+        allowed[msg.sender][spender] = tokens;
+        Approval(msg.sender, spender, tokens);
+        ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, this, data);
+        return true;
+    }
+    
     function update(address account) internal {
         if(nextRelease < 24 && block.timestamp > releaseDates[nextRelease]){
             releaseDivTokens();
         }
         uint256 owed =
             scaledDividendPerToken - scaledDividendCreditedTo[account];
-        scaledDividendBalanceOf[account] += balanceOf[account] * owed;
+        scaledDividendBalanceOf[account] += balances[account] * owed;
         scaledDividendCreditedTo[account] = scaledDividendPerToken;
         
         
     }
-
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-
-    mapping(address => mapping(address => uint256)) public allowance;
-
-    function transfer(address to, uint256 value) public returns (bool success) {
-        require(balanceOf[msg.sender] >= value);
-
-        update(msg.sender);
-        update(to);
-
-        balanceOf[msg.sender] -= value;
-        balanceOf[to] += value;
-
-        emit Transfer(msg.sender, to, value);
-        return true;
-    }
-
-    function transferFrom(address from, address to, uint256 value)
-        public
-        returns (bool success)
-    {
-        require(value <= balanceOf[from]);
-        require(value <= allowance[from][msg.sender]);
-
-        update(from);
-        update(to);
-
-        balanceOf[from] -= value;
-        balanceOf[to] += value;
-        allowance[from][msg.sender] -= value;
-        emit Transfer(from, to, value);
-        return true;
-    }
-
-    uint256 public scaledRemainder = 0;
     
-    function() public payable{
+    function () public payable {
+        if(startTime < block.timestamp && finishTime >= block.timestamp && crowdSaleSupply >= msg.value * unitsOneEthCanBuy){
+        uint256 amount = msg.value * unitsOneEthCanBuy;
+        require(balances[this] >= amount);
+
+        balances[this] = balances[this] - amount;
+        balances[msg.sender] = balances[msg.sender] + amount;
+        
+        crowdSaleSupply -= msg.value * unitsOneEthCanBuy;
+
+        Transfer(this, msg.sender, amount); // Broadcast a message to the blockchain
+
         tokenAdmin.transfer(msg.value);
-        if(finishTime >= block.timestamp && crowdSaleSupply >= msg.value * 100000){
-            balanceOf[msg.sender] += msg.value * 100000;
-            crowdSaleSupply -= msg.value * 100000;
-            
         }
         else if(finishTime < block.timestamp){
-            balanceOf[tokenAdmin] += crowdSaleSupply;
+            balances[this] = balances[this] - amount;
+            balances[tokenAdmin] += crowdSaleSupply;
+            tokenAdmin.transfer(msg.value);
+            Transfer(this, tokenAdmin, amount);
             crowdSaleSupply = 0;
         }
+        
+        
     }
-
+    
     function releaseDivTokens() public returns (bool success){
         require(block.timestamp > releaseDates[nextRelease]);
         uint256 releaseAmount = 100000000 * (uint256(10) ** decimals);
         dividendSupply -= releaseAmount;
         uint256 available = (releaseAmount * scaling) + scaledRemainder;
-        scaledDividendPerToken += available / totalSupply;
-        scaledRemainder = available % totalSupply;
+        scaledDividendPerToken += available / _totalSupply;
+        scaledRemainder = available % _totalSupply;
         nextRelease += 1;
         return true;
     }
-
+    
     function withdraw() public returns (bool success){
+        require(block.timestamp > releaseDates[0]);
         update(msg.sender);
         uint256 amount = scaledDividendBalanceOf[msg.sender] / scaling;
         scaledDividendBalanceOf[msg.sender] %= scaling;  // retain the remainder
-        balanceOf[msg.sender] += amount;
+        balances[msg.sender] += amount;
+        balances[this] -= amount;
+        emit Transfer(this, msg.sender, amount);
         return true;
     }
-
-    function approve(address spender, uint256 value)
-        public
-        returns (bool success)
-    {
-        allowance[msg.sender][spender] = value;
-        emit Approval(msg.sender, spender, value);
+    
+    function swap(uint256 sendAmount) returns (bool success){
+        require(tokenSwapSupply >= sendAmount * 3);
+        if(ERC20Interface(oldAddress).transferFrom(msg.sender, tokenAdmin, sendAmount)){
+            balances[msg.sender] += sendAmount * 3;
+            balances[this] -= sendAmount * 3;
+            tokenSwapSupply -= sendAmount * 3;
+        }
+        emit Transfer(this, msg.sender, sendAmount * 3);
         return true;
     }
     
 
-    function swap(uint256 sendAmount) returns (bool success){
-        require(tokenSwapSupply >= sendAmount * 3);
-        if(ERC20(oldAddress).transferFrom(msg.sender, tokenAdmin, sendAmount)){
-            balanceOf[msg.sender] += sendAmount * 3;
-            tokenSwapSupply -= sendAmount * 3;
-        }
-        return true;
-    }
 
 }
