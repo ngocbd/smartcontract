@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x0069e491f2ed9e562a7c9c92ba40f73d946718e0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x1a3c2fd0983b6b37e83784ab70a8e9d8ae0474b0
 */
 pragma solidity ^0.4.24;
 // This contract has the burn option
@@ -8,21 +8,17 @@ interface token {
     function burn(uint256 _value) returns (bool);
     function balanceOf(address _address) returns (uint256);
 }
-contract owned { //Contract used to only allow the owner to call some functions
-	address public owner;
+contract owned {
+    address public owner;
 
-	function owned() public {
-	owner = msg.sender;
-	}
+    function owned() public {
+        owner = msg.sender;
+    }
 
-	modifier onlyOwner {
-	require(msg.sender == owner);
-	_;
-	}
-
-	function transferOwnership(address newOwner) onlyOwner public {
-	owner = newOwner;
-	}
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
 }
 
 contract SafeMath {
