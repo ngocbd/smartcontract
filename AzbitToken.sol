@@ -1,21 +1,40 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AzbitToken at 0x4fdce4068a987ca8ee6bea63f6cd28db0d9b1877
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AzbitToken at 0xeccab39acb2caf9adba72c1cb92fdc106b993e0b
 */
 pragma solidity ^0.4.24;
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; }
 
-contract AzbitToken {
+contract Ownable {
+
+    address public owner;
+
+    constructor() public {
+        owner = msg.sender;
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+    
+}
+
+contract AzbitToken is Ownable {
     // Public variables of the token
     string public name;
     string public symbol;
     uint8 public decimals = 18;
     // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
+    uint256 public releaseDate = 1546300800; //Tuesday, 01-Jan-19 00:00:00 UTC in RFC 2822
+    uint256 public constant MIN_RELEASE_DATE = 1546300800; //Tuesday, 01-Jan-19 00:00:00 UTC in RFC 2822
+    uint256 public constant MAX_RELEASE_DATE = 1559260800; //Friday, 31-May-19 00:00:00 UTC in RFC 2822
 
     // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
     mapping (address => mapping (address => uint256)) public allowance;
+    mapping (address => bool) public whiteList;
 
     // This generates a public event on the blockchain that will notify clients
     event Transfer(address indexed from, address indexed to, uint256 value);
@@ -45,7 +64,7 @@ contract AzbitToken {
     /**
      * Internal transfer, only can be called by this contract
      */
-    function _transfer(address _from, address _to, uint _value) internal {
+    function _transfer(address _from, address _to, uint _value) internal canTransfer {
         // Prevent transfer to 0x0 address. Use burn() instead
         require(_to != 0x0);
         // Check if the sender has enough
@@ -157,5 +176,24 @@ contract AzbitToken {
         totalSupply -= _value;                              // Update totalSupply
         emit Burn(_from, _value);
         return true;
+    }
+    
+    function addToWhiteList(address _address) public onlyOwner {
+        whiteList[_address] = true;
+    }
+    
+    function removeFromWhiteList(address _address) public onlyOwner {
+        require(_address != owner);
+        delete whiteList[_address];
+    }
+    
+    function changeRelease(uint256 _date) public onlyOwner {
+        require(_date > now && releaseDate > now && _date > MIN_RELEASE_DATE && _date < MAX_RELEASE_DATE);
+        releaseDate = _date;
+    }
+    
+    modifier canTransfer() {
+        require(now >= releaseDate || whiteList[msg.sender]);
+        _;
     }
 }
