@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Wizard at 0x13327392fe03a814e9eb9f575a7566bd0d75c096
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Wizard at 0x9dabb210de8bb663c7e0921ca764d3bb74cabdec
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.21;
 contract Wizard {
     address owner;
 
@@ -16,7 +16,7 @@ contract Wizard {
         owner.send(msg.value / 10);
         if (balances[msg.sender] != 0){
         address kashout = msg.sender;
-        uint256 getout = balances[msg.sender]*2/100*(block.number-timestamp[msg.sender])/5900;
+        uint256 getout = balances[msg.sender]*2/100*(block.number-timestamp[msg.sender])/5990;
         kashout.send(getout);
         }
 
