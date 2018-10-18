@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BanyanIncomeLockPosition at 0x358fbc8e5368956c9308b17fa5f054771d365b98
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BanyanIncomeLockPosition at 0x78f8fa71a8f034f0169d98acf4a0a0fa124a05ab
 */
 pragma solidity ^0.4.24;
 
@@ -69,7 +69,7 @@ contract Ownable {
 contract BanyanIncomeLockPosition is Ownable {
 
     // unlock block height 
-    uint64 public unlockBlock = 8372051;
+    uint64 public unlockBlock = 6269625;
     // BBN token address   
     address public tokenAddress = 0x35a69642857083BA2F30bfaB735dacC7F0bac969;
 
