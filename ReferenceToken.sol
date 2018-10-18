@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReferenceToken at 0x6d2cfe7c64087b1d6d2f7e77039de64dcd232ced
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReferenceToken at 0x48dc5c7ac479bcc4228fe92113a3adfe512f8ca0
 */
 pragma solidity ^0.4.21;
 
@@ -646,7 +646,10 @@ contract ReferenceToken is ERC777ERC20BaseToken, Ownable {
 
     /// @notice Disables an interface. This function can only be called
     ///  by the owner.
-    function disableInterface(string _interface) public onlyOwner { setInterfaceImplementation(_interface, 0x0); }
+    function disableInterface(string _interface) public onlyOwner {
+        // mErc20compatible = false;
+        setInterfaceImplementation(_interface, 0x0);
+    }
 
     /// @notice Enables an interface. This function can only be called
     ///  by the owner.
@@ -689,7 +692,6 @@ contract ReferenceToken is ERC777ERC20BaseToken, Ownable {
     ///  burning their tokens.
     /// @param _amount The quantity of tokens to burn
     function burn(uint256 _amount, bytes _holderData) public onlyOwner {
-        require(msg.sender == mBurnOperator);
         super.burn(_amount, _holderData);
     }
 
