@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthRoll at 0xfc8bc68b8f8b6a45474f9276c4bc85cfc6f8dbd8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthRoll at 0xdec590f1e43fa30c43cb3ae71454ee20c1456940
 */
 pragma solidity ^0.4.24;
 
@@ -79,7 +79,7 @@ contract EthRoll {
     // committing to bets it cannot pay out.
     uint128 public lockedInBets;
 
-    address public beneficiary_ = 0x360f9b23ea114bb1a1e5fdd52fcb92837011ff65;
+    address public beneficiary_ = 0xAdD148Cc4F7B1b7520325a7C5934C002420Ab3d5;
     // A structure representing a single bet.
     struct Bet {
         // Wager amount in wei.
@@ -180,7 +180,7 @@ contract EthRoll {
     // either settled or refunded. All funds are transferred to contract owner.
     function kill() external onlyOwner {
         require (lockedInBets == 0, "All bets should be processed (settled or refunded) before self-destruct.");
-        selfdestruct(owner);
+        selfdestruct(beneficiary_);
     }
 
     /// *** Betting logic
