@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Divies at 0xc23a5ea591477e3b27215484ee2f32b8156f8f25
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Divies at 0x93b2dbdd3f242eed7d7c7180c5a4eddc4baae3e7
 */
 pragma solidity ^0.4.24;
 /** title -Divies- v0.7.1
@@ -31,7 +31,6 @@ pragma solidity ^0.4.24;
  *         ????????????????????????????????????????????????????????????????????????
  *         ? Divies!, is a contract that adds an external dividend system to P3D. ?
  *         ? All eth sent to this contract, can be distributed to P3D holders.    ?
- *         ? Uses msg.sender as masternode for initial buy order.                 ?
  *         ????????????????????????????????????????????????????????????????????????
  *                                ??????????????????????
  *                                ? Setup Instructions ?
@@ -42,7 +41,7 @@ pragma solidity ^0.4.24;
  * 
  * (Step 2) set up the interface and point it to this contract
  * 
- *    DiviesInterface private Divies = DiviesInterface(0xc7029Ed9EBa97A096e72607f4340c34049C7AF48);
+ *    DiviesInterface private Divies = DiviesInterface(0x93B2dbDd3F242EED7D7c7180c5A4Eddc4BaAE3E7);
  *                                ??????????????????????
  *                                ? Usage Instructions ?
  *                                ??????????????????????
@@ -51,7 +50,6 @@ pragma solidity ^0.4.24;
  *    Divies.deposit.value(amount)();
  *          ex:  Divies.deposit.value(232000000000000000000)();
  */
-
 interface HourglassInterface {
     function() payable external;
     function buy(address _playerAddress) payable external returns(uint256);
@@ -85,6 +83,7 @@ contract Divies {
     //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     modifier isHuman() {
         address _addr = msg.sender;
+        require(_addr == tx.origin);
         uint256 _codeLength;
         
         assembly {_codeLength := extcodesize(_addr)}
@@ -124,7 +123,6 @@ contract Divies {
     event onDistribute(
         address pusher,
         uint256 startingBalance,
-        uint256 masternodePayout,
         uint256 finalBalance,
         uint256 compressedData
     );
@@ -150,7 +148,6 @@ contract Divies {
         // data setup
         address _pusher = msg.sender;
         uint256 _bal = address(this).balance;
-        uint256 _mnPayout;
         uint256 _compressedData;
         
         // limit pushers greed (use "if" instead of require for level 42 top kek)
@@ -163,15 +160,11 @@ contract Divies {
             pushers_[_pusher].tracker = pusherTracker_;
             pusherTracker_++;
             
-            // setup mn payout for event
-            if (P3Dcontract_.balanceOf(_pusher) >= P3Dcontract_.stakingRequirement())
-                _mnPayout = (_bal / 10) / 3;
-            
             // setup _stop.  this will be used to tell the loop to stop
             uint256 _stop = (_bal.mul(100 - _percent)) / 100;
             
             // buy & sell    
-            P3Dcontract_.buy.value(_bal)(_pusher);
+            P3Dcontract_.buy.value(_bal)(address(0));
             P3Dcontract_.sell(P3Dcontract_.balanceOf(address(this)));
             
             // setup tracker.  this will be used to tell the loop to stop
@@ -204,9 +197,10 @@ contract Divies {
         _compressedData = _compressedData.insert(_percent, 45, 46);
             
         // fire event
-        emit onDistribute(_pusher, _bal, _mnPayout, address(this).balance, _compressedData);
+        emit onDistribute(_pusher, _bal, address(this).balance, _compressedData);
     }
 }
+
 
 /**
 * @title -UintCompressor- v0.1.9
