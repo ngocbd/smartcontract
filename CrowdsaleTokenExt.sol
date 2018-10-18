@@ -1,14 +1,46 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleTokenExt at 0x7c7D518689798Fd5f9E6cCDa4e222b9d6e6f3B97
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleTokenExt at 0xda23c8a2f194505fa44f2310d305ba91e0ddcf78
 */
 pragma solidity ^0.4.11;
+/*
+TRIXCHAIN Powered by POA NETWORK
 
+TRIXCHAIN is the first Indonesia Crypto Marketplace , Indonesia with more than 240 Millions Populations and more than 5% Economic Growth every years is a big opportunity for Cryptocurrency.
 
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
+TRIXCHAIN will be the first and the biggest Crypto Marketplace in Indonesia.
+
+Name ---------- : TRIXCHAIN 
+Symbol -------- : TRIX
+Total Supply - : 100.000.000.000 TRIX
+Decimals ------ : 18 
+Contract ------- : 0xda23c8a2f194505fa44f2310d305ba91e0ddcf78
+CREATOR ------ : 0x64db52750f06456a5315Af1d04D0D3efCB48FF23
+
+TOKEN DETAILS
+
+Total Supply ---------------- : 100.000.000.000 TRIX
+Future Development ---- :   35.000.000.000 TRIX
+Investor ---------------------- :   40.000.000.000 TRIX
+Foundation ----------------- :     7.000.000.000 TRIX 
+Team & Advisor ----------- :   15.000.000.000 TRIX 
+Giveaway -------------------- :     3.000.000.000 TRIX
+
+If you’re interest to be an Investor on TRIXCHAIN project , You can Buy TRIXCHAIN Token
+
+Send ETH to TRIX CREATOR Address "0x64db52750f06456a5315Af1d04D0D3efCB48FF23”
+
+You’ll get 40.000.000 TRIX for 1 ETH , minimum contribution 0.01 ETH
+TRIX will list on exchange after we get fund from investor, our first target TRIX will list on Hotbit , Cryptopia , Mercatox , idex , and Indodax.
+
+We also giveaway TRIX to random address to build a strong Community 
+
+Official Group --- : https://t.me/trixchain
+Channel ----------- : https://t.me/trixofficialchannel
+
+Official website , Official twitter  will launch on December 2018 
+
+*/
+
 contract ERC20Basic {
   uint256 public totalSupply;
   function balanceOf(address who) public constant returns (uint256);
@@ -59,8 +91,6 @@ contract Ownable {
   }
 
 }
-// Temporarily have SafeMath here until all contracts have been migrated to SafeMathLib version from OpenZeppelin
-
 
 
 
@@ -109,33 +139,7 @@ contract SafeMath {
   }
 
 }
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
 
-
-
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
-
-
-
-
-
-
-
-
-
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
 contract ERC20 is ERC20Basic {
   function allowance(address owner, address spender) public constant returns (uint256);
   function transferFrom(address from, address to, uint256 value) public returns (bool);
@@ -143,15 +147,6 @@ contract ERC20 is ERC20Basic {
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-
-
-
-/**
- * Standard ERC20 token with Short Hand Attack and approve() race condition mitigation.
- *
- * Based on code by FirstBlood:
- * https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
- */
 contract StandardToken is ERC20, SafeMath {
 
   /* Token supply got increased and a new owner received these tokens */
@@ -191,10 +186,6 @@ contract StandardToken is ERC20, SafeMath {
 
   function approve(address _spender, uint _value) returns (bool success) {
 
-    // To change the approve amount you first have to reduce the addresses`
-    //  allowance to zero by calling `approve(_spender, 0)` if it is not
-    //  already 0 to mitigate the race condition described here:
-    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
     if ((_value != 0) && (allowed[msg.sender][_spender] != 0)) throw;
 
     allowed[msg.sender][_spender] = _value;
@@ -207,23 +198,6 @@ contract StandardToken is ERC20, SafeMath {
   }
 
 }
-
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
-
-
-
-
-
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
-
 
 
 /**
@@ -372,18 +346,6 @@ contract UpgradeableToken is StandardToken {
 }
 
 /**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
-
-
-
-
-
-
-
-/**
  * Define interface for releasing the token transfer after a successful crowdsale.
  */
 contract ReleasableToken is ERC20, Ownable {
@@ -467,33 +429,6 @@ contract ReleasableToken is ERC20, Ownable {
 
 }
 
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
-
-
-
-
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
-
-
-
-/**
- * Safe unsigned safe math.
- *
- * https://blog.aragon.one/library-driven-development-in-solidity-2bebcaf88736#.750gwtwli
- *
- * Originally from https://raw.githubusercontent.com/AragonOne/zeppelin-solidity/master/contracts/SafeMathLib.sol
- *
- * Maintained here until merged to mainline zeppelin-solidity.
- *
- */
 library SafeMathLibExt {
 
   function times(uint a, uint b) returns (uint) {
