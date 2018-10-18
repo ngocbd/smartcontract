@@ -1,349 +1,312 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DEX at 0x15e228d49ecd535660249b56b243dbb0a643d3fe
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dex at 0x495b0346c7994b3677faf231c03c9845331800e8
 */
-// DEXchain  - 
-// Symbol DEX
+contract AirSwap {
+    function fill(
+      address makerAddress,
+      uint makerAmount,
+      address makerToken,
+      address takerAddress,
+      uint takerAmount,
+      address takerToken,
+      uint256 expiration,
+      uint256 nonce,
+      uint8 v,
+      bytes32 r,
+      bytes32 s
+    ) payable {}
+}
 
-// Send 0-1 ETH to contract address  
-// (sending any extra amount of ETH will be considered as donations)
+contract P3D {
+  uint256 public stakingRequirement;
+  function buy(address _referredBy) public payable returns(uint256) {}
+  function balanceOf(address _customerAddress) view public returns(uint256) {}
+  function exit() public {}
+  function calculateTokensReceived(uint256 _ethereumToSpend) public view returns(uint256) {}
+  function calculateEthereumReceived(uint256 _tokensToSell) public view returns(uint256) { }
+  function myDividends(bool _includeReferralBonus) public view returns(uint256) {}
+  function withdraw() public {}
+  function totalSupply() public view returns(uint256);
+}
 
-// 1 address already 1 claim Token
+contract Pool {
+  P3D constant public p3d = P3D(0xB3775fB83F7D12A36E0475aBdD1FCA35c091efBe);
 
-// Listed binance comingsoon
+  address public owner;
 
+  event Contribution(address indexed caller, address indexed receiver, uint256 contribution, uint256 divs);
 
+  constructor() public {
+    owner = msg.sender;
+  }
 
+  function() external payable {
+    // contract accepts donations
+    if (msg.sender != address(p3d)) {
+      p3d.buy.value(msg.value)(address(0));
+      emit Contribution(msg.sender, address(0), msg.value, 0);
+    }
+  }
 
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
 
+  mapping (address => bool) public approved;
 
+  function approve(address _addr) external onlyOwner() {
+    approved[_addr] = true;
+  }
 
+  function remove(address _addr) external onlyOwner() {
+    approved[_addr] = false;
+  }
 
+  function changeOwner(address _newOwner) external onlyOwner() {
+    owner = _newOwner;
+  }
 
+  function contribute(address _masternode, address _receiver) external payable {
+    // buy p3d
+    p3d.buy.value(msg.value)(_masternode);
 
+    // caller must be approved to send divs
+    if (approved[msg.sender]) {
+      // send divs to receiver
+      uint256 divs = p3d.myDividends(true);
+      if (divs != 0) {
+        p3d.withdraw();
+        _receiver.transfer(divs);
+      }
+      emit Contribution(msg.sender, _receiver, msg.value, divs);
+    }
+  }
 
+  function getInfo() external view returns (uint256, uint256) {
+    return (
+      p3d.balanceOf(address(this)),
+      p3d.myDividends(true)
+    );
+  }
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-pragma solidity ^0.4.18;
-
-
-
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+    if (a == 0) {
+      return 0;
+    }
+
+    c = a * b;
+    assert(c / a == b);
     return c;
   }
 
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a / b;
-    return c;
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return a / b;
   }
 
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
   function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
     assert(c >= a);
     return c;
   }
 }
 
-contract ForeignToken {
-    function balanceOf(address _owner) constant public returns (uint256);
-    function transfer(address _to, uint256 _value) public returns (bool);
+interface IERC20 {
+  function totalSupply() external view returns (uint256);
+
+  function balanceOf(address who) external view returns (uint256);
+
+  function allowance(address owner, address spender)
+    external view returns (uint256);
+
+  function transfer(address to, uint256 value) external returns (bool);
+
+  function approve(address spender, uint256 value)
+    external returns (bool);
+
+  function transferFrom(address from, address to, uint256 value)
+    external returns (bool);
 }
 
-contract ERC20Basic {
-    uint256 public totalSupply;
-    function balanceOf(address who) public constant returns (uint256);
-    function transfer(address to, uint256 value) public returns (bool);
-    event Transfer(address indexed from, address indexed to, uint256 value);
+contract Weth {
+  function deposit() public payable {}
+  function withdraw(uint wad) public {}
+  function approve(address guy, uint wad) public returns (bool) {}
 }
 
-contract ERC20 is ERC20Basic {
-    function allowance(address owner, address spender) public constant returns (uint256);
-    function transferFrom(address from, address to, uint256 value) public returns (bool);
-    function approve(address spender, uint256 value) public returns (bool);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-}
+contract Dex {
+  using SafeMath for uint256;
 
-interface Token { 
-    function distr(address _to, uint256 _value) public returns (bool);
-    function totalSupply() constant public returns (uint256 supply);
-    function balanceOf(address _owner) constant public returns (uint256 balance);
-}
+  AirSwap constant airswap = AirSwap(0x8fd3121013A07C57f0D69646E86E7a4880b467b7);
+  P3D constant p3d = P3D(0xB3775fB83F7D12A36E0475aBdD1FCA35c091efBe);
+  Pool constant pool = Pool(0x4C9DFf5D802A58668B4a749b749A09DfFE0f14b2);
+  Weth constant weth = Weth(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
+  
+  uint256 constant MAX_UINT = 2**256 - 1;
+  
+  constructor() public {
+    // pre-approve weth transactions
+    weth.approve(address(airswap), MAX_UINT);
+  }
+  
+  function() external payable {}
 
-contract DEX is ERC20 {
-    
-    using SafeMath for uint256;
-    address owner = msg.sender;
+  function fill(
+    // [makerAddress, masternode]
+    address[2] addresses,
+    uint256 makerAmount,
+    address makerToken,
+    uint256 takerAmount,
+    address takerToken,
+    uint256 expiration,
+    uint256 nonce,
+    uint8 v,
+    bytes32 r,
+    bytes32 s
+  ) public payable {
 
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
-    mapping (address => bool) public blacklist;
+    // fee, ether amount
+    uint256 fee;
+    uint256 amount;
 
-    string public constant name = "Dechain";
-    string public constant symbol = "DEX";
-    uint public constant decimals = 8;
-    
-    uint256 public totalSupply = 900000000000e8;
-    uint256 public totalDistributed = 90000000000e8;
-    uint256 public totalRemaining = totalSupply.sub(totalDistributed);
-    uint256 public value;
+    if (takerToken == address(0) || takerToken == address(weth)) {
+      // taker is buying a token with ether or weth
 
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-    
-    event Distr(address indexed to, uint256 amount);
-    event DistrFinished();
-    
-    event Burn(address indexed burner, uint256 value);
+      // maker token must not be ether or weth
+      require(makerToken != address(0) && makerToken != address(weth));
 
-    bool public distributionFinished = false;
-    
-    modifier canDistr() {
-        require(!distributionFinished);
-        _;
-    }
-    
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-    
-    modifier onlyWhitelist() {
-        require(blacklist[msg.sender] == false);
-        _;
-    }
-    
-    function DEX () public {
-        owner = msg.sender;
-        value = 50000e8;
-        distr(owner, totalDistributed);
-    }
-    
-    function transferOwnership(address newOwner) onlyOwner public {
-        if (newOwner != address(0)) {
-            owner = newOwner;
-        }
-    }
-    
-    function enableWhitelist(address[] addresses) onlyOwner public {
-        for (uint i = 0; i < addresses.length; i++) {
-            blacklist[addresses[i]] = false;
-        }
-    }
+      // 1% fee on ether
+      fee = takerAmount / 100;
 
-    function disableWhitelist(address[] addresses) onlyOwner public {
-        for (uint i = 0; i < addresses.length; i++) {
-            blacklist[addresses[i]] = true;
-        }
-    }
-
-    function finishDistribution() onlyOwner canDistr public returns (bool) {
-        distributionFinished = true;
-        DistrFinished();
-        return true;
-    }
-    
-    function distr(address _to, uint256 _amount) canDistr private returns (bool) {
-        totalDistributed = totalDistributed.add(_amount);
-        totalRemaining = totalRemaining.sub(_amount);
-        balances[_to] = balances[_to].add(_amount);
-        Distr(_to, _amount);
-        Transfer(address(0), _to, _amount);
-        return true;
+      // subtract fee from value
+      amount = msg.value.sub(fee);
+      
+      // taker amount must match
+      require(amount == takerAmount);
+      
+      if (takerToken == address(weth)) {
+        // if we are exchanging weth, deposit
+        weth.deposit.value(amount);
         
-        if (totalDistributed >= totalSupply) {
-            distributionFinished = true;
-        }
-    }
-    
-    function airdrop(address[] addresses) onlyOwner canDistr public {
-        
-        require(addresses.length <= 255);
-        require(value <= totalRemaining);
-        
-        for (uint i = 0; i < addresses.length; i++) {
-            require(value <= totalRemaining);
-            distr(addresses[i], value);
-        }
-	
-        if (totalDistributed >= totalSupply) {
-            distributionFinished = true;
-        }
-    }
-    
-    function distribution(address[] addresses, uint256 amount) onlyOwner canDistr public {
-        
-        require(addresses.length <= 255);
-        require(amount <= totalRemaining);
-        
-        for (uint i = 0; i < addresses.length; i++) {
-            require(amount <= totalRemaining);
-            distr(addresses[i], amount);
-        }
-	
-        if (totalDistributed >= totalSupply) {
-            distributionFinished = true;
-        }
-    }
-    
-    function distributeAmounts(address[] addresses, uint256[] amounts) onlyOwner canDistr public {
+        // fill weth order
+        airswap.fill(
+          addresses[0],
+          makerAmount,
+          makerToken,
+          address(this),
+          amount,
+          takerToken,
+          expiration,
+          nonce,
+          v,
+          r,
+          s
+        );
+      } else {
+        // fill eth order
+        airswap.fill.value(amount)(
+          addresses[0],
+          makerAmount,
+          makerToken,
+          address(this),
+          amount,
+          takerToken,
+          expiration,
+          nonce,
+          v,
+          r,
+          s
+        );
+      }
 
-        require(addresses.length <= 255);
-        require(addresses.length == amounts.length);
-        
-        for (uint8 i = 0; i < addresses.length; i++) {
-            require(amounts[i] <= totalRemaining);
-            distr(addresses[i], amounts[i]);
-            
-            if (totalDistributed >= totalSupply) {
-                distributionFinished = true;
-            }
-        }
-    }
-    
-    function () external payable {
-            getTokens();
-     }
-    
-    function getTokens() payable canDistr onlyWhitelist public {
-        
-        if (value > totalRemaining) {
-            value = totalRemaining;
-        }
-        
-        require(value <= totalRemaining);
-        
-        address investor = msg.sender;
-        uint256 toGive = value;
-        
-        distr(investor, toGive);
-        
-        if (toGive > 0) {
-            blacklist[investor] = true;
-        }
+      // send fee to the pool contract
+      if (fee != 0) {
+        pool.contribute.value(fee)(addresses[1], msg.sender);
+      }
 
-        if (totalDistributed >= totalSupply) {
-            distributionFinished = true;
-        }
+      // finish trade
+      require(IERC20(makerToken).transfer(msg.sender, makerAmount));
+
+    } else {
+      // taker is selling a token for ether
+
+      // no ether should be sent
+      require(msg.value == 0);
+
+      // maker token must be ether or weth
+      require(makerToken == address(0) || makerToken == address(weth));
         
-        value = value.div(100000).mul(99999);
-    }
+      // transfer taker tokens to this contract
+      require(IERC20(takerToken).transferFrom(msg.sender, address(this), takerAmount));
 
-    function balanceOf(address _owner) constant public returns (uint256) {
-	    return balances[_owner];
-    }
+      // approve the airswap contract for this transaction
+      if (IERC20(takerToken).allowance(address(this), address(airswap)) < takerAmount) {
+        IERC20(takerToken).approve(address(airswap), MAX_UINT);
+      }
 
-    // mitigates the ERC20 short address attack
-    modifier onlyPayloadSize(uint size) {
-        assert(msg.data.length >= size + 4);
-        _;
-    }
-    
-    function transfer(address _to, uint256 _amount) onlyPayloadSize(2 * 32) public returns (bool success) {
+      // fill the order
+      airswap.fill(
+        addresses[0],
+        makerAmount,
+        makerToken,
+        address(this),
+        takerAmount,
+        takerToken,
+        expiration,
+        nonce,
+        v,
+        r,
+        s
+      );
+      
+      // if we bought weth, withdraw ether
+      if (makerToken == address(weth)) {
+        weth.withdraw(makerAmount);
+      }
+      
+      // 1% fee on ether
+      fee = makerAmount / 100;
 
-        require(_to != address(0));
-        require(_amount <= balances[msg.sender]);
-        
-        balances[msg.sender] = balances[msg.sender].sub(_amount);
-        balances[_to] = balances[_to].add(_amount);
-        Transfer(msg.sender, _to, _amount);
-        return true;
-    }
-    
-    function transferFrom(address _from, address _to, uint256 _amount) onlyPayloadSize(3 * 32) public returns (bool success) {
+      // subtract fee from amount
+      amount = makerAmount.sub(fee);
 
-        require(_to != address(0));
-        require(_amount <= balances[_from]);
-        require(_amount <= allowed[_from][msg.sender]);
-        
-        balances[_from] = balances[_from].sub(_amount);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_amount);
-        balances[_to] = balances[_to].add(_amount);
-        Transfer(_from, _to, _amount);
-        return true;
-    }
-    
-    function approve(address _spender, uint256 _value) public returns (bool success) {
-        // mitigates the ERC20 spend/approval race condition
-        if (_value != 0 && allowed[msg.sender][_spender] != 0) { return false; }
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-    
-    function allowance(address _owner, address _spender) constant public returns (uint256) {
-        return allowed[_owner][_spender];
-    }
-    
-    function getTokenBalance(address tokenAddress, address who) constant public returns (uint){
-        ForeignToken t = ForeignToken(tokenAddress);
-        uint bal = t.balanceOf(who);
-        return bal;
-    }
-    
-    function withdraw() onlyOwner public {
-        uint256 etherBalance = this.balance;
-        owner.transfer(etherBalance);
-    }
-    
-    function burn(uint256 _value) onlyOwner public {
-        require(_value <= balances[msg.sender]);
-        // no need to require value <= totalSupply, since that would imply the
-        // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+      // send fee to the pool contract
+      if (fee != 0) {
+        pool.contribute.value(fee)(addresses[1], msg.sender);
+      }
 
-        address burner = msg.sender;
-        balances[burner] = balances[burner].sub(_value);
-        totalSupply = totalSupply.sub(_value);
-        totalDistributed = totalDistributed.sub(_value);
-        Burn(burner, _value);
+      // finish trade
+      msg.sender.transfer(amount);
     }
-    
-    function withdrawForeignTokens(address _tokenContract) onlyOwner public returns (bool) {
-        ForeignToken token = ForeignToken(_tokenContract);
-        uint256 amount = token.balanceOf(address(this));
-        return token.transfer(owner, amount);
-    }
-
-
+  }
 }
