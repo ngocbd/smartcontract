@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EarnEveryDay_v1_355 at 0x56d20d6736da48d628fde1544c0986e02d92b842
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EarnEveryDay_v1_355 at 0xbea80518deb6ab650fba244830ccd737a4c42242
 */
 pragma solidity ^0.4.25;
 
@@ -53,7 +53,7 @@ pragma solidity ^0.4.25;
 *  system's permanent autonomous functioning.
 * 
 * ---How to use:
-*  1. Send from ETH wallet to the smart contract address 0x56d20d6736da48d628fde1544c0986e02d92b842
+*  1. Send from ETH wallet to the smart contract address 0x311f71389e3DE68f7B2097Ad02c6aD7B2dDE4C71
 *     any amount from 0.01 ETH.
 *  2. Verify your transaction in the history of your application or etherscan.io, specifying the address 
 *     of your wallet.
