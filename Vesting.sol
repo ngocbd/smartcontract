@@ -1,529 +1,215 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vesting at 0x48d8a487a90207e371acd3ded547e5c6afe90332
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vesting at 0x211D8B3EB985626B3363D3AeDd9B071113660330
 */
-pragma solidity ^0.4.23;
+pragma solidity 0.4.24;
 pragma experimental "v0.5.0";
-/*
-  This file is part of The Colony Network.
+library SafeMath {
 
-  The Colony Network is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
+  // We use `pure` bbecause it promises that the value for the function depends ONLY
+  // on the function arguments
+    function mul(uint256 a, uint256 b) internal pure  returns (uint256) {
+        uint256 c = a * b;
+        require(a == 0 || c / a == b);
+        return c;
+    }
 
-  The Colony Network is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a / b;
+        return c;
+    }
 
-  You should have received a copy of the GNU General Public License
-  along with The Colony Network. If not, see <http://www.gnu.org/licenses/>.
-*/
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        require(b <= a);
+        return a - b;
+    }
 
-
-
-
-/*
-  This file is part of The Colony Network.
-
-  The Colony Network is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  The Colony Network is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with The Colony Network. If not, see <http://www.gnu.org/licenses/>.
-*/
-
-
-
-
-
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-
-
-contract DSAuthority {
-    function canCall(
-        address src, address dst, bytes4 sig
-    ) public view returns (bool);
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        require(c >= a);
+        return c;
+    }
 }
 
-contract DSAuthEvents {
-    event LogSetAuthority (address indexed authority);
-    event LogSetOwner     (address indexed owner);
+interface RTCoinInterface {
+    
+
+    /** Functions - ERC20 */
+    function transfer(address _recipient, uint256 _amount) external returns (bool);
+
+    function transferFrom(address _owner, address _recipient, uint256 _amount) external returns (bool);
+
+    function approve(address _spender, uint256 _amount) external returns (bool approved);
+
+    /** Getters - ERC20 */
+    function totalSupply() external view returns (uint256);
+
+    function balanceOf(address _holder) external view returns (uint256);
+
+    function allowance(address _owner, address _spender) external view returns (uint256);
+
+    /** Getters - Custom */
+    function mint(address _recipient, uint256 _amount) external returns (bool);
+
+    function stakeContractAddress() external view returns (address);
+
+    function mergedMinerValidatorAddress() external view returns (address);
+    
+    /** Functions - Custom */
+    function freezeTransfers() external returns (bool);
+
+    function thawTransfers() external returns (bool);
 }
 
-contract DSAuth is DSAuthEvents {
-    DSAuthority  public  authority;
-    address      public  owner;
 
-    constructor() public {
-        owner = msg.sender;
-        emit LogSetOwner(msg.sender);
+/// @title This contract is used to handle vesting of the RTC token
+/// @author Postables, RTrade Technologies Ltd
+/// @dev We able V5 for safety features, see https://solidity.readthedocs.io/en/v0.4.24/security-considerations.html#take-warnings-seriously
+contract Vesting {
+
+    using SafeMath for uint256;
+
+    // these will need to be changed prior to deployment
+    address constant public TOKENADDRESS = 0xecc043b92834c1ebDE65F2181B59597a6588D616;
+    RTCoinInterface constant public RTI = RTCoinInterface(TOKENADDRESS);
+    string constant public VERSION = "production";
+
+    address public admin;
+
+    // keeps track of the state of a vest
+    enum VestState {nil, vesting, vested}
+
+    struct Vest {
+        // total amount of coins vesting
+        uint256 totalVest;
+        // the times at which the tokens will unlock
+        uint256[] releaseDates;
+        // the amount of tokens to unlock at each interval
+        uint256[] releaseAmounts;
+        VestState state;
+        // keeps track of what tokens have been unlocked
+        mapping (uint256 => bool) claimed;
     }
 
-    function setOwner(address owner_)
-        public
-        auth
-    {
-        owner = owner_;
-        emit LogSetOwner(owner);
-    }
+    // Keeps track of token vests
+    mapping (address => Vest) public vests;
 
-    function setAuthority(DSAuthority authority_)
-        public
-        auth
-    {
-        authority = authority_;
-        emit LogSetAuthority(authority);
-    }
-
-    modifier auth {
-        require(isAuthorized(msg.sender, msg.sig));
+    // make sure that they are using a valid vest index
+    modifier validIndex(uint256 _vestIndex) {
+        require(_vestIndex < vests[msg.sender].releaseDates.length, "attempting to access invalid vest index must be less than length of array");
         _;
     }
 
-    function isAuthorized(address src, bytes4 sig) internal view returns (bool) {
-        if (src == address(this)) {
-            return true;
-        } else if (src == owner) {
-            return true;
-        } else if (authority == DSAuthority(0)) {
-            return false;
-        } else {
-            return authority.canCall(src, this, sig);
-        }
-    }
-}
-/// base.sol -- basic ERC20 implementation
-
-// Copyright (C) 2015, 2016, 2017  DappHub, LLC
-
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-
-
-/// erc20.sol -- API for the ERC20 token standard
-
-// See <https://github.com/ethereum/EIPs/issues/20>.
-
-// This file likely does not meet the threshold of originality
-// required for copyright to apply.  As a result, this is free and
-// unencumbered software belonging to the public domain.
-
-
-
-contract ERC20Events {
-    event Approval(address indexed src, address indexed guy, uint wad);
-    event Transfer(address indexed src, address indexed dst, uint wad);
-}
-
-contract ERC20 is ERC20Events {
-    function totalSupply() public view returns (uint);
-    function balanceOf(address guy) public view returns (uint);
-    function allowance(address src, address guy) public view returns (uint);
-
-    function approve(address guy, uint wad) public returns (bool);
-    function transfer(address dst, uint wad) public returns (bool);
-    function transferFrom(
-        address src, address dst, uint wad
-    ) public returns (bool);
-}
-/// math.sol -- mixin for inline numerical wizardry
-
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-
-
-contract DSMath {
-    function add(uint x, uint y) internal pure returns (uint z) {
-        require((z = x + y) >= x);
-    }
-    function sub(uint x, uint y) internal pure returns (uint z) {
-        require((z = x - y) <= x);
-    }
-    function mul(uint x, uint y) internal pure returns (uint z) {
-        require(y == 0 || (z = x * y) / y == x);
+    // make sure that the claim date has been passed
+    modifier pastClaimDate(uint256 _vestIndex) {
+        require(now >= vests[msg.sender].releaseDates[_vestIndex], "attempting to claim vest before release date");
+        _;
     }
 
-    function min(uint x, uint y) internal pure returns (uint z) {
-        return x <= y ? x : y;
-    }
-    function max(uint x, uint y) internal pure returns (uint z) {
-        return x >= y ? x : y;
-    }
-    function imin(int x, int y) internal pure returns (int z) {
-        return x <= y ? x : y;
-    }
-    function imax(int x, int y) internal pure returns (int z) {
-        return x >= y ? x : y;
+    // make sure that the vest is not yet claimed
+    modifier unclaimedVest(uint256 _vestIndex) {
+        require(!vests[msg.sender].claimed[_vestIndex], "vest must be unclaimed");
+        _;
     }
 
-    uint constant WAD = 10 ** 18;
-    uint constant RAY = 10 ** 27;
-
-    function wmul(uint x, uint y) internal pure returns (uint z) {
-        z = add(mul(x, y), WAD / 2) / WAD;
-    }
-    function rmul(uint x, uint y) internal pure returns (uint z) {
-        z = add(mul(x, y), RAY / 2) / RAY;
-    }
-    function wdiv(uint x, uint y) internal pure returns (uint z) {
-        z = add(mul(x, WAD), y / 2) / y;
-    }
-    function rdiv(uint x, uint y) internal pure returns (uint z) {
-        z = add(mul(x, RAY), y / 2) / y;
+    // make sure that the vest is active
+    modifier activeVester() {
+        require(vests[msg.sender].state == VestState.vesting, "vest must be active");
+        _;
     }
 
-    // This famous algorithm is called "exponentiation by squaring"
-    // and calculates x^n with x as fixed-point and n as regular unsigned.
-    //
-    // It's O(log n), instead of O(n) for naive repeated multiplication.
-    //
-    // These facts are why it works:
-    //
-    //  If n is even, then x^n = (x^2)^(n/2).
-    //  If n is odd,  then x^n = x * x^(n-1),
-    //   and applying the equation for even x gives
-    //    x^n = x * (x^2)^((n-1) / 2).
-    //
-    //  Also, EVM division is flooring and
-    //    floor[(n-1) / 2] = floor[n / 2].
-    //
-    function rpow(uint x, uint n) internal pure returns (uint z) {
-        z = n % 2 != 0 ? x : RAY;
-
-        for (n /= 2; n != 0; n /= 2) {
-            x = rmul(x, x);
-
-            if (n % 2 != 0) {
-                z = rmul(z, x);
-            }
-        }
-    }
-}
-
-contract DSTokenBase is ERC20, DSMath {
-    uint256                                            _supply;
-    mapping (address => uint256)                       _balances;
-    mapping (address => mapping (address => uint256))  _approvals;
-
-    constructor(uint supply) public {
-        _balances[msg.sender] = supply;
-        _supply = supply;
+    // make sure that the user has no active vests going on
+    modifier nonActiveVester(address _vester) {
+        require(vests[_vester].state == VestState.nil, "address must not have an active vest");
+        _;
     }
 
-    function totalSupply() public view returns (uint) {
-        return _supply;
-    }
-    function balanceOf(address src) public view returns (uint) {
-        return _balances[src];
-    }
-    function allowance(address src, address guy) public view returns (uint) {
-        return _approvals[src][guy];
+    modifier onlyAdmin() {
+        require(msg.sender == admin, "sender must be admin");
+        _;
     }
 
-    function transfer(address dst, uint wad) public returns (bool) {
-        return transferFrom(msg.sender, dst, wad);
+    constructor(address _admin) public {
+        // prevent deployments if not properly setup
+        require(TOKENADDRESS != address(0), "token address not set");
+        admin = _admin;
     }
 
-    function transferFrom(address src, address dst, uint wad)
+    /** @notice Used to deposit a vest for someone
+        * Mythril will report an overflow here, however it is a false positive
+        * @dev Yes we are looping, however we have the ability to ensure that the block gas limit will never be reached
+        * @param _vester This is the person for whom vests are being enabled
+        * @param _totalAmountToVest This is the total amount of coins being vested
+        * @param _releaseDates These are the dates at which tokens will be unlocked
+        * @param _releaseAmounts these are the amounts of tokens to be unlocked at each date
+     */
+    function addVest(
+        address _vester,
+        uint256 _totalAmountToVest,
+        uint256[] _releaseDates, // unix time stamp format `time.Now().Unix()` in golang
+        uint256[] _releaseAmounts)
         public
+        nonActiveVester(_vester)
+        onlyAdmin
         returns (bool)
     {
-        if (src != msg.sender) {
-            _approvals[src][msg.sender] = sub(_approvals[src][msg.sender], wad);
+        require(_releaseDates.length > 0 && _releaseAmounts.length > 0 && _totalAmountToVest > 0, "attempting to use non zero values");
+        require(_releaseDates.length == _releaseAmounts.length, "array lengths are not equal");
+        uint256 total;
+        for (uint256 i = 0; i < _releaseAmounts.length; i++) {
+            total = total.add(_releaseAmounts[i]);
+            require(now < _releaseDates[i], "release date must be in the future");
         }
-
-        _balances[src] = sub(_balances[src], wad);
-        _balances[dst] = add(_balances[dst], wad);
-
-        emit Transfer(src, dst, wad);
-
+        require(total == _totalAmountToVest, "invalid total amount to vest");
+        Vest memory v = Vest({
+            totalVest: _totalAmountToVest,
+            releaseDates: _releaseDates,
+            releaseAmounts: _releaseAmounts,
+            state: VestState.vesting
+        });
+        vests[_vester] = v;
+        require(RTI.transferFrom(msg.sender, address(this), _totalAmountToVest), "transfer from failed, most likely needs approval");
         return true;
     }
 
-    function approve(address guy, uint wad) public returns (bool) {
-        _approvals[msg.sender][guy] = wad;
 
-        emit Approval(msg.sender, guy, wad);
-
+    /** @notice Used to withdraw unlocked vested tokens
+        * @dev Yes we are looping, but as we can control the total number of loops, etc.. we can ensure that the block gas limit will never be reached
+        * @notice IF YOU ARE WITHDRAWING THE LAST VEST (LAST INDEX) YOU MUST HAVE WITHDRAWN ALL OTHER VESTS FIRST OR THE TX WILL FAIL
+        * @param _vestIndex the particular vest to be withdrawn
+     */
+    function withdrawVestedTokens(
+        uint256 _vestIndex)
+        public
+        activeVester
+        validIndex(_vestIndex)
+        unclaimedVest(_vestIndex)
+        pastClaimDate(_vestIndex)
+        returns (bool)
+    {
+        // if this is the last vest, make sure all others have been claimed and then mark as vested
+        if (_vestIndex == vests[msg.sender].releaseAmounts.length.sub(1)) {
+            bool check;
+            for (uint256 i = 0; i < vests[msg.sender].releaseAmounts.length; i++) {
+                // if we detect that even one vest hasn't been claimed, set check to false and break out of loop
+                if (!vests[msg.sender].claimed[i]) {
+                    // this will preventsituations where the first vest may not be claimed but later ones have been
+                    // which would result in a "split brain" type scenario, in which the code thinks all vests have been claimed
+                    // but they actually haven't
+                    check = false;
+                    // break out of the loop
+                    break;
+                }
+                check = true;
+            }
+            // if they are attempting to withdraw the last vest, this must be true or else the tx will revert
+            require(check, "not all vests have been withdrawn before attempting to withdraw final vest");
+            // as this is the last vest, we must mark everything as having been vested, preventing further invocations
+            vests[msg.sender].state = VestState.vested;
+        }
+        // mark this particular vest as claimed
+        vests[msg.sender].claimed[_vestIndex] = true;
+        uint256 amount = vests[msg.sender].releaseAmounts[_vestIndex];
+        require(RTI.transfer(msg.sender, amount), "failed to transfer");
         return true;
     }
-}
-/*
-  This file is part of The Colony Network.
-
-  The Colony Network is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  The Colony Network is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with The Colony Network. If not, see <http://www.gnu.org/licenses/>.
-*/
-
-
-
-
-
-
-
-contract ERC20Extended is ERC20 {
-  event Mint(address indexed guy, uint wad);
-  event Burn(address indexed guy, uint wad);
-
-  function mint(uint wad) public;
-  
-  function burn(uint wad) public;
-}
-
-
-contract Token is DSTokenBase(0), DSAuth, ERC20Extended {
-  uint8 public decimals;
-  string public symbol;
-  string public name;
-
-  bool public locked;
-
-  modifier unlocked {
-    if (locked) {
-      require(isAuthorized(msg.sender, msg.sig));
-    }
-    _;
-  }
-
-  constructor(string _name, string _symbol, uint8 _decimals) public {
-    name = _name;
-    symbol = _symbol;
-    decimals = _decimals;
-    locked = true;
-  }
-
-  function transferFrom(address src, address dst, uint wad) public 
-  unlocked
-  returns (bool)
-  {
-    return super.transferFrom(src, dst, wad);
-  }
-
-  function mint(uint wad) public
-  auth
-  {
-    _balances[msg.sender] = add(_balances[msg.sender], wad);
-    _supply = add(_supply, wad);
-
-    emit Mint(msg.sender, wad);
-  }
-
-  function burn(uint wad) public {
-    _balances[msg.sender] = sub(_balances[msg.sender], wad);
-    _supply = sub(_supply, wad);
-
-    emit Burn(msg.sender, wad);
-  }
-
-  function unlock() public
-  auth
-  {
-    locked = false;
-  }
-}
-
-
-
-
-contract Vesting is DSMath {
-  Token public token;
-  address public colonyMultiSig;
-
-  uint constant internal SECONDS_PER_MONTH = 2628000;
-
-  event GrantAdded(address recipient, uint256 startTime, uint128 amount, uint16 vestingDuration, uint16 vestingCliff);
-  event GrantRemoved(address recipient, uint128 amountVested, uint128 amountNotVested);
-  event GrantTokensClaimed(address recipient, uint128 amountClaimed);
-
-  struct Grant {
-    uint startTime;
-    uint128 amount;
-    uint16 vestingDuration;
-    uint16 vestingCliff;
-    uint16 monthsClaimed;
-    uint128 totalClaimed;
-  }
-  mapping (address => Grant) public tokenGrants;
-
-  modifier onlyColonyMultiSig {
-    require(msg.sender == colonyMultiSig);
-    _;
-  }
-
-  modifier nonZeroAddress(address x) {
-    require(x != 0);
-    _;
-  }
-
-  modifier noGrantExistsForUser(address _user) {
-    require(tokenGrants[_user].startTime == 0);
-    _;
-  }
-
-  constructor(address _token, address _colonyMultiSig) public
-  nonZeroAddress(_token)
-  nonZeroAddress(_colonyMultiSig)
-  {
-    token = Token(_token);
-    colonyMultiSig = _colonyMultiSig;
-  }
-
-  /// @notice Add a new token grant for user `_recipient`. Only one grant per user is allowed
-  /// The amount of CLNY tokens here need to be preapproved for transfer by this `Vesting` contract before this call
-  /// Secured to the Colony MultiSig only
-  /// @param _recipient Address of the token grant recipient entitled to claim the grant funds
-  /// @param _startTime Grant start time as seconds since unix epoch
-  /// Allows backdating grants by passing time in the past. If `0` is passed here current blocktime is used. 
-  /// @param _amount Total number of tokens in grant
-  /// @param _vestingDuration Number of months of the grant's duration
-  /// @param _vestingCliff Number of months of the grant's vesting cliff
-  function addTokenGrant(address _recipient, uint256 _startTime, uint128 _amount, uint16 _vestingDuration, uint16 _vestingCliff) public 
-  onlyColonyMultiSig
-  noGrantExistsForUser(_recipient)
-  {
-    require(_vestingCliff > 0);
-    require(_vestingDuration > _vestingCliff);
-    uint amountVestedPerMonth = _amount / _vestingDuration;
-    require(amountVestedPerMonth > 0);
-
-    // Transfer the grant tokens under the control of the vesting contract
-    token.transferFrom(colonyMultiSig, address(this), _amount);
-
-    Grant memory grant = Grant({
-      startTime: _startTime == 0 ? now : _startTime,
-      amount: _amount,
-      vestingDuration: _vestingDuration,
-      vestingCliff: _vestingCliff,
-      monthsClaimed: 0,
-      totalClaimed: 0
-    });
-
-    tokenGrants[_recipient] = grant;
-    emit GrantAdded(_recipient, grant.startTime, _amount, _vestingDuration, _vestingCliff);
-  }
-
-  /// @notice Terminate token grant transferring all vested tokens to the `_recipient`
-  /// and returning all non-vested tokens to the Colony MultiSig
-  /// Secured to the Colony MultiSig only
-  /// @param _recipient Address of the token grant recipient
-  function removeTokenGrant(address _recipient) public 
-  onlyColonyMultiSig
-  {
-    Grant storage tokenGrant = tokenGrants[_recipient];
-    uint16 monthsVested;
-    uint128 amountVested;
-    (monthsVested, amountVested) = calculateGrantClaim(_recipient);
-    uint128 amountNotVested = uint128(sub(sub(tokenGrant.amount, tokenGrant.totalClaimed), amountVested));
-
-    require(token.transfer(_recipient, amountVested));
-    require(token.transfer(colonyMultiSig, amountNotVested));
-
-    tokenGrant.startTime = 0;
-    tokenGrant.amount = 0;
-    tokenGrant.vestingDuration = 0;
-    tokenGrant.vestingCliff = 0;
-    tokenGrant.monthsClaimed = 0;
-    tokenGrant.totalClaimed = 0;
-
-    emit GrantRemoved(_recipient, amountVested, amountNotVested);
-  }
-
-  /// @notice Allows a grant recipient to claim their vested tokens. Errors if no tokens have vested
-  /// It is advised recipients check they are entitled to claim via `calculateGrantClaim` before calling this
-  function claimVestedTokens() public {
-    uint16 monthsVested;
-    uint128 amountVested;
-    (monthsVested, amountVested) = calculateGrantClaim(msg.sender);
-    require(amountVested > 0);
-
-    Grant storage tokenGrant = tokenGrants[msg.sender];
-    tokenGrant.monthsClaimed = uint16(add(tokenGrant.monthsClaimed, monthsVested));
-    tokenGrant.totalClaimed = uint128(add(tokenGrant.totalClaimed, amountVested));
-    
-    require(token.transfer(msg.sender, amountVested));
-    emit GrantTokensClaimed(msg.sender, amountVested);
-  }
-
-  /// @notice Calculate the vested and unclaimed months and tokens available for `_recepient` to claim
-  /// Due to rounding errors once grant duration is reached, returns the entire left grant amount
-  /// Returns (0, 0) if cliff has not been reached
-  function calculateGrantClaim(address _recipient) public view returns (uint16, uint128) {
-    Grant storage tokenGrant = tokenGrants[_recipient];
-
-    // For grants created with a future start date, that hasn't been reached, return 0, 0
-    if (now < tokenGrant.startTime) {
-      return (0, 0);
-    }
-
-    // Check cliff was reached
-    uint elapsedTime = sub(now, tokenGrant.startTime);
-    uint elapsedMonths = elapsedTime / SECONDS_PER_MONTH;
-    
-    if (elapsedMonths < tokenGrant.vestingCliff) {
-      return (0, 0);
-    }
-
-    // If over vesting duration, all tokens vested
-    if (elapsedMonths >= tokenGrant.vestingDuration) {
-      uint128 remainingGrant = tokenGrant.amount - tokenGrant.totalClaimed;
-      return (tokenGrant.vestingDuration, remainingGrant);
-    } else {
-      uint16 monthsVested = uint16(sub(elapsedMonths, tokenGrant.monthsClaimed));
-      uint amountVestedPerMonth = tokenGrant.amount / tokenGrant.vestingDuration;
-      uint128 amountVested = uint128(mul(monthsVested, amountVestedPerMonth));
-      return (monthsVested, amountVested);
-    }
-  }
 }
