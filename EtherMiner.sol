@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherMiner at 0x2eee31223b1d043e6b63da8360b682e3fd2ebfbe
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherMiner at 0x7c20263dd382628f5100d252960adda402a28aa1
 */
 pragma solidity ^0.4.25;
 
 /*
 * http://etherminer.club
 *
-* EtherMiner Machine
+* EthMiner Pro concept
 *
 * [?] 25% Withdraw fee
 * [?] 15% Deposit fee
