@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xfdb2f6cf652926ed14a4e334c161449caebb8e3b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xa604cedf3e657a5750cdcb335f40f4da100cad1a
 */
 pragma solidity ^0.4.24;
 // This contract has the burn option
@@ -78,7 +78,7 @@ contract Crowdsale is owned, SafeMath {
         fundingGoal = 2500000000 * (10 ** tokenDecimals); 
         start = 1537142400; //      17/09/2017 @ 00:00 (UTC)
         deadline =1539734400; //    17/10/2018 @ 00:00 (UTC)
-        tokenReward = token(0x19335137283563C9531062EDD04ddf19d42097bd); //Token address. Modify by the current token address
+        tokenReward = token(0x829E3DDD1b32d645d329b3c989497465792C1D04); //Token address. Modify by the current token address
     }    
 
     /**
