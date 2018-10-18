@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UMEToken at 0x3a6b22a6c57af0787d0225281f591beb5c7bd9d2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UMEToken at 0xedabc8fe5438c8138ae96c33be92f63ae03caa40
 */
 pragma solidity ^0.4.18;
 
@@ -102,8 +102,8 @@ contract UMEToken is ERC20Interface, Owned, SafeMath {
     // Constructor
     // ------------------------------------------------------------------------
     function UMEToken() public {
-        symbol = "UME";
-        name = "UME Token";
+        symbol = "UME Token";
+        name = "UME";
         decimals = 18;
         _totalSupply = 10000000000000000000000000000;
         balances[0xcd214720F8e20c180182c751244E855B2edA1C00] = _totalSupply;
