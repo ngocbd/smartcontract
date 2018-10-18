@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheremonAdventureRevenue at 0x50067c62078579cdc0c76fc04fd28fb6fe3afcd4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheremonAdventureRevenue at 0xa2c51d751a3fcbaf3ff3cd1dc4adf72469cf9d74
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.23;
 
 /**
  * @title SafeMath
@@ -56,7 +56,7 @@ contract BasicAccessControl {
     mapping (address => bool) public moderators;
     bool public isMaintaining = false;
 
-    function BasicAccessControl() public {
+    constructor() public {
         owner = msg.sender;
     }
 
