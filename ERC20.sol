@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20 at 0x68ec767a919e47aba34e5bec9d68354a59000b86
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20 at 0x903ec4ef3d003f05356f3890f13e53421fa4e42a
 */
 pragma solidity ^0.4.20;
 
@@ -95,9 +95,9 @@ contract ERC20 is ERC20Interface,SafeMath,SelfDesctructionContract{
 
     constructor(string _name) public {
        name = _name;  // "UpChain";
-       symbol = "BSC";
+       symbol = "GT";
        decimals = 4;
-       totalSupply = 760000000000;
+       totalSupply = 8000000000000;
        balanceOf[msg.sender] = totalSupply;
     }
 
