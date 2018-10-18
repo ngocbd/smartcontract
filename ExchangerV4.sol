@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ExchangerV4 at 0x3dddf31644905b79335407711fef6df7fa44761b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ExchangerV4 at 0xb0c95e37b9c493b2a39838db235ad47959a37af5
 */
 pragma solidity ^0.4.24;
 interface IExchangeFormula {
