@@ -1,30 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CompliantCrowdsale at 0x31bc759f583e0d8dbf8e7649483dcd85fbc18029
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CompliantCrowdsale at 0x21a669bee022eb8d3a78631dc935d08b2c284eb3
 */
 pragma solidity 0.4.24;
 
-//
-//
-///
-//
-//
-//
-//
-//
-//
-//company_2
-//
-//
-//
-//demo
-//wallet2
-//new ICO Sep28
-//company_2
-//DefaultOffer
-//DefaultOffer
-//new for company_2
-//FOR PRODUCTION
-
+// hbm
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
