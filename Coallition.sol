@@ -1,14 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Coallition at 0x608e9210e314eda9cc7115c7e2881dd0e66dd615
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Coallition at 0x2c6ab1bf5bfeb45bb1200a049c0c86b4ffacbe5b
 */
 pragma solidity ^0.4.24;
-// Spielley's King of the crypto hill beta Coallition expansion v1.0
+// Spielley's King of the crypto hill beta Coallition expansion v1.01
 // Coallition owner sets shares for the alliance, alliance members send in their eth winnings to share among the group
 // Coallition owner can increase or decrease members and shares
 // this is not a trustless situation, alliance owner can screw everyone over, only join an alliance you trust
 
 // play at https://kotch.dvx.me/# 
-// 25/08/2018
+// 28/08/2018
 
 // ----------------------------------------------------------------------------
 // Safe maths
@@ -62,10 +62,10 @@ contract Owned {
 contract Coallition is Owned {
      using SafeMath for uint;
      
-     mapping(uint256 => address) members;
-     mapping(address => uint256) shares;
+     mapping(uint256 => address) public members;
+     mapping(address => uint256) public shares;
      
-     uint256 total;
+     uint256 public total;
      constructor () public {
          
     }
@@ -93,6 +93,23 @@ function settotal(uint256 set) public onlyOwner  {
             totalshares += shares[members[i]];
         }
         uint256 base = msg.value.div(totalshares);
+    for(i=0; i< total; i++)
+        {
+            
+            uint256 amounttotransfer = base.mul(shares[members[i]]);
+            members[i].transfer(amounttotransfer);
+            
+        }
+}
+function collectdustatcontract() public payable {
+        
+   for(uint i=0; i< total; i++)
+        {
+            uint256 totalshares;
+            totalshares += shares[members[i]];
+        }
+       
+        uint256 base = address(this).balance.div(totalshares);
     for(i=0; i< total; i++)
         {
             
