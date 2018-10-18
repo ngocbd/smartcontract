@@ -1,76 +1,49 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KYC at 0xd6b9e8f3f0d06ce286ae07801e44eacbe86155ef
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KYC at 0x4853cb0e07ab16cb380f8aeda24507779881cdeb
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.23;
 
+// File: contracts/token/ERC20Basic.sol
 
 /**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
  */
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipRenounced(address indexed previousOwner);
-  event OwnershipTransferred(
-    address indexed previousOwner,
-    address indexed newOwner
-  );
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  constructor() public {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to relinquish control of the contract.
-   */
-  function renounceOwnership() public onlyOwner {
-    emit OwnershipRenounced(owner);
-    owner = address(0);
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param _newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address _newOwner) public onlyOwner {
-    _transferOwnership(_newOwner);
-  }
-
-  /**
-   * @dev Transfers control of the contract to a newOwner.
-   * @param _newOwner The address to transfer ownership to.
-   */
-  function _transferOwnership(address _newOwner) internal {
-    require(_newOwner != address(0));
-    emit OwnershipTransferred(owner, _newOwner);
-    owner = _newOwner;
-  }
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
+// File: contracts/Ownerable.sol
+
+contract Ownerable {
+    /// @notice The address of the owner is the only address that can call
+    ///  a function with this modifier
+    modifier onlyOwner { require(msg.sender == owner); _; }
+
+    address public owner;
+
+    constructor() public { owner = msg.sender;}
+
+    /// @notice Changes the owner of the contract
+    /// @param _newOwner The new owner of the contract
+    function setOwner(address _newOwner) public onlyOwner {
+        owner = _newOwner;
+    }
+}
+
+// File: contracts/KYC.sol
 
 /**
  * @title KYC
- * @dev KYC contract handles the white list for PLCCrowdsale contract
- * Only accounts registered in KYC contract can buy PLC token.
+ * @dev KYC contract handles the white list for ASTCrowdsale contract
+ * Only accounts registered in KYC contract can buy AST token.
  * Admins can register account, and the reason why
  */
-contract KYC is Ownable {
+contract KYC is Ownerable {
   // check the address is registered for token sale
   mapping (address => bool) public registeredAddress;
 
@@ -79,7 +52,17 @@ contract KYC is Ownable {
 
   event Registered(address indexed _addr);
   event Unregistered(address indexed _addr);
-  event SetAdmin(address indexed _addr, bool indexed _isAdmin);
+  event NewAdmin(address indexed _addr);
+  event ClaimedTokens(address _token, address owner, uint256 balance);
+
+  /**
+   * @dev check whether the address is registered for token sale or not.
+   * @param _addr address
+   */
+  modifier onlyRegistered(address _addr) {
+    require(registeredAddress[_addr]);
+    _;
+  }
 
   /**
    * @dev check whether the msg.sender is admin or not
@@ -89,7 +72,7 @@ contract KYC is Ownable {
     _;
   }
 
-  function KYC() public {
+  constructor () public {
     admin[msg.sender] = true;
   }
 
@@ -97,14 +80,14 @@ contract KYC is Ownable {
    * @dev set new admin as admin of KYC contract
    * @param _addr address The address to set as admin of KYC contract
    */
-  function setAdmin(address _addr, bool _isAdmin)
+  function setAdmin(address _addr)
     public
     onlyOwner
   {
-    require(_addr != address(0));
-    admin[_addr] = _isAdmin;
+    require(_addr != address(0) && admin[_addr] == false);
+    admin[_addr] = true;
 
-    emit SetAdmin(_addr, _isAdmin);
+    emit NewAdmin(_addr);
   }
 
   /**
@@ -115,7 +98,7 @@ contract KYC is Ownable {
     public
     onlyAdmin
   {
-    require(_addr != address(0));
+    require(_addr != address(0) && registeredAddress[_addr] == false);
 
     registeredAddress[_addr] = true;
 
@@ -131,7 +114,7 @@ contract KYC is Ownable {
     onlyAdmin
   {
     for(uint256 i = 0; i < _addrs.length; i++) {
-      require(_addrs[i] != address(0));
+      require(_addrs[i] != address(0) && registeredAddress[_addrs[i]] == false);
 
       registeredAddress[_addrs[i]] = true;
 
@@ -146,6 +129,7 @@ contract KYC is Ownable {
   function unregister(address _addr)
     public
     onlyAdmin
+    onlyRegistered(_addr)
   {
     registeredAddress[_addr] = false;
 
@@ -161,9 +145,25 @@ contract KYC is Ownable {
     onlyAdmin
   {
     for(uint256 i = 0; i < _addrs.length; i++) {
+      require(registeredAddress[_addrs[i]]);
+
       registeredAddress[_addrs[i]] = false;
 
       emit Unregistered(_addrs[i]);
     }
+  }
+
+  function claimTokens(address _token) public onlyOwner {
+
+    if (_token == 0x0) {
+        owner.transfer( address(this).balance );
+        return;
+    }
+
+    ERC20Basic token = ERC20Basic(_token);
+    uint256 balance = token.balanceOf(this);
+    token.transfer(owner, balance);
+
+    emit ClaimedTokens(_token, owner, balance);
   }
 }
