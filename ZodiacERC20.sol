@@ -1,20 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZodiacERC20 at 0xfa5f1b6d36e6e4b1cee699864b518198670712bf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZodiacERC20 at 0xf238f55Ede5120915b36715b0fFfE20Ff57f8134
 */
 pragma solidity ^0.4.24;
-
-
-/*
- * Ownable
- *
- * Base contract with an owner.
- * Provides onlyOwner modifier, which prevents function from running if it is called by anyone other than the owner.
- */
 
 contract Ownable {
     address public owner;
 
-    constructor()
+    function Ownable()
         public
     {
         owner = msg.sender;
@@ -111,39 +103,38 @@ library SafeMath {
 /**
  * @title BytesToTypes
  * @dev The BytesToTypes contract converts the memory byte arrays to the standard solidity types
- * @author pouladzade@gmail.com
  */
 
 contract BytesToTypes {
-    
+
 
     function bytesToAddress(uint _offst, bytes memory _input) internal pure returns (address _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
-    } 
-    
+    }
+
     function bytesToBool(uint _offst, bytes memory _input) internal pure returns (bool _output) {
-        
+
         uint8 x;
         assembly {
             x := mload(add(_input, _offst))
         }
         x==0 ? _output = false : _output = true;
-    }   
-        
+    }
+
     function getStringSize(uint _offst, bytes memory _input) internal pure returns(uint size){
-        
+
         assembly{
-            
+
             size := mload(add(_input,_offst))
             let chunk_count := add(div(size,32),1) // chunk_count = size/32 + 1
-            
+
             if gt(mod(size,32),0) {// if size%32 > 0
                 chunk_count := add(chunk_count,1)
-            } 
-            
+            }
+
              size := mul(chunk_count,32)// first 32 bytes reseves for size in strings
         }
     }
@@ -153,24 +144,24 @@ contract BytesToTypes {
         uint size = 32;
         assembly {
             let loop_index:= 0
-                  
+
             let chunk_count
-            
+
             size := mload(add(_input,_offst))
             chunk_count := add(div(size,32),1) // chunk_count = size/32 + 1
-            
+
             if gt(mod(size,32),0) {
                 chunk_count := add(chunk_count,1)  // chunk_count++
             }
-                
-            
+
+
             loop:
                 mstore(add(_output,mul(loop_index,32)),mload(add(_input,_offst)))
                 _offst := sub(_offst,32)           // _offst -= 32
                 loop_index := add(loop_index,1)
-                
+
             jumpi(loop , lt(loop_index , chunk_count))
-            
+
         }
     }
 
@@ -239,471 +230,462 @@ contract BytesToTypes {
         }
     }
 
-    /*function bytesToBytes32(uint _offst, bytes memory  _input, bytes32 _output) internal pure {
-        
-        assembly {
-            mstore(_output , add(_input, _offst))
-            mstore(add(_output,32) , add(add(_input, _offst),32))
-        }
-    }*/
-    
     function bytesToInt8(uint _offst, bytes memory  _input) internal pure returns (int8 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
     }
-    
+
     function bytesToInt16(uint _offst, bytes memory _input) internal pure returns (int16 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
     }
 
     function bytesToInt24(uint _offst, bytes memory _input) internal pure returns (int24 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
     }
 
     function bytesToInt32(uint _offst, bytes memory _input) internal pure returns (int32 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
     }
 
     function bytesToInt40(uint _offst, bytes memory _input) internal pure returns (int40 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
     }
 
     function bytesToInt48(uint _offst, bytes memory _input) internal pure returns (int48 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
     }
 
     function bytesToInt56(uint _offst, bytes memory _input) internal pure returns (int56 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
     }
 
     function bytesToInt64(uint _offst, bytes memory _input) internal pure returns (int64 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
     }
 
     function bytesToInt72(uint _offst, bytes memory _input) internal pure returns (int72 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
     }
 
     function bytesToInt80(uint _offst, bytes memory _input) internal pure returns (int80 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
     }
 
     function bytesToInt88(uint _offst, bytes memory _input) internal pure returns (int88 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
     }
 
     function bytesToInt96(uint _offst, bytes memory _input) internal pure returns (int96 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
     }
-	
+
 	function bytesToInt104(uint _offst, bytes memory _input) internal pure returns (int104 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
     }
-    
+
     function bytesToInt112(uint _offst, bytes memory _input) internal pure returns (int112 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
     }
 
     function bytesToInt120(uint _offst, bytes memory _input) internal pure returns (int120 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
     }
 
     function bytesToInt128(uint _offst, bytes memory _input) internal pure returns (int128 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
     }
 
     function bytesToInt136(uint _offst, bytes memory _input) internal pure returns (int136 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
     }
 
     function bytesToInt144(uint _offst, bytes memory _input) internal pure returns (int144 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
     }
 
     function bytesToInt152(uint _offst, bytes memory _input) internal pure returns (int152 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
     }
 
     function bytesToInt160(uint _offst, bytes memory _input) internal pure returns (int160 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
     }
 
     function bytesToInt168(uint _offst, bytes memory _input) internal pure returns (int168 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
     }
 
     function bytesToInt176(uint _offst, bytes memory _input) internal pure returns (int176 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
     }
 
     function bytesToInt184(uint _offst, bytes memory _input) internal pure returns (int184 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
     }
 
     function bytesToInt192(uint _offst, bytes memory _input) internal pure returns (int192 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
     }
 
     function bytesToInt200(uint _offst, bytes memory _input) internal pure returns (int200 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
     }
 
     function bytesToInt208(uint _offst, bytes memory _input) internal pure returns (int208 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
     }
 
     function bytesToInt216(uint _offst, bytes memory _input) internal pure returns (int216 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
     }
 
     function bytesToInt224(uint _offst, bytes memory _input) internal pure returns (int224 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
     }
 
     function bytesToInt232(uint _offst, bytes memory _input) internal pure returns (int232 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
     }
 
     function bytesToInt240(uint _offst, bytes memory _input) internal pure returns (int240 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
     }
 
     function bytesToInt248(uint _offst, bytes memory _input) internal pure returns (int248 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
     }
 
     function bytesToInt256(uint _offst, bytes memory _input) internal pure returns (int256 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
     }
 
 	function bytesToUint8(uint _offst, bytes memory _input) internal pure returns (uint8 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
-    } 
+    }
 
 	function bytesToUint16(uint _offst, bytes memory _input) internal pure returns (uint16 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
-    } 
+    }
 
 	function bytesToUint24(uint _offst, bytes memory _input) internal pure returns (uint24 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
-    } 
+    }
 
 	function bytesToUint32(uint _offst, bytes memory _input) internal pure returns (uint32 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
-    } 
+    }
 
 	function bytesToUint40(uint _offst, bytes memory _input) internal pure returns (uint40 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
-    } 
+    }
 
 	function bytesToUint48(uint _offst, bytes memory _input) internal pure returns (uint48 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
-    } 
+    }
 
 	function bytesToUint56(uint _offst, bytes memory _input) internal pure returns (uint56 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
-    } 
+    }
 
 	function bytesToUint64(uint _offst, bytes memory _input) internal pure returns (uint64 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
-    } 
+    }
 
 	function bytesToUint72(uint _offst, bytes memory _input) internal pure returns (uint72 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
-    } 
+    }
 
 	function bytesToUint80(uint _offst, bytes memory _input) internal pure returns (uint80 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
-    } 
+    }
 
 	function bytesToUint88(uint _offst, bytes memory _input) internal pure returns (uint88 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
-    } 
+    }
 
 	function bytesToUint96(uint _offst, bytes memory _input) internal pure returns (uint96 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
-    } 
-	
+    }
+
 	function bytesToUint104(uint _offst, bytes memory _input) internal pure returns (uint104 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
-    } 
+    }
 
     function bytesToUint112(uint _offst, bytes memory _input) internal pure returns (uint112 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
-    } 
+    }
 
     function bytesToUint120(uint _offst, bytes memory _input) internal pure returns (uint120 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
-    } 
+    }
 
     function bytesToUint128(uint _offst, bytes memory _input) internal pure returns (uint128 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
-    } 
+    }
 
     function bytesToUint136(uint _offst, bytes memory _input) internal pure returns (uint136 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
-    } 
+    }
 
     function bytesToUint144(uint _offst, bytes memory _input) internal pure returns (uint144 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
-    } 
+    }
 
     function bytesToUint152(uint _offst, bytes memory _input) internal pure returns (uint152 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
-    } 
+    }
 
     function bytesToUint160(uint _offst, bytes memory _input) internal pure returns (uint160 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
-    } 
+    }
 
     function bytesToUint168(uint _offst, bytes memory _input) internal pure returns (uint168 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
-    } 
+    }
 
     function bytesToUint176(uint _offst, bytes memory _input) internal pure returns (uint176 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
-    } 
+    }
 
     function bytesToUint184(uint _offst, bytes memory _input) internal pure returns (uint184 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
-    } 
+    }
 
     function bytesToUint192(uint _offst, bytes memory _input) internal pure returns (uint192 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
-    } 
+    }
 
     function bytesToUint200(uint _offst, bytes memory _input) internal pure returns (uint200 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
-    } 
+    }
 
     function bytesToUint208(uint _offst, bytes memory _input) internal pure returns (uint208 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
-    } 
+    }
 
     function bytesToUint216(uint _offst, bytes memory _input) internal pure returns (uint216 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
-    } 
+    }
 
     function bytesToUint224(uint _offst, bytes memory _input) internal pure returns (uint224 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
-    } 
+    }
 
     function bytesToUint232(uint _offst, bytes memory _input) internal pure returns (uint232 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
-    } 
+    }
 
     function bytesToUint240(uint _offst, bytes memory _input) internal pure returns (uint240 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
-    } 
+    }
 
     function bytesToUint248(uint _offst, bytes memory _input) internal pure returns (uint248 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
-    } 
+    }
 
     function bytesToUint256(uint _offst, bytes memory _input) internal pure returns (uint256 _output) {
-        
+
         assembly {
             _output := mload(add(_input, _offst))
         }
-    } 
-    
+    }
+
 }
 
-
 interface ITradeable {
-    
+
     /// @param _owner The address from which the balance will be retrieved
     /// @return The balance
     function balanceOf(address _owner) external view returns (uint balance);
-    
+
     /// @notice send `_value` token to `_to` from `msg.sender`
     /// @param _to The address of the recipient
     /// @param _value The amount of token to be transferred
@@ -721,13 +703,12 @@ interface ITradeable {
     /// @param _value The amount of wei to be approved for transfer
     /// @return Whether the approval was successful or not
     function approve(address _spender, uint _value) external returns (bool success);
-    
+
     /// @param _owner The address of the account owning tokens
     /// @param _spender The address of the account able to transfer the tokens
     /// @return Amount of remaining tokens allowed to spent
     function allowance(address _owner, address _spender) external view returns (uint remaining);
 }
-
 
 
 contract ITrader {
@@ -744,7 +725,7 @@ contract ITrader {
 
   function isExpired(
     bytes orderData
-  ) public view returns (bool); 
+  ) public view returns (bool);
 
   function trade(
     bool isSell,
@@ -752,7 +733,7 @@ contract ITrader {
     uint volume,
     uint volumeEth
   ) public;
-  
+
   function getFillVolumes(
     bool isSell,
     bytes orderData,
@@ -803,87 +784,10 @@ contract Members is Ownable {
   }
 }
 
-
-contract IFeeWallet {
-
-  function getFee(
-    uint amount) public view returns(uint);
-
-  function collect(
-    address _affiliate) public payable;
-}
-
-
-contract FeeWallet is IFeeWallet, Ownable, Members {
-
-  address public serviceAccount; // Address of service account
-  uint public servicePercentage; // Percentage times (1 ether)
-  uint public affiliatePercentage; // Percentage times (1 ether)
-
-  mapping (address => uint) public pendingWithdrawals; // Balances
-
-  constructor(
-    address _serviceAccount,
-    uint _servicePercentage,
-    uint _affiliatePercentage) public
-  {
-    serviceAccount = _serviceAccount;
-    servicePercentage = _servicePercentage;
-    affiliatePercentage = _affiliatePercentage;
-  }
-
-  /// @dev Set the new service account. Only owner.
-  function changeServiceAccount(address _serviceAccount) public onlyOwner {
-    serviceAccount = _serviceAccount;
-  }
-
-  /// @dev Set the service percentage. Only owner.
-  function changeServicePercentage(uint _servicePercentage) public onlyOwner {
-    servicePercentage = _servicePercentage;
-  }
-
-  /// @dev Set the affiliate percentage. Only owner.
-  function changeAffiliatePercentage(uint _affiliatePercentage) public onlyOwner {
-    affiliatePercentage = _affiliatePercentage;
-  }
-
-  /// @dev Calculates the service fee for a specific amount. Only owner.
-  function getFee(uint amount) public view returns(uint)  {
-    return SafeMath.safeMul(amount, servicePercentage) / (1 ether);
-  }
-
-  /// @dev Calculates the affiliate amount for a specific amount. Only owner.
-  function getAffiliateAmount(uint amount) public view returns(uint)  {
-    return SafeMath.safeMul(amount, affiliatePercentage) / (1 ether);
-  }
-
-  /// @dev Collects fees according to last payment receivedi. Only valid smart contracts.
-  function collect(
-    address _affiliate) public payable onlyMembers
-  {
-    if(_affiliate == address(0))
-      pendingWithdrawals[serviceAccount] += msg.value;
-    else {
-      uint affiliateAmount = getAffiliateAmount(msg.value);
-      pendingWithdrawals[_affiliate] += affiliateAmount;
-      pendingWithdrawals[serviceAccount] += SafeMath.safeSub(msg.value, affiliateAmount);
-    }
-  }
-
-  /// @dev Withdraw.
-  function withdraw() public {
-    uint amount = pendingWithdrawals[msg.sender];
-    pendingWithdrawals[msg.sender] = 0;
-    msg.sender.transfer(amount);
-  }
-}
 contract ZodiacERC20 is Ownable, BytesToTypes {
-  string constant public VERSION = '2.0.0';
-
   ITraders public traders; // Smart contract that hold the list of valid traders
-  IFeeWallet public feeWallet; // Smart contract that hold the fees collected
   bool public tradingEnabled; // Switch to enable or disable the contract
-
+  uint feePercentage;
   event Sell(
     address account,
     address destinationAddr,
@@ -904,10 +808,10 @@ contract ZodiacERC20 is Ownable, BytesToTypes {
   );
 
 
-  constructor(ITraders _traders, IFeeWallet _feeWallet) public {
+  function ZodiacERC20(ITraders _traders, uint _feePercentage) public {
     traders = _traders;
-    feeWallet = _feeWallet;
     tradingEnabled = true;
+    feePercentage = _feePercentage;
   }
 
   /// @dev Only accepts payment from smart contract traders.
@@ -915,9 +819,8 @@ contract ZodiacERC20 is Ownable, BytesToTypes {
   //  require(traders.isValidTraderAddress(msg.sender));
   }
 
-  /// @dev Setter for feeWallet smart contract (Only owner)
-  function changeFeeWallet(IFeeWallet _feeWallet) public onlyOwner {
-    feeWallet = _feeWallet;
+  function changeFeePercentage(uint _feePercentage) public onlyOwner {
+    feePercentage = _feePercentage;
   }
 
   /// @dev Setter for traders smart contract (Only owner)
@@ -1011,7 +914,7 @@ contract ZodiacERC20 is Ownable, BytesToTypes {
     require(volumeEffective > 0);
 
     // Collects service fee
-    uint volumeEthEffective = collectSellFee(affiliate);
+    uint volumeEthEffective = collectSellFee();
 
     // IMPORTANT: Check that: effective_price >= agreed_price (guarantee a good deal for the seller)
     require(
@@ -1095,7 +998,8 @@ contract ZodiacERC20 is Ownable, BytesToTypes {
       } else {
         //Collects service fee
         //TODO: transfer fees after all iteration
-        volumeEth = collectBuyFee(volumeEth, affiliate);
+        //volumeEth = collectBuyFee(volumeEth, affiliate);
+        volumeEth = collectFee(volumeEth);
         address(trader).transfer(volumeEth);
       }
 
@@ -1118,22 +1022,17 @@ contract ZodiacERC20 is Ownable, BytesToTypes {
   }
 
   // @dev Collect service/affiliate fee for a buy
-  function collectBuyFee(uint ethers, address affiliate) internal returns(uint) {
-    uint remaining;
-    uint fee = feeWallet.getFee(ethers);
-    //If there is enough remaining to pay fee, it substract from the balance
-    if(SafeMath.safeSub(address(this).balance, ethers) >= fee)
-      remaining = ethers;
-    else
-      remaining = SafeMath.safeSub(SafeMath.safeSub(ethers, address(this).balance), fee);
-    feeWallet.collect.value(fee)(affiliate);
+  function collectFee(uint ethers) internal returns(uint) {
+    uint fee = SafeMath.safeMul(ethers, feePercentage) / (1 ether);
+    owner.transfer(fee);
+    uint remaining = SafeMath.safeSub(ethers, fee);
     return remaining;
   }
 
   // @dev Collect service/affiliate fee for a sell
-  function collectSellFee(address affiliate) internal returns(uint) {
-    uint fee = feeWallet.getFee(address(this).balance);
-    feeWallet.collect.value(fee)(affiliate);
+  function collectSellFee() internal returns(uint) {
+    uint fee = SafeMath.safeMul(address(this).balance, feePercentage) / (1 ether);
+    owner.transfer(fee);
     return address(this).balance;
   }
 
