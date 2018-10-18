@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AtomicSwap at 0x0ff1ced0d5525a331e562c7c79186045b4d98cfa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AtomicSwap at 0x0ff1C3dD4b262a0324910A6E30CaA182204d9163
 */
 pragma solidity ^0.4.19;
 
@@ -29,7 +29,7 @@ contract AtomicSwap {
   }
 
   event InitiateSwap(address _initiator, address _participant, uint _expiration, bytes20 _hash, address _token, bool _isToken, uint256 _value);
-  event RedeemSwap(address _participant, bytes20 _hash, bytes32 _secret);
+  event RedeemSwap(address indexed _participant, bytes20 indexed _hash, bytes32 _secret);
   event RefundSwap(address _initiator, address _participant, bytes20 _hash);
   // maps the redeemer and bytes20 hash to a swap    
   mapping(address => mapping(bytes20 => Swap)) public swaps;
