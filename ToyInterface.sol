@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ToyInterface at 0x25073d89644d3b033f422949e70064c60fa05c3c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ToyInterface at 0x11ea8fc9e440b294d2df2090beb134eb2a410289
 */
 pragma solidity ^0.4.24;
 
@@ -903,7 +903,7 @@ contract ToyCreation is Ownable, ExternalTokenHandler, ToyInterfaceSupport {
     //  Tokens with a uid greater than the buffer are unlinked.
     uint constant uidBuffer = 0x0100000000000000; // 14 zeroes
     // PLAY Token Contract object to interface with.
-    PlayInterface play = PlayInterface(0xe2427cfEB5C330c007B8599784B97b65b4a3A819);
+    PlayInterface play = PlayInterface(0x9C2532Cf0B91CF7afa3f266a89C98e9CA39681A8);
 
     //-------------------------------------------------------------------------
     /// @notice Update PLAY Token contract variable with new contract address.
@@ -935,11 +935,12 @@ contract ToyCreation is Ownable, ExternalTokenHandler, ToyInterfaceSupport {
         play.lockFrom (msg.sender, 2, priceToMint);
 
         uint uid = uidBuffer + toyArray.length;
-        uint index = toyArray.push(ToyToken(msg.sender, uid, 0, 0, ""));
+        uint index = toyArray.push(ToyToken(msg.sender, uid, block.timestamp, 0, ""));
         uidToToyIndex[uid] = index - 1;
 
         emit Transfer(0, msg.sender, uid);
     }
+
 
     //-------------------------------------------------------------------------
     /// @notice Send and lock PLAY to mint a new empty TOY Token for 'to'.
@@ -953,29 +954,10 @@ contract ToyCreation is Ownable, ExternalTokenHandler, ToyInterfaceSupport {
         play.lockFrom (msg.sender, 2, priceToMint);
 
         uint uid = uidBuffer + toyArray.length;
-        uint index = toyArray.push(ToyToken(_to, uid, 0, 0, ""));
+        uint index = toyArray.push(ToyToken(_to, uid, block.timestamp, 0, ""));
         uidToToyIndex[uid] = index - 1;
 
         emit Transfer(0, _to, uid);
-    }
-
-    //-------------------------------------------------------------------------
-    /// @notice Send and lock PLAY to mint `_amount` new empty TOY Tokens for
-    ///  yourself.
-    /// @dev Sender must have approved this contract address as an authorized
-    ///  spender with at least "priceToMint" x `_amount` PLAY. Throws if the
-    ///  sender has insufficient PLAY. Throws if sender has not granted this
-    ///  contract's address sufficient allowance.
-    //-------------------------------------------------------------------------
-    function mintBulk(uint _amount) external {
-        play.lockFrom (msg.sender, 2, priceToMint * _amount);
-
-        for (uint i = 0; i < _amount; ++i) {
-            uint uid = uidBuffer + toyArray.length;
-            uint index = toyArray.push(ToyToken(msg.sender, uid, 0, 0, ""));
-            uidToToyIndex[uid] = index - 1;
-            emit Transfer(0, msg.sender, uid);
-        }
     }
 
     //-------------------------------------------------------------------------
@@ -1017,58 +999,6 @@ contract ToyCreation is Ownable, ExternalTokenHandler, ToyInterfaceSupport {
         toy.timestamp = now;
 
         emit Link(_toyId, uint(_newUid));
-    }
-
-    //-------------------------------------------------------------------------
-    /// @notice Change TOY Token UIDs to new UIDs for multiple TOY Tokens.
-    ///  Writes any data passed through '_data' into all the TOY Tokens' data.
-    /// @dev Throws if any TOY Token's UID does not exist. Throws if sender is
-    ///  not approved to operate for any TOY Token. Throws if any '_toyId' is
-    ///  smaller than 8 bytes. Throws if any '_newUid' is bigger than 7 bytes. 
-    ///  Throws if any '_newUid' is zero. Throws if '_newUid' is already taken.
-    ///  Throws if array parameters are not the same length.
-    /// @param _newUid The UID of the RFID chip to link to the TOY Token
-    /// @param _toyId The UID of the empty TOY Token to link
-    /// @param _data A byte string of data to attach to the TOY Token
-    //-------------------------------------------------------------------------
-    function linkBulk(
-        bytes7[] _newUid, 
-        uint[] _toyId, 
-        bytes _data
-    ) external {
-        require (_newUid.length == _toyId.length, "Array lengths not equal");
-        for (uint i = 0; i < _newUid.length; ++i) {
-            ToyToken storage toy = toyArray[uidToToyIndex[_toyId[i]]];
-            // sender must be authorized operator
-            require (
-                msg.sender == toy.owner ||
-                msg.sender == idToApprovedAddress[_toyId[i]] ||
-                operatorApprovals[toy.owner][msg.sender],
-                "Not authorized to operate for this TOY Token"
-            );
-            // _toyId must be an empty TOY Token
-            require (_toyId[i] > uidBuffer, "TOY Token already linked");
-            // _newUid field cannot be empty or greater than 7 bytes
-            require (_newUid[i] > 0 && uint(_newUid[i]) < UID_MAX, "Invalid new UID");
-            // a TOY Token with the new UID must not currently exist
-            require (
-                uidToToyIndex[uint(_newUid[i])] == 0, 
-                "TOY Token with 'newUID' already exists"
-            );
-
-            // set new UID's mapping to index to old UID's mapping
-            uidToToyIndex[uint(_newUid[i])] = uidToToyIndex[_toyId[i]];
-            // reset old UID's mapping to index
-            uidToToyIndex[_toyId[i]] = 0;
-            // set TOY Token's UID to new UID
-            toy.uid = uint(_newUid[i]);
-            // set any data
-            toy.toyData = _data;
-            // reset the timestamp
-            toy.timestamp = now;
-
-            emit Link(_toyId[i], uint(_newUid[i]));
-        }
     }
 
     //-------------------------------------------------------------------------
