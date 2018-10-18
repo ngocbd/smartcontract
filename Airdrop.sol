@@ -1,63 +1,47 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdrop at 0x677c90da4fbc618ba71e1da3f08ac35c8edf11b1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdrop at 0x9a620aa59321cb46b760b4b028dd0545fceb12d6
 */
-pragma solidity ^0.4.11;
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control 
- * functions, this simplifies the implementation of "user permissions". 
- */
+pragma solidity ^0.4.24;
 contract Ownable {
-  address public owner;
-
-
-  /** 
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() {
-    owner = 0x587c04e40346171dE18341fc9027395c3FdA83ab;
-  }
-
-
-  /**
-   * @dev Throws if called by any account other than the owner. 
-   */
-  modifier onlyOwner() {
-    if (msg.sender != owner) {
-      throw;
+    address public owner;
+    constructor() public {
+        owner = msg.sender;
     }
-    _;
-  }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to. 
-   */
-  function transferOwnership(address newOwner) onlyOwner {
-    if (newOwner != address(0)) {
-      owner = newOwner;
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
     }
-  }
-
 }
-
-contract Token{
-  function transfer(address to, uint value) returns (bool);
+contract Pausable is Ownable {
+    event Pause();
+    event Unpause();
+    bool public paused = false;
+    modifier whenNotPaused() {
+        require(!paused, "Contract Paused. Events/Transaction Paused until Further Notice");
+        _;
+    }
+    modifier whenPaused() {
+        require(paused, "Contract Functionality Resumed");
+        _;
+    }
+    function pause() onlyOwner whenNotPaused public {
+        paused = true;
+        emit Pause();
+    }
+    function unpause() onlyOwner whenPaused public {
+        paused = false;
+        emit Unpause();
+    }
 }
-
-contract Airdrop is Ownable {
-
-    function multisend(address _tokenAddr, address[] _to, uint256[] _value)
-    returns (bool _success) {
-        assert(_to.length == _value.length);
-        assert(_to.length <= 150);
-        // loop through to addresses and send value
-        for (uint8 i = 0; i < _to.length; i++) {
-                assert((Token(_tokenAddr).transfer(_to[i], _value[i])) == true);
-            }
-            return true;
+contract ERC20Token {
+    function transferFrom(address _from, address _to, uint _value) public returns (bool);
+}
+contract Airdrop is Ownable, Pausable {
+    event TokenDrop(address indexed _from, address indexed _to, uint256 _value);
+    function drop(ERC20Token _token, address[] _recipients, uint256[] _values) public onlyOwner whenNotPaused {
+        for (uint256 i = 0; i < _recipients.length; i++) {
+            _token.transferFrom(msg.sender, _recipients[i], _values[i]);
+            emit TokenDrop(msg.sender, _recipients[i], _values[i]);
         }
+    }
 }
