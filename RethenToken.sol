@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RethenToken at 0xb9d526121e3f04e3d3266fd71b49a11c98ef9bf5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RethenToken at 0xf15bdd0ca301a241ded7b82ca3d48e4ae3c72c25
 */
 pragma solidity ^0.4.18;
 
@@ -80,7 +80,7 @@ contract RethenToken is ERC20 {
     uint public constant decimals = 8;
     uint256 public totalSupply = 20000000000e8;
     uint256 public totalDistributed = 0;        
-    uint256 public tokensPerEth = 200000000e8;
+    uint256 public tokensPerEth = 250000000e8;
     uint256 public constant minContribution = 1 ether / 100; // 0.01 Ether
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
@@ -108,7 +108,7 @@ contract RethenToken is ERC20 {
     }
     
     
-    function Rethen () public {
+    function RETHEN1 () public {
         owner = msg.sender;
         uint256 devTokens = 2500000000e8;
         distr(owner, devTokens);
