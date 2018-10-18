@@ -1,7 +1,28 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CSTK_CLT at 0x24b68cf0c67a54d6f67c469d2b9455f6953c3199
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CSTK_CLT at 0xF771Cd3EA4AfBb55e1b2b85E3B9E2388F0Fd43B8
 */
 pragma solidity ^0.4.24;
+
+contract Owned {
+  address public owner;
+
+  // ------------------------------------------------------------------------
+  // Constructor
+  // ------------------------------------------------------------------------
+  constructor() public {
+    owner = msg.sender;
+  }
+
+  modifier onlyOwner {
+    require(msg.sender == owner);
+    _;
+  }
+
+  function transferOwnership(address newOwner) public onlyOwner returns (address account) {
+    owner = newOwner;
+    return owner;
+  }
+}
 
 library SafeMath {
   function add(uint a, uint b) internal pure returns (uint c) {
@@ -32,27 +53,6 @@ contract ERC20 {
 
   event Transfer(address indexed from, address indexed to, uint256 tokens);
   event Approval(address indexed tokenOwner, address indexed spender, uint256 tokens);
-}
-
-contract Owned {
-  address public owner;
-
-  // ------------------------------------------------------------------------
-  // Constructor
-  // ------------------------------------------------------------------------
-  constructor() public {
-    owner = msg.sender;
-  }
-
-  modifier onlyOwner {
-    require(msg.sender == owner);
-    _;
-  }
-
-  function transferOwnership(address newOwner) public onlyOwner returns (address account) {
-    owner = newOwner;
-    return owner;
-  }
 }
 
 contract CSTKDropToken is ERC20, Owned {
@@ -290,8 +290,6 @@ contract CSTKDropToken is ERC20, Owned {
       return;
     }
 
-    uint256 decimalsDiff = 10 ** (18 - 2 * decimals);
-
     ERC20 tokenInstance = ERC20(token);
     uint256 balance = tokenInstance.balanceOf(this);
 
@@ -303,7 +301,7 @@ contract CSTKDropToken is ERC20, Owned {
         continue;
       }
 
-      uint256 _tokens = orderEth / levels[i].price / decimalsDiff;
+      uint256 _tokens = (10**decimals) * orderEth / levels[i].price;
 
       // check if there enough tokens on the level
       if (_tokens > levels[i].available) {
@@ -315,7 +313,7 @@ contract CSTKDropToken is ERC20, Owned {
         _tokens = orderTokens;
       }
 
-      uint256 _eth = _tokens * levels[i].price * decimalsDiff;
+      uint256 _eth = _tokens * levels[i].price / (10**decimals);
       levels[i].available -= _tokens;
 
       // accumulate total price and tokens
@@ -326,7 +324,7 @@ contract CSTKDropToken is ERC20, Owned {
       orderEth -= _eth;
       orderTokens -= _tokens;
 
-      if (orderEth <= 0 || orderTokens <= 0) {
+      if (orderEth <= 0 || orderTokens <= 0 || levels[i].available > 0) {
         // order is calculated
         break;
       }
