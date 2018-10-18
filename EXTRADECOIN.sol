@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Extradecoin at 0x43dea031d5fec7b8316293303e5f813d43eb33ed
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Extradecoin at 0x9d985879704dbddade14cad3aba059afe5785afd
 */
 pragma solidity ^0.4.21;
 
@@ -111,7 +111,6 @@ contract Extradecoin is Owner {
     bool public isTransferable;
     uint public founderAllocatedTime = 1;
     uint public advisorAllocatedTime = 1;
-    uint256 public icoStandardPrice;
     
     uint256 public totalRemainingTokensForSales; // Total tokens remaining for sales
     uint256 public totalAdvisor; // Total tokens allocated for advisor
@@ -123,9 +122,7 @@ contract Extradecoin is Owner {
     event StartICO(uint state); // Start ICO sales
     event EndICO(uint state); // End ICO sales
     
-    event SetICOPrice(uint256 price); // Set ICO standard price
     
-    event IssueTokens(address investorAddress, uint256 amount, uint256 tokenAmount, uint state); // Issue tokens to investor
     event AllocateTokensForFounder(address founderAddress, uint256 founderAllocatedTime, uint256 tokenAmount); // Allocate tokens to founders' address
     event AllocateTokensForAdvisor(address advisorAddress, uint256 advisorAllocatedTime, uint256 tokenAmount); // Allocate tokens to advisor address
     event AllocateReservedTokens(address reservedAddress, uint256 tokenAmount); // Allocate reserved tokens
@@ -168,18 +165,6 @@ contract Extradecoin is Owner {
         totalRemainingTokensForSales = salesAllocation;
         totalAdvisor = advisorAllocation;
         totalReservedTokenAllocation = reservedAllocation;
-    }
-    
-    // Fallback function for token purchasing  
-    function () external payable isActive isInSale {
-        uint state = getCurrentState();
-        require(state == IN_ICO);
-        require(msg.value >= minInvestedAmount);
-        
-        if (state == IN_ICO) {
-            return issueTokensForICO(state);
-        }
-        revert();
     }
 
     // ERC20 standard function
@@ -233,16 +218,6 @@ contract Extradecoin is Owner {
         isSelling = false;
         icoEndTime = now;
         emit EndICO(saleState);
-        return true;
-    }
-    
-    // Set ICO price including ICO standard price, ICO 1st round price, ICO 2nd round price
-    function setICOPrice(uint256 _tokenPerEther) external onlyOwnerOrAdmin returns(bool) {
-        require(_tokenPerEther > 0);
-		
-        icoStandardPrice = _tokenPerEther;
-        emit SetICOPrice(icoStandardPrice);
-        
         return true;
     }
 
@@ -319,7 +294,7 @@ contract Extradecoin is Owner {
         require(saleState == END_SALE);
         require(advisorAddress != address(0));
         uint256 amount;
-        if (advisorAllocatedTime == 1) {
+        if (founderAllocatedTime == 1) {
             amount = advisorAllocation * 50/100;
             balances[advisorAddress] = balances[advisorAddress].add(amount);
             emit AllocateTokensForFounder(advisorAddress, founderAllocatedTime, amount);
@@ -363,6 +338,7 @@ contract Extradecoin is Owner {
     
     // Allocate reserved tokens
     function allocateReservedTokens(address _addr, uint _amount) external isActive onlyOwnerOrAdmin {
+        require(saleState == END_SALE);
         require(_amount > 0);
         require(_addr != address(0));
 		
@@ -384,35 +360,12 @@ contract Extradecoin is Owner {
     function allowance(address _owner, address _spender) external constant returns (uint256) {
         return allowed[_owner][_spender];
     }
-    
-     // Issue tokens to normal investors through ICO rounds
-    function issueTokensForICO(uint _state) private {
-        uint256 price = icoStandardPrice;
-        issueTokens(price, _state);
-    }
-    
-    // Issue tokens to investors and transfer ether to wallet
-    function issueTokens(uint256 _price, uint _state) private {
-        require(walletAddress != address(0));
-		
-        uint tokenAmount = msg.value.mul(_price).mul(10**18).div(1 ether);
-        balances[msg.sender] = balances[msg.sender].add(tokenAmount);
-        totalInvestedAmountOf[msg.sender] = totalInvestedAmountOf[msg.sender].add(msg.value);
-        totalRemainingTokensForSales = totalRemainingTokensForSales.sub(tokenAmount);
-        totalInvestedAmount = totalInvestedAmount.add(msg.value);
-        walletAddress.transfer(msg.value);
-        emit IssueTokens(msg.sender, msg.value, tokenAmount, _state);
-    }
 
     // ERC20 standard function
     function balanceOf(address _owner) external constant returns (uint256 balance) {
         return balances[_owner];
     }
-    
-     // Get current sales state
-    function getCurrentState() public view returns(uint256) {
-        return saleState;
-    }
+
     // Get softcap reaching status
     function isSoftCapReached() public view returns (bool) {
         return totalInvestedAmount >= minInvestedCap;
