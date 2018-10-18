@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ClubToken at 0x8c4c3ee6dae680b1ae7b6d0ede4beef8075c2139
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ClubToken at 0x9e85c5b1a66c0bb6ce2ffb41ce0f918b19bf3c8d
 */
 pragma solidity ^0.4.24;
 
@@ -20,9 +20,44 @@ contract owned {
     }
 }
 
+/**
+ * Math operations with safety checks
+ */
+contract SafeMath {
+  function safeMul(uint256 a, uint256 b) internal returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function safeDiv(uint256 a, uint256 b) internal returns (uint256) {
+    assert(b > 0);
+    uint256 c = a / b;
+    assert(a == b * c + a % b);
+    return c;
+  }
+
+  function safeSub(uint256 a, uint256 b) internal returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function safeAdd(uint256 a, uint256 b) internal returns (uint256) {
+    uint256 c = a + b;
+    assert(c>=a && c>=b);
+    return c;
+  }
+
+  function assert(bool assertion) internal {
+    if (!assertion) {
+      throw;
+    }
+  }
+}
+
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; }
 
-contract TokenERC20 {
+contract TokenERC20 is SafeMath {
     // Public variables of the token
     string public name;
     string public symbol;
@@ -68,16 +103,14 @@ contract TokenERC20 {
         // Check if the sender has enough
         require(balanceOf[_from] >= _value);
         // Check for overflows
-        require(balanceOf[_to] + _value > balanceOf[_to]);
+        require(SafeMath.safeAdd(balanceOf[_to], _value) > balanceOf[_to]);
         // Save this for an assertion in the future
-        uint previousBalances = balanceOf[_from] + balanceOf[_to];
-        // Subtract from the sender
-        balanceOf[_from] -= _value;
-        // Add the same to the recipient
-        balanceOf[_to] += _value;
+        uint previousBalances = SafeMath.safeAdd(balanceOf[_from], balanceOf[_to]); 
+        balanceOf[_from] = SafeMath.safeSub(balanceOf[_from], _value);                     // Subtract from the sender
+        balanceOf[_to] = SafeMath.safeAdd(balanceOf[_to], _value);                            // Add the same to the recipient
         emit Transfer(_from, _to, _value);
         // Asserts are used to use static analysis to find bugs in your code. They should never fail
-        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
+        assert(SafeMath.safeAdd(balanceOf[_from], balanceOf[_to]) == previousBalances);
     }
 
     /**
@@ -104,7 +137,7 @@ contract TokenERC20 {
      */
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
         require(_value <= allowance[_from][msg.sender]);     // Check allowance
-        allowance[_from][msg.sender] -= _value;
+        allowance[_from][msg.sender] = SafeMath.safeSub(allowance[_from][msg.sender], _value);
         _transfer(_from, _to, _value);
         return true;
     }
@@ -119,7 +152,7 @@ contract TokenERC20 {
      */
     function approve(address _spender, uint256 _value) public
         returns (bool success) {
-        allowance[msg.sender][_spender] = _value;
+        allowance[msg.sender][_spender] = SafeMath.safeSub(allowance[msg.sender][_spender], _value);
         emit Approval(msg.sender, _spender, _value);
         return true;
     }
@@ -152,8 +185,8 @@ contract TokenERC20 {
      */
     function burn(uint256 _value) public returns (bool success) {
         require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
-        balanceOf[msg.sender] -= _value;            // Subtract from the sender
-        totalSupply -= _value;                      // Updates totalSupply
+        balanceOf[msg.sender] = SafeMath.safeSub(balanceOf[msg.sender], _value);    // Subtract from the sender
+        totalSupply = SafeMath.safeSub(totalSupply, _value);     // Updates totalSupply
         emit Burn(msg.sender, _value);
         return true;
     }
@@ -169,9 +202,9 @@ contract TokenERC20 {
     function burnFrom(address _from, uint256 _value) public returns (bool success) {
         require(balanceOf[_from] >= _value);                // Check if the targeted balance is enough
         require(_value <= allowance[_from][msg.sender]);    // Check allowance
-        balanceOf[_from] -= _value;                         // Subtract from the targeted balance
-        allowance[_from][msg.sender] -= _value;             // Subtract from the sender's allowance
-        totalSupply -= _value;                              // Update totalSupply
+        balanceOf[_from] = SafeMath.safeSub(balanceOf[_from], _value);
+        allowance[_from][msg.sender] = SafeMath.safeSub(allowance[_from][msg.sender], _value);
+        totalSupply = SafeMath.safeSub(totalSupply, _value);     // Updates totalSupply
         emit Burn(_from, _value);
         return true;
     }
@@ -190,9 +223,6 @@ contract ClubToken is owned, TokenERC20 {
     
     uint256 public initialSupply = 100000000;
 
-    uint256 public sellPrice;
-    uint256 public buyPrice;
-
     mapping (address => bool) public frozenAccount;
 
     /* This generates a public event on the blockchain that will notify clients */
@@ -205,22 +235,12 @@ contract ClubToken is owned, TokenERC20 {
     function _transfer(address _from, address _to, uint _value) internal {
         require (_to != 0x0);                               // Prevent transfer to 0x0 address. Use burn() instead
         require (balanceOf[_from] >= _value);               // Check if the sender has enough
-        require (balanceOf[_to] + _value >= balanceOf[_to]); // Check for overflows
+        require(SafeMath.safeAdd(balanceOf[_to], _value) > balanceOf[_to]);
         require(!frozenAccount[_from]);                     // Check if sender is frozen
         require(!frozenAccount[_to]);                       // Check if recipient is frozen
-        balanceOf[_from] -= _value;                         // Subtract from the sender
-        balanceOf[_to] += _value;                           // Add the same to the recipient
+        balanceOf[_from] = SafeMath.safeSub(balanceOf[_from], _value);
+        balanceOf[_to] = SafeMath.safeAdd(balanceOf[_to], _value);
         emit Transfer(_from, _to, _value);
-    }
-
-    /// @notice Create `mintedAmount` tokens and send it to `target`
-    /// @param target Address to receive the tokens
-    /// @param mintedAmount the amount of tokens it will receive
-    function mintToken(address target, uint256 mintedAmount) onlyOwner public {
-        balanceOf[target] += mintedAmount;
-        totalSupply += mintedAmount;
-        emit Transfer(0, this, mintedAmount);
-        emit Transfer(this, target, mintedAmount);
     }
 
     /// @notice `freeze? Prevent | Allow` `target` from sending & receiving tokens
@@ -231,26 +251,4 @@ contract ClubToken is owned, TokenERC20 {
         emit FrozenFunds(target, freeze);
     }
 
-    /// @notice Allow users to buy tokens for `newBuyPrice` eth and sell tokens for `newSellPrice` eth
-    /// @param newSellPrice Price the users can sell to the contract
-    /// @param newBuyPrice Price users can buy from the contract
-    function setPrices(uint256 newSellPrice, uint256 newBuyPrice) onlyOwner public {
-        sellPrice = newSellPrice;
-        buyPrice = newBuyPrice;
-    }
-
-    /// @notice Buy tokens from contract by sending ether
-    function buy() payable public {
-        uint amount = msg.value / buyPrice;               // calculates the amount
-        _transfer(this, msg.sender, amount);              // makes the transfers
-    }
-
-    /// @notice Sell `amount` tokens to contract
-    /// @param amount amount of tokens to be sold
-    function sell(uint256 amount) public {
-        address myAddress = this;
-        require(myAddress.balance >= amount * sellPrice);      // checks if the contract has enough ether to buy
-        _transfer(msg.sender, this, amount);              // makes the transfers
-        msg.sender.transfer(amount * sellPrice);          // sends ether to the seller. It's important to do this last to avoid recursion attacks
-    }
 }
