@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC820Registry at 0x820d0bc4d0ad9e0e7dc19bd8cf9c566fc86054ce
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC820Registry at 0x820c4597fc3e4193282576750ea4fcfe34ddf0a7
 */
 /* ERC820: Pseudo-introspection Registry Contract
  * by Jordi Baylina and Jacques Dafflon
@@ -29,7 +29,7 @@
  */
 pragma solidity 0.4.24;
 // IV is value needed to have a vanity address starting with `0x820`.
-// IV: 1200
+// IV: 2241
 
 /// @dev The interface a contract MUST implement if it is the implementer of
 /// some (other) interface for any address other than itself.
