@@ -1,7 +1,75 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LANDRegistry at 0x46fbcfd32ea671caa21897c09072cb6cb44c0bc9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LANDRegistry at 0x08ed5780f834d48c2be7d5433a4a7df8f7e82b31
 */
 pragma solidity ^0.4.24;
+
+// File: contracts/upgradable/ProxyStorage.sol
+
+contract ProxyStorage {
+
+  /**
+   * Current contract to which we are proxing
+   */
+  address public currentContract;
+  address public proxyOwner;
+}
+
+// File: contracts/upgradable/OwnableStorage.sol
+
+contract OwnableStorage {
+
+  address public owner;
+
+  constructor() internal {
+    owner = msg.sender;
+  }
+
+}
+
+// File: erc821/contracts/AssetRegistryStorage.sol
+
+contract AssetRegistryStorage {
+
+  string internal _name;
+  string internal _symbol;
+  string internal _description;
+
+  /**
+   * Stores the total count of assets managed by this registry
+   */
+  uint256 internal _count;
+
+  /**
+   * Stores an array of assets owned by a given account
+   */
+  mapping(address => uint256[]) internal _assetsOf;
+
+  /**
+   * Stores the current holder of an asset
+   */
+  mapping(uint256 => address) internal _holderOf;
+
+  /**
+   * Stores the index of an asset in the `_assetsOf` array of its holder
+   */
+  mapping(uint256 => uint256) internal _indexOfAsset;
+
+  /**
+   * Stores the data associated with an asset
+   */
+  mapping(uint256 => string) internal _assetData;
+
+  /**
+   * For a given account, for a given operator, store whether that operator is
+   * allowed to transfer and modify assets on behalf of them.
+   */
+  mapping(address => mapping(address => bool)) internal _operators;
+
+  /**
+   * Approval array
+   */
+  mapping(uint256 => address) internal _approval;
+}
 
 // File: contracts/estate/IEstateRegistry.sol
 
@@ -60,95 +128,9 @@ contract LANDStorage {
   IEstateRegistry public estateRegistry;
 }
 
-// File: contracts/upgradable/OwnableStorage.sol
-
-contract OwnableStorage {
-
-  address public owner;
-
-  constructor() internal {
-    owner = msg.sender;
-  }
-
-}
-
-// File: contracts/upgradable/ProxyStorage.sol
-
-contract ProxyStorage {
-
-  /**
-   * Current contract to which we are proxing
-   */
-  address public currentContract;
-  address public proxyOwner;
-}
-
-// File: erc821/contracts/AssetRegistryStorage.sol
-
-contract AssetRegistryStorage {
-
-  string internal _name;
-  string internal _symbol;
-  string internal _description;
-
-  /**
-   * Stores the total count of assets managed by this registry
-   */
-  uint256 internal _count;
-
-  /**
-   * Stores an array of assets owned by a given account
-   */
-  mapping(address => uint256[]) internal _assetsOf;
-
-  /**
-   * Stores the current holder of an asset
-   */
-  mapping(uint256 => address) internal _holderOf;
-
-  /**
-   * Stores the index of an asset in the `_assetsOf` array of its holder
-   */
-  mapping(uint256 => uint256) internal _indexOfAsset;
-
-  /**
-   * Stores the data associated with an asset
-   */
-  mapping(uint256 => string) internal _assetData;
-
-  /**
-   * For a given account, for a given operator, store whether that operator is
-   * allowed to transfer and modify assets on behalf of them.
-   */
-  mapping(address => mapping(address => bool)) internal _operators;
-
-  /**
-   * Approval array
-   */
-  mapping(uint256 => address) internal _approval;
-}
-
 // File: contracts/Storage.sol
 
 contract Storage is ProxyStorage, OwnableStorage, AssetRegistryStorage, LANDStorage {
-}
-
-// File: erc821/contracts/ERC165.sol
-
-interface ERC165 {
-  function supportsInterface(bytes4 interfaceID) external view returns (bool);
-}
-
-// File: contracts/metadata/IMetadataHolder.sol
-
-contract IMetadataHolder is ERC165 {
-  function getMetadata(uint256 /* assetId */) external view returns (string);
-}
-
-// File: contracts/upgradable/IApplication.sol
-
-contract IApplication {
-  function initialize(bytes data) public;
 }
 
 // File: contracts/upgradable/Ownable.sol
@@ -168,47 +150,62 @@ contract Ownable is Storage {
   }
 }
 
-// File: contracts/land/ILANDRegistry.sol
+// File: contracts/upgradable/IApplication.sol
 
-interface ILANDRegistry {
+contract IApplication {
+  function initialize(bytes data) public;
+}
 
-  // LAND can be assigned by the owner
-  function assignNewParcel(int x, int y, address beneficiary) external;
-  function assignMultipleParcels(int[] x, int[] y, address beneficiary) external;
+// File: openzeppelin-solidity/contracts/math/SafeMath.sol
 
-  // After one year, LAND can be claimed from an inactive public key
-  function ping() external;
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
 
-  // LAND-centric getters
-  function encodeTokenId(int x, int y) external pure returns (uint256);
-  function decodeTokenId(uint value) external pure returns (int, int);
-  function exists(int x, int y) external view returns (bool);
-  function ownerOfLand(int x, int y) external view returns (address);
-  function ownerOfLandMany(int[] x, int[] y) external view returns (address[]);
-  function landOf(address owner) external view returns (int[], int[]);
-  function landData(int x, int y) external view returns (string);
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
+    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+    if (_a == 0) {
+      return 0;
+    }
 
-  // Transfer LAND
-  function transferLand(int x, int y, address to) external;
-  function transferManyLand(int[] x, int[] y, address to) external;
+    c = _a * _b;
+    assert(c / _a == _b);
+    return c;
+  }
 
-  // Update LAND
-  function updateLandData(int x, int y, string data) external;
-  function updateManyLandData(int[] x, int[] y, string data) external;
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 _a, uint256 _b) internal pure returns (uint256) {
+    // assert(_b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = _a / _b;
+    // assert(_a == _b * c + _a % _b); // There is no case in which this doesn't hold
+    return _a / _b;
+  }
 
-  // Events
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 _a, uint256 _b) internal pure returns (uint256) {
+    assert(_b <= _a);
+    return _a - _b;
+  }
 
-  event Update(
-    uint256 indexed assetId,
-    address indexed holder,
-    address indexed operator,
-    string data
-  );
-
-  event UpdateOperator(
-    uint256 indexed assetId,
-    address indexed operator
-  );
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
+    c = _a + _b;
+    assert(c >= _a);
+    return c;
+  }
 }
 
 // File: erc821/contracts/IERC721Base.sol
@@ -266,72 +263,22 @@ interface IERC721Base {
 
 interface IERC721Receiver {
   function onERC721Received(
-    address _operator,
-    address _from,
+    address _oldOwner,
     uint256 _tokenId,
     bytes   _userData
   ) external returns (bytes4);
 }
 
-// File: openzeppelin-solidity/contracts/math/SafeMath.sol
+// File: erc821/contracts/ERC165.sol
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
-    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
-    // benefit is lost if 'b' is also tested.
-    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
-    if (_a == 0) {
-      return 0;
-    }
-
-    c = _a * _b;
-    assert(c / _a == _b);
-    return c;
-  }
-
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 _a, uint256 _b) internal pure returns (uint256) {
-    // assert(_b > 0); // Solidity automatically throws when dividing by 0
-    // uint256 c = _a / _b;
-    // assert(_a == _b * c + _a % _b); // There is no case in which this doesn't hold
-    return _a / _b;
-  }
-
-  /**
-  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 _a, uint256 _b) internal pure returns (uint256) {
-    assert(_b <= _a);
-    return _a - _b;
-  }
-
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
-    c = _a + _b;
-    assert(c >= _a);
-    return c;
-  }
+interface ERC165 {
+  function supportsInterface(bytes4 interfaceID) external view returns (bool);
 }
 
 // File: erc821/contracts/ERC721Base.sol
 
 contract ERC721Base is AssetRegistryStorage, IERC721Base, ERC165 {
   using SafeMath for uint256;
-
-  // Equals to `bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))`
-  bytes4 private constant ERC721_RECEIVED = 0x150b7a02;
 
   //
   // Global Getters
@@ -650,10 +597,11 @@ contract ERC721Base is AssetRegistryStorage, IERC721Base, ERC165 {
     _addAssetTo(to, assetId);
 
     if (doCheck && _isContract(to)) {
-      // Equals to `bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))
+      // Equals to bytes4(keccak256("onERC721Received(address,uint256,bytes)"))
+      bytes4 ERC721_RECEIVED = bytes4(0xf0b9e5ba);
       require(
         IERC721Receiver(to).onERC721Received(
-          msg.sender, holder, assetId, userData
+          holder, assetId, userData
         ) == ERC721_RECEIVED
       );
     }
@@ -845,6 +793,55 @@ contract FullAssetRegistry is ERC721Base, ERC721Enumerable, ERC721Metadata {
   function decimals() external pure returns (uint256) {
     return 0;
   }
+}
+
+// File: contracts/land/ILANDRegistry.sol
+
+interface ILANDRegistry {
+
+  // LAND can be assigned by the owner
+  function assignNewParcel(int x, int y, address beneficiary) external;
+  function assignMultipleParcels(int[] x, int[] y, address beneficiary) external;
+
+  // After one year, LAND can be claimed from an inactive public key
+  function ping() external;
+
+  // LAND-centric getters
+  function encodeTokenId(int x, int y) external pure returns (uint256);
+  function decodeTokenId(uint value) external pure returns (int, int);
+  function exists(int x, int y) external view returns (bool);
+  function ownerOfLand(int x, int y) external view returns (address);
+  function ownerOfLandMany(int[] x, int[] y) external view returns (address[]);
+  function landOf(address owner) external view returns (int[], int[]);
+  function landData(int x, int y) external view returns (string);
+
+  // Transfer LAND
+  function transferLand(int x, int y, address to) external;
+  function transferManyLand(int[] x, int[] y, address to) external;
+
+  // Update LAND
+  function updateLandData(int x, int y, string data) external;
+  function updateManyLandData(int[] x, int[] y, string data) external;
+
+  // Events
+
+  event Update(
+    uint256 indexed assetId,
+    address indexed holder,
+    address indexed operator,
+    string data
+  );
+
+  event UpdateOperator(
+    uint256 indexed assetId,
+    address indexed operator
+  );
+}
+
+// File: contracts/metadata/IMetadataHolder.sol
+
+contract IMetadataHolder is ERC165 {
+  function getMetadata(uint256 /* assetId */) external view returns (string);
 }
 
 // File: contracts/land/LANDRegistry.sol
