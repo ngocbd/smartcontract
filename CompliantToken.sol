@@ -1,26 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CompliantToken at 0x11466447f5def12d2772ccb89d5f0416a1af64f1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CompliantToken at 0x09640f7b5a96010c8524be0d6cf3ea02b8df6288
 */
 pragma solidity 0.4.24;
-//
-//
-//
-//used Wallet of ACcount 179//
-//
-//
-//
-//
-//
-//
-//testing 2nd company
-//demo
-//wallet2
-//new ICO Sep28
-//company_2
-//DefaultOffer
-//new for company_2
-//FOR PRODUCTION
-//New Offer
+
 
 /**
  * @title SafeMath
@@ -184,11 +166,6 @@ contract Whitelist is Ownable {
 contract Validator {
     address public validator;
 
-    /**
-    * event for validator address update logging
-    * @param previousOwner address of the old validator
-    * @param newValidator address of the new validator
-    */
     event NewValidatorSet(address indexed previousOwner, address indexed newValidator);
 
     /**
@@ -408,7 +385,6 @@ contract MintableToken is StandardToken, Ownable {
         public 
         Ownable(_owner) 
     {
-
     }
 
     /**
@@ -520,13 +496,15 @@ contract CompliantToken is Validator, DetailedERC20, MintableToken {
     * @param value number of tokens
     * @param fee fee in tokens
     * @param spender The address which will spend the tokens
+    * @param nonce request recorded at this particular nonce
     */
     event RecordedPendingTransaction(
         address indexed from,
         address indexed to,
         uint256 value,
         uint256 fee,
-        address indexed spender
+        address indexed spender,
+        uint256 nonce
     );
 
     /**
@@ -657,7 +635,7 @@ contract CompliantToken is Validator, DetailedERC20, MintableToken {
             address(0)
         );
 
-        emit RecordedPendingTransaction(msg.sender, _to, _value, transferFee, address(0));
+        emit RecordedPendingTransaction(msg.sender, _to, _value, transferFee, address(0), currentNonce);
         currentNonce++;
 
         return true;
@@ -696,7 +674,7 @@ contract CompliantToken is Validator, DetailedERC20, MintableToken {
             msg.sender
         );
 
-        emit RecordedPendingTransaction(_from, _to, _value, transferFee, msg.sender);
+        emit RecordedPendingTransaction(_from, _to, _value, transferFee, msg.sender, currentNonce);
         currentNonce++;
 
         return true;
