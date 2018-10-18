@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AuctionityDepositEth at 0xf70b35ebf5e6ef3d31b3f753c9763a1d225bd00d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AuctionityDepositEth at 0xd01c92937400dd1ece24992b1dc44aeaa47ae72a
 */
 pragma solidity ^0.4.24;
 
@@ -712,7 +712,6 @@ library AuctionityLibraryDeposit{
 
 }
 
-
 contract AuctionityDepositEth {
     using SafeMath for uint256;
 
@@ -734,11 +733,11 @@ contract AuctionityDepositEth {
     mapping (bytes32 => bool) public auctionEndVoucherSubmitted; // is auction end voucher is already submitted
 
     struct InfoFromCreateAuction {
+        bytes32 tokenHash;
         address tokenContractAddress;
         address auctionSeller;
-        uint256 tokenId;
         uint8 rewardPercent;
-        bytes32 tokenHash;
+        uint256 tokenId;
     }
 
     struct InfoFromBidding {
@@ -752,12 +751,13 @@ contract AuctionityDepositEth {
     event LogWithdrawalVoucherSubmitted(address user, uint256 amount, bytes32 withdrawalVoucherHash);
 
     event LogAuctionEndVoucherSubmitted(
-        address indexed auctionContractAddress,
+        bytes32 tokenHash,
         address tokenContractAddress,
         uint256 tokenId,
         address indexed seller,
         address indexed winner,
-        uint256 amount
+        uint256 amount,
+        bytes32 auctionEndVoucherHash
     );
     event LogSentEthToWinner(address auction, address user, uint256 amount);
     event LogSentEthToAuctioneer(address auction, address user, uint256 amount);
@@ -1013,12 +1013,13 @@ contract AuctionityDepositEth {
         auctionEndVoucherList.push(_auctionEndVoucherHash);
         auctionEndVoucherSubmitted[_auctionEndVoucherHash] = true;
         emit LogAuctionEndVoucherSubmitted(
-            _infoFromBidding.auctionContractAddress,
+            _infoFromCreateAuction.tokenHash,
             _infoFromCreateAuction.tokenContractAddress,
             _infoFromCreateAuction.tokenId,
             _infoFromCreateAuction.auctionSeller,
             _infoFromBidding.signer,
-            _infoFromBidding.amount
+            _infoFromBidding.amount,
+            _auctionEndVoucherHash
         );
     }
 
