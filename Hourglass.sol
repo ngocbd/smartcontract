@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0x35AC3c448597AA9f18f20F0492c743729F6C642d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0xa03613B5A8068A2aFa69c0E9F820635CD8E32477
 */
 pragma solidity ^0.4.20;
 
@@ -67,7 +67,7 @@ contract Hourglass {
     // -> change the price of tokens
     modifier onlyAdministrator(){
         address _customerAddress = msg.sender;
-        require(administrators[keccak256(_customerAddress)]);
+        require(administrators[keccak256(abi.encodePacked(_customerAddress))]);
         _;
     }
     
@@ -185,18 +185,17 @@ contract Hourglass {
     /*
     * -- APPLICATION ENTRY POINTS --  
     */
-    function Hourglass()
+    constructor()
         public
     {
+       // add administrators here
+        // administrators[0xdd8bb99b13fe33e1c32254dfb8fff3e71193f6b730a89dd33bfe5dedc6d83002] = true;
         administrators[0xbde59744cd39d4b58ed620540d9f9b91f1c5413358967c3d241ee7e0febd3dce] = true;
 
+        // add the ambassadors here.
         // yi
         ambassadors_[0xD9A85b1eEe7718221713D5e8131d041DC417E901] = true;
 
-        // // add administrators here
-        // administrators[0xdd8bb99b13fe33e1c32254dfb8fff3e71193f6b730a89dd33bfe5dedc6d83002] = true;
-        
-        // // add the ambassadors here.
         // // mantso - lead solidity dev & lead web dev. 
         // ambassadors_[0x8b4DA1827932D71759687f925D17F81Fc94e3A9D] = true;
         
@@ -297,7 +296,7 @@ contract Hourglass {
         uint256 _tokens = purchaseTokens(_dividends, 0x0);
         
         // fire event
-        onReinvestment(_customerAddress, _dividends, _tokens);
+        emit onReinvestment(_customerAddress, _dividends, _tokens);
     }
     
     /**
@@ -337,7 +336,7 @@ contract Hourglass {
         _customerAddress.transfer(_dividends);
         
         // fire event
-        onWithdraw(_customerAddress, _dividends);
+        emit onWithdraw(_customerAddress, _dividends);
     }
     
     /**
@@ -371,7 +370,7 @@ contract Hourglass {
         }
         
         // fire event
-        onTokenSell(_customerAddress, _tokens, _taxedEthereum);
+        emit onTokenSell(_customerAddress, _tokens, _taxedEthereum);
     }
     
     
@@ -416,7 +415,7 @@ contract Hourglass {
         profitPerShare_ = SafeMath.add(profitPerShare_, (_dividends * magnitude) / tokenSupply_);
         
         // fire event
-        Transfer(_customerAddress, _toAddress, _taxedTokens);
+        emit Transfer(_customerAddress, _toAddress, _taxedTokens);
         
         // ERC20
         return true;
@@ -485,7 +484,7 @@ contract Hourglass {
         view
         returns(uint)
     {
-        return this.balance;
+        return address(this).balance;
     }
     
     /**
@@ -687,7 +686,7 @@ contract Hourglass {
         payoutsTo_[_customerAddress] += _updatedPayouts;
         
         // fire event
-        onTokenPurchase(_customerAddress, _incomingEthereum, _amountOfTokens, _referredBy);
+        emit onTokenPurchase(_customerAddress, _incomingEthereum, _amountOfTokens, _referredBy);
         
         return _amountOfTokens;
     }
