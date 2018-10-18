@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BatchPreOrder at 0xe611f33a851257b7b1b781098c5bb8512dae3482
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BatchPreOrder at 0xd558f0c903ccac458495f0dc776dbcc78f1adf79
 */
 pragma solidity ^0.4.22;
 
@@ -2337,7 +2337,7 @@ contract BatchPreOrder is Destructible {
     uint private midgrade_offset = 5;
     uint private regular_offset = 6;
 
-    uint256 public constant GAS_REQUIREMENT = 4500000;
+    uint256 public constant GAS_REQUIREMENT = 400000;
     uint256 public constant BUFFER = 0.0001 ether;
 
     //Premium type id
@@ -2513,7 +2513,7 @@ contract BatchPreOrder is Destructible {
             uint256 nextPrice = (price * percent) / base;
 
             ether_required += (price + (GAS_REQUIREMENT * tx.gasprice) + BUFFER);
-
+            
             currentTypePrice[cType] = nextPrice;
         }
 
