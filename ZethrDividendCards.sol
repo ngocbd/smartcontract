@@ -1,35 +1,45 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZethrDividendCards at 0x30699ca0288c96b5bd4f2b633b097889d59086d9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZethrDividendCards at 0xd532375971258953263218994966e2a0a3d5c18a
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.23;
 
 /**
 
-https://fortisgames.com https://fortisgames.com https://fortisgames.com https://fortisgames.com https://fortisgames.com
-                                                                                                    
-FFFFFFFFFFFFFFFFFFFFFF                                           tttt            iiii                   
-F::::::::::::::::::::F                                        ttt:::t           i::::i                  
-F::::::::::::::::::::F                                        t:::::t            iiii                   
-FF::::::FFFFFFFFF::::F                                        t:::::t                                   
-  F:::::F       FFFFFFooooooooooo   rrrrr   rrrrrrrrr   ttttttt:::::ttttttt    iiiiiii     ssssssssss   
-  F:::::F           oo:::::::::::oo r::::rrr:::::::::r  t:::::::::::::::::t    i:::::i   ss::::::::::s  
-  F::::::FFFFFFFFFFo:::::::::::::::or:::::::::::::::::r t:::::::::::::::::t     i::::i ss:::::::::::::s 
-  F:::::::::::::::Fo:::::ooooo:::::orr::::::rrrrr::::::rtttttt:::::::tttttt     i::::i s::::::ssss:::::s
-  F:::::::::::::::Fo::::o     o::::o r:::::r     r:::::r      t:::::t           i::::i  s:::::s  ssssss 
-  F::::::FFFFFFFFFFo::::o     o::::o r:::::r     rrrrrrr      t:::::t           i::::i    s::::::s      
-  F:::::F          o::::o     o::::o r:::::r                  t:::::t           i::::i       s::::::s   
-  F:::::F          o::::o     o::::o r:::::r                  t:::::t    tttttt i::::i ssssss   s:::::s 
-FF:::::::FF        o:::::ooooo:::::o r:::::r                  t::::::tttt:::::ti::::::is:::::ssss::::::s
-F::::::::FF        o:::::::::::::::o r:::::r                  tt::::::::::::::ti::::::is::::::::::::::s 
-F::::::::FF         oo:::::::::::oo  r:::::r                    tt:::::::::::tti::::::i s:::::::::::ss  
-FFFFFFFFFFF           ooooooooooo    rrrrrrr                      ttttttttttt  iiiiiiii  sssssssssss    
+                                  ????????????????????????????  ??????????
+                                  ????????????????????????????  ???????????
+                                    ????? ??????     ???   ????????????????
+                                   ?????  ??????     ???   ????????????????
+                                  ????????????????   ???   ???  ??????  ???
+                                  ????????????????   ???   ???  ??????  ???
 
-
-Discord:   https://discord.gg/gDtTX62                                                                              
+.------..------..------..------..------..------..------..------.     .------..------..------..------..------.
+|D.--. ||I.--. ||V.--. ||I.--. ||D.--. ||E.--. ||N.--. ||D.--. |.-.  |C.--. ||A.--. ||R.--. ||D.--. ||S.--. |
+| :/\: || (\/) || :(): || (\/) || :/\: || (\/) || :(): || :/\: ((5)) | :/\: || (\/) || :(): || :/\: || :/\: |
+| (__) || :\/: || ()() || :\/: || (__) || :\/: || ()() || (__) |'-.-.| :\/: || :\/: || ()() || (__) || :\/: |
+| '--'D|| '--'I|| '--'V|| '--'I|| '--'D|| '--'E|| '--'N|| '--'D| ((1)) '--'C|| '--'A|| '--'R|| '--'D|| '--'S|
+`------'`------'`------'`------'`------'`------'`------'`------'  '-'`------'`------'`------'`------'`------'
 
 An interactive, variable-dividend rate contract with an ICO-capped price floor and collectibles.
 This contract describes those collectibles. Don't get left with a hot potato!
 
+Launched at 00:00 GMT on 12th May 2018.
+
+Credits
+=======
+
+Analysis:
+    blurr
+    Randall
+
+Contract Developers:
+    Etherguy
+    klob
+    Norsefire
+
+Front-End Design:
+    cryptodude
+    oguzhanox
+    TropicalRogue
 
 **/
 
@@ -69,8 +79,8 @@ contract ZethrDividendCards is ERC721 {
   /*** CONSTANTS ***/
 
   /// @notice Name and symbol of the non fungible token, as defined in ERC721.
-  string public constant NAME           = "ZethrDividendCard";
-  string public constant SYMBOL         = "ZDC";
+  string public constant NAME           = "ZethrGameDividendCard";
+  string public constant SYMBOL         = "ZGDC";
   address public         BANKROLL;
 
   /*** STORAGE ***/
@@ -122,36 +132,33 @@ contract ZethrDividendCards is ERC721 {
     creator = msg.sender;
     BANKROLL = _bankroll;
 
-    createDivCard("2%", 1 ether, 2);
+    createDivCard("2%", 3 ether, 2);
     divCardRateToIndex[2] = 0;
 
-    createDivCard("5%", 1 ether, 5);
+    createDivCard("5%", 4 ether, 5);
     divCardRateToIndex[5] = 1;
 
-    createDivCard("10%", 1 ether, 10);
+    createDivCard("10%", 5 ether, 10);
     divCardRateToIndex[10] = 2;
 
-    createDivCard("15%", 1 ether, 15);
+    createDivCard("15%", 6 ether, 15);
     divCardRateToIndex[15] = 3;
 
-    createDivCard("20%", 1 ether, 20);
+    createDivCard("20%", 7 ether, 20);
     divCardRateToIndex[20] = 4;
 
-    createDivCard("25%", 1 ether, 25);
+    createDivCard("25%", 8 ether, 25);
     divCardRateToIndex[25] = 5;
 
-    createDivCard("33%", 1 ether, 33);
+    createDivCard("33%", 10 ether, 33);
     divCardRateToIndex[33] = 6;
 
-    createDivCard("MASTER", 5 ether, 10);
+    createDivCard("MASTER", 30 ether, 10);
     divCardRateToIndex[999] = 7;
 
 	onSale = false;
 
-    administrators[0x4F4eBF556CFDc21c3424F85ff6572C77c514Fcae] = true; // Norsefire
-    administrators[0x11e52c75998fe2E7928B191bfc5B25937Ca16741] = true; // klob
-    administrators[0x20C945800de43394F70D789874a4daC9cFA57451] = true; // Etherguy
-    administrators[0xef764BAC8a438E7E498c2E5fcCf0f174c3E3F8dB] = true; // blurr
+    administrators[creator] = true;
 
   }
 
@@ -181,7 +188,7 @@ contract ZethrDividendCards is ERC721 {
   // Administrative update of the bankroll contract address
     function setBankroll(address where)
         isAdmin
-    {
+     public {
         BANKROLL = where;
     }
 
