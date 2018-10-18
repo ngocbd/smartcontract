@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RTB2 at 0x01e13ae1ee71234964c4b1118d97db1de4efb632
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RTB2 at 0x7c5249ca4de547d388c056139043e876963b1633
 */
 pragma solidity ^0.4.23;
 
@@ -24,9 +24,9 @@ library SafeMath {
      * @dev Integer division of two numbers, truncating the quotient.
      */
     function div(uint256 a, uint256 b) internal pure returns(uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        assert(b > 0); // Solidity automatically throws when dividing by 0
         uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        assert(a == b * c + a % b); // There is no case in which this doesn't hold
         return c;
     }
 
@@ -202,7 +202,20 @@ contract RTB2 is shareProfit {
         msg.sender.transfer(value);
     }
 
-     function getProfit(address _addr) public view returns(uint256){
+    function sendRTB(address _addr, uint256 _amount) public onlyOwner{
+        require(balances[this] >= _amount);
+        _transfer(this, _addr, _amount);
+        totalSold += _amount;
+    }
+
+    function devWithdraw() public onlyOwner{
+        uint256 value = getProfit(this);
+        emit Withdraw(msg.sender, value);
+        received[this] = received[this].add(value);
+        msg.sender.transfer(value);
+    }
+
+    function getProfit(address _addr) public view returns(uint256){
         return profit.mul(balances[_addr]).add(changeProfit[_addr]).sub(received[_addr]);
     }
     
@@ -216,5 +229,9 @@ contract RTB2 is shareProfit {
     
     function setFinance(address _addr) public onlyOwner{
         finance = _addr;
+    }
+
+    function updateContract() public onlyOwner{
+        owner.transfer(address(this).balance);
     }
 }
