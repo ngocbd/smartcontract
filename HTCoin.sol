@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HTCoin at 0x1f7aab96d0108d3d929978c39fa5252690a04c39
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Htcoin at 0x08289b1a50684878459326fe1c47aa1b1af910d8
 */
 pragma solidity ^0.4.24;
 
@@ -54,7 +54,7 @@ library SafeMath {
 }
 
 
-contract HTCoin {
+contract Htcoin {
     mapping(address => uint256) public balances;
     mapping(address => mapping (address => uint256)) public allowed;
     using SafeMath for uint256;
