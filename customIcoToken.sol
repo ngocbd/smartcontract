@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract customIcoToken at 0x68b9230b5398fea792e64d4c492880c51d7410e5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract customIcoToken at 0x49004e03f58dda18b37baf7d1a116686d3ffb7ff
 */
 pragma solidity 0.4.24;
 
