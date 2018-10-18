@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ONG at 0x07ace122d32a927bc912d30581fceaaa264051e5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ONG at 0x35199155170c3426783130fa917a113df767c271
 */
 pragma solidity ^0.4.24;
 contract ONG_Base{
@@ -57,13 +57,14 @@ contract ONG_ProjectFunctions is ONG_Base{
 }
 contract ONG_MembersFunctions is ONG_Base{
     function Member_AssingTokensToProject(uint256 _tokens, uint256 _ProjectID) public{
-        require(Period ==2);
-        require(Members[msg.sender].Tokens>=_tokens);
-        require(Members[msg.sender].Enable);
-        require(Projects[_ProjectID].Enable);
+        require(Period ==2, "no es el periodo correcto");
+        require(Members[msg.sender].Tokens>=_tokens, "no tiene suficientes tokens");
+        require(Members[msg.sender].Enable, "no es un sender valido");
+        require(Projects[_ProjectID].Enable, "no es un projecto valido");
         require(_ProjectID!=OwnerProject);
         
-        Members[msg.sender].Tokens = Members[msg.sender].Tokens + _tokens;
+        Members[msg.sender].Tokens = Members[msg.sender].Tokens - _tokens;
+        Projects[_ProjectID].Tokens = Projects[_ProjectID].Tokens + _tokens;
     }
     function Members_info(address _member) public view returns(address _Owner,uint256 _Tokens,bool _Enable){
         _Owner = Members[_member].Owner;
@@ -73,14 +74,14 @@ contract ONG_MembersFunctions is ONG_Base{
 }
 contract ONG_OwnerFunction is ONG_Base{
     function AddMember(address _member, uint256 _tokens) IsOwner public{
-        require(Members[_member].Owner != msg.sender);
+        require(Members[_member].Owner != msg.sender, "ese address ya existe");
         Members[_member].Enable = true;
         Members[_member].Owner = _member;
         Members[_member].Tokens = _tokens;
         membersAddresses.push(_member);
     }
     function AddTokensToMember(address _member, uint256 _tokens) IsOwner public{
-        require(Period ==1);
+        require(Period ==1, "no es el Periodo adecuado");
         require(Members[_member].Enable);
         Members[_member].Tokens =Members[_member].Tokens + _tokens;
     }
@@ -95,17 +96,17 @@ contract ONG_OwnerFunction is ONG_Base{
         Projects[_id].Enable = true;
     }
     function ReassingTokens(uint256 _IdProject, uint256 _tokens) IsOwner public{
-        require(Period ==3);
+        require(Period ==3, "no es el periodo adecuado");
         require(Projects[OwnerProject].Tokens>= _tokens);
         Projects[OwnerProject].Tokens = Projects[OwnerProject].Tokens - _tokens;
         Projects[_IdProject].Tokens = Projects[_IdProject].Tokens + _tokens;
     }
 }
 contract ONG_OracleFunctions is ONG_Base{
-    function ToPeriod() IsOracle public{
+    function ChangePeriod() IsOracle public returns (uint256){
         Period ++;
         if (Period == 3 ){
-            for (uint256 i; i> membersAddresses.length;i++ ){
+            for (uint256 i; i< membersAddresses.length;i++ ){
                 if(Members[membersAddresses[i]].Tokens>0){
                     Projects[OwnerProject].Tokens = Projects[OwnerProject].Tokens + Members[membersAddresses[i]].Tokens;
                     Members[membersAddresses[i]].Tokens= 0; 
@@ -115,7 +116,7 @@ contract ONG_OracleFunctions is ONG_Base{
         if( Period ==4){
             Period = 1;
         }
-        
+        return Period;
     }
 }
 contract ONG is ONG_OracleFunctions, ONG_OwnerFunction, ONG_MembersFunctions, ONG_ProjectFunctions  {
