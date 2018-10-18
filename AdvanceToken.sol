@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AdvanceToken at 0xebd55da9de25d071369130270de9fad62a12f5e6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AdvanceToken at 0xe8a2c10a8c52de7aa9f3d97482418e8c85b9efa3
 */
 pragma solidity ^0.4.20;
 
@@ -50,18 +50,21 @@ contract ERC20Interface {
  
 contract ERC20 is ERC20Interface,SafeMath {
 
+    // ?????????????balanceOf????
     mapping(address => uint256) public balanceOf;
 
-     mapping(address => mapping(address => uint256)) allowed;
+    // allowed?????????????????address?? ????????????(?????address)?????uint256??
+    mapping(address => mapping(address => uint256)) allowed;
 
     constructor(string _name) public {
-       name = _name;  
-       symbol = "FTC";
-       decimals = 9;
-       totalSupply = 50000000000000000;
+       name = _name;  // "UpChain";
+       symbol = "FTCB";
+       decimals = 4;
+       totalSupply = 500000000000;
        balanceOf[msg.sender] = totalSupply;
     }
 
+  // ???
   function transfer(address _to, uint256 _value) returns (bool success) {
       require(_to != address(0));
       require(balanceOf[msg.sender] >= _value);
