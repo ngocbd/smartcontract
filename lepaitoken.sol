@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract lepaitoken at 0xa80dde977d283401703e00de0f9a9705601e2553
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract lepaitoken at 0x9a156823999fc7585a2ae1fe1c507259bde47542
 */
 pragma solidity ^ 0.4.25;
 
@@ -374,12 +374,6 @@ contract lepaitoken is owned{
 	 */
 	function admAccount(address target, bool freeze) onlyOwner public {
 		admins[target] = freeze;
-	}
-	function addbtycmoney(address addr, uint money) onlyadmin public{
-	    btycaddmoney(addr, money);
-	}
-	function subbtycmoney(address addr, uint money) onlyadmin public{
-	    btycsubmoney(addr, money);
 	}
 	function btycaddmoney(address addr, uint money) private{
 	    address[] memory addrs =  new address[](1);
