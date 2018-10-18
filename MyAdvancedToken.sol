@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0xB6D9eB058B1e9b60E86cd4981d9da47e78820F76
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0xcd8e7fa2b7c12a9b36780b93264ebd1db479c13b
 */
 pragma solidity ^0.4.16;
 
 contract owned {
     address public owner;
 
-    constructor() public {
+    function owned() public {
         owner = msg.sender;
     }
 
@@ -48,7 +48,7 @@ contract TokenERC20 {
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    constructor(
+    function TokenERC20(
         uint256 initialSupply,
         string tokenName,
         string tokenSymbol
@@ -192,7 +192,7 @@ contract MyAdvancedToken is owned, TokenERC20 {
     event FrozenFunds(address target, bool frozen);
 
     /* Initializes contract with initial supply tokens to the creator of the contract */
-    constructor(
+    function MyAdvancedToken(
         uint256 initialSupply,
         string tokenName,
         string tokenSymbol
