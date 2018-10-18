@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HoneyShareCoin at 0x0a22036d0cf7c5f9faf1b28d2aa00e27a38becc7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HoneyShareCoin at 0x3948e1db31419627003d42768f95cab8c66407a2
 */
 pragma solidity ^0.4.18;
 
