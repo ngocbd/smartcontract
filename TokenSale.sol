@@ -1,27 +1,24 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSale at 0xffd0a15ed9f957fbd1a5b9f5b164a2dddcf5a385
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSale at 0x759075d2107ABFB9747FC0655d9B6B72b9eDde3d
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.21;
 
 interface IERC20Token {
-    function balanceOf(address owner) external returns (uint256);
-    function transfer(address to, uint256 amount) external returns (bool);
-    function decimals() external returns (uint256);
+    function balanceOf(address owner) public returns (uint256);
+    function transfer(address to, uint256 amount) public returns (bool);
+    function decimals() public returns (uint256);
 }
 
 contract TokenSale {
     IERC20Token public tokenContract;  // the token being sold
-    uint256 public price;              // the price, in wei, per token
     address owner;
-
     uint256 public tokensSold;
 
     event Sold(address buyer, uint256 amount);
 
-    constructor() public {
+    constructor(IERC20Token _tokenContract) public {
         owner = msg.sender;
-        tokenContract = IERC20Token(0x25a803EC5d9a14D41F1Af5274d3f2C77eec80CE9);
-        price = 800 finney;
+        tokenContract = _tokenContract;
     }
 
     // Guards against integer overflows
@@ -35,27 +32,23 @@ contract TokenSale {
         }
     }
 
-    function buyTokens(uint256 numberOfTokens) public payable {
-        require(msg.value == safeMultiply(numberOfTokens, price));
+    function () public payable {
 
-        uint256 scaledAmount = safeMultiply(numberOfTokens,
-            uint256(10) ** tokenContract.decimals());
+        uint256 scaledAmount = safeMultiply(msg.value, 125000);
 
         require(tokenContract.balanceOf(this) >= scaledAmount);
 
-        emit Sold(msg.sender, numberOfTokens);
-        tokensSold += numberOfTokens;
 
-        require(tokenContract.transfer(msg.sender, scaledAmount));
+        tokenContract.transfer(msg.sender, scaledAmount);
     }
 
-    function retractTokens(uint256 numberOfTokens) public {
-        require(msg.sender == owner);
-        tokenContract.transfer(owner, numberOfTokens);
-    }
 
-    function withdraw() public {
+    function endSale() public {
         require(msg.sender == owner);
+
+        // Send unsold tokens to the owner.
+        require(tokenContract.transfer(owner, tokenContract.balanceOf(this)));
+
         msg.sender.transfer(address(this).balance);
     }
 }
