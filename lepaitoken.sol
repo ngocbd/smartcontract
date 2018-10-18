@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract lepaitoken at 0x754d06a9f6667cc76f1b86e002979578cf9fbc5f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract lepaitoken at 0x7af68a25a2c2ee6e1518fcc16876388e1796eed9
 */
 pragma solidity ^ 0.4.25;
 /* ??????? ????? */
@@ -96,7 +96,7 @@ contract lepaitoken is owned{
 	    btyc.transfer(toaddr, money);
 	}
 	/*????*/
-	function inputauction(uint auctids, address pusers, uint addmoneys,string useraddrs) public payable{
+	function inputauction(uint auctids, address pusers, uint addmoneys,string useraddrs) public {
 	    uint _now = now;
 	    auctionlist storage c = auctionlisting[auctids];
 	    require(c.ifend == false);
@@ -105,9 +105,12 @@ contract lepaitoken is owned{
 	    uint userbalance = canuse(pusers);
 	    require(addmoneys > c.currentprice);
 	    require(addmoneys <= c.endprice);
-	   // uint userhasmoney = c.ausers[pusers];
-	   require(addmoneys > c.ausers[pusers]);
-	    uint money = addmoneys - c.ausers[pusers];
+	    uint userhasmoney = c.ausers[pusers];
+	    uint money = addmoneys;
+	    if(userhasmoney > 0) {
+	        require(addmoneys > userhasmoney);
+	        money = addmoneys - userhasmoney;
+	    }
 	    
 	    require(userbalance >= money);
 	    if(c.endtime < _now) {
@@ -122,7 +125,7 @@ contract lepaitoken is owned{
 	        c.aucusers[c.lastid++] = putusers(pusers, _now, addmoneys,  useraddrs);
 	    
 	        userlist[pusers].push(auctids);
-	        //emit auctconfim(pusers, money);
+	        emit auctconfim(pusers, money);
 	    }
 	    
 	    
