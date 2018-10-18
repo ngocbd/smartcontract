@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AdvisorGPX at 0x26ba1a76df5b82dc85e41d25bd1281e3ddfd9603
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AdvisorGPX at 0x282b88cfd5b7eeb4562c6afa768095f2cf85b8af
 */
 pragma solidity 0.4.19;
 
