@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthertipGateway at 0xb90e444ee4ac565e1dd402498b6309c32e113b6a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthertipGateway at 0xac1b45f9ab422195b013d47c23fe13b2cd9929d3
 */
 pragma solidity ^0.4.24;
 
@@ -9,9 +9,8 @@ contract EthertipGateway {
     event Deposit(address indexed from, uint value);   
 
     mapping(uint=>uint) public used;
-    mapping(uint=>address) public users;
-
     address public validator;
+
     uint public tipToEther = 0.0001 ether;
 
     constructor (address _validator) public {
@@ -22,17 +21,11 @@ contract EthertipGateway {
         emit Deposit(msg.sender, msg.value);
     }
 
-    function register(uint _id, address _address) public {
-        require(msg.sender == validator);
-        users[_id] = _address;
-    }
-
     function withdraw(uint _id, uint _value, bytes _sig) public {
         bytes32 dataHash = keccak256(validator, _id, _value);
         bytes32 prefixedHash = keccak256("\x19Ethereum Signed Message:\n32", dataHash);
         address recovered = getRecoveredAddress(_sig, prefixedHash);
         require(validator == recovered);
-        require(users[_id] == msg.sender);
         require(used[_id] < _value);
         
         uint _transfer = (_value - used[_id]) * tipToEther;
