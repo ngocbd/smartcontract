@@ -1,15 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hostingicos at 0x092596ddf614aca7185cba8f523ce2bae879946d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hostingicos at 0x9a95a3aeb8ed9fc76e5992f11678d9ec3b322b31
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
 // 'Hostingicos' token contract
 //
-// Deployed to : 0xE190F201858402f1A5Ebbe6BBaB2dF7B4d2D4f5d
+// Deployed to : 0x60DdaaBc9f04B7bAFa4786c55E065C235aB6fA81
 // Symbol      : HTS
 // Name        : Hostingicos
-// Total supply: 10000000000000000000000000000
+// Total supply: 100000000000000000000000000
 // Decimals    : 18
 //
 // Enjoy.
@@ -115,11 +115,11 @@ contract Hostingicos is ERC20Interface, Owned, SafeMath {
     // ------------------------------------------------------------------------
     // Constructor
     // ------------------------------------------------------------------------
-    function Geet() public {
-        symbol = "HTS`";
+    function Hostingicos() public {
+        symbol = "HTS";
         name = "Hostingicos";
         decimals = 18;
-        _totalSupply = 1000000000000000000000000000;
+        _totalSupply = 100000000000000000000000000;
         balances[0x60DdaaBc9f04B7bAFa4786c55E065C235aB6fA81] = _totalSupply;
         Transfer(address(0), 0x60DdaaBc9f04B7bAFa4786c55E065C235aB6fA81, _totalSupply);
     }
