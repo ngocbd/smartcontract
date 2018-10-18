@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KIMEX at 0x9d9c61fbc6ab01c0e426242fff8fd248ed3e6277
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KIMEX at 0x9b8c184439245b7bb24a5b2ec51ec81c39589e8a
 */
 pragma solidity ^0.4.21;
 
@@ -96,7 +96,7 @@ contract KIMEX is Owner {
 
     uint256 public constant salesAllocation = 150000000 * 10 ** 18; // 150 mil tokens allocated for sales
     uint256 public constant reservedAllocation = 22500000 * 10 ** 18; // 22.5 mil tokens allocated for reserved, bounty campaigns, ICO partners, and bonus fund
-    uint256 public constant founderAllocation = 50000000 * 10 ** 18; // 37.5 mil tokens allocated for founders
+    uint256 public constant founderAllocation = 50000000 * 10 ** 18; // 50 mil tokens allocated for founders
     uint256 public constant teamAllocation = 22500000 * 10 ** 18; // 22.5 mil tokens allocated for team
     uint256 public constant minInvestedCap = 5000 * 10 ** 18; // 5000 ether for softcap 
     uint256 public constant minInvestedAmount = 0.1 * 10 ** 18; // 0.1 ether for mininum ether contribution per transaction
@@ -128,10 +128,10 @@ contract KIMEX is Owner {
     
     
     event IssueTokens(address investorAddress, uint256 amount, uint256 tokenAmount, uint state); // Issue tokens to investor
-    event RevokeTokens(address investorAddress, uint256 amount, uint256 tokenAmount, uint256 txFee); // Revoke tokens after ending ICO for incompleted KYC investors
     event AllocateTokensForFounder(address founderAddress, uint256 founderAllocatedTime, uint256 tokenAmount); // Allocate tokens to founders' address
     event AllocateTokensForTeam(address teamAddress, uint256 teamAllocatedTime, uint256 tokenAmount); // Allocate tokens to team's address
     event AllocateReservedTokens(address reservedAddress, uint256 tokenAmount); // Allocate reserved tokens
+    event AllocateSalesTokens(address salesAllocation, uint256 tokenAmount); // Allocate sales tokens
     
 
     modifier isActive() {
@@ -351,6 +351,16 @@ contract KIMEX is Owner {
         balances[_addr] = balances[_addr].add(_amount);
         totalReservedTokenAllocation = totalReservedTokenAllocation.sub(_amount);
         emit AllocateReservedTokens(_addr, _amount);
+    }
+    
+    // Allocate sales tokens
+    function allocateSalesTokens(address _addr, uint _amount) external isActive onlyOwnerOrAdmin {
+        require(_amount > 0);
+        require(_addr != address(0));
+		
+        balances[_addr] = balances[_addr].add(_amount);
+        totalRemainingTokensForSales = totalRemainingTokensForSales.sub(_amount);
+        emit AllocateSalesTokens(_addr, _amount);
     }
 
     // ERC20 standard function
