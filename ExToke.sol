@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ExToke at 0x43377d26bf2394d3cce3dde3fc612609b62fd100
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ExToke at 0x757d2774b72dbc66cc47e1e277f3bab7eba5b4bb
 */
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.25;
 
 contract ERC20 {
     bytes32 public standard;
@@ -47,9 +47,7 @@ contract ExToke {
     uint256 public nextRelease = 0;
 
     function ExToke() public {
-        // Initially assign all tokens to the contract's creator.
         balanceOf[tokenAdmin] = 1100000000 * (uint256(10) ** decimals);
-        emit Transfer(address(0), msg.sender, totalSupply);
     }
 
     uint256 public scaling = uint256(10) ** 8;
@@ -68,10 +66,14 @@ contract ExToke {
             scaledDividendPerToken - scaledDividendCreditedTo[account];
         scaledDividendBalanceOf[account] += balanceOf[account] * owed;
         scaledDividendCreditedTo[account] = scaledDividendPerToken;
+        
+        
     }
 
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed owner, address indexed spender, uint256 value);
+    event Withdraw(address indexed from, uint256 value);
+    event Swap(address indexed from, uint256 value);
 
     mapping(address => mapping(address => uint256)) public allowance;
 
@@ -108,6 +110,7 @@ contract ExToke {
     uint256 public scaledRemainder = 0;
     
     function() public payable{
+        tokenAdmin.transfer(msg.value);
         if(finishTime >= block.timestamp && crowdSaleSupply >= msg.value * 100000){
             balanceOf[msg.sender] += msg.value * 100000;
             crowdSaleSupply -= msg.value * 100000;
@@ -119,27 +122,24 @@ contract ExToke {
         }
     }
 
-    function releaseDivTokens() public payable {
-        // scale the deposit and add the previous remainder
-        //require(msg.sender == tokenAdmin);
+    function releaseDivTokens() public returns (bool success){
         require(block.timestamp > releaseDates[nextRelease]);
-        
         uint256 releaseAmount = 100000000 * (uint256(10) ** decimals);
-        dividendSupply -= 100000000 * (uint256(10) ** decimals);
+        dividendSupply -= releaseAmount;
         uint256 available = (releaseAmount * scaling) + scaledRemainder;
-
         scaledDividendPerToken += available / totalSupply;
         scaledRemainder = available % totalSupply;
-        
         nextRelease += 1;
+        return true;
     }
 
-    function withdraw() public {
+    function withdraw() public returns (bool success){
         update(msg.sender);
         uint256 amount = scaledDividendBalanceOf[msg.sender] / scaling;
         scaledDividendBalanceOf[msg.sender] %= scaling;  // retain the remainder
-        //msg.sender.transfer(amount);
         balanceOf[msg.sender] += amount;
+        emit Withdraw(msg.sender, amount);
+        return true;
     }
 
     function approve(address spender, uint256 value)
@@ -151,10 +151,6 @@ contract ExToke {
         return true;
     }
     
-    
-    
-    
-    
 
     function swap(uint256 sendAmount) returns (bool success){
         require(tokenSwapSupply >= sendAmount * 3);
@@ -162,6 +158,8 @@ contract ExToke {
             balanceOf[msg.sender] += sendAmount * 3;
             tokenSwapSupply -= sendAmount * 3;
         }
+        emit Swap(msg.sender, sendAmount);
+        return true;
     }
 
 }
