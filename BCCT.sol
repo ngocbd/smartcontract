@@ -1,172 +1,200 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BCCT at 0x6a0abbde66e54d4b22d71427076026089d2d6aa7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BCCT at 0xbc99b514a9923ae316040d4219913617b0e29773
 */
-pragma solidity ^0.4.17;
+pragma solidity 0.4.24;
 
-library SafeMathMod {// Partial SafeMath Library
 
-    function sub(uint256 a, uint256 b) internal pure returns (uint256 c) {
-        require((c = a - b) < a);
+// ----------------------------------------------------------------------------
+// Safe maths
+// ----------------------------------------------------------------------------
+library SafeMath {
+    function add(uint a, uint b) internal pure returns (uint c) {
+        c = a + b;
+        require(c >= a);
+    }
+    
+    function sub(uint a, uint b) internal pure returns (uint c) {
+        require(b <= a);
+        c = a - b;
     }
 
-    function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-        require((c = a + b) > a);
+    function mul(uint a, uint b) internal pure returns (uint c) {
+        c = a * b;
+        require(a == 0 || c / a == b);
+    }
+
+    function div(uint a, uint b) internal pure returns (uint c) {
+        require(b > 0);
+        c = a / b;
     }
 }
 
-contract BCCT {//is inherently ERC20
-    using SafeMathMod for uint256;
 
-    /**
-    * @constant name The name of the token
-    * @constant symbol  The symbol used to display the currency
-    * @constant decimals  The number of decimals used to dispay a balance
-    * @constant totalSupply The total number of tokens times 10^ of the number of decimals
-    * @constant MAX_UINT256 Magic number for unlimited allowance
-    * @storage balanceOf Holds the balances of all token holders
-    * @storage allowed Holds the allowable balance to be transferable by another address.
-    */
+// ----------------------------------------------------------------------------
+// ERC Token Standard #20 Interface
+// https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md
+// ----------------------------------------------------------------------------
+contract ERC20Interface {
+    function totalSupply() public constant returns (uint);
+    function balanceOf(address tokenOwner) public constant returns (uint balance);
+    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
+    function transfer(address to, uint tokens) public returns (bool success);
+    function approve(address spender, uint tokens) public returns (bool success);
+    function transferFrom(address from, address to, uint tokens) public returns (bool success);
 
-    string constant public name = "Block Chain Community Token";
+    event Transfer(address indexed from, address indexed to, uint tokens);
+    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
+}
 
-    string constant public symbol = "BCCT";
 
-    uint8 constant public decimals = 8;
+// ----------------------------------------------------------------------------
+// ERC20 Token, with the addition of symbol, name and decimals and a
+// fixed supply
+// ----------------------------------------------------------------------------
+contract BCCT is ERC20Interface {
+    using SafeMath for uint;
+    
+    address public owner;
+    string public symbol = "BCCT";
+    string public name = "Beverage Cash Coin";
+    uint8 public decimals = 18;
+    // 150,235,700,000,000,000,000,000,000 (the same as wei):
+    uint private _totalSupply = 150425700 * 10**uint(decimals);
 
-    uint256 constant public totalSupply = 100000000e8;
-
-    uint256 constant private MAX_UINT256 = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
-
-    mapping (address => uint256) public balanceOf;
-
-    mapping (address => mapping (address => uint256)) public allowed;
-
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-
-    event TransferFrom(address indexed _spender, address indexed _from, address indexed _to, uint256 _value);
-
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-
-    function BCCT() public {balanceOf[msg.sender] = totalSupply;}
-
-    /**
-    * @notice send `_value` token to `_to` from `msg.sender`
-    *
-    * @param _to The address of the recipient
-    * @param _value The amount of token to be transferred
-    * @return Whether the transfer was successful or not
-    */
-    function transfer(address _to, uint256 _value) public returns (bool success) {
-        /* Ensures that tokens are not sent to address "0x0" */
-        require(_to != address(0));
-
-        /* SafeMathMOd.sub will throw if there is not enough balance and if the transfer value is 0. */
-        balanceOf[msg.sender] = balanceOf[msg.sender].sub(_value);
-        balanceOf[_to] = balanceOf[_to].add(_value);
-        Transfer(msg.sender, _to, _value);
-        return true;
+    mapping(address => uint) private balances;
+    mapping(address => mapping(address => uint)) private allowed;
+    
+    constructor() public {
+        owner = msg.sender;
+        balances[owner] = _totalSupply;
+        emit Transfer(address(0), owner, _totalSupply);
     }
 
-    /**
-    * @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
-    *
-    * @param _from The address of the sender
-    * @param _to The address of the recipient
-    * @param _value The amount of token to be transferred
-    * @return Whether the transfer was successful or not
-    */
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        /* Ensures that tokens are not sent to address "0x0" */
-        require(_to != address(0));
+    // ------------------------------------------------------------------------
+    // Allows execution of function only for owner of smart-contract
+    // ------------------------------------------------------------------------
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
+    
+    // ------------------------------------------------------------------------
+    // Allows execution only if the request is properly formed to prevent short address attacks
+    // ------------------------------------------------------------------------
+    modifier onlyPayloadSize(uint size) {
+        require(msg.data.length >= size + 4); // add 4 bytes for function signature
+        _;
+    }
+    
+    // ------------------------------------------------------------------------
+    // Perform several transfers from smart contract owner's account to `to` accounts.
+    // Useful during ICO to save gas on base transaction costs.
+    // - Owner's account must have sufficient balance to transfer
+    // - 0 value transfers are allowed
+    // ------------------------------------------------------------------------
+    function transferQueue(address[] to, uint[] amount) public onlyOwner returns (bool success) {
+        require(to.length == amount.length);
         
-        uint256 allowance = allowed[_from][msg.sender];
-        /* Ensures sender has enough available allowance OR sender is balance holder allowing single transsaction send to contracts*/
-        require(_value <= allowance || _from == msg.sender);
-
-        /* Use SafeMathMod to add and subtract from the _to and _from addresses respectively. Prevents under/overflow and 0 transfers */
-        balanceOf[_to] = balanceOf[_to].add(_value);
-        balanceOf[_from] = balanceOf[_from].sub(_value);
-
-        /* Only reduce allowance if not MAX_UINT256 in order to save gas on unlimited allowance */
-        /* Balance holder does not need allowance to send from self. */
-        if (allowed[_from][msg.sender] != MAX_UINT256 && _from != msg.sender) {
-            allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+        for (uint64 i = 0; i < to.length; ++i) {
+            _transfer(msg.sender, to[i], amount[i]);
         }
-        Transfer(_from, _to, _value);
+        
         return true;
     }
 
-    /**
-    * @dev Transfer the specified amounts of tokens to the specified addresses.
-    * @dev Be aware that there is no check for duplicate recipients.
-    *
-    * @param _toAddresses Receiver addresses.
-    * @param _amounts Amounts of tokens that will be transferred.
-    */
-    function multiPartyTransfer(address[] _toAddresses, uint256[] _amounts) public {
-        /* Ensures _toAddresses array is less than or equal to 255 */
-        require(_toAddresses.length <= 255);
-        /* Ensures _toAddress and _amounts have the same number of entries. */
-        require(_toAddresses.length == _amounts.length);
-
-        for (uint8 i = 0; i < _toAddresses.length; i++) {
-            transfer(_toAddresses[i], _amounts[i]);
-        }
+    // ------------------------------------------------------------------------
+    // Owner can transfer out any accidentally sent ERC20 tokens
+    // ------------------------------------------------------------------------
+    function transferAnyERC20Token(address tokenAddress, uint tokens) 
+        public 
+        onlyOwner 
+        onlyPayloadSize(32 + 32) // 32 bytes for address + 32 bytes for tokens
+        returns (bool success) 
+    {
+        return ERC20Interface(tokenAddress).transfer(owner, tokens);
     }
 
-    /**
-    * @dev Transfer the specified amounts of tokens to the specified addresses from authorized balance of sender.
-    * @dev Be aware that there is no check for duplicate recipients.
-    *
-    * @param _from The address of the sender
-    * @param _toAddresses The addresses of the recipients (MAX 255)
-    * @param _amounts The amounts of tokens to be transferred
-    */
-    function multiPartyTransferFrom(address _from, address[] _toAddresses, uint256[] _amounts) public {
-        /* Ensures _toAddresses array is less than or equal to 255 */
-        require(_toAddresses.length <= 255);
-        /* Ensures _toAddress and _amounts have the same number of entries. */
-        require(_toAddresses.length == _amounts.length);
-
-        for (uint8 i = 0; i < _toAddresses.length; i++) {
-            transferFrom(_from, _toAddresses[i], _amounts[i]);
-        }
+    // ------------------------------------------------------------------------
+    // ERC-20: Total supply in accounts
+    // ------------------------------------------------------------------------
+    function totalSupply() public view returns (uint) {
+        return _totalSupply.sub(balances[address(0)]);
     }
 
-    /**
-    * @notice `msg.sender` approves `_spender` to spend `_value` tokens
-    *
-    * @param _spender The address of the account able to transfer the tokens
-    * @param _value The amount of tokens to be approved for transfer
-    * @return Whether the approval was successful or not
-    */
-    function approve(address _spender, uint256 _value) public returns (bool success) {
-        /* Ensures address "0x0" is not assigned allowance. */
-        require(_spender != address(0));
+    // ------------------------------------------------------------------------
+    // ERC-20: Get the token balance for account `tokenOwner`
+    // ------------------------------------------------------------------------
+    function balanceOf(address tokenOwner) public view returns (uint balance) {
+        return balances[tokenOwner];
+    }
 
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+    // ------------------------------------------------------------------------
+    // ERC-20: Transfer the balance from token owner's account to `to` account
+    // - Owner's account must have sufficient balance to transfer
+    // - 0 value transfers are allowed
+    // ------------------------------------------------------------------------
+    function transfer(address to, uint tokens) 
+        public 
+        onlyPayloadSize(32 + 32) // 32 bytes for to + 32 bytes for tokens
+        returns (bool success) 
+    {
+        _transfer(msg.sender, to, tokens);
         return true;
     }
 
-    /**
-    * @param _owner The address of the account owning tokens
-    * @param _spender The address of the account able to transfer the tokens
-    * @return Amount of remaining tokens allowed to spent
-    */
-    function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
-        remaining = allowed[_owner][_spender];
+    // ------------------------------------------------------------------------
+    // ERC-20: Token owner can approve for `spender` to transferFrom(...) `tokens`
+    // from the token owner's account
+    //
+    // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
+    // recommends that there are no checks for the approval double-spend attack
+    // as this should be implemented in user interfaces 
+    // ------------------------------------------------------------------------
+    function approve(address spender, uint tokens) 
+        public 
+        onlyPayloadSize(32 + 32) // 32 bytes for spender + 32 bytes for tokens
+        returns (bool success) 
+    {
+        require(balances[msg.sender] >= tokens);
+        allowed[msg.sender][spender] = tokens;
+        emit Approval(msg.sender, spender, tokens);
+        return true;
     }
 
-    function isNotContract(address _addr) private view returns (bool) {
-        uint length;
-        assembly {
-        /* retrieve the size of the code on target address, this needs assembly */
-        length := extcodesize(_addr)
-        }
-        return (length == 0);
+    // ------------------------------------------------------------------------
+    // ERC-20: Transfer `tokens` from the `from` account to the `to` account
+    // 
+    // The calling account must already have sufficient tokens approve(...)-d
+    // for spending from the `from` account and
+    // - From account must have sufficient balance to transfer
+    // - Spender must have sufficient allowance to transfer
+    // - 0 value transfers are allowed
+    // ------------------------------------------------------------------------
+    function transferFrom(address from, address to, uint tokens) 
+        public 
+        onlyPayloadSize(32 + 32 + 32) // 32 bytes for from + 32 bytes for to + 32 bytes for tokens
+        returns (bool success) 
+    {
+        allowed[from][msg.sender] = allowed[from][msg.sender].sub(tokens);
+        _transfer(from, to, tokens);
+        return true;
     }
 
-    // revert on eth transfers to this contract
-    function() public payable {revert();}
+    // ------------------------------------------------------------------------
+    // ERC-20: Returns the amount of tokens approved by the owner that can be
+    // transferred to the spender's account
+    // ------------------------------------------------------------------------
+    function allowance(address tokenOwner, address spender) public view returns (uint remaining) {
+        return allowed[tokenOwner][spender];
+    }
+    
+    // ------------------------------------------------------------------------
+    // Internal transfer function for calling from the contract. 
+    // Workaround for issues with payload size checking in internal calls.
+    // ------------------------------------------------------------------------
+    function _transfer(address from, address to, uint tokens) internal {
+        balances[from] = balances[from].sub(tokens);
+        balances[to] = balances[to].add(tokens);
+        emit Transfer(from, to, tokens);
+    }
 }
