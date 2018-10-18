@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Slaughter3D at 0x3d490ec6940a3be86e0eb5f1a06b0c1271b81ba1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Slaughter3D at 0x43326dd7b558cc59b44e998357a28e8649279cfe
 */
 pragma solidity ^0.4.25;
 // expansion on original contract from dav's stronghands contract
@@ -67,14 +67,14 @@ contract Slaughter3D {
     function previousstagedata()
         public
         view
-        returns(address , address , string  ,address , string  )
+        returns(address loser , address player1, string van1 ,address player2, string van2 )
     {
         return (Loser[numberOfFinalizedStages],stages[numberOfFinalizedStages].slotXplayer[0],Vanity[stages[numberOfFinalizedStages].slotXplayer[0]],stages[numberOfFinalizedStages].slotXplayer[1],Vanity[stages[numberOfFinalizedStages].slotXplayer[1]]);
     }
     function currentstagedata()
         public
         view
-        returns( address , string  ,address , string  )
+        returns( address player1, string van1 ,address player2, string van2 )
     {
         return (stages[numberOfStages].slotXplayer[0],Vanity[stages[numberOfStages].slotXplayer[0]],stages[numberOfStages].slotXplayer[1],Vanity[stages[numberOfStages].slotXplayer[1]]);
     }
@@ -85,10 +85,10 @@ contract Slaughter3D {
     {
         return (Jackpot);
     }
-    function checkstatus()// true = ready to vallidate
+    function checkstatus()
         public
         view
-        returns(bool  )
+        returns(bool CanStartBattle )
     {
         bool check;
         if(numberOfStages >= numberOfFinalizedStages)
@@ -103,9 +103,9 @@ contract Slaughter3D {
     function Refundlineinfo()
         public
         view
-        returns(address , uint256 ,uint256 , uint256  , string )
+        returns(address NextAdresstoRefund, uint256 LengthUnpaidLine,uint256 divsunfetched, uint256 refundpot , string vanityofnexttoberefunded)
     {
-        uint256 LengthUnpaidLine = NextAtLineEnd - NextInLine;
+        LengthUnpaidLine = NextAtLineEnd - NextInLine;
         uint256 dividends = p3dContract.myDividends(true);
         return (RefundWaitingLine[NextInLine],LengthUnpaidLine, dividends , Refundpot ,Vanity[RefundWaitingLine[NextInLine]]);
     }
