@@ -1,16 +1,16 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WhaleKiller at 0xef83364a6c43ad90abff5ae9206241e6cf933156
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WhaleKiller at 0x14550617a40096a222fd214fd33c9fbe6509e7c8
 */
 pragma solidity ^0.4.24;
 
 contract WhaleKiller {
     address WhaleAddr;
-    uint constant interest = 5;
-    uint constant whalefee = 1;
-    uint constant maxRoi = 150;
+    uint constant public interest = 5;
+    uint constant public whalefee = 1;
+    uint constant public maxRoi = 150;
     uint256 amount = 0;
     mapping (address => uint256) invested;
-    mapping (address => uint256) timeInvest;
+    mapping (address => uint256) dateInvest;
     mapping (address => uint256) rewards;
 
     constructor() public {
@@ -20,7 +20,7 @@ contract WhaleKiller {
         address sender = msg.sender;
         
         if (invested[sender] != 0) {
-            amount = invested[sender] * interest / 100 * (now - timeInvest[sender]) / 1 days;
+            amount = invested[sender] * interest / 100 * (now - dateInvest[sender]) / 1 days;
             if (msg.value == 0) {
                 if (amount >= address(this).balance) {
                     amount = (address(this).balance);
@@ -38,7 +38,7 @@ contract WhaleKiller {
                 }
             }
         }
-        timeInvest[sender] = now;
+        dateInvest[sender] = now;
         invested[sender] += (msg.value + amount);
         
         if (msg.value != 0) {
@@ -49,10 +49,10 @@ contract WhaleKiller {
         }
     }
     function showDeposit(address _dep) public view returns(uint256) {
-        return (invested[_dep] / 10**18);
+        return (invested[_dep] / 1**18);
     }
     function showRewards(address _rew) public view returns(uint256) {
-        return (rewards[_rew] / 10**18);
+        return (invested[_rew] / 1**18);
     }
     function showWhaleAddr() public view returns(address) {
         return WhaleAddr;
