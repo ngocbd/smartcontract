@@ -1,75 +1,81 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StoreGoods at 0xd083713e4d9bc1e4c923795f9f6ce2a97646c116
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StoreGoods at 0xB11ee4eF5c2e2Ac877211543F0eE073d307b3d51
 */
 pragma solidity ^0.4.24;
 
 
 
-library IndexList
+contract Base
 {
-    function insert(uint32[] storage self, uint32 index, uint pos) external
+    uint8 constant HEROLEVEL_MIN = 1;
+    uint8 constant HEROLEVEL_MAX = 5;
+
+    uint8 constant LIMITCHIP_MINLEVEL = 3;
+    uint constant PARTWEIGHT_NORMAL = 100;
+    uint constant PARTWEIGHT_LIMIT = 40;
+
+    address creator;
+
+    constructor() public
     {
-        require(self.length >= pos);
-        self.length++;
-        for (uint i=self.length; i>pos; i++)
-        {
-            self[i+1] = self[i];
-        }
-        self[pos] = index;
+        creator = msg.sender;
     }
 
-    function remove(uint32[] storage self, uint32 index) external returns(bool)
+    modifier CreatorAble()
     {
-        return remove(self,index,0);
+        require(msg.sender == creator);
+        _;
     }
 
-    function remove(uint32[] storage self, uint32 index, uint startPos) public returns(bool)
+    function IsLimitPart(uint8 level, uint part) internal pure returns(bool)
     {
-        for (uint i=startPos; i<self.length; i++)
-        {
-            if (self[i] != index) continue;
-            for (uint j=i; j<self.length-1; j++)
-            {
-                self[j] = self[j+1];
-            }
-            delete self[self.length-1];
-            self.length--;
-            return true;
-        }
-        return false;
+        if (level < LIMITCHIP_MINLEVEL) return false;
+        if (part < GetPartNum(level)) return false;
+        return true;
+    }
+
+    function GetPartWeight(uint8 level, uint part) internal pure returns(uint)
+    {
+        if (IsLimitPart(level, part)) return PARTWEIGHT_LIMIT;
+        return PARTWEIGHT_NORMAL;
+    }
+    
+    function GetPartNum(uint8 level) internal pure returns(uint)
+    {
+        if (level <= 2) return 3;
+        else if (level <= 4) return 4;
+        return 5;
+    }
+
+    function GetPartLimit(uint8 level, uint part) internal pure returns(uint8)
+    {
+        if (!IsLimitPart(level, part)) return 0;
+        if (level == 5) return 1;
+        if (level == 4) return 8;
+        return 15;
     }
 
 }
 
+
+
+
 library ItemList {
 
-    using IndexList for uint32[];
-    
     struct Data {
         uint32[] m_List;
         mapping(uint32 => uint) m_Maps;
-    }
-
-    function _insert(Data storage self, uint32 key, uint val) internal
-    {
-        self.m_List.push(key);
-        self.m_Maps[key] = val;
-    }
-
-    function _delete(Data storage self, uint32 key) internal
-    {
-        self.m_List.remove(key);
-        delete self.m_Maps[key];
     }
 
     function set(Data storage self, uint32 key, uint num) public
     {
         if (!has(self,key)) {
             if (num == 0) return;
-            _insert(self,key,num);
+            self.m_List.push(key);
+            self.m_Maps[key] = num;
         }
         else if (num == 0) {
-            _delete(self,key);
+            delete self.m_Maps[key];
         } 
         else {
             uint old = self.m_Maps[key];
@@ -130,84 +136,10 @@ library ItemList {
 
 
 
-contract Base
-{
-    uint8 constant HEROLEVEL_MIN = 1;
-    uint8 constant HEROLEVEL_MAX = 5;
-
-    uint8 constant LIMITCHIP_MINLEVEL = 3;
-    uint constant PARTWEIGHT_NORMAL = 100;
-    uint constant PARTWEIGHT_LIMIT = 40;
-
-    address creator;
-
-    constructor() public
-    {
-        creator = msg.sender;
-    }
-
-    modifier MasterAble()
-    {
-        require(msg.sender == creator);
-        _;
-    }
-
-    function IsLimitPart(uint8 level, uint part) internal pure returns(bool)
-    {
-        if (level < LIMITCHIP_MINLEVEL) return false;
-        if (part < GetPartNum(level)) return false;
-        return true;
-    }
-
-    function GetPartWeight(uint8 level, uint part) internal pure returns(uint)
-    {
-        if (IsLimitPart(level, part)) return PARTWEIGHT_LIMIT;
-        return PARTWEIGHT_NORMAL;
-    }
-    
-    function GetPartNum(uint8 level) internal pure returns(uint)
-    {
-        if (level <= 2) return 3;
-        else if (level <= 4) return 4;
-        return 5;
-    }
-
-}
-
-contract BasicTime
-{
-    uint constant DAY_SECONDS = 60 * 60 * 24;
-
-    function GetDayCount(uint timestamp) pure internal returns(uint)
-    {
-        return timestamp/DAY_SECONDS;
-    }
-
-    function GetExpireTime(uint timestamp, uint dayCnt) pure internal returns(uint)
-    {
-        uint dayEnd = GetDayCount(timestamp) + dayCnt;
-        return dayEnd * DAY_SECONDS;
-    }
-
-}
-
 contract BasicAuth is Base
 {
 
-    address master;
     mapping(address => bool) auth_list;
-
-    function InitMaster(address acc) internal
-    {
-        require(address(0) != acc);
-        master = acc;
-    }
-
-    modifier MasterAble()
-    {
-        require(msg.sender == creator || msg.sender == master);
-        _;
-    }
 
     modifier OwnerAble(address acc)
     {
@@ -221,20 +153,19 @@ contract BasicAuth is Base
         _;
     }
 
-    function CanHandleAuth(address from) internal view returns(bool)
+    modifier ValidHandleAuth()
     {
-        return from == creator || from == master;
+        require(tx.origin==creator || msg.sender==creator);
+        _;
     }
-    
-    function SetAuth(address target) external
+   
+    function SetAuth(address target) external ValidHandleAuth
     {
-        require(CanHandleAuth(tx.origin) || CanHandleAuth(msg.sender));
         auth_list[target] = true;
     }
 
-    function ClearAuth(address target) external
+    function ClearAuth(address target) external ValidHandleAuth
     {
-        require(CanHandleAuth(tx.origin) || CanHandleAuth(msg.sender));
         delete auth_list[target];
     }
 
@@ -264,23 +195,7 @@ contract StoreGoods is BasicAuth
     mapping(uint32 => Goods) g_Goods;
     mapping(address => ItemList.Data) g_PurchaseInfo;
 
-    constructor(address Master) public
-    {
-        InitMaster(Master);
-    }
-
-    function AddGoods(
-        uint32 iGoods,
-        uint32 costItem,
-        uint price,
-        uint32 itemRef,
-        uint32 amount,
-        uint32 duration,
-        uint32 expire,
-        uint8 limit,
-        uint8 disCount,
-        uint8 disRate
-    ) external MasterAble
+    function AddGoods(uint32 iGoods, uint32 costItem, uint price, uint32 itemRef, uint32 amount, uint32 duration, uint32 expire, uint8 limit, uint8 disCount, uint8 disRate) external CreatorAble
     {
         require(!HasGoods(iGoods));
         g_Goods[iGoods] = Goods({
@@ -297,7 +212,7 @@ contract StoreGoods is BasicAuth
         });
     }
 
-    function DelGoods(uint32 iGoods) external MasterAble
+    function DelGoods(uint32 iGoods) external CreatorAble
     {
         delete g_Goods[iGoods];
     }
