@@ -1,105 +1,88 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiEthSender at 0xda15dd091fbc1a0e69723b22c0e9aa0701d28bdb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiEthSender at 0x11352d75f63804d5f8fdb88bddf9efe9b52d6723
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.24;
 
 /**
  * @title SafeMath
- * @dev Math operations with safety checks that revert on error
+ * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
 
   /**
-  * @dev Multiplies two numbers, reverts on overflow.
+  * @dev Multiplies two numbers, throws on overflow.
   */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    // Gas optimization: this is cheaper than requiring 'a' not being zero, but the
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
     // benefit is lost if 'b' is also tested.
     // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
     if (a == 0) {
       return 0;
     }
 
-    uint256 c = a * b;
-    require(c / a == b);
-
+    c = a * b;
+    assert(c / a == b);
     return c;
   }
 
   /**
-  * @dev Integer division of two numbers truncating the quotient, reverts on division by zero.
+  * @dev Integer division of two numbers, truncating the quotient.
   */
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    require(b > 0); // Solidity only automatically asserts when dividing by 0
-    uint256 c = a / b;
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-
-    return c;
+    return a / b;
   }
 
   /**
-  * @dev Subtracts two numbers, reverts on overflow (i.e. if subtrahend is greater than minuend).
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
   */
   function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    require(b <= a);
-    uint256 c = a - b;
-
-    return c;
+    assert(b <= a);
+    return a - b;
   }
 
   /**
-  * @dev Adds two numbers, reverts on overflow.
+  * @dev Adds two numbers, throws on overflow.
   */
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    require(c >= a);
-
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
+    assert(c >= a);
     return c;
-  }
-
-  /**
-  * @dev Divides two numbers and returns the remainder (unsigned integer modulo),
-  * reverts when dividing by zero.
-  */
-  function mod(uint256 a, uint256 b) internal pure returns (uint256) {
-    require(b != 0);
-    return a % b;
   }
 }
 
+
 contract MultiEthSender {
+
     using SafeMath for uint256;
-    address public owner;
 
     event Send(uint256 _amount, address indexed _receiver);
 
-    modifier onlyOwner () {
-        if (msg.sender == owner) _;
+    modifier enoughBalance(uint256 amount, address[] list) {
+        uint256 totalAmount = amount.mul(list.length);
+        require(address(this).balance >= totalAmount);
+        _;
     }
 
-    constructor () public {
-        owner = msg.sender;
+    constructor() public {
+
     }
 
-    function multiSendEth(uint256 amount, address[] list) public payable onlyOwner returns (bool) {
-        uint256 balance = address(this).balance;
-        uint256 total = amount.mul(uint256(list.length));
-        if (total > balance) {
-            return false;
-        }
-        for (uint i = 0; i < list.length; i++) {
-            list[i].transfer(amount);
-            // emit Send(amount, list[i]);
-            // another way to write log
-            bytes32 _id = 0x5ce4017cdf5be6a02f39ba5d91777cf13a304b9e024d038bca26189d148feeb9;
-            log2(
-                bytes32(amount),
-                _id,
-                bytes32(list[i])
-            );
+    function () public payable {
+        require(msg.value >= 0);
+    }
+
+    function multiSendEth(uint256 amount, address[] list)
+    enoughBalance(amount, list)
+    public
+    returns (bool) 
+    {
+        for (uint256 i = 0; i < list.length; i++) {
+            address(list[i]).transfer(amount);
+            emit Send(amount, address(list[i]));
         }
         return true;
     }
-
-    function () public payable {}
 }
