@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FeeMultiToken at 0x41a58f8ac55b7aa83d7ca78dd804a475e7eaf3d8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FeeMultiToken at 0x385ed61627a1f2d2851fb686bc40f33944953ef5
 */
 pragma solidity ^0.4.24;
 
@@ -611,7 +611,7 @@ contract MultiToken is IMultiToken, BasicMultiToken {
             require(_weights[i] != 0, "The _weights array should not contains zeros");
             require(weights[tokens[i]] == 0, "The _tokens array have duplicates");
             weights[tokens[i]] = _weights[i];
-            if (minimalWeight == 0 || minimalWeight < _weights[i]) {
+            if (minimalWeight == 0 || _weights[i] < minimalWeight) {
                 minimalWeight = _weights[i];
             }
         }
@@ -626,7 +626,7 @@ contract MultiToken is IMultiToken, BasicMultiToken {
             uint256 fromBalance = ERC20(_fromToken).balanceOf(this);
             uint256 toBalance = ERC20(_toToken).balanceOf(this);
             returnAmount = _amount.mul(toBalance).mul(weights[_fromToken]).div(
-                _amount.mul(weights[_fromToken]).div(minimalWeight).add(fromBalance)
+                _amount.mul(weights[_fromToken]).div(minimalWeight).add(fromBalance).mul(weights[_toToken])
             );
         }
     }
@@ -716,5 +716,29 @@ contract FeeMultiToken is Ownable, MultiToken {
         uint256 prevBalance = _token.balanceOf(this);
         super.lend(_to, _token, _amount, _target, _data);
         require(_token.balanceOf(this) >= prevBalance.mul(TOTAL_PERCRENTS.add(lendFee)).div(TOTAL_PERCRENTS), "lend: tokens must be returned with lend fee");
+    }
+}
+
+// File: contracts/registry/IDeployer.sol
+
+contract IDeployer is Ownable {
+    function deploy(bytes data) external returns(address mtkn);
+}
+
+// File: contracts/registry/MultiTokenDeployer.sol
+
+contract MultiTokenDeployer is Ownable, IDeployer {
+    function deploy(bytes data) external onlyOwner returns(address) {
+        require(
+            // init(address[],uint256[],string,string,uint8)
+            (data[0] == 0x6f && data[1] == 0x5f && data[2] == 0x53 && data[3] == 0x5d) ||
+            // init2(address[],uint256[],string,string,uint8)
+            (data[0] == 0x18 && data[1] == 0x2a && data[2] == 0x54 && data[3] == 0x15)
+        );
+
+        FeeMultiToken mtkn = new FeeMultiToken();
+        require(address(mtkn).call(data));
+        mtkn.transferOwnership(msg.sender);
+        return mtkn;
     }
 }
