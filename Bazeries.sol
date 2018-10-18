@@ -1,10 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bazeries at 0x8dbebdca0f66b3532f7613e9606faee19030d3f9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bazeries at 0x2d75956188fd58e68cf7e01aa97b147e52b90407
 */
 pragma solidity ^0.4.8;
 // ----------------------------------------------------------------------------
 // 'The Bazeries Cylinder' token contract
-//FINAL
+//
 // Symbol      : Bazeries
 // Name        : The Bazeries Cylinder
 // Decimals    : 18
@@ -52,7 +52,7 @@ contract Bazeries is SafeMath{
     string public name;
     string public symbol;
     uint8 public decimals = 18;
-    uint256 public totalSupply = 100000000000000000000000000;
+    uint256 public totalSupply = 21000000;
 	address public owner = 0xfE0927e78278e301A3813c708819D77ed292CDF8;
 
     /* This creates an array with all balances */
@@ -75,10 +75,10 @@ contract Bazeries is SafeMath{
     /* Initializes contract with initial supply tokens to the creator of the contract */
     function Bazeries() 
     {
-    balanceOf[msg.sender] = 100000000000000000000000000;              // Give the creator all initial tokens
-    totalSupply = 100000000000000000000000000;                        // Update total supply
+    balanceOf[msg.sender] = 21000000;              // Give the creator all initial tokens
+    totalSupply = 21000000;                        // Update total supply
     name= "Bazeries";                                   // Set the name for display purposes
-    symbol= "BAZR";                               // Set the symbol for display purposes
+    symbol= "BZR";                               // Set the symbol for display purposes
     decimals = 18;                            // Amount of decimals for display purposes
 	owner = msg.sender;
     }
