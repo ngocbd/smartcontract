@@ -1,21 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LEGEND at 0x759f524e90bed1844dc9be586b691fbc26807671
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LEGEND at 0x286d32efa33c8ce0895544d8cd6e66fc1da2867c
 */
 pragma solidity ^0.4.18;
-
-// ----------------------------------------------------------------------------
-// 'LEGEND' CROWDSALE token contract
-//
-// Deployed to : 0xa657871a2ed2c2f33685c1a64bd0a03677b78409
-// Symbol      : LGD
-// Name        : LEGEND
-// Total supply: 1000000000
-// Decimals    : 8
-//
-// Enjoy.
-//
-// (c) by Moritz Neto with BokkyPooBah / Bok Consulting Pty Ltd Au 2017. The MIT Licence.
-// ----------------------------------------------------------------------------
 
 /**
  * @title SafeMath
