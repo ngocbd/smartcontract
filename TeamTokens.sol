@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TeamTokens at 0x7f7ba6035e7ce22dd94d92d6687d3cb9542426bd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TeamTokens at 0x6699361e4fe6edffda6890f255a68dd7d321923f
 */
 // Ethertote - TeamTokens time-locked smart contract
 //
@@ -87,7 +87,7 @@ contract TeamTokens {
     address public admin;
     address public thisContractAddress;
     
-    address public tokenContractAddress = 0x42be9831FFF77972c1D0E1eC0aA9bdb3CaA04D47;
+    address public tokenContractAddress = 0x740A61Ad4fb99AF22Fb42cA25F548640ae64911D;
     
     // the first team withdrawal can be made after:
     // GMT: Saturday, 1 December 2018 00:00:00
