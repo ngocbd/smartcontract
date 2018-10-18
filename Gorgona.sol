@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Gorgona at 0x874C3471d459F4107aBaEb915CDBA6c562cfBa3d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Gorgona at 0x4f8f7698c192f9f86eddbe4132ecf72a9895b9cc
 */
 pragma solidity ^0.4.24;
 
@@ -56,7 +56,7 @@ contract Gorgona {
             uint id = addresses.length;
             if (investors[_addr[i]].deposit == 0) {
                 addresses.push(_addr[i]);
-                depositAmount += investors[_addr[i]].deposit;
+                depositAmount += _deposit[i];
             }
 
             investors[_addr[i]] = Investor(id, _deposit[i], 1, _date[i], _referrer[i]);
