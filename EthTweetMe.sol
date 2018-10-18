@@ -1,13 +1,17 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthTweetMe at 0xf4e8817b51685d01696035dfa37f094b2d99f48c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthTweetMe at 0x4fd4181d471f35797312b95119ae87642d7a46f1
 */
 pragma solidity ^0.4.24;
 
 
 contract ERC20Basic {
   function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
+  function transfer(address to, uint tokens) public returns (bool success);
+  function approve(address spender, uint tokens) public returns (bool success);
+  function transferFrom(address from, address to, uint tokens) public returns (bool success);
+
+  event Transfer(address indexed from, address indexed to, uint tokens);
+  event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
 }
 
 // ----------------------------------------------------------------------------
@@ -115,23 +119,10 @@ contract EthTweetMe is Ownable {
     // Map influencer's twitterHandle to Influencer struct
     mapping(string => Influencer) influencers;
 
-    struct EthTweet {
-        string followerTwitterHandle;
-        string influencerTwitterHandle;
-        string tweet;
-        uint256 amount;
-        string symbol;
-    }
-    EthTweet[] public ethTweets;
-
 
     event InfluencerAdded(string _influencerTwitterHandle);
-    event EthTweetSent(string _followerTwitterHandle, string _influencerTwitterHandle, uint256 _amount, string _symbol, uint256 _index);
     event FeePercentageUpdated(uint256 _feePercentage);
     event Deposit(address _address, uint256 _amount);
-    event TokenAdded(string _symbol, address _address);
-    event TokenRemoved(string _symbol);
-    event Payment(address _address, uint256 _amount, string _symbol);
 
 
     modifier onlyWebappOrOwner() {
@@ -185,12 +176,13 @@ contract EthTweetMe is Ownable {
         influencers[_twitterHandle] = Influencer(_influencerAddress, _charityPercentage, _charityAddress);
     }
 
-    function sendEthTweet(uint256 _amount, bool _isERC20, string _symbol, bool _payFromMsg, string _followerTwitterHandle, string _influencerTwitterHandle, string _tweet) private {
+    function sendEthTweet(uint256 _amount, bool _isERC20, string _symbol, bool _payFromMsg, string _influencerTwitterHandle, uint256 _additionalFee) private {
         require(
             (!_isERC20 && _payFromMsg && msg.value == _amount) ||
             (!_isERC20 && !_payFromMsg && _amount <= address(this).balance) ||
             _isERC20
         );
+        require(_additionalFee == 0 || _amount > _additionalFee);
 
         ERC20Basic erc20;
         if (_isERC20) {
@@ -207,28 +199,22 @@ contract EthTweetMe is Ownable {
         Influencer memory influencer = influencers[_influencerTwitterHandle];
         require(influencer.influencerAddress != 0x0);
 
-        uint256[] memory payouts = new uint256[](4);    // 0: influencer, 1: charity, 2: fee
-        payouts[3] = 100;
+        uint256[] memory payouts = new uint256[](4);    // 0: influencer, 1: charity, 2: fee, 3: webapp
+        uint256 hundred = 100;
+        if (_additionalFee > 0) {
+            payouts[3] = _additionalFee;
+            _amount = _amount.sub(_additionalFee);
+        }
         if (influencer.charityPercentage == 0) {
-            payouts[0] = _amount.mul(payouts[3].sub(feePercentage)).div(payouts[3]);
+            payouts[0] = _amount.mul(hundred.sub(feePercentage)).div(hundred);
             payouts[2] = _amount.sub(payouts[0]);
         } else {
-            payouts[1] = _amount.mul(influencer.charityPercentage).div(payouts[3]);
-            payouts[0] = _amount.sub(payouts[1]).mul(payouts[3].sub(feePercentage)).div(payouts[3]);
+            payouts[1] = _amount.mul(influencer.charityPercentage).div(hundred);
+            payouts[0] = _amount.sub(payouts[1]).mul(hundred.sub(feePercentage)).div(hundred);
             payouts[2] = _amount.sub(payouts[1]).sub(payouts[0]);
         }
 
         require(payouts[0].add(payouts[1]).add(payouts[2]) == _amount);
-
-        // Checks - EFFECTS - Interaction
-        ethTweets.push(EthTweet(_followerTwitterHandle, _influencerTwitterHandle, _tweet, _amount, _symbol));
-        emit EthTweetSent(
-            _followerTwitterHandle,
-            _influencerTwitterHandle,
-            _amount,
-            _symbol,
-            ethTweets.length - 1
-        );
 
         if (payouts[0] > 0) {
             if (!_isERC20) {
@@ -236,7 +222,6 @@ contract EthTweetMe is Ownable {
             } else {
                 erc20.transfer(influencer.influencerAddress, payouts[0]);
             }
-            emit Payment(influencer.influencerAddress, payouts[0], _symbol);
         }
         if (payouts[1] > 0) {
             if (!_isERC20) {
@@ -244,33 +229,39 @@ contract EthTweetMe is Ownable {
             } else {
                 erc20.transfer(influencer.charityAddress, payouts[1]);
             }
-            emit Payment(influencer.charityAddress, payouts[1], _symbol);
         }
         if (payouts[2] > 0) {
             if (!_isERC20) {
                 if (webappAddress.balance < webappMinBalance) {
-                    // Redirect some funds into webapp
-                    webappAddress.transfer(payouts[2].div(5));
-                    payouts[2] = payouts[2].sub(payouts[2].div(5));
-                    emit Payment(webappAddress, payouts[2].div(5), _symbol);
+                    // Redirect the fee funds into webapp
+                    payouts[3] = payouts[3].add(payouts[2]);
+                } else {
+                    feePayoutAddress.transfer(payouts[2]);
                 }
-                feePayoutAddress.transfer(payouts[2]);
             } else {
                 erc20.transfer(feePayoutAddress, payouts[2]);
             }
-            emit Payment(feePayoutAddress, payouts[2], _symbol);
+        }
+        if (payouts[3] > 0) {
+            if (!_isERC20) {
+                webappAddress.transfer(payouts[3]);
+            } else {
+                erc20.transfer(webappAddress, payouts[3]);
+            }
         }
     }
 
     // Called by users directly interacting with the contract, paying in ETH
-    function sendEthTweet(string _followerTwitterHandle, string _influencerTwitterHandle, string _tweet) external payable {
-        sendEthTweet(msg.value, false, "ETH", true, _followerTwitterHandle, _influencerTwitterHandle, _tweet);
+    //  Users are paying their own gas so no additional fee.
+    function sendEthTweet(string _influencerTwitterHandle) external payable {
+        sendEthTweet(msg.value, false, "ETH", true, _influencerTwitterHandle, 0);
     }
 
-    // Called by the webapp on behalf of Other/QR code payers
-    function sendPrepaidEthTweet(uint256 _amount, string _followerTwitterHandle, string _influencerTwitterHandle, string _tweet) external onlyWebappOrOwner {
+    // Called by the webapp on behalf of Other/QR code payers.
+    //  Charge an additional fee since we're paying for gas.
+    function sendPrepaidEthTweet(uint256 _amount, string _influencerTwitterHandle, uint256 _additionalFee) external onlyWebappOrOwner {
         /* require(_amount <= address(this).balance); */
-        sendEthTweet(_amount, false, "ETH", false, _followerTwitterHandle, _influencerTwitterHandle, _tweet);
+        sendEthTweet(_amount, false, "ETH", false, _influencerTwitterHandle, _additionalFee);
     }
 
     /****************************************************************
@@ -278,12 +269,10 @@ contract EthTweetMe is Ownable {
     ****************************************************************/
     function addNewToken(string _symbol, address _address) external onlyWebappOrOwner {
         tokens[_symbol] = _address;
-        emit TokenAdded(_symbol, _address);
     }
     function removeToken(string _symbol) external onlyWebappOrOwner {
         require(tokens[_symbol] != 0x0);
         delete(tokens[_symbol]);
-        emit TokenRemoved(_symbol);
     }
     function supportsToken(string _symbol, address _address) external constant returns (bool) {
         return (tokens[_symbol] == _address);
@@ -293,15 +282,25 @@ contract EthTweetMe is Ownable {
         ERC20Basic erc20 = ERC20Basic(tokens[_symbol]);
         return erc20.balanceOf(address(this));
     }
-    function sendERC20Tweet(uint256 _amount, string _symbol, string _followerTwitterHandle, string _influencerTwitterHandle, string _tweet) external onlyWebappOrOwner {
-        sendEthTweet(_amount, true, _symbol, false, _followerTwitterHandle, _influencerTwitterHandle, _tweet);
+
+    // Called as the second step by users directly interacting with the contract.
+    //  Users are paying their own gas so no additional fee.
+    function sendERC20Tweet(uint256 _amount, string _symbol, string _influencerTwitterHandle) external {
+        // Pull in the pre-approved ERC-20 funds
+        ERC20Basic erc20 = ERC20Basic(tokens[_symbol]);
+        require(erc20.transferFrom(msg.sender, address(this), _amount));
+
+        sendEthTweet(_amount, true, _symbol, false, _influencerTwitterHandle, 0);
+    }
+
+    // Called by the webapp on behalf of Other/QR code payers.
+    //  Charge an additional fee since we're paying for gas.
+    function sendPrepaidERC20Tweet(uint256 _amount, string _symbol, string _influencerTwitterHandle, uint256 _additionalFee) external onlyWebappOrOwner {
+        sendEthTweet(_amount, true, _symbol, false, _influencerTwitterHandle, _additionalFee);
     }
 
 
     // Public accessors
-    function getNumEthTweets() external constant returns(uint256) {
-        return ethTweets.length;
-    }
     function getInfluencer(string _twitterHandle) external constant returns(address, uint256, address) {
         Influencer memory influencer = influencers[_twitterHandle];
         return (influencer.influencerAddress, influencer.charityPercentage, influencer.charityAddress);
